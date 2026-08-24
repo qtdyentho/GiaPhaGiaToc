@@ -4,6 +4,9 @@
 
 @layer base {
   :root {
+    --font-ui: 'Be Vietnam Pro', sans-serif;
+    --font-heritage: 'Noto Serif', serif;
+
     --primary: 22 101 52;
     --secondary: 30 58 95;
     --accent: 196 154 58;
@@ -13,7 +16,23 @@
   body {
     background-color: #F7F8F5;
     color: #1E293B;
-    font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: var(--font-ui);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-ui);
+  }
+}
+
+@layer utilities {
+  .font-ui {
+    font-family: var(--font-ui);
+  }
+
+  .font-heritage {
+    font-family: var(--font-heritage);
   }
 }
 
