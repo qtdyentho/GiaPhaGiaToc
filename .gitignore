@@ -11,6 +11,7 @@ lerna-debug.log*
 .gemini
 .agents
 .system_generated
+.cbi
 
 # Dependency directories
 node_modules

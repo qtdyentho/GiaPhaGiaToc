@@ -182,8 +182,9 @@ export interface MemberRelationship {
   member_id: string;
   related_member_id: string;
   relationship: RelationshipType;
-  is_direct_lineage: boolean;
-  created_at: string;
+  relationship_type?: RelationshipType;
+  is_direct_lineage?: boolean;
+  created_at?: string;
 }
 
 export interface MemorialDate {
