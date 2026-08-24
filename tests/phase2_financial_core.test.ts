@@ -1,12 +1,10 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { FundService } from '../src/services/FundService';
+import { FundService, mockContributions } from '../src/services/FundService';
 import { VietQRService } from '../src/services/VietQRService';
 import {
   mockFunds,
   mockTransactions,
   mockAssessments,
   mockExpenses,
-  mockContributions,
 } from '../src/services/mockData';
 import crypto from 'crypto';
 
@@ -92,7 +90,7 @@ async function runTests() {
     paymentMethod: 'BANK_TRANSFER',
     description: 'Test overdraw',
   });
-  assert('FIN-006: Insufficient Fund', !resExpFail.success && resExpFail.error?.includes('không đủ'));
+  assert('FIN-006: Insufficient Fund', !resExpFail.success && Boolean(resExpFail.error?.includes('không đủ')));
 
   // --- FIN-007: Expense Approval ---
   const resExpValid = await FundService.createExpense({
@@ -112,7 +110,7 @@ async function runTests() {
   );
   assert(
     'FIN-007: Expense Approval',
-    resApprove.success && resExpValid.expense?.status === 'APPROVED'
+    resApprove.success && Boolean(resExpValid.expense?.status === 'APPROVED')
   );
 
   // --- FIN-008: Approver Audit Recorded ---
