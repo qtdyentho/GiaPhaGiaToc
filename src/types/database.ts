@@ -48,9 +48,9 @@ export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE_ATTEMPT' | 'APPROVE' | '
 export type NotificationType = 'MEMORIAL_REMINDER' | 'EVENT_REMINDER' | 'PAYMENT_DUE' | 'EXPENSE_APPROVAL_REQUEST' | 'TRANSACTION_POSTED' | 'MEMBERSHIP_INVITE' | 'SYSTEM';
 
 export type SubscriptionStatus = 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELLED' | 'EXPIRED' | 'SUSPENDED' | 'READ_ONLY';
-export type InvoiceStatus = 'DRAFT' | 'OPEN' | 'PAID' | 'VOID' | 'UNCOLLECTIBLE' | 'REFUNDED';
+export type InvoiceStatus = 'DRAFT' | 'OPEN' | 'PENDING_PAYMENT' | 'WAITING_CONFIRMATION' | 'PAID' | 'VOID' | 'UNCOLLECTIBLE' | 'REFUNDED' | 'REJECTED';
 export type PlanTier = 'FREE' | 'FAMILY' | 'GIA_TOC' | 'DONG_HO' | 'PREMIUM';
-export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'CANCELLED' | 'REFUNDED' | 'PARTIAL';
+export type PaymentStatus = 'PENDING' | 'SUBMITTED' | 'SUCCESS' | 'FAILED' | 'CANCELLED' | 'REFUNDED' | 'PARTIAL' | 'OVERPAYMENT' | 'REJECTED';
 export type RefundStatus = 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'PROCESSED';
 
 export type SubscriptionEventType =
@@ -471,6 +471,12 @@ export interface Invoice {
   due_at: string;
   paid_at?: string;
   pdf_url?: string;
+  customer_submitted_at?: string;
+  customer_bank_reference?: string;
+  customer_note?: string;
+  confirmed_by?: string;
+  confirmed_at?: string;
+  rejection_reason?: string;
   created_at: string;
   updated_at: string;
 }
@@ -502,8 +508,27 @@ export interface Payment {
   status: PaymentStatus;
   paid_at?: string;
   failure_reason?: string;
+  transaction_reference?: string;
+  received_amount?: number;
+  bank_transaction_date?: string;
+  audit_reason?: string;
+  confirmed_by?: string;
   metadata?: Json;
   created_at: string;
+  updated_at: string;
+}
+
+export interface AdminBillingConfig {
+  id: string;
+  bank_name: string;
+  bank_code: string;
+  account_number: string;
+  account_name: string;
+  qr_template: string;
+  support_phone: string;
+  support_email: string;
+  default_invoice_validity_days: number;
+  is_active: boolean;
   updated_at: string;
 }
 

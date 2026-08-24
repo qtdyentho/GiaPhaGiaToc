@@ -2,6 +2,10 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppLayout } from './components/layout/AppLayout';
+import { LandingPage } from './pages/LandingPage';
+import { HelpPage } from './pages/HelpPage';
+import { InviteRegisterPage } from './pages/InviteRegisterPage';
+import { DevTestLoginPage } from './pages/DevTestLoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -40,6 +44,8 @@ import IntegrityWatchdogPage from './pages/admin/IntegrityWatchdogPage';
 import FinancialReconciliationPage from './pages/admin/FinancialReconciliationPage';
 import BetaEvidencePage from './pages/admin/BetaEvidencePage';
 import BetaExitAuditPage from './pages/admin/BetaExitAuditPage';
+import AdminPaymentsPage from './pages/admin/AdminPaymentsPage';
+import AdminBillingConfigPage from './pages/admin/AdminBillingConfigPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,13 +61,21 @@ export const App: React.FC = () => {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
-          {/* Public & Auth Routes */}
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/help" element={<HelpPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/invite/:code" element={<InviteRegisterPage />} />
+
+          {/* Dev / Test Mode Routes (Available in Dev / Staging) */}
+          <Route path="/dev/test-login" element={<DevTestLoginPage />} />
+
+          {/* Onboarding */}
           <Route path="/onboarding/create-family" element={<CreateFamilyPage />} />
 
-          {/* Authenticated App Shell Routes */}
+          {/* Authenticated App Shell Routes (/app/...) */}
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<Navigate to="/app/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
@@ -91,10 +105,12 @@ export const App: React.FC = () => {
             <Route path="audit" element={<AuditLogsPage />} />
           </Route>
 
-          {/* Admin Routes */}
+          {/* Admin Routes (/admin/...) */}
           <Route path="/admin" element={<AppLayout />}>
             <Route index element={<Navigate to="/admin/beta" replace />} />
             <Route path="beta" element={<BetaCommandCenterPage />} />
+            <Route path="payments" element={<AdminPaymentsPage />} />
+            <Route path="billing/config" element={<AdminBillingConfigPage />} />
             <Route path="integrity" element={<IntegrityWatchdogPage />} />
             <Route path="reconciliation" element={<FinancialReconciliationPage />} />
             <Route path="beta/evidence" element={<BetaEvidencePage />} />
@@ -105,10 +121,12 @@ export const App: React.FC = () => {
             <Route path="transactions" element={<AdminRevenuePage />} />
           </Route>
 
-          {/* Default Fallback */}
-          <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
+          {/* Default Fallback to Landing Page */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>
   );
 };
+
+export default App;

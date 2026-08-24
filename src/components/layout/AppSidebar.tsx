@@ -72,11 +72,13 @@ const navSections: { title: string; items: NavItem[] }[] = [
     ],
   },
   {
-    title: 'HỆ THỐNG',
+    title: 'HỆ THỐNG & QUẢN TRỊ',
     items: [
       { to: '/app/family/settings', icon: Settings, label: 'Cài Đặt Gia Tộc' },
-      { to: '/admin/beta', icon: ShieldCheck, label: 'Beta Control Center', badge: 'Beta' },
-      { to: '/admin/revenue', icon: ShieldCheck, label: 'Quản Trị Hệ Thống' },
+      { to: '/admin/payments', icon: Landmark, label: 'Duyệt Thanh Toán (Admin)', badge: 'Mới' },
+      { to: '/admin/beta', icon: ShieldCheck, label: 'Trung Tâm Chỉ Huy Beta', badge: 'Beta' },
+      { to: '/admin/revenue', icon: ShieldCheck, label: 'Quản Trị Doanh Thu' },
+      { to: '/admin/billing/config', icon: Settings, label: 'Cấu Hình Tài Khoản Nhận' },
     ],
   },
 ];
