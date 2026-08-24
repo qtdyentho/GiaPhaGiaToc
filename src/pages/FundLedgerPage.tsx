@@ -7,12 +7,14 @@ import {
   Printer,
   Landmark,
   FileSpreadsheet,
+  Info,
 } from 'lucide-react';
 import { FundService } from '../services/FundService';
 import { FinancialTransaction, Fund } from '../types/database';
 import { ReversalModal } from '../components/finance/ReversalModal';
 import { CreateFundModal } from '../components/finance/CreateFundModal';
 import { RecordIncomeModal } from '../components/finance/RecordIncomeModal';
+import { FundDetailModal } from '../components/finance/FundDetailModal';
 
 export const FundLedgerPage: React.FC = () => {
   const [funds, setFunds] = useState<Fund[]>([]);
@@ -28,6 +30,7 @@ export const FundLedgerPage: React.FC = () => {
   const [reversalTarget, setReversalTarget] = useState<FinancialTransaction | null>(null);
   const [isCreateFundOpen, setIsCreateFundOpen] = useState(false);
   const [isRecordIncomeOpen, setIsRecordIncomeOpen] = useState(false);
+  const [selectedFundDetail, setSelectedFundDetail] = useState<Fund | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -142,12 +145,21 @@ export const FundLedgerPage: React.FC = () => {
       {/* Funds Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {funds.map((f) => (
-          <div key={f.id} className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm space-y-2">
+          <div
+            key={f.id}
+            onClick={() => setSelectedFundDetail(f)}
+            className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm space-y-2 hover:border-[#166534] hover:shadow-md cursor-pointer transition-all group"
+          >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">{f.name}</span>
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold border border-emerald-200">
-                ACTIVE
+              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider group-hover:text-[#166534] transition">
+                {f.name}
               </span>
+              <div className="flex items-center gap-1">
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold border border-emerald-200">
+                  ACTIVE
+                </span>
+                <Info className="w-3.5 h-3.5 text-slate-300 group-hover:text-[#166534] transition" />
+              </div>
             </div>
             <p className="text-2xl font-black text-amber-800 font-mono">
               {Number(f.current_balance || 0).toLocaleString()} ₫
@@ -299,6 +311,13 @@ export const FundLedgerPage: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Fund Detail Modal */}
+      <FundDetailModal
+        isOpen={Boolean(selectedFundDetail)}
+        onClose={() => setSelectedFundDetail(null)}
+        fund={selectedFundDetail}
+      />
 
       {/* Modals */}
       <ReversalModal

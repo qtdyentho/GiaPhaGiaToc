@@ -7,11 +7,9 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   Plus,
-  ShieldCheck,
   BookOpen,
   ReceiptText,
   Receipt,
-  HeartHandshake,
   Trophy,
   Landmark,
   ChevronRight,
@@ -21,8 +19,9 @@ import { Fund, FinancialTransaction } from '../types/database';
 import { RecordIncomeModal } from '../components/finance/RecordIncomeModal';
 import { CreateExpenseModal } from '../components/finance/CreateExpenseModal';
 import { CreateFundModal } from '../components/finance/CreateFundModal';
+import { FundDetailModal } from '../components/finance/FundDetailModal';
 import { formatCurrency, formatDate } from '../lib/utils';
-import { Button, Card, Badge, PageHeader, StatCard } from '../components/ui';
+import { Button, Card, Badge, StatCard } from '../components/ui';
 
 export const FinanceDashboardPage: React.FC = () => {
   const [summary, setSummary] = useState<{
@@ -49,6 +48,9 @@ export const FinanceDashboardPage: React.FC = () => {
   const [isRecordIncomeOpen, setIsRecordIncomeOpen] = useState(false);
   const [isCreateExpenseOpen, setIsCreateExpenseOpen] = useState(false);
   const [isCreateFundOpen, setIsCreateFundOpen] = useState(false);
+  const [selectedFundDetail, setSelectedFundDetail] = useState<Fund | null>(null);
+  const [targetIncomeFund, setTargetIncomeFund] = useState<Fund | null>(null);
+  const [targetExpenseFund, setTargetExpenseFund] = useState<Fund | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -71,13 +73,13 @@ export const FinanceDashboardPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in font-sans">
       {/* Page Header */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-card flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-heritage-green via-heritage-gold to-heritage-navy" />
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#166534] via-[#C49A3A] to-[#1E3A5F]" />
         
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-heritage-gold shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-800 shrink-0">
             <Wallet className="w-6 h-6" />
           </div>
           <div>
@@ -99,24 +101,30 @@ export const FinanceDashboardPage: React.FC = () => {
             variant="secondary"
             size="sm"
             onClick={() => setIsCreateFundOpen(true)}
-            icon={<Landmark className="w-4 h-4 text-heritage-gold" />}
+            icon={<Plus className="w-4 h-4" />}
           >
-            Tạo Quỹ Mới
+            Tạo Quỹ
           </Button>
 
           <Button
             variant="primary"
             size="sm"
-            onClick={() => setIsRecordIncomeOpen(true)}
+            onClick={() => {
+              setTargetIncomeFund(null);
+              setIsRecordIncomeOpen(true);
+            }}
             icon={<ArrowDownLeft className="w-4 h-4" />}
           >
-            Ghi Thu Quỹ
+            Thu Tiền
           </Button>
 
           <Button
-            variant="gold"
+            variant="danger"
             size="sm"
-            onClick={() => setIsCreateExpenseOpen(true)}
+            onClick={() => {
+              setTargetExpenseFund(null);
+              setIsCreateExpenseOpen(true);
+            }}
             icon={<ArrowUpRight className="w-4 h-4" />}
           >
             Đề Xuất Chi
@@ -130,7 +138,7 @@ export const FinanceDashboardPage: React.FC = () => {
           title="Tổng Số Dư Khả Dụng"
           value={formatCurrency(summary.totalBalance)}
           subtitle={`${summary.funds.length} Quỹ hoạt động`}
-          icon={<Wallet className="w-5 h-5 text-heritage-green" />}
+          icon={<Wallet className="w-5 h-5 text-[#166534]" />}
           variant="green"
         />
 
@@ -163,10 +171,10 @@ export const FinanceDashboardPage: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Link
           to="/app/finance/ledger"
-          className="p-4 rounded-xl bg-white border border-slate-200 hover:border-heritage-green hover:shadow-card transition flex items-center justify-between group"
+          className="p-4 rounded-xl bg-white border border-slate-200 hover:border-[#166534] hover:shadow-sm transition flex items-center justify-between group"
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-emerald-50 text-heritage-green group-hover:bg-heritage-green group-hover:text-white transition">
+            <div className="p-2 rounded-lg bg-emerald-50 text-[#166534] group-hover:bg-[#166534] group-hover:text-white transition">
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
@@ -174,15 +182,15 @@ export const FinanceDashboardPage: React.FC = () => {
               <div className="text-[11px] text-slate-500">Tra cứu & Bút toán hoàn trả</div>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-heritage-green transition" />
+          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#166534] transition" />
         </Link>
 
         <Link
           to="/app/finance/income"
-          className="p-4 rounded-xl bg-white border border-slate-200 hover:border-heritage-green hover:shadow-card transition flex items-center justify-between group"
+          className="p-4 rounded-xl bg-white border border-slate-200 hover:border-[#166534] hover:shadow-sm transition flex items-center justify-between group"
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-emerald-50 text-heritage-green group-hover:bg-heritage-green group-hover:text-white transition">
+            <div className="p-2 rounded-lg bg-emerald-50 text-[#166534] group-hover:bg-[#166534] group-hover:text-white transition">
               <Receipt className="w-5 h-5" />
             </div>
             <div>
@@ -190,15 +198,15 @@ export const FinanceDashboardPage: React.FC = () => {
               <div className="text-[11px] text-slate-500">Bổ phần định kỳ dòng họ</div>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-heritage-green transition" />
+          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#166534] transition" />
         </Link>
 
         <Link
           to="/app/finance/expenses"
-          className="p-4 rounded-xl bg-white border border-slate-200 hover:border-heritage-green hover:shadow-card transition flex items-center justify-between group"
+          className="p-4 rounded-xl bg-white border border-slate-200 hover:border-[#166534] hover:shadow-sm transition flex items-center justify-between group"
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-emerald-50 text-heritage-green group-hover:bg-heritage-green group-hover:text-white transition">
+            <div className="p-2 rounded-lg bg-emerald-50 text-[#166534] group-hover:bg-[#166534] group-hover:text-white transition">
               <ArrowUpRight className="w-5 h-5" />
             </div>
             <div>
@@ -206,15 +214,15 @@ export const FinanceDashboardPage: React.FC = () => {
               <div className="text-[11px] text-slate-500">Quy trình duyệt chi 2 cấp</div>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-heritage-green transition" />
+          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#166534] transition" />
         </Link>
 
         <Link
           to="/app/finance/honor-roll"
-          className="p-4 rounded-xl bg-white border border-slate-200 hover:border-heritage-green hover:shadow-card transition flex items-center justify-between group"
+          className="p-4 rounded-xl bg-white border border-slate-200 hover:border-[#166534] hover:shadow-sm transition flex items-center justify-between group"
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-50 text-heritage-gold group-hover:bg-heritage-gold group-hover:text-white transition">
+            <div className="p-2 rounded-lg bg-amber-50 text-amber-800 group-hover:bg-amber-800 group-hover:text-white transition">
               <Trophy className="w-5 h-5" />
             </div>
             <div>
@@ -222,37 +230,51 @@ export const FinanceDashboardPage: React.FC = () => {
               <div className="text-[11px] text-slate-500">Vinh danh công đức dòng họ</div>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-heritage-green transition" />
+          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#166534] transition" />
         </Link>
       </div>
 
       {/* Main Content Grid: Funds and Recent Transactions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Funds List */}
+        {/* Left 2 Cols: Funds List with Clickable Interaction */}
         <div className="lg:col-span-2 space-y-4">
-          <Card className="p-0 overflow-hidden">
+          <Card className="p-0 overflow-hidden shadow-sm">
             <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
-                <Landmark className="w-4 h-4 text-heritage-green" />
-                <span>Danh Sách Quỹ Gia Tộc Hoạt Động</span>
-              </h2>
+              <div>
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Landmark className="w-4 h-4 text-[#166534]" />
+                  <span>Danh Sách Quỹ Gia Tộc Hoạt Động</span>
+                </h2>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Nhấn vào từng quỹ để xem chi tiết số dư, quy chế và lịch sử giao dịch
+                </p>
+              </div>
               <Badge variant="neutral">{summary.funds.length} Quỹ</Badge>
             </div>
 
             <div className="divide-y divide-slate-100">
               {summary.funds.map((fund) => (
-                <div key={fund.id} className="p-4 sm:p-5 hover:bg-slate-50/80 transition flex items-center justify-between gap-4">
+                <div
+                  key={fund.id}
+                  onClick={() => setSelectedFundDetail(fund)}
+                  className="p-4 sm:p-5 hover:bg-emerald-50/40 hover:border-emerald-200/60 transition-all flex items-center justify-between gap-4 cursor-pointer group"
+                >
                   <div className="flex items-center gap-3.5">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center font-bold text-heritage-green shrink-0">
+                    <div className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center font-bold text-[#166534] shrink-0 text-base group-hover:bg-[#166534] group-hover:text-white transition-colors shadow-xs">
                       {fund.name.charAt(0)}
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900">{fund.name}</h3>
-                      <p className="text-xs text-slate-500 line-clamp-1">{fund.description || 'Quỹ chuyên dùng của dòng họ'}</p>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#166534] transition-colors">
+                          {fund.name}
+                        </h3>
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-[#166534] group-hover:translate-x-0.5 transition-all" />
+                      </div>
+                      <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">{fund.description || 'Quỹ chuyên dùng của dòng họ'}</p>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="text-sm sm:text-base font-bold text-slate-900">{formatCurrency(fund.current_balance)}</div>
+                    <div className="text-sm sm:text-base font-bold text-slate-900 font-mono">{formatCurrency(fund.current_balance)}</div>
                     <Badge variant={fund.current_balance > 0 ? 'success' : 'neutral'} size="sm">
                       {fund.current_balance > 0 ? 'Có số dư' : 'Số dư 0đ'}
                     </Badge>
@@ -265,13 +287,13 @@ export const FinanceDashboardPage: React.FC = () => {
 
         {/* Right 1 Col: Recent Transactions */}
         <div className="space-y-4">
-          <Card className="p-0 overflow-hidden">
+          <Card className="p-0 overflow-hidden shadow-sm">
             <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-heritage-navy" />
+                <BookOpen className="w-4 h-4 text-[#1E3A5F]" />
                 <span>Bút Toán Gần Đây</span>
               </h2>
-              <Link to="/app/finance/ledger" className="text-xs font-semibold text-heritage-green hover:underline">
+              <Link to="/app/finance/ledger" className="text-xs font-bold text-[#166534] hover:underline">
                 Xem tất cả
               </Link>
             </div>
@@ -284,7 +306,7 @@ export const FinanceDashboardPage: React.FC = () => {
                     <p className="text-[10px] text-slate-400 mt-0.5">{formatDate(tx.transaction_date)} • {tx.transaction_type}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className={`font-bold ${tx.amount >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                    <p className={`font-bold font-mono ${tx.amount >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
                       {tx.amount >= 0 ? '+' : ''}{formatCurrency(tx.amount)}
                     </p>
                     <Badge variant="neutral" size="sm">{tx.status}</Badge>
@@ -296,19 +318,34 @@ export const FinanceDashboardPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Fund Detail Modal */}
+      <FundDetailModal
+        isOpen={Boolean(selectedFundDetail)}
+        onClose={() => setSelectedFundDetail(null)}
+        fund={selectedFundDetail}
+        onRecordIncome={(fund) => {
+          setTargetIncomeFund(fund);
+          setIsRecordIncomeOpen(true);
+        }}
+        onCreateExpense={(fund) => {
+          setTargetExpenseFund(fund);
+          setIsCreateExpenseOpen(true);
+        }}
+      />
+
       {/* Modals */}
       <RecordIncomeModal
         isOpen={isRecordIncomeOpen}
         onClose={() => setIsRecordIncomeOpen(false)}
         onSuccess={loadData}
-        funds={summary.funds}
+        funds={targetIncomeFund ? [targetIncomeFund, ...summary.funds.filter((f) => f.id !== targetIncomeFund.id)] : summary.funds}
       />
 
       <CreateExpenseModal
         isOpen={isCreateExpenseOpen}
         onClose={() => setIsCreateExpenseOpen(false)}
         onSuccess={loadData}
-        funds={summary.funds}
+        funds={targetExpenseFund ? [targetExpenseFund, ...summary.funds.filter((f) => f.id !== targetExpenseFund.id)] : summary.funds}
         categories={categories}
       />
 
@@ -320,3 +357,5 @@ export const FinanceDashboardPage: React.FC = () => {
     </div>
   );
 };
+
+export default FinanceDashboardPage;
