@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "cbi-mcp": {
+      "command": "node",
+      "args": [
+        "D:/Antigravity Projects/cbi-mcp/dist/mcp/server.js"
+      ],
+      "env": {
+        "WORKSPACE_ROOT": "D:/Antigravity Projects/GiaPhaGiaToc"
+      }
+    },
+    "code-review-graph": {
+      "command": "python",
+      "args": [
+        "-m",
+        "code_review_graph",
+        "server"
+      ],
+      "env": {
+        "PYTHONIOENCODING": "utf-8"
+      }
+    }
+  }
+}
