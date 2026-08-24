@@ -18,6 +18,7 @@ export interface CreateFamilyData {
 interface AuthContextType {
   user: Profile | null;
   platformRole: PlatformRole;
+  families: Family[];
   memberships: FamilyMembership[];
   activeFamily: Family | null;
   activeMembership: FamilyMembership | null;
@@ -358,6 +359,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         platformRole,
+        families,
         memberships,
         activeFamily,
         activeMembership,
