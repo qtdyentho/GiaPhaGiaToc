@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { AppSidebar } from './AppSidebar';
 import { AppHeader } from './AppHeader';
+import { EventBroadcastToast } from '../notifications/EventBroadcastToast';
 
 export const AppLayout: React.FC = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -32,6 +33,9 @@ export const AppLayout: React.FC = () => {
           <Outlet />
         </main>
       </div>
+
+      {/* 🔔 Thông Báo Đẩy Sự Kiện Quan Trọng Dòng Họ Kèm Đếm Ngược 5s */}
+      <EventBroadcastToast />
     </div>
   );
 };

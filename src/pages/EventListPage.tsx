@@ -16,13 +16,18 @@ import { EventService } from '../services/calendar/EventService';
 import { Event } from '../types/database';
 import { formatDate } from '../lib/utils';
 import { CreateEventModal } from '../components/calendar/CreateEventModal';
+import { CreateBroadcastModal } from '../components/notifications/CreateBroadcastModal';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { Megaphone } from 'lucide-react';
 
 export const EventListPage: React.FC = () => {
+  const { isFamilyAdmin } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [eventTypeFilter, setEventTypeFilter] = useState<string>('ALL');
   const [search, setSearch] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const loadData = async () => {
@@ -55,13 +60,25 @@ export const EventListPage: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center space-x-1.5 px-3.5 py-2 bg-heritage-green hover:bg-heritage-green-light text-white text-xs font-semibold rounded-xl transition shadow-sm"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Tạo Sự Kiện Mới</span>
-        </button>
+        <div className="flex items-center space-x-2">
+          {isFamilyAdmin && (
+            <button
+              onClick={() => setShowBroadcastModal(true)}
+              className="flex items-center space-x-1.5 px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-amber-950 text-xs font-bold rounded-xl transition shadow-xs border border-amber-400"
+            >
+              <Megaphone className="w-4 h-4" />
+              <span>Phát Thông Báo Đẩy</span>
+            </button>
+          )}
+
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center space-x-1.5 px-3.5 py-2 bg-heritage-green hover:bg-heritage-green-light text-white text-xs font-semibold rounded-xl transition shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tạo Sự Kiện Mới</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter Bar */}
@@ -182,6 +199,11 @@ export const EventListPage: React.FC = () => {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSuccess={loadData}
+      />
+
+      <CreateBroadcastModal
+        isOpen={showBroadcastModal}
+        onClose={() => setShowBroadcastModal(false)}
       />
     </div>
   );

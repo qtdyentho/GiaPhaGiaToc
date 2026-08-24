@@ -2,13 +2,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Bell, Search, Calendar, ChevronDown, User, Shield, Menu, Check, 
   LogOut, Settings, Sparkles, X, ArrowUpRight, DollarSign, Users, Clock,
-  PanelLeftClose, PanelLeftOpen
+  PanelLeftClose, PanelLeftOpen, Megaphone
 } from 'lucide-react';
 import { LunarCalendarService } from '../../services/LunarCalendarService';
 import { useAuth } from '../../contexts/AuthContext';
 import { mockMembers, mockMemorialDates, mockFunds } from '../../services/mockData';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatCurrency } from '../../lib/utils';
+import { CreateBroadcastModal } from '../notifications/CreateBroadcastModal';
 
 interface SearchResultItem {
   id: string;
@@ -36,6 +37,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const [isFamilyMenuOpen, setIsFamilyMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
 
   // Search State
   const [searchQuery, setSearchQuery] = useState('');
@@ -393,6 +395,22 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   ))}
                 </div>
 
+                {isFamilyAdmin && (
+                  <div className="p-2 bg-amber-50/70 border-t border-amber-200">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsNotificationOpen(false);
+                        setIsBroadcastModalOpen(true);
+                      }}
+                      className="w-full py-1.5 bg-amber-500 hover:bg-amber-600 text-amber-950 font-bold text-xs rounded-xl flex items-center justify-center space-x-1.5 transition shadow-2xs"
+                    >
+                      <Megaphone className="w-3.5 h-3.5" />
+                      <span>Phát Thông Báo Đẩy Sự Kiện</span>
+                    </button>
+                  </div>
+                )}
+
                 <div className="p-2 text-center">
                   <Link
                     to="/app/notifications"
@@ -491,6 +509,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           )}
         </div>
       </div>
+
+      {/* Modal Phát Thông Báo Đẩy Sự Kiện */}
+      <CreateBroadcastModal
+        isOpen={isBroadcastModalOpen}
+        onClose={() => setIsBroadcastModalOpen(false)}
+      />
     </header>
   );
 };

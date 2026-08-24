@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   Users, Landmark, Wallet, Calendar, ArrowUpRight, Sparkles, 
   ChevronRight, MapPin, Camera, Image, ShieldCheck, HeartHandshake,
-  BookOpen
+  BookOpen, Megaphone
 } from 'lucide-react';
 import { LunarCalendarService } from '../services/LunarCalendarService';
 import { formatCurrency } from '../lib/utils';
@@ -12,6 +12,7 @@ import { UpcomingEventsWidget } from '../components/calendar/UpcomingEventsWidge
 import { useAuth } from '../contexts/AuthContext';
 import { AncestralBannerModal, ANCESTRAL_PRESETS } from '../components/family/AncestralBannerModal';
 import { ClanCovenantCard } from '../components/family/ClanCovenantCard';
+import { CreateBroadcastModal } from '../components/notifications/CreateBroadcastModal';
 
 export const DashboardPage: React.FC = () => {
   const { activeFamily, isFamilyAdmin } = useAuth();
@@ -26,6 +27,7 @@ export const DashboardPage: React.FC = () => {
   const familyTransactions = mockTransactions.filter((t) => t.family_id === currentFamily.id);
 
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
+  const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
 
   const bannerImageUrl = currentFamily.banner_url || ANCESTRAL_PRESETS[0].url;
 
@@ -55,17 +57,28 @@ export const DashboardPage: React.FC = () => {
             <span className="tracking-wide">Ẩm Hà Tư Nguyên • Mộc Hữu Bản, Thủy Hữu Nguyên</span>
           </div>
 
-          {/* Action Button: Thay Đổi Ảnh Từ Đường (Trưởng tộc / Quản trị viên) */}
+          {/* Action Buttons: Phát Thông Báo & Thay Đổi Ảnh Từ Đường (Trưởng tộc / Quản trị viên) */}
           <div className="flex items-center space-x-2 self-start sm:self-auto">
             {isFamilyAdmin && (
-              <button
-                type="button"
-                onClick={() => setIsBannerModalOpen(true)}
-                className="inline-flex items-center space-x-1.5 bg-black/40 hover:bg-black/60 text-amber-200 hover:text-white text-xs font-semibold px-3.5 py-1.5 rounded-full border border-white/20 backdrop-blur-md transition shadow-xs hover:border-amber-400/50"
-              >
-                <Camera className="w-3.5 h-3.5 text-amber-300" />
-                <span>Đổi Ảnh Từ Đường</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsBroadcastModalOpen(true)}
+                  className="inline-flex items-center space-x-1.5 bg-amber-500/90 hover:bg-amber-500 text-amber-950 text-xs font-bold px-3.5 py-1.5 rounded-full border border-amber-300 backdrop-blur-md transition shadow-xs"
+                >
+                  <Megaphone className="w-3.5 h-3.5" />
+                  <span>Phát Thông Báo Đẩy</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsBannerModalOpen(true)}
+                  className="inline-flex items-center space-x-1.5 bg-black/40 hover:bg-black/60 text-amber-200 hover:text-white text-xs font-semibold px-3.5 py-1.5 rounded-full border border-white/20 backdrop-blur-md transition shadow-xs hover:border-amber-400/50"
+                >
+                  <Camera className="w-3.5 h-3.5 text-amber-300" />
+                  <span>Đổi Ảnh Từ Đường</span>
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -284,6 +297,12 @@ export const DashboardPage: React.FC = () => {
         isOpen={isBannerModalOpen}
         onClose={() => setIsBannerModalOpen(false)}
         family={currentFamily}
+      />
+
+      {/* 📢 Modal Phát Thông Báo Đẩy Sự Kiện */}
+      <CreateBroadcastModal
+        isOpen={isBroadcastModalOpen}
+        onClose={() => setIsBroadcastModalOpen(false)}
       />
     </div>
   );
