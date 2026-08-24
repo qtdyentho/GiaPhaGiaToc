@@ -64,14 +64,11 @@ export const ContributionsPage: React.FC = () => {
             <HeartHandshake className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2.5">
-              <span>Đóng Góp & Tài Trợ Dòng Họ</span>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-100 border border-amber-300 text-amber-900 font-bold">
-                {contributions.length} Khoản Đóng Góp
-              </span>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
+              Đóng Góp & Tài Trợ Dòng Họ
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Quản lý các khoản hảo tâm, công đức và tài trợ tự nguyện của con cháu & doanh nghiệp dòng họ
+              Ghi nhận các khoản hảo tâm, công đức và tài trợ tự nguyện của con cháu dòng họ
             </p>
           </div>
         </div>

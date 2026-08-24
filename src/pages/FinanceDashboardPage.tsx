@@ -90,11 +90,9 @@ export const FinanceDashboardPage: React.FC = () => {
               <h1 className="text-xl sm:text-2xl font-bold text-slate-900 font-sans tracking-tight">
                 Trung Tâm Tài Chính & Sổ Quỹ Gia Tộc
               </h1>
-              <Badge variant="gold">Sổ Quỹ Minh Bạch</Badge>
-              <Badge variant="success">Ghi Sổ Chuẩn Mực</Badge>
             </div>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Ghi chép thu chi minh bạch, lưu truyền lịch sử quỹ dòng họ qua các thế hệ
+              Quản lý các quỹ thu chi, quỹ khuyến học và tu bổ từ đường của dòng họ
             </p>
           </div>
         </div>

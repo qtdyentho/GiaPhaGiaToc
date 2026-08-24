@@ -92,14 +92,11 @@ export const IncomeAssessmentsPage: React.FC = () => {
             <ReceiptText className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2.5">
-              <span>Định Mức Thu Phí Thành Viên</span>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-100 border border-amber-300 text-amber-900 font-bold">
-                Bổ Phần Định Kỳ
-              </span>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
+              Định Mức Thu Phí Thành Viên
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Tách bạch giữa Nghĩa vụ thu (Assessment) và Thực thu (Payment) cho từng suất đinh & hộ gia đình
+              Quản lý các đợt thu bổ phần định kỳ theo suất đinh & hộ gia đình
             </p>
           </div>
         </div>

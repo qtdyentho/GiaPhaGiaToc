@@ -78,14 +78,11 @@ export const ExpensesPage: React.FC = () => {
             <Receipt className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2.5">
-              <span>Quản Lý Khoản Chi & Duyệt Chi</span>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-rose-50 border border-rose-200 text-rose-800 font-bold">
-                Quy Trình 2 Cấp
-              </span>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
+              Quản Lý Khoản Chi & Duyệt Chi
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Duyệt chi nghiêm ngặt bởi Ban Kiểm Soát & Trưởng Tộc (Chỉ xuất quỹ khi đã APPROVED)
+              Phê duyệt và giải ngân các khoản chi tiêu phục vụ công việc dòng họ
             </p>
           </div>
         </div>

@@ -98,14 +98,11 @@ export const FundLedgerPage: React.FC = () => {
             <BookOpen className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2.5">
-              <span>Sổ Quỹ Gia Tộc</span>
-              <span className="text-xs bg-emerald-50 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">
-                Lưu Trữ Vĩnh Viễn
-              </span>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
+              Sổ Quỹ Gia Tộc
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Mọi khoản thu chi đã ghi sổ đều được lưu giữ vĩnh viễn, trường hợp sai sót sẽ thực hiện hoàn tác đối ứng
+              Nhật ký thu chi và lịch sử biến động số dư các quỹ của dòng họ
             </p>
           </div>
         </div>

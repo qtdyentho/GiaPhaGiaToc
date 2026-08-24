@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { X, Download, Printer, FileText, CheckCircle2, ShieldCheck, Image as ImageIcon, Sparkles, Settings2 } from 'lucide-react';
+import { 
+  X, Download, Printer, FileText, CheckCircle2, ShieldCheck, 
+  Image as ImageIcon, Sparkles, Settings2, FileSpreadsheet, Eye
+} from 'lucide-react';
 import { Member, Generation, Branch, MemberRelationship } from '../../types/database';
 
 interface ExportTreeModalProps {
@@ -21,20 +24,253 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
   relationships,
   familyName = 'Đại Tộc Nguyễn Văn',
 }) => {
-  const [exportFormat, setExportFormat] = useState<'IMAGE' | 'PRINT' | 'CSV' | 'JSON'>('IMAGE');
-  const [paperSize, setPaperSize] = useState<'A0' | 'A1' | 'A2' | 'A3' | 'A4'>('A1');
+  const [exportFormat, setExportFormat] = useState<'PDF_PRINT' | 'IMAGE' | 'CSV' | 'JSON'>('PDF_PRINT');
+  const [paperSize, setPaperSize] = useState<'A0' | 'A1' | 'A2' | 'A3' | 'A4'>('A4');
   const [orientation, setOrientation] = useState<'LANDSCAPE' | 'PORTRAIT'>('LANDSCAPE');
   const [resolutionScale, setResolutionScale] = useState<'1' | '2' | '4'>('2');
   const [includeDeceasedInfo, setIncludeDeceasedInfo] = useState(true);
   const [includeBio, setIncludeBio] = useState(true);
   const [includeLunarDates, setIncludeLunarDates] = useState(true);
   const [downloaded, setDownloaded] = useState(false);
-  const [isExportingImage, setIsExportingImage] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   if (!isOpen) return null;
 
+  // Open Direct Print Engine Window
+  const handlePrintDocument = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Trình duyệt đang chặn cửa sổ bật lên. Vui lòng cho phép mở popup để in ấn.');
+      return;
+    }
+
+    const sortedGens = [...generations].sort((a, b) => a.generation_number - b.generation_number);
+
+    // Build Generation Rows HTML
+    const gensHtml = sortedGens
+      .map((gen) => {
+        const genMembers = members.filter((m) => m.generation_id === gen.id);
+        if (genMembers.length === 0) return '';
+
+        const membersCardsHtml = genMembers
+          .map((m) => {
+            const branch = branches.find((b) => b.id === m.branch_id);
+            const isDeceased = m.life_status === 'DECEASED';
+
+            // Spouses
+            const spouseRels = relationships.filter(
+              (r) =>
+                (r.relationship === 'SPOUSE' || r.relationship_type === 'SPOUSE') &&
+                (r.member_id === m.id || r.related_member_id === m.id)
+            );
+            const spouseIds = spouseRels.map((r) => (r.member_id === m.id ? r.related_member_id : r.member_id));
+            const spouses = members.filter((sp) => spouseIds.includes(sp.id));
+
+            return `
+              <div class="member-card ${isDeceased ? 'deceased' : 'alive'}">
+                <div class="member-branch">${branch ? branch.name : 'Chi Trưởng'}</div>
+                <div class="member-name">${m.full_name.replace(/\(.*?\)/g, '').trim()}</div>
+                <div class="member-info">
+                  ${
+                    includeLunarDates && m.death_lunar_day && m.death_lunar_month
+                      ? `<span>🕯️ Giỗ: ${m.death_lunar_day}/${m.death_lunar_month} ÂL</span>`
+                      : m.birth_solar_date
+                      ? `<span>Sinh: ${new Date(m.birth_solar_date).getFullYear()}</span>`
+                      : ''
+                  }
+                  ${isDeceased ? '<span class="status-tag">Đã mất</span>' : '<span class="status-tag live">Còn sống</span>'}
+                </div>
+                ${
+                  spouses.length > 0
+                    ? `<div class="member-spouse">Phối: ${spouses.map((s) => s.full_name.replace(/\(.*?\)/g, '').trim()).join(', ')}</div>`
+                    : ''
+                }
+              </div>
+            `;
+          })
+          .join('');
+
+        return `
+          <div class="gen-section">
+            <div class="gen-title">
+              <span>ĐỜI THỨ ${gen.generation_number}: ${gen.name.toUpperCase()}</span>
+              <span class="gen-count">(${genMembers.length} thành viên)</span>
+            </div>
+            <div class="gen-grid">
+              ${membersCardsHtml}
+            </div>
+          </div>
+        `;
+      })
+      .join('');
+
+    // Full Print HTML Template
+    const fullHtml = `
+      <!DOCTYPE html>
+      <html lang="vi">
+      <head>
+        <meta charset="UTF-8">
+        <title>Phả Đồ Đại Tộc - ${familyName}</title>
+        <style>
+          @page {
+            size: ${paperSize} ${orientation.toLowerCase()};
+            margin: 12mm;
+          }
+          * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          body {
+            font-family: "Times New Roman", "Be Vietnam Pro", serif;
+            color: #0F172A;
+            background: #FFFFFF;
+            margin: 0;
+            padding: 16px;
+          }
+          .border-container {
+            border: 4px double #C49A3A;
+            padding: 24px;
+            min-height: 96vh;
+            position: relative;
+          }
+          .header {
+            text-align: center;
+            border-bottom: 2px solid #166534;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+          }
+          .header h1 {
+            color: #166534;
+            font-size: 26pt;
+            margin: 0 0 6px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+          }
+          .header .subtitle {
+            font-size: 11pt;
+            color: #475569;
+            font-style: italic;
+          }
+          .gen-section {
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+          }
+          .gen-title {
+            background: #166534;
+            color: #FFFFFF;
+            font-weight: bold;
+            font-size: 11pt;
+            padding: 4px 12px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 10px;
+          }
+          .gen-count {
+            font-size: 9pt;
+            color: #FEF3C7;
+            font-weight: normal;
+            margin-left: 8px;
+          }
+          .gen-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+          }
+          .member-card {
+            border: 1.5px solid #94A3B8;
+            border-radius: 8px;
+            padding: 8px 12px;
+            width: 210px;
+            background: #FAFAFA;
+            font-size: 9.5pt;
+          }
+          .member-card.alive {
+            border-color: #166534;
+            background: #F0FDF4;
+          }
+          .member-branch {
+            font-size: 7.5pt;
+            font-weight: bold;
+            color: #166534;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+          }
+          .member-name {
+            font-weight: bold;
+            font-size: 11pt;
+            color: #0F172A;
+            margin-bottom: 4px;
+          }
+          .member-info {
+            font-size: 8pt;
+            color: #64748B;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+          .member-spouse {
+            font-size: 8pt;
+            color: #B45309;
+            margin-top: 4px;
+            border-top: 1px dashed #E2E8F0;
+            padding-top: 2px;
+          }
+          .status-tag {
+            font-size: 7pt;
+            padding: 1px 4px;
+            border-radius: 3px;
+            background: #E2E8F0;
+            color: #475569;
+          }
+          .status-tag.live {
+            background: #DCFCE7;
+            color: #166534;
+          }
+          .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 8.5pt;
+            color: #94A3B8;
+            border-top: 1px solid #E2E8F0;
+            padding-top: 10px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="border-container">
+          <div class="header">
+            <h1>PHẢ ĐỒ ĐẠI TỘC — ${familyName.toUpperCase()}</h1>
+            <div class="subtitle">
+              Lưu truyền truyền thống huyết thống • ${members.length} Thành viên • ${generations.length} Thế hệ • Khổ giấy in: ${paperSize} (${orientation})
+            </div>
+          </div>
+
+          <div class="tree-content">
+            ${gensHtml}
+          </div>
+
+          <div class="footer">
+            Trích xuất từ Nền Tảng Quản Trị Gia Phả Gia Tộc (Heritage Ledger SaaS) — Ngày in: ${new Date().toLocaleDateString('vi-VN')}
+          </div>
+        </div>
+        <script>
+          window.onload = function() {
+            window.print();
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.open();
+    printWindow.document.write(fullHtml);
+    printWindow.document.close();
+  };
+
+  // High-Res Image Export
   const handleExportHighResImage = () => {
-    setIsExportingImage(true);
+    setIsExporting(true);
     try {
       const scale = Number(resolutionScale) || 2;
       const canvas = document.createElement('canvas');
@@ -45,11 +281,11 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
       const ctx = canvas.getContext('2d');
 
       if (ctx) {
-        // Background - Warm Papyrus
+        // Background
         ctx.fillStyle = '#F7F8F5';
         ctx.fillRect(0, 0, width, height);
 
-        // Outer Decorative Heritage Border
+        // Heritage Borders
         ctx.strokeStyle = '#C49A3A';
         ctx.lineWidth = 6 * scale;
         ctx.strokeRect(30 * scale, 30 * scale, width - 60 * scale, height - 60 * scale);
@@ -58,22 +294,21 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
         ctx.lineWidth = 2 * scale;
         ctx.strokeRect(40 * scale, 40 * scale, width - 80 * scale, height - 80 * scale);
 
-        // Header Title
+        // Title
         ctx.fillStyle = '#166534';
-        ctx.font = `bold ${36 * scale}px "Be Vietnam Pro", sans-serif`;
+        ctx.font = `bold ${36 * scale}px "Be Vietnam Pro", serif`;
         ctx.textAlign = 'center';
         ctx.fillText(`PHẢ ĐỒ ĐẠI TỘC — ${familyName.toUpperCase()}`, width / 2, 100 * scale);
 
-        // Subtitle
         ctx.fillStyle = '#1E3A5F';
         ctx.font = `${16 * scale}px "Be Vietnam Pro", sans-serif`;
         ctx.fillText(
-          `Khổ giấy ${paperSize} • ${members.length} Nhân khẩu • ${generations.length} Thế hệ • Xuất ngày ${new Date().toLocaleDateString('vi-VN')}`,
+          `Khổ ${paperSize} (${orientation}) • ${members.length} Thành viên • ${generations.length} Thế hệ • Ngày xuất: ${new Date().toLocaleDateString('vi-VN')}`,
           width / 2,
           135 * scale
         );
 
-        // Render generation levels & nodes
+        // Generation rows
         const sortedGens = [...generations].sort((a, b) => a.generation_number - b.generation_number);
         const yStart = 200 * scale;
         const genSpacing = (height - 300 * scale) / Math.max(sortedGens.length, 1);
@@ -82,11 +317,10 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
           const genMembers = members.filter((m) => m.generation_id === gen.id);
           const y = yStart + gIdx * genSpacing;
 
-          // Generation header line
-          ctx.fillStyle = '#94A3B8';
-          ctx.font = `bold ${12 * scale}px "Be Vietnam Pro", sans-serif`;
+          ctx.fillStyle = '#166534';
+          ctx.font = `bold ${14 * scale}px "Be Vietnam Pro", sans-serif`;
           ctx.textAlign = 'left';
-          ctx.fillText(`THẾ HỆ ${gen.generation_number}: ${gen.name.toUpperCase()}`, 70 * scale, y - 20 * scale);
+          ctx.fillText(`ĐỜI ${gen.generation_number}: ${gen.name.toUpperCase()}`, 70 * scale, y - 20 * scale);
 
           if (genMembers.length > 0) {
             const nodeWidth = 240 * scale;
@@ -106,13 +340,13 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
               ctx.fill();
               ctx.stroke();
 
-              // Member Name
+              // Name
               ctx.fillStyle = '#0F172A';
               ctx.font = `bold ${13 * scale}px "Be Vietnam Pro", sans-serif`;
               ctx.textAlign = 'left';
               ctx.fillText(m.full_name.replace(/\(.*?\)/g, '').trim(), x + 15 * scale, y + 25 * scale);
 
-              // Details
+              // Status
               ctx.fillStyle = '#64748B';
               ctx.font = `${10 * scale}px "Be Vietnam Pro", sans-serif`;
               const genLabel = gIdx === 0 ? 'Thủy Tổ' : `Đời ${gen.generation_number}`;
@@ -142,323 +376,240 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
         }, 'image/png');
       }
     } catch (err) {
-      console.error('Lỗi khi xuất ảnh độ phân giải cao:', err);
+      console.error('Lỗi khi xuất ảnh:', err);
     } finally {
-      setIsExportingImage(false);
+      setIsExporting(false);
     }
   };
 
-  const handleExport = () => {
+  // CSV Export
+  const handleExportCSV = () => {
+    const headers = ['ID', 'Họ Tên', 'Giới Tính', 'Tình Trạng', 'Chi Phái', 'Đời', 'Năm Sinh', 'Ngày Giỗ ÂL', 'Nơi An Táng', 'Tiểu Sử'];
+    const rows = members.map((m) => {
+      const branchName = branches.find((b) => b.id === m.branch_id)?.name || '';
+      const genName = generations.find((g) => g.id === m.generation_id)?.name || '';
+      const deathDate = m.death_lunar_day && m.death_lunar_month ? `${m.death_lunar_day}/${m.death_lunar_month}` : '';
+      return [
+        m.id,
+        `"${m.full_name}"`,
+        m.gender === 'MALE' ? 'Nam' : 'Nữ',
+        m.life_status === 'DECEASED' ? 'Đã mất' : 'Còn sống',
+        `"${branchName}"`,
+        `"${genName}"`,
+        m.birth_solar_date ? new Date(m.birth_solar_date).getFullYear() : '',
+        deathDate,
+        `"${m.burial_place || ''}"`,
+        `"${m.bio || ''}"`,
+      ].join(',');
+    });
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `DanhSachGiaPha_${familyName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setDownloaded(true);
+    setTimeout(() => setDownloaded(false), 3000);
+  };
+
+  const handleExecuteExport = () => {
+    if (exportFormat === 'PDF_PRINT') {
+      handlePrintDocument();
+      return;
+    }
     if (exportFormat === 'IMAGE') {
       handleExportHighResImage();
       return;
     }
-
-    if (exportFormat === 'PRINT') {
-      window.print();
-      onClose();
-      return;
-    }
-
-    if (exportFormat === 'JSON') {
-      const dataToExport = {
-        familyName,
-        exportedAt: new Date().toISOString(),
-        totalMembers: members.length,
-        generations,
-        branches,
-        members: members.map((m) => ({
-          ...m,
-          burial_place: includeDeceasedInfo ? m.burial_place : undefined,
-          bio: includeBio ? m.bio : undefined,
-        })),
-        relationships,
-      };
-
-      const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `GiaPha_${familyName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      setDownloaded(true);
-      setTimeout(() => setDownloaded(false), 3000);
-      return;
-    }
-
     if (exportFormat === 'CSV') {
-      const headers = ['ID', 'Họ Tên', 'Giới Tính', 'Tình Trạng', 'Chi Phái', 'Đời', 'Năm Sinh', 'Ngày Giỗ ÂL', 'Nơi An Táng', 'Tiểu Sử'];
-      const rows = members.map((m) => {
-        const branchName = branches.find((b) => b.id === m.branch_id)?.name || '';
-        const genName = generations.find((g) => g.id === m.generation_id)?.name || '';
-        const deathDate = m.death_lunar_day && m.death_lunar_month ? `${m.death_lunar_day}/${m.death_lunar_month}` : '';
-        return [
-          m.id,
-          `"${m.full_name}"`,
-          m.gender === 'MALE' ? 'Nam' : 'Nữ',
-          m.life_status === 'DECEASED' ? 'Đã mất' : 'Còn sống',
-          `"${branchName}"`,
-          `"${genName}"`,
-          m.birth_solar_date ? m.birth_solar_date.slice(0, 4) : '',
-          deathDate,
-          includeDeceasedInfo ? `"${m.burial_place || ''}"` : '""',
-          includeBio ? `"${(m.bio || '').replace(/"/g, '""')}"` : '""',
-        ].join(',');
-      });
-
-      const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `DanhSachThanhVien_${familyName.replace(/\s+/g, '_')}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-      setDownloaded(true);
-      setTimeout(() => setDownloaded(false), 3000);
+      handleExportCSV();
+      return;
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 font-sans">
-      <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-        {/* Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-amber-50 via-slate-50 to-white border-b border-slate-200 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-fade-in font-sans">
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+        {/* Top Header */}
+        <div className="bg-gradient-to-r from-[#14532D] via-[#166534] to-[#0F3D21] p-6 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-800">
+            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-amber-300 border border-white/20">
               <Printer className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">Xuất Bản & Cấu Hình In Ấn Phả Đồ</h3>
-              <p className="text-xs text-slate-500">{familyName} • {members.length} nhân khẩu • {generations.length} thế hệ</p>
+              <h2 className="text-lg font-bold font-serif">Xuất File & In Ấn Gia Phả</h2>
+              <p className="text-xs text-emerald-100 mt-0.5">
+                Xuất file in PDF khổ lớn (A0 - A4), ảnh siêu nét 4K/8K và file Excel dữ liệu dòng họ
+              </p>
             </div>
           </div>
+
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            className="p-2 rounded-full bg-black/20 hover:bg-black/40 text-white/80 hover:text-white transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Body */}
-        <div className="p-6 space-y-5 max-h-[80vh] overflow-y-auto">
-          {/* Format Selector Tabs */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-              Định dạng xuất dữ liệu
-            </label>
-            <div className="grid grid-cols-4 gap-2">
+        {/* Modal Body */}
+        <div className="p-6 space-y-6 overflow-y-auto text-slate-800 text-xs">
+          {/* Format Selection */}
+          <div className="space-y-2">
+            <label className="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Định Dạng Xuất Bản:</label>
+            <div className="grid grid-cols-3 gap-3">
               <button
                 type="button"
-                onClick={() => setExportFormat('IMAGE')}
-                className={`p-3 rounded-2xl border flex flex-col items-center gap-1.5 transition-all ${
-                  exportFormat === 'IMAGE'
-                    ? 'bg-emerald-50 border-heritage-green text-heritage-green font-bold shadow-sm ring-1 ring-heritage-green'
-                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                onClick={() => setExportFormat('PDF_PRINT')}
+                className={`p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between space-y-2 cursor-pointer ${
+                  exportFormat === 'PDF_PRINT'
+                    ? 'border-[#166534] bg-emerald-50 text-emerald-950 shadow-xs'
+                    : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
                 }`}
               >
-                <ImageIcon className="w-4 h-4" />
-                <span className="text-[11px]">Ảnh Siêu Nét</span>
+                <Printer className={`w-5 h-5 ${exportFormat === 'PDF_PRINT' ? 'text-[#166534]' : 'text-slate-500'}`} />
+                <div>
+                  <div className="font-bold text-xs">In Ấn / Xuất PDF</div>
+                  <div className="text-[10px] text-slate-500">Chuẩn in ấn A0 - A4</div>
+                </div>
               </button>
 
               <button
                 type="button"
-                onClick={() => setExportFormat('PRINT')}
-                className={`p-3 rounded-2xl border flex flex-col items-center gap-1.5 transition-all ${
-                  exportFormat === 'PRINT'
-                    ? 'bg-emerald-50 border-heritage-green text-heritage-green font-bold shadow-sm ring-1 ring-heritage-green'
-                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                onClick={() => setExportFormat('IMAGE')}
+                className={`p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between space-y-2 cursor-pointer ${
+                  exportFormat === 'IMAGE'
+                    ? 'border-[#166534] bg-emerald-50 text-emerald-950 shadow-xs'
+                    : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
                 }`}
               >
-                <Printer className="w-4 h-4" />
-                <span className="text-[11px]">In Phả Đồ</span>
+                <ImageIcon className={`w-5 h-5 ${exportFormat === 'IMAGE' ? 'text-[#166534]' : 'text-slate-500'}`} />
+                <div>
+                  <div className="font-bold text-xs">Ảnh Siêu Nét PNG</div>
+                  <div className="text-[10px] text-slate-500">Độ phân giải cao 4K/8K</div>
+                </div>
               </button>
 
               <button
                 type="button"
                 onClick={() => setExportFormat('CSV')}
-                className={`p-3 rounded-2xl border flex flex-col items-center gap-1.5 transition-all ${
+                className={`p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between space-y-2 cursor-pointer ${
                   exportFormat === 'CSV'
-                    ? 'bg-emerald-50 border-heritage-green text-heritage-green font-bold shadow-sm ring-1 ring-heritage-green'
-                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                    ? 'border-[#166534] bg-emerald-50 text-emerald-950 shadow-xs'
+                    : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
                 }`}
               >
-                <FileText className="w-4 h-4" />
-                <span className="text-[11px]">Excel / CSV</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setExportFormat('JSON')}
-                className={`p-3 rounded-2xl border flex flex-col items-center gap-1.5 transition-all ${
-                  exportFormat === 'JSON'
-                    ? 'bg-emerald-50 border-heritage-green text-heritage-green font-bold shadow-sm ring-1 ring-heritage-green'
-                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                <Download className="w-4 h-4" />
-                <span className="text-[11px]">Sao Lưu JSON</span>
+                <FileSpreadsheet className={`w-5 h-5 ${exportFormat === 'CSV' ? 'text-[#166534]' : 'text-slate-500'}`} />
+                <div>
+                  <div className="font-bold text-xs">File Excel (CSV)</div>
+                  <div className="text-[10px] text-slate-500">Bảng dữ liệu thành viên</div>
+                </div>
               </button>
             </div>
           </div>
 
-          {/* Print & High-Res Image Configuration */}
-          {(exportFormat === 'IMAGE' || exportFormat === 'PRINT') && (
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 text-xs">
-              <h4 className="font-bold text-slate-900 flex items-center gap-1.5">
-                <Settings2 className="w-4 h-4 text-heritage-green" /> Cấu hình bản in & độ phân giải xuất bản
-              </h4>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Khổ Giấy In Ấn</label>
-                  <select
-                    value={paperSize}
-                    onChange={(e) => setPaperSize(e.target.value as any)}
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 font-bold focus:outline-none focus:border-heritage-green"
-                  >
-                    <option value="A0">Khổ Lớn A0 (841 x 1189 mm - Treo Từ Đường)</option>
-                    <option value="A1">Khổ Lớn A1 (594 x 841 mm - Chuẩn Phổ Biến)</option>
-                    <option value="A2">Khổ Vừa A2 (420 x 594 mm)</option>
-                    <option value="A3">Khổ A3 (297 x 420 mm - Đóng Sách Lớn)</option>
-                    <option value="A4">Khổ A4 (210 x 297 mm - Tài Liệu Họ)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Hướng Giấy</label>
-                  <select
-                    value={orientation}
-                    onChange={(e) => setOrientation(e.target.value as any)}
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 font-bold focus:outline-none focus:border-heritage-green"
-                  >
-                    <option value="LANDSCAPE">Khổ Ngang (Landscape - Đẹp nhất)</option>
-                    <option value="PORTRAIT">Khổ Dọc (Portrait)</option>
-                  </select>
-                </div>
+          {/* Paper Size & Layout Options (Only for PDF / Print / Image) */}
+          {(exportFormat === 'PDF_PRINT' || exportFormat === 'IMAGE') && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#F7F8F5] p-4 rounded-2xl border border-slate-200/80">
+              <div className="space-y-1.5">
+                <label className="font-bold text-slate-700 text-xs">Khổ Giấy In Ấn:</label>
+                <select
+                  value={paperSize}
+                  onChange={(e: any) => setPaperSize(e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#166534]"
+                >
+                  <option value="A4">Khổ A4 (210 x 297 mm - Xem nhanh)</option>
+                  <option value="A3">Khổ A3 (297 x 420 mm - Chuẩn in phòng họp)</option>
+                  <option value="A2">Khổ A2 (420 x 594 mm - Khổ vừa)</option>
+                  <option value="A1">Khổ A1 (594 x 841 mm - Nhà thờ họ)</option>
+                  <option value="A0">Khổ A0 (841 x 1189 mm - Đại lễ khánh thành)</option>
+                </select>
               </div>
 
-              {exportFormat === 'IMAGE' && (
-                <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Độ Phân Giải Xuất Ảnh</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setResolutionScale('1')}
-                      className={`py-1.5 px-2 rounded-xl border text-center font-bold transition ${
-                        resolutionScale === '1'
-                          ? 'bg-white border-heritage-green text-heritage-green shadow-sm'
-                          : 'bg-white/60 border-slate-200 text-slate-600'
-                      }`}
-                    >
-                      Full HD (1x)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setResolutionScale('2')}
-                      className={`py-1.5 px-2 rounded-xl border text-center font-bold transition ${
-                        resolutionScale === '2'
-                          ? 'bg-white border-heritage-green text-heritage-green shadow-sm'
-                          : 'bg-white/60 border-slate-200 text-slate-600'
-                      }`}
-                    >
-                      4K Ultra (2x)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setResolutionScale('4')}
-                      className={`py-1.5 px-2 rounded-xl border text-center font-bold transition ${
-                        resolutionScale === '4'
-                          ? 'bg-white border-heritage-green text-heritage-green shadow-sm'
-                          : 'bg-white/60 border-slate-200 text-slate-600'
-                      }`}
-                    >
-                      8K Master (4x)
-                    </button>
-                  </div>
-                </div>
-              )}
+              <div className="space-y-1.5">
+                <label className="font-bold text-slate-700 text-xs">Hướng Trang Giấy:</label>
+                <select
+                  value={orientation}
+                  onChange={(e: any) => setOrientation(e.target.value)}
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#166534]"
+                >
+                  <option value="LANDSCAPE">Nằm ngang (Landscape - Khuyên dùng)</option>
+                  <option value="PORTRAIT">Nằm dọc (Portrait)</option>
+                </select>
+              </div>
             </div>
           )}
 
-          {/* Options */}
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs">
-            <h4 className="font-bold text-slate-900">Tùy chọn trường thông tin kèm theo:</h4>
-            
-            <label className="flex items-center gap-2.5 text-slate-700 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={includeLunarDates}
-                onChange={(e) => setIncludeLunarDates(e.target.checked)}
-                className="w-4 h-4 rounded text-heritage-green focus:ring-heritage-green"
-              />
-              <span>Bao gồm ngày giỗ âm lịch & can chi năm</span>
-            </label>
+          {/* Content Checklist */}
+          <div className="space-y-2.5">
+            <label className="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Thông Tin Hiển Thị:</label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+              <label className="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
+                <input
+                  type="checkbox"
+                  checked={includeLunarDates}
+                  onChange={(e) => setIncludeLunarDates(e.target.checked)}
+                  className="rounded text-[#166534] focus:ring-[#166534]"
+                />
+                <span className="font-medium text-slate-700">Ngày giỗ Âm Lịch</span>
+              </label>
 
-            <label className="flex items-center gap-2.5 text-slate-700 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={includeDeceasedInfo}
-                onChange={(e) => setIncludeDeceasedInfo(e.target.checked)}
-                className="w-4 h-4 rounded text-heritage-green focus:ring-heritage-green"
-              />
-              <span>Bao gồm nơi an táng & mộ phần</span>
-            </label>
+              <label className="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
+                <input
+                  type="checkbox"
+                  checked={includeDeceasedInfo}
+                  onChange={(e) => setIncludeDeceasedInfo(e.target.checked)}
+                  className="rounded text-[#166534] focus:ring-[#166534]"
+                />
+                <span className="font-medium text-slate-700">Trạng thái sinh tử</span>
+              </label>
 
-            <label className="flex items-center gap-2.5 text-slate-700 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={includeBio}
-                onChange={(e) => setIncludeBio(e.target.checked)}
-                className="w-4 h-4 rounded text-heritage-green focus:ring-heritage-green"
-              />
-              <span>Bao gồm tiểu sử, chức tước & công trạng</span>
-            </label>
+              <label className="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
+                <input
+                  type="checkbox"
+                  checked={includeBio}
+                  onChange={(e) => setIncludeBio(e.target.checked)}
+                  className="rounded text-[#166534] focus:ring-[#166534]"
+                />
+                <span className="font-medium text-slate-700">Thông tin phối ngẫu</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Modal Footer Actions */}
+        <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3 shrink-0">
+          <div className="text-slate-500 text-xs font-medium">
+            Tổng cộng: <strong className="text-slate-900">{members.length}</strong> thành viên • <strong className="text-slate-900">{generations.length}</strong> thế hệ
           </div>
 
-          <div className="flex items-center gap-2 text-[11px] text-slate-500">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Dữ liệu xuất ra đảm bảo an toàn, bảo toàn tính chuẩn xác và phân quyền gia tộc.</span>
-          </div>
-
-          {/* Actions */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
+              className="px-4 py-2.5 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer"
             >
-              Đóng
+              Hủy
             </button>
+
             <button
               type="button"
-              onClick={handleExport}
-              disabled={isExportingImage}
-              className="px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center gap-2 shadow-sm transition-all disabled:opacity-50"
+              onClick={handleExecuteExport}
+              disabled={isExporting}
+              className="px-6 py-2.5 bg-[#166534] hover:bg-[#14532D] text-white font-bold rounded-xl text-xs transition flex items-center gap-2 shadow-md cursor-pointer disabled:opacity-50"
             >
-              {downloaded ? (
-                <>
-                  <CheckCircle2 className="w-4 h-4 text-white" />
-                  <span>Đã Xuất Thành Công!</span>
-                </>
-              ) : isExportingImage ? (
-                <span>Đang kết xuất ảnh Ultra HD...</span>
-              ) : exportFormat === 'IMAGE' ? (
-                <>
-                  <ImageIcon className="w-4 h-4" />
-                  <span>Tải Xuống Ảnh Độ Phân Giải Cao</span>
-                </>
-              ) : exportFormat === 'PRINT' ? (
+              {exportFormat === 'PDF_PRINT' ? (
                 <>
                   <Printer className="w-4 h-4" />
-                  <span>Mở Giao Diện In Phả Đồ</span>
+                  <span>Mở Cửa Sổ In Ấn / Lưu PDF</span>
                 </>
               ) : (
                 <>
                   <Download className="w-4 h-4" />
-                  <span>Tải Xuống Tệp Dữ Liệu</span>
+                  <span>{isExporting ? 'Đang xuất bản...' : 'Tải File Xuống'}</span>
                 </>
               )}
             </button>
@@ -468,3 +619,5 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
     </div>
   );
 };
+
+export default ExportTreeModal;
