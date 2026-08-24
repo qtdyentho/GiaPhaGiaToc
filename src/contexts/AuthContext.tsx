@@ -1,12 +1,18 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Profile, Family, FamilyMembership, MembershipRole } from '../types/database';
-import { mockProfile, mockFamily, mockMemberships } from '../services/mockData';
+import { Profile, Family, FamilyMembership, MembershipRole, Fund } from '../types/database';
+import { mockProfile, mockFamily, mockMemberships, mockFunds, mockGenerations, mockMembers } from '../services/mockData';
 
 export type PlatformRole = 'SUPER_ADMIN' | 'USER';
 
-export interface UserFamilyContext {
-  family: Family;
-  membership: FamilyMembership;
+export interface CreateFamilyData {
+  name: string;
+  code: string;
+  originProvince: string;
+  originDistrict?: string;
+  originCommune?: string;
+  ancestralHallAddress?: string;
+  founderName?: string;
+  description?: string;
 }
 
 interface AuthContextType {
@@ -20,14 +26,15 @@ interface AuthContextType {
   isSuperAdmin: boolean;
   isFamilyAdmin: boolean;
   switchFamily: (familyId: string) => void;
-  signIn: (email: string, password?: string) => Promise<void>;
+  signIn: (email: string, password?: string) => Promise<{ success: boolean; activeFamily: Family | null; isSuperAdmin: boolean }>;
+  signUp: (fullName: string, email: string, phone?: string, password?: string) => Promise<Profile>;
+  createFamily: (data: CreateFamilyData) => Promise<Family>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Available demo families for multi-family testing
-const AVAILABLE_FAMILIES: Family[] = [
+const INITIAL_FAMILIES: Family[] = [
   mockFamily,
   {
     id: 'fam-0000-0002',
@@ -46,32 +53,89 @@ const AVAILABLE_FAMILIES: Family[] = [
 ];
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<Profile | null>(mockProfile);
-  const [platformRole, setPlatformRole] = useState<PlatformRole>('USER');
-  const [memberships, setMemberships] = useState<FamilyMembership[]>(mockMemberships);
-  const [activeFamily, setActiveFamily] = useState<Family | null>(mockFamily);
-  const [activeMembership, setActiveMembership] = useState<FamilyMembership | null>(mockMemberships[0] || null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  // Initialize and check saved family in session
-  useEffect(() => {
-    const savedFamilyId = sessionStorage.getItem('active_family_id');
-    if (savedFamilyId) {
-      const found = AVAILABLE_FAMILIES.find((f) => f.id === savedFamilyId);
-      if (found) {
-        setActiveFamily(found);
+  const [user, setUser] = useState<Profile | null>(() => {
+    const saved = localStorage.getItem('hl_auth_user');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // ignore
       }
     }
-  }, []);
+    return mockProfile;
+  });
+
+  const [families, setFamilies] = useState<Family[]>(() => {
+    const saved = localStorage.getItem('hl_families');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // ignore
+      }
+    }
+    return INITIAL_FAMILIES;
+  });
+
+  const [memberships, setMemberships] = useState<FamilyMembership[]>(() => {
+    const saved = localStorage.getItem('hl_memberships');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // ignore
+      }
+    }
+    return mockMemberships;
+  });
+
+  const [platformRole, setPlatformRole] = useState<PlatformRole>(() => {
+    return localStorage.getItem('hl_platform_role') === 'SUPER_ADMIN' ? 'SUPER_ADMIN' : 'USER';
+  });
+
+  const [activeFamily, setActiveFamily] = useState<Family | null>(() => {
+    const savedFamilyId = sessionStorage.getItem('active_family_id') || localStorage.getItem('hl_active_family_id');
+    if (savedFamilyId) {
+      const savedFamilies = localStorage.getItem('hl_families');
+      const allFamilies: Family[] = savedFamilies ? JSON.parse(savedFamilies) : INITIAL_FAMILIES;
+      const found = allFamilies.find((f) => f.id === savedFamilyId);
+      if (found) return found;
+    }
+    return mockFamily;
+  });
+
+  const [activeMembership, setActiveMembership] = useState<FamilyMembership | null>(() => {
+    return memberships[0] || null;
+  });
+
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // Sync state changes to localStorage
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('hl_auth_user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('hl_auth_user');
+    }
+  }, [user]);
+
+  useEffect(() => {
+    localStorage.setItem('hl_families', JSON.stringify(families));
+  }, [families]);
+
+  useEffect(() => {
+    localStorage.setItem('hl_memberships', JSON.stringify(memberships));
+  }, [memberships]);
 
   const switchFamily = (familyId: string) => {
-    const target = AVAILABLE_FAMILIES.find((f) => f.id === familyId);
+    const target = families.find((f) => f.id === familyId);
     if (target) {
       setActiveFamily(target);
       sessionStorage.setItem('active_family_id', target.id);
-      // Resolve membership in target family
-      const mem = memberships.find((m) => m.family_id === familyId) || {
-        id: `mem-${familyId}`,
+      localStorage.setItem('hl_active_family_id', target.id);
+      
+      const mem = memberships.find((m) => m.family_id === familyId && m.user_id === user?.id) || {
+        id: `mem-${familyId}-${user?.id || 'usr'}`,
         family_id: familyId,
         user_id: user?.id || 'usr-0000-0001',
         role: 'OWNER' as MembershipRole,
@@ -84,16 +148,188 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const signUp = async (fullName: string, email: string, phone?: string, _password?: string): Promise<Profile> => {
+    setIsLoading(true);
+    const newProfile: Profile = {
+      id: `usr-${Date.now()}`,
+      email,
+      full_name: fullName,
+      phone,
+      avatar_url: '',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    setUser(newProfile);
+    setPlatformRole('USER');
+    // Newly registered user has no active family initially
+    setActiveFamily(null);
+    setActiveMembership(null);
+    sessionStorage.removeItem('active_family_id');
+    localStorage.removeItem('hl_active_family_id');
+    setIsLoading(false);
+    return newProfile;
+  };
+
+  const createFamily = async (data: CreateFamilyData): Promise<Family> => {
+    setIsLoading(true);
+    const newFamilyId = `fam-${Date.now()}`;
+    const newFam: Family = {
+      id: newFamilyId,
+      name: data.name,
+      code: data.code,
+      slug: data.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+      description: data.description || `Dòng họ ${data.name} tại ${data.originProvince}`,
+      origin_province: data.originProvince,
+      origin_district: data.originDistrict,
+      origin_commune: data.originCommune,
+      ancestral_hall_address: data.ancestralHallAddress,
+      created_by: user?.id || 'usr-0000-0001',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // Create OWNER membership
+    const newMem: FamilyMembership = {
+      id: `mem-${newFamilyId}`,
+      family_id: newFamilyId,
+      user_id: user?.id || 'usr-0000-0001',
+      role: 'OWNER',
+      status: 'ACTIVE',
+      joined_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // Seed default initial funds for this new family (Clean 0 balance)
+    const initialFunds: Fund[] = [
+      {
+        id: `fund-${newFamilyId}-1`,
+        family_id: newFamilyId,
+        name: 'Quỹ Hoạt Động Thường Niên',
+        description: 'Chi phí hương khói, giỗ chạp, hội họp dòng họ',
+        opening_balance: 0,
+        current_balance: 0,
+        status: 'ACTIVE',
+        created_at: new Date().toISOString(),
+      },
+      {
+        id: `fund-${newFamilyId}-2`,
+        family_id: newFamilyId,
+        name: 'Quỹ Khuyến Học & Khuyến Tài',
+        description: 'Khen thưởng con cháu đỗ đạt và thành tích xuất sắc',
+        opening_balance: 0,
+        current_balance: 0,
+        status: 'ACTIVE',
+        created_at: new Date().toISOString(),
+      },
+      {
+        id: `fund-${newFamilyId}-3`,
+        family_id: newFamilyId,
+        name: 'Quỹ Tu Bổ & Xây Dựng Từ Đường',
+        description: 'Bảo tồn, trùng tu và mở rộng nhà thờ họ',
+        opening_balance: 0,
+        current_balance: 0,
+        status: 'ACTIVE',
+        created_at: new Date().toISOString(),
+      },
+    ];
+    mockFunds.push(...initialFunds);
+
+    // If founder name is given, seed Generation 1 and Founder member for this family
+    if (data.founderName) {
+      const genId = `gen-${newFamilyId}-1`;
+      mockGenerations.push({
+        id: genId,
+        family_id: newFamilyId,
+        generation_number: 1,
+        name: 'Đời thứ nhất (Thủy Tổ)',
+        created_at: new Date().toISOString(),
+      });
+
+      mockMembers.push({
+        id: `mb-${newFamilyId}-1`,
+        family_id: newFamilyId,
+        generation_id: genId,
+        first_name: data.founderName.split(' ').pop() || '',
+        last_name: data.founderName.split(' ').slice(0, -1).join(' ') || '',
+        full_name: data.founderName,
+        gender: 'MALE',
+        life_status: 'DECEASED',
+        bio: `Cụ Thủy Tổ khởi lập dòng họ ${data.name}.`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    }
+
+    const updatedFamilies = [...families, newFam];
+    const updatedMemberships = [...memberships, newMem];
+
+    setFamilies(updatedFamilies);
+    setMemberships(updatedMemberships);
+    setActiveFamily(newFam);
+    setActiveMembership(newMem);
+
+    sessionStorage.setItem('active_family_id', newFam.id);
+    localStorage.setItem('hl_active_family_id', newFam.id);
+    setIsLoading(false);
+    return newFam;
+  };
+
   const signIn = async (email: string, _password?: string) => {
     setIsLoading(true);
-    // If email is superadmin, grant platform role
-    if (email.toLowerCase().includes('admin') || email.toLowerCase().includes('super')) {
+    const isSuper = email.toLowerCase().includes('admin') || email.toLowerCase().includes('super');
+    
+    if (isSuper) {
       setPlatformRole('SUPER_ADMIN');
+      localStorage.setItem('hl_platform_role', 'SUPER_ADMIN');
     } else {
       setPlatformRole('USER');
+      localStorage.setItem('hl_platform_role', 'USER');
     }
-    setUser({ ...mockProfile, email });
+
+    // Check if user is Nguyen Van demo account
+    if (email === 'truongtoc.nguyen@giapha.vn' || email === 'demo@giapha.vn') {
+      setUser(mockProfile);
+      setActiveFamily(mockFamily);
+      setActiveMembership(mockMemberships[0]);
+      sessionStorage.setItem('active_family_id', mockFamily.id);
+      localStorage.setItem('hl_active_family_id', mockFamily.id);
+      setIsLoading(false);
+      return { success: true, activeFamily: mockFamily, isSuperAdmin: isSuper };
+    }
+
+    // Check if user already exists in saved users
+    const existingUser: Profile = {
+      id: `usr-${email.replace(/[^a-zA-Z0-9]/g, '')}`,
+      email,
+      full_name: email.split('@')[0].toUpperCase(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    setUser(existingUser);
+
+    // Resolve user's family membership
+    const userMem = memberships.find((m) => m.user_id === existingUser.id);
+    if (userMem) {
+      const fam = families.find((f) => f.id === userMem.family_id) || null;
+      setActiveFamily(fam);
+      setActiveMembership(userMem);
+      if (fam) {
+        sessionStorage.setItem('active_family_id', fam.id);
+        localStorage.setItem('hl_active_family_id', fam.id);
+      }
+      setIsLoading(false);
+      return { success: true, activeFamily: fam, isSuperAdmin: isSuper };
+    }
+
+    // User has no family yet
+    setActiveFamily(null);
+    setActiveMembership(null);
+    sessionStorage.removeItem('active_family_id');
+    localStorage.removeItem('hl_active_family_id');
     setIsLoading(false);
+    return { success: true, activeFamily: null, isSuperAdmin: isSuper };
   };
 
   const signOut = async () => {
@@ -102,6 +338,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setActiveMembership(null);
     setPlatformRole('USER');
     sessionStorage.removeItem('active_family_id');
+    localStorage.removeItem('hl_auth_user');
+    localStorage.removeItem('hl_active_family_id');
+    localStorage.removeItem('hl_platform_role');
   };
 
   const isSuperAdmin = platformRole === 'SUPER_ADMIN';
@@ -128,6 +367,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isFamilyAdmin,
         switchFamily,
         signIn,
+        signUp,
+        createFamily,
         signOut,
       }}
     >

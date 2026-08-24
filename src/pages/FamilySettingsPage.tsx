@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 import { Shield, MapPin, Building, Copy, Plus, UserCheck, Key, CheckCircle2 } from 'lucide-react';
 import { mockFamily, mockMemberships } from '../services/mockData';
 import { ROLE_LABELS } from '../lib/constants';
+import { useAuth } from '../contexts/AuthContext';
 
 export const FamilySettingsPage: React.FC = () => {
+  const { activeFamily } = useAuth();
+  const currentFamily = activeFamily || mockFamily;
   const [copied, setCopied] = useState(false);
   const [inviteRole, setInviteRole] = useState('MEMBER');
   const [generatedToken, setGeneratedToken] = useState('GP-INVITE-2026-HN01');
@@ -19,8 +22,8 @@ export const FamilySettingsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Cài Đặt & Cấu Hình Không Gian Gia Tộc</h1>
-          <p className="text-xs text-slate-500">Quản lý hồ sơ dòng tộc, phân quyền thành viên và mã mời tham gia</p>
+          <h1 className="text-xl font-bold text-slate-900">Cài Đặt & Quản Trị Gia Tộc</h1>
+          <p className="text-xs text-slate-500">Cấu hình thông tin dòng họ, địa chỉ từ đường và phân quyền thành viên</p>
         </div>
       </div>
 
@@ -40,7 +43,7 @@ export const FamilySettingsPage: React.FC = () => {
                 <label className="block text-xs font-bold text-slate-700 uppercase">Tên Gia Tộc</label>
                 <input
                   type="text"
-                  defaultValue={mockFamily.name}
+                  defaultValue={currentFamily.name}
                   className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-heritage-green"
                 />
               </div>
@@ -50,7 +53,7 @@ export const FamilySettingsPage: React.FC = () => {
                 <input
                   type="text"
                   disabled
-                  defaultValue={mockFamily.code}
+                  defaultValue={currentFamily.code}
                   className="mt-1 block w-full px-3 py-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg text-slate-500"
                 />
               </div>
@@ -60,7 +63,7 @@ export const FamilySettingsPage: React.FC = () => {
               <label className="block text-xs font-bold text-slate-700 uppercase">Địa Chỉ Nhà Thờ Tổ (Từ Đường)</label>
               <input
                 type="text"
-                defaultValue={mockFamily.ancestral_hall_address}
+                defaultValue={currentFamily.ancestral_hall_address || 'Chưa cập nhật'}
                 className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-heritage-green"
               />
             </div>
@@ -69,7 +72,7 @@ export const FamilySettingsPage: React.FC = () => {
               <label className="block text-xs font-bold text-slate-700 uppercase">Mô Tả & Lịch Sử Tóm Tắt</label>
               <textarea
                 rows={3}
-                defaultValue={mockFamily.description}
+                defaultValue={currentFamily.description}
                 className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-heritage-green"
               ></textarea>
             </div>

@@ -165,6 +165,9 @@ export class FundService {
       const { data, error } = await query;
       if (!error && data && data.length > 0) return data as Fund[];
     }
+    if (familyId) {
+      return mockFunds.filter((f) => f.family_id === familyId);
+    }
     return mockFunds;
   }
 
@@ -226,6 +229,9 @@ export class FundService {
       if (familyId) query = query.eq('family_id', familyId);
       const { data, error } = await query;
       if (!error && data && data.length > 0) return data as IncomeAssessment[];
+    }
+    if (familyId) {
+      return mockAssessments.filter((a) => a.family_id === familyId);
     }
     return mockAssessments;
   }
@@ -377,6 +383,9 @@ export class FundService {
       const { data, error } = await query;
       if (!error && data && data.length > 0) return data as ExpenseRecord[];
     }
+    if (familyId) {
+      return mockExpenses.filter((e) => e.family_id === familyId);
+    }
     return mockExpenses;
   }
 
@@ -395,7 +404,7 @@ export class FundService {
     }
 
     const payload = {
-      family_id: params.familyId,
+      family_id: params.familyId || 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
       fund_id: params.fundId,
       category_id: params.categoryId,
       title: params.title,
@@ -448,7 +457,7 @@ export class FundService {
 
     const fund = mockFunds.find((f) => f.id === expense.fund_id);
     if (fund && fund.current_balance < expense.amount) {
-      return { success: false, error: 'Số dư quỹ không đủ để duyệt chi' };
+      return { success: false, error: 'Số dư quỹ không đủ để giải ngân' };
     }
 
     // Deduct Fund
@@ -462,19 +471,19 @@ export class FundService {
     expense.approved_at = new Date().toISOString();
     expense.updated_at = new Date().toISOString();
 
-    const txCode = `CHI-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`;
     const txId = `tx-${Date.now()}`;
     const newTx: FinancialTransaction = {
       id: txId,
       family_id: familyId,
       fund_id: expense.fund_id,
-      transaction_code: txCode,
+      transaction_code: `TX-EXP-${Date.now().toString().slice(-6)}`,
       transaction_type: 'EXPENSE',
       expense_id: expense.id,
       amount: expense.amount,
       payment_method: expense.payment_method,
       transaction_date: expense.expense_date,
-      description: expense.description || expense.title,
+      description: `Chi: ${expense.title} (${expense.recipient_name})`,
+      receipt_url: expense.receipt_url,
       status: 'POSTED',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -498,6 +507,7 @@ export class FundService {
     }
 
     let result = [...mockTransactions];
+    if (familyId) result = result.filter((t) => t.family_id === familyId);
     if (filters?.fundId) result = result.filter((t) => t.fund_id === filters.fundId);
     if (filters?.type) result = result.filter((t) => t.transaction_type === filters.type);
     return result;
@@ -584,6 +594,9 @@ export class FundService {
       if (familyId) query = query.eq('family_id', familyId);
       const { data, error } = await query;
       if (!error && data && data.length > 0) return data as Contribution[];
+    }
+    if (familyId) {
+      return mockContributions.filter((c) => c.family_id === familyId);
     }
     return mockContributions;
   }

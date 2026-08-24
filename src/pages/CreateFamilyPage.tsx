@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Sparkles, MapPin, Building, User, ArrowRight, CheckCircle2 } from 'lucide-react';
-import { BRAND } from '../lib/constants';
+import { Shield, MapPin, User, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export const CreateFamilyPage: React.FC = () => {
   const [name, setName] = useState('');
@@ -12,60 +12,90 @@ export const CreateFamilyPage: React.FC = () => {
   const [ancestralHallAddress, setAncestralHallAddress] = useState('');
   const [founderName, setFounderName] = useState('');
   const [description, setDescription] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { createFamily } = useAuth();
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate creating family & redirect to dashboard
-    navigate('/app/dashboard');
+    setLoading(true);
+    try {
+      await createFamily({
+        name,
+        code,
+        originProvince,
+        originDistrict,
+        originCommune,
+        ancestralHallAddress,
+        founderName,
+        description,
+      });
+      // Redirect straight to dashboard of newly created family
+      navigate('/app/dashboard');
+    } catch (err) {
+      console.error('Lỗi khi tạo dòng họ:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-heritage-bg py-10 px-4 sm:px-6 lg:px-8 font-sans">
+    <div className="min-h-screen bg-heritage-bg py-10 px-4 sm:px-6 lg:px-8 font-sans animate-fade-in">
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 bg-heritage-green text-heritage-gold font-black text-xl rounded-xl mx-auto flex items-center justify-center shadow-md">
+          <div className="w-14 h-14 bg-[#166534] text-amber-300 font-black text-2xl rounded-2xl mx-auto flex items-center justify-center shadow-lg border border-emerald-400/30">
             GP
           </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Khởi Tạo Không Gian Gia Tộc Mới</h1>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Khởi Tạo Không Gian Dòng Họ Của Bạn</h1>
           <p className="text-xs text-slate-500">
-            Tạo lập cơ sở dữ liệu số hóa dòng họ, thiết lập cây phả hệ và phân quyền thành viên
+            Tạo lập cơ sở dữ liệu số hóa dòng họ riêng biệt, thiết lập cây phả hệ và quỹ tài chính độc lập
           </p>
         </div>
 
         {/* Wizard Form Card */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-heritage p-6 sm:p-8">
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8">
           <form className="space-y-6" onSubmit={handleCreate}>
             {/* Step 1: Thông tin cơ bản */}
             <div>
               <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2 border-b border-slate-100 pb-2">
-                <Shield className="w-4 h-4 text-heritage-green" />
+                <Shield className="w-4 h-4 text-[#166534]" />
                 <span>1. Thông Tin Danh Xưng Gia Tộc</span>
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase">Tên Gia Tộc / Dòng Họ *</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Tên Gia Tộc / Dòng Họ *</label>
                   <input
                     type="text"
                     required
-                    placeholder="VD: Đại Tộc Nguyễn Văn"
+                    placeholder="VD: Đại Tộc Vũ Đình"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-heritage-green"
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      if (!code) {
+                        const generatedCode = e.target.value
+                          .normalize('NFD')
+                          .replace(/[\u0300-\u036f]/g, '')
+                          .toUpperCase()
+                          .replace(/[^A-Z0-9]/g, '-')
+                          .replace(/-+/g, '-');
+                        setCode(generatedCode);
+                      }
+                    }}
+                    className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534] bg-slate-50 focus:bg-white transition"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase">Mã Gia Tộc (Duy Nhất) *</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Mã Gia Tộc (Duy Nhất) *</label>
                   <input
                     type="text"
                     required
-                    placeholder="VD: NGUYEN-VAN-HN"
+                    placeholder="VD: VU-DINH-ND"
                     value={code}
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
-                    className="mt-1 block w-full px-3 py-2 text-xs font-mono border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-heritage-green uppercase"
+                    className="mt-1 block w-full px-3 py-2 text-xs font-mono border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534] bg-slate-50 focus:bg-white uppercase transition"
                   />
                 </div>
               </div>
@@ -74,54 +104,54 @@ export const CreateFamilyPage: React.FC = () => {
             {/* Step 2: Nguồn cội & Quê quán */}
             <div>
               <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2 border-b border-slate-100 pb-2">
-                <MapPin className="w-4 h-4 text-heritage-green" />
+                <MapPin className="w-4 h-4 text-[#166534]" />
                 <span>2. Nguyên Quán & Từ Đường (Nhà Thờ Tổ)</span>
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase">Tỉnh / Thành Phố *</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Tỉnh / Thành Phố *</label>
                   <input
                     type="text"
                     required
-                    placeholder="VD: Hà Nội"
+                    placeholder="VD: Nam Định"
                     value={originProvince}
                     onChange={(e) => setOriginProvince(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-heritage-green"
+                    className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534] bg-slate-50 focus:bg-white transition"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase">Quận / Huyện</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Quận / Huyện</label>
                   <input
                     type="text"
-                    placeholder="VD: Hoàng Mai"
+                    placeholder="VD: Hải Hậu"
                     value={originDistrict}
                     onChange={(e) => setOriginDistrict(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-heritage-green"
+                    className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534] bg-slate-50 focus:bg-white transition"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase">Xã / Phường</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Xã / Phường</label>
                   <input
                     type="text"
-                    placeholder="VD: Định Công"
+                    placeholder="VD: Hải Anh"
                     value={originCommune}
                     onChange={(e) => setOriginCommune(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-heritage-green"
+                    className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534] bg-slate-50 focus:bg-white transition"
                   />
                 </div>
               </div>
 
               <div className="mt-4">
-                <label className="block text-xs font-bold text-slate-700 uppercase">Địa Chỉ Nhà Thờ Họ (Từ Đường)</label>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Địa Chỉ Nhà Thờ Họ (Từ Đường)</label>
                 <input
                   type="text"
-                  placeholder="VD: Số 18 Ngõ 42 Tổ 5, Định Công, Hoàng Mai, Hà Nội"
+                  placeholder="VD: Xóm 5, Xã Hải Anh, Huyện Hải Hậu, Tỉnh Nam Định"
                   value={ancestralHallAddress}
                   onChange={(e) => setAncestralHallAddress(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-heritage-green"
+                  className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534] bg-slate-50 focus:bg-white transition"
                 />
               </div>
             </div>
@@ -129,39 +159,39 @@ export const CreateFamilyPage: React.FC = () => {
             {/* Step 3: Thủy tổ & Giới thiệu */}
             <div>
               <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2 border-b border-slate-100 pb-2">
-                <User className="w-4 h-4 text-heritage-green" />
+                <User className="w-4 h-4 text-[#166534]" />
                 <span>3. Cụ Thủy Tổ & Tiểu Sử Dòng Tộc</span>
               </h2>
 
               <div className="mt-4">
-                <label className="block text-xs font-bold text-slate-700 uppercase">Danh Tính Cụ Thủy Tổ (Đời 1)</label>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Danh Tính Cụ Thủy Tổ (Đời 1)</label>
                 <input
                   type="text"
-                  placeholder="VD: Cụ Nguyễn Văn Phúc (Thủy Tổ đời 1)"
+                  placeholder="VD: Cụ Vũ Đình Thủy (Thủy Tổ đời 1)"
                   value={founderName}
                   onChange={(e) => setFounderName(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-heritage-green"
+                  className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534] bg-slate-50 focus:bg-white transition"
                 />
               </div>
 
               <div className="mt-4">
-                <label className="block text-xs font-bold text-slate-700 uppercase">Mô Tả & Lịch Sử Tóm Tắt Dòng Họ</label>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Mô Tả & Lịch Sử Tóm Tắt Dòng Họ</label>
                 <textarea
                   rows={3}
                   placeholder="Ghi chú về nguồn gốc di cư, công đức tiền nhân hoặc đặc điểm dòng họ..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-heritage-green"
+                  className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534] bg-slate-50 focus:bg-white transition"
                 ></textarea>
               </div>
             </div>
 
             {/* Role & Quota Notice */}
-            <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 flex items-start space-x-3">
-              <CheckCircle2 className="w-5 h-5 text-heritage-green shrink-0 mt-0.5" />
+            <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-start space-x-3">
+              <CheckCircle2 className="w-5 h-5 text-[#166534] shrink-0 mt-0.5" />
               <div className="text-xs text-emerald-900">
-                <span className="font-bold">Đặc quyền Trưởng Tộc (OWNER):</span> Bạn sẽ là quản trị viên cao nhất của gia tộc này.
-                Hệ thống tự động kích hoạt 14 ngày dùng thử miễn phí đầy đủ tính năng.
+                <span className="font-bold">Đặc quyền Trưởng Tộc (OWNER):</span> Bạn sẽ là quản trị viên cao nhất của dòng họ này.
+                Hệ thống tự động khởi tạo 3 quỹ dòng họ độc lập và kích hoạt 14 ngày dùng thử miễn phí đầy đủ tính năng.
               </div>
             </div>
 
@@ -169,9 +199,10 @@ export const CreateFamilyPage: React.FC = () => {
             <div className="pt-2">
               <button
                 type="submit"
-                className="w-full py-3 bg-heritage-green hover:bg-heritage-green-light text-white text-xs font-bold rounded-xl flex items-center justify-center space-x-2 transition shadow-md"
+                disabled={loading}
+                className="w-full py-3 bg-[#166534] hover:bg-[#14532d] text-white text-xs font-bold rounded-xl flex items-center justify-center space-x-2 transition shadow-xs disabled:opacity-50 cursor-pointer"
               >
-                <span>Hoàn Tất Khởi Tạo Gia Tộc</span>
+                <span>{loading ? 'Đang khởi tạo dòng họ...' : 'Hoàn Tất Khởi Tạo Gia Tộc'}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -181,3 +212,5 @@ export const CreateFamilyPage: React.FC = () => {
     </div>
   );
 };
+
+export default CreateFamilyPage;
