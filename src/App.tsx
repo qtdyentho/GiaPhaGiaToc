@@ -22,6 +22,8 @@ import { ReminderSettingsPage } from './pages/ReminderSettingsPage';
 import { FundLedgerPage } from './pages/FundLedgerPage';
 import { IncomeAssessmentsPage } from './pages/IncomeAssessmentsPage';
 import { ExpensesPage } from './pages/ExpensesPage';
+import { ContributionsPage } from './pages/ContributionsPage';
+import { HonorRollPage } from './pages/HonorRollPage';
 import { PermissionsPage } from './pages/PermissionsPage';
 import { AuditLogsPage } from './pages/AuditLogsPage';
 import { NotificationsPage } from './pages/NotificationsPage';
@@ -64,6 +66,8 @@ export const App: React.FC = () => {
             <Route path="finance/ledger" element={<FundLedgerPage />} />
             <Route path="finance/income" element={<IncomeAssessmentsPage />} />
             <Route path="finance/expenses" element={<ExpensesPage />} />
+            <Route path="finance/contributions" element={<ContributionsPage />} />
+            <Route path="finance/honor-roll" element={<HonorRollPage />} />
             <Route path="billing" element={<BillingOverviewPage />} />
             <Route path="billing/usage" element={<BillingOverviewPage />} />
             <Route path="billing/invoices" element={<BillingOverviewPage />} />

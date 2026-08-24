@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "npx tsx tests/alpha_full_execution.test.ts"
+    "test": "npx tsx tests/alpha_full_execution.test.ts && npx tsx tests/phase2_financial_core.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

@@ -1,176 +1,275 @@
-import React, { useState } from 'react';
-import { ReceiptText, Plus, CheckCircle2, QrCode, Search, Filter, ArrowDownLeft, Clock } from 'lucide-react';
-import { mockAssessments, mockMembers, mockFunds } from '../services/mockData';
-import { formatCurrency, formatDate } from '../lib/utils';
+import React, { useState, useEffect } from 'react';
+import {
+  ReceiptText,
+  Plus,
+  CheckCircle2,
+  QrCode,
+  Search,
+  Filter,
+  ArrowDownLeft,
+  Clock,
+  Layers,
+  Calendar,
+  DollarSign,
+} from 'lucide-react';
+import { FundService } from '../services/FundService';
+import { GenealogyService } from '../services/GenealogyService';
+import {
+  IncomeAssessment,
+  Fund,
+  IncomeCategory,
+  Branch,
+  Generation,
+  Member,
+} from '../types/database';
+import { BulkAssessmentModal } from '../components/finance/BulkAssessmentModal';
+import { RecordIncomeModal } from '../components/finance/RecordIncomeModal';
+import { mockMembers } from '../services/mockData';
 
 export const IncomeAssessmentsPage: React.FC = () => {
-  const [showRecordModal, setShowRecordModal] = useState(false);
-  const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null);
+  const [assessments, setAssessments] = useState<IncomeAssessment[]>([]);
+  const [funds, setFunds] = useState<Fund[]>([]);
+  const [categories, setCategories] = useState<IncomeCategory[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [generations, setGenerations] = useState<Generation[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleOpenRecord = (id: string) => {
-    setSelectedAssessmentId(id);
-    setShowRecordModal(true);
+  // Filters
+  const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
+  const [search, setSearch] = useState('');
+
+  // Modals
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [recordTarget, setRecordTarget] = useState<IncomeAssessment | null>(null);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [asmData, fundsData, catData, treeData] = await Promise.all([
+        FundService.getAssessments(),
+        FundService.getFunds(),
+        FundService.getIncomeCategories(),
+        GenealogyService.getFamilyTree(),
+      ]);
+      setAssessments(asmData);
+      setFunds(fundsData);
+      setCategories(catData);
+      setBranches(treeData.branches);
+      setGenerations(treeData.generations);
+    } catch (err) {
+      console.error('Lỗi khi tải danh sách định mức thu:', err);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const totalDue = assessments.reduce((sum, a) => sum + Number(a.amount_due || 0), 0);
+  const totalPaid = assessments.reduce((sum, a) => sum + Number(a.amount_paid || 0), 0);
+  const totalPending = totalDue - totalPaid;
+
+  const filteredAssessments = assessments.filter((asm) => {
+    const member = mockMembers.find((m) => m.id === asm.member_id);
+    const matchStatus =
+      selectedStatus === 'ALL'
+        ? true
+        : selectedStatus === 'PAID'
+        ? asm.status === 'PAID'
+        : asm.status === 'PENDING' || asm.status === 'PARTIAL';
+    const matchSearch =
+      !search.trim() ||
+      asm.title.toLowerCase().includes(search.toLowerCase()) ||
+      (member?.full_name && member.full_name.toLowerCase().includes(search.toLowerCase()));
+    return matchStatus && matchSearch;
+  });
 
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Quản Lý Khoản Thu Định Mức & Đóng Góp</h1>
-          <p className="text-xs text-slate-500">
-            Tách bạch giữa Nghĩa vụ thu (Assessment) và Thực thu (Payment) theo chuẩn BR-FUND-001
-          </p>
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <ReceiptText className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2.5">
+              <span>Định Mức Thu Phí Thành Viên</span>
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 font-semibold">
+                BR-FUND-001
+              </span>
+            </h1>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Tách bạch giữa Nghĩa vụ thu (Assessment) và Thực thu (Payment)
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <button className="flex items-center space-x-1.5 px-3.5 py-2 bg-heritage-green hover:bg-heritage-green-light text-white text-xs font-semibold rounded-xl transition shadow-sm">
-            <Plus className="w-4 h-4" />
-            <span>Lập Đợt Thu Mới (Gán 86 Thành Viên)</span>
-          </button>
-        </div>
+        <button
+          onClick={() => setIsBulkModalOpen(true)}
+          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-amber-500/20"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Lập Đợt Thu Hàng Loạt</span>
+        </button>
       </div>
 
       {/* Campaign Summary */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div>
-          <div className="text-xs font-bold text-slate-500 uppercase">Tổng Nghĩa Vụ Phải Thu</div>
-          <div className="text-2xl font-black text-slate-900 mt-1">43.000.000 ₫</div>
-          <div className="text-xs text-slate-400 mt-0.5">86 suất thu định mức 500k</div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-lg p-5">
+          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tổng Nghĩa Vụ Phải Thu</div>
+          <div className="text-2xl font-black text-slate-100 mt-1 font-mono">{totalDue.toLocaleString()} ₫</div>
+          <div className="text-xs text-slate-400 mt-0.5">{assessments.length} suất nghĩa vụ thu</div>
         </div>
 
-        <div>
-          <div className="text-xs font-bold text-emerald-600 uppercase">Đã Thực Thu (Vào Quỹ)</div>
-          <div className="text-2xl font-black text-emerald-700 mt-1">36.500.000 ₫</div>
-          <div className="text-xs text-slate-400 mt-0.5">73 thành viên đã hoàn thành</div>
+        <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-lg p-5">
+          <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Đã Thực Thu (Vào Quỹ)</div>
+          <div className="text-2xl font-black text-emerald-400 mt-1 font-mono">{totalPaid.toLocaleString()} ₫</div>
+          <div className="text-xs text-slate-400 mt-0.5">
+            {assessments.filter((a) => a.status === 'PAID').length} thành viên đã hoàn thành
+          </div>
         </div>
 
-        <div>
-          <div className="text-xs font-bold text-amber-600 uppercase">Còn Tồn Đọng Chưa Thu</div>
-          <div className="text-2xl font-black text-amber-700 mt-1">6.500.000 ₫</div>
-          <div className="text-xs text-slate-400 mt-0.5">13 thành viên chưa đóng</div>
+        <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-lg p-5">
+          <div className="text-xs font-bold text-amber-400 uppercase tracking-wider">Còn Tồn Đọng Chưa Thu</div>
+          <div className="text-2xl font-black text-amber-400 mt-1 font-mono">{totalPending.toLocaleString()} ₫</div>
+          <div className="text-xs text-slate-400 mt-0.5">
+            {assessments.filter((a) => a.status !== 'PAID').length} thành viên chưa nộp đủ
+          </div>
+        </div>
+      </div>
+
+      {/* Filter and Search Bar */}
+      <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-3">
+        <div className="relative flex-1 min-w-[240px]">
+          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Tìm theo tên thành viên hoặc tên khoản thu..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-amber-500"
+          />
+        </div>
+
+        <div className="flex items-center gap-1 bg-slate-800 p-1 rounded-xl border border-slate-700">
+          {['ALL', 'PENDING', 'PAID'].map((status) => (
+            <button
+              key={status}
+              onClick={() => setSelectedStatus(status)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                selectedStatus === status
+                  ? 'bg-amber-500 text-slate-950 shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {status === 'ALL' ? 'Tất cả' : status === 'PENDING' ? 'Chưa nộp đủ' : 'Đã nộp đủ'}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Assessments List Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-700">
-            <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+          <table className="w-full text-left text-xs text-slate-300">
+            <thead className="bg-slate-950/80 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
               <tr>
                 <th className="py-3.5 px-4">Khoản Thu / Chiến Dịch</th>
                 <th className="py-3.5 px-4">Thành Viên Phải Nộp</th>
-                <th className="py-3.5 px-4">Mức Thu Phải Nộp</th>
-                <th className="py-3.5 px-4">Đã Thu</th>
+                <th className="py-3.5 px-4 text-right">Mức Phải Nộp</th>
+                <th className="py-3.5 px-4 text-right">Đã Thu</th>
                 <th className="py-3.5 px-4">Hạn Nộp</th>
-                <th className="py-3.5 px-4">Trạng Thái</th>
-                <th className="py-3.5 px-4 text-right">Ghi Nhận Thực Thu</th>
+                <th className="py-3.5 px-4 text-center">Trạng Thái</th>
+                <th className="py-3.5 px-4 text-right">Thao Tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {mockAssessments.map((asm) => {
-                const member = mockMembers.find((m) => m.id === asm.member_id);
-                return (
-                  <tr key={asm.id} className="hover:bg-slate-50/80 transition">
-                    <td className="py-3.5 px-4 font-bold text-slate-900">{asm.title}</td>
-                    <td className="py-3.5 px-4 font-medium text-slate-800">{member?.full_name}</td>
-                    <td className="py-3.5 px-4 font-bold text-slate-900">{formatCurrency(asm.amount_due)}</td>
-                    <td className="py-3.5 px-4 font-semibold text-emerald-700">{formatCurrency(asm.amount_paid)}</td>
-                    <td className="py-3.5 px-4 text-slate-500">{formatDate(asm.due_date)}</td>
-                    <td className="py-3.5 px-4">
-                      <span
-                        className={`font-bold px-2.5 py-1 rounded-full text-[10px] ${
-                          asm.status === 'PAID'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-amber-100 text-amber-900'
-                        }`}
-                      >
-                        {asm.status === 'PAID' ? 'ĐÃ NỘP ĐỦ' : 'CHỜ NỘP'}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-right">
-                      {asm.status !== 'PAID' ? (
-                        <button
-                          onClick={() => handleOpenRecord(asm.id)}
-                          className="px-3 py-1.5 bg-heritage-green hover:bg-heritage-green-light text-white font-bold rounded-lg text-xs transition shadow-sm inline-flex items-center space-x-1"
+            <tbody className="divide-y divide-slate-800/60">
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-slate-500">
+                    <div className="w-8 h-8 border-2 border-amber-500/20 border-t-amber-500 rounded-full animate-spin mx-auto mb-2" />
+                    Đang tải danh sách định mức thu...
+                  </td>
+                </tr>
+              ) : filteredAssessments.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-slate-500">
+                    Không có khoản thu nào trong danh sách
+                  </td>
+                </tr>
+              ) : (
+                filteredAssessments.map((asm) => {
+                  const member = mockMembers.find((m) => m.id === asm.member_id);
+                  const isPaid = asm.status === 'PAID';
+
+                  return (
+                    <tr key={asm.id} className="hover:bg-slate-800/40 transition">
+                      <td className="py-3.5 px-4 font-bold text-slate-100">{asm.title}</td>
+                      <td className="py-3.5 px-4 font-medium text-slate-200">{member?.full_name || 'Thành viên'}</td>
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-100">
+                        {Number(asm.amount_due).toLocaleString()} ₫
+                      </td>
+                      <td className="py-3.5 px-4 text-right font-mono font-semibold text-emerald-400">
+                        {Number(asm.amount_paid).toLocaleString()} ₫
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-400">{asm.due_date || '2026-12-31'}</td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span
+                          className={`font-bold px-2.5 py-0.5 rounded-full text-[10px] ${
+                            isPaid
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                              : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                          }`}
                         >
-                          <ArrowDownLeft className="w-3.5 h-3.5" />
-                          <span>Ghi Thu Tiền</span>
-                        </button>
-                      ) : (
-                        <span className="text-slate-400 font-semibold text-xs flex items-center justify-end space-x-1">
-                          <CheckCircle2 className="w-4 h-4 text-heritage-green" />
-                          <span>Đã vào quỹ</span>
+                          {isPaid ? 'ĐÃ NỘP ĐỦ' : 'CHỜ NỘP'}
                         </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        {!isPaid ? (
+                          <button
+                            onClick={() => setRecordTarget(asm)}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold rounded-xl text-xs transition shadow-sm inline-flex items-center gap-1"
+                          >
+                            <ArrowDownLeft className="w-3.5 h-3.5" />
+                            <span>Ghi Thu Tiền</span>
+                          </button>
+                        ) : (
+                          <span className="text-slate-400 font-semibold text-xs flex items-center justify-end gap-1">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                            <span>Đã vào quỹ</span>
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Modal Ghi Thu Tiền */}
-      {showRecordModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200">
-            <h2 className="text-base font-bold text-slate-900 flex items-center space-x-2">
-              <ArrowDownLeft className="w-5 h-5 text-heritage-green" />
-              <span>Ghi Nhận Thực Thu Tiền Quỹ</span>
-            </h2>
+      {/* Modals */}
+      <BulkAssessmentModal
+        isOpen={isBulkModalOpen}
+        onClose={() => setIsBulkModalOpen(false)}
+        onSuccess={loadData}
+        funds={funds}
+        categories={categories}
+        branches={branches}
+        generations={generations}
+      />
 
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Thao tác này sẽ tự động sinh mã bút toán <strong>THU-YYYYMMDD-XXXX</strong> và cập nhật số dư Quỹ nguyên tử (Atomicity).
-            </p>
-
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="block font-bold text-slate-700 uppercase">Số Tiền Nộp (VNĐ) *</label>
-                <input
-                  type="number"
-                  defaultValue={500000}
-                  className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-heritage-green font-bold text-heritage-navy"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 uppercase">Phương Thức Thanh Toán</label>
-                <select className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-heritage-green">
-                  <option value="VIETQR">Chuyển khoản VietQR</option>
-                  <option value="CASH">Tiền mặt (Thủ quỹ nhận)</option>
-                  <option value="BANK_TRANSFER">Chuyển khoản ngân hàng</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 uppercase">Ghi Chú Bút Toán</label>
-                <input
-                  type="text"
-                  placeholder="VD: Nguyễn Văn Tuấn nộp quỹ thường niên 2026..."
-                  className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-heritage-green"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
-              <button
-                onClick={() => setShowRecordModal(false)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition"
-              >
-                Hủy Bỏ
-              </button>
-              <button
-                onClick={() => setShowRecordModal(false)}
-                className="px-4 py-2 bg-heritage-green hover:bg-heritage-green-light text-white text-xs font-bold rounded-xl transition shadow-sm"
-              >
-                Xác Nhận Thu Tiền
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <RecordIncomeModal
+        isOpen={Boolean(recordTarget)}
+        onClose={() => setRecordTarget(null)}
+        onSuccess={loadData}
+        assessment={recordTarget}
+        funds={funds}
+      />
     </div>
   );
 };

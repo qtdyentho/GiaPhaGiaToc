@@ -43,7 +43,7 @@ export type TransactionStatus = 'DRAFT' | 'POSTED' | 'REVERSED' | 'CANCELLED';
 export type AssessmentStatus = 'PENDING' | 'PARTIAL' | 'PAID' | 'WAIVED' | 'CANCELLED';
 export type ExpenseStatus = 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'POSTED' | 'CANCELLED';
 export type PaymentMethod = 'CASH' | 'BANK_TRANSFER' | 'VIETQR' | 'VNPAY' | 'MOMO' | 'OTHER';
-export type SponsorType = 'MEMBER' | 'RELATIVE' | 'BUSINESS' | 'ORGANIZATION' | 'OTHER';
+export type SponsorType = 'MEMBER' | 'RELATIVE' | 'BUSINESS' | 'ORGANIZATION' | 'ANONYMOUS' | 'OTHER';
 export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE_ATTEMPT' | 'APPROVE' | 'REJECT' | 'POST' | 'REVERSE' | 'LOGIN' | 'LOGOUT';
 export type NotificationType = 'MEMORIAL_REMINDER' | 'EVENT_REMINDER' | 'PAYMENT_DUE' | 'EXPENSE_APPROVAL_REQUEST' | 'TRANSACTION_POSTED' | 'MEMBERSHIP_INVITE' | 'SYSTEM';
 
@@ -220,11 +220,31 @@ export interface Event {
   updated_at: string;
 }
 
-export interface Fund {
+export interface IncomeCategory {
   id: string;
   family_id: string;
   name: string;
   code: string;
+  description?: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface ExpenseCategory {
+  id: string;
+  family_id: string;
+  name: string;
+  code: string;
+  description?: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface Fund {
+  id: string;
+  family_id: string;
+  name: string;
+  code?: string;
   description?: string;
   opening_balance: number;
   current_balance: number;
@@ -259,6 +279,7 @@ export interface FinancialTransaction {
 export interface IncomeAssessment {
   id: string;
   family_id: string;
+  fund_id?: string;
   title: string;
   category_id?: string;
   event_id?: string;
@@ -286,6 +307,7 @@ export interface ExpenseRecord {
   status: ExpenseStatus;
   description?: string;
   receipt_url?: string;
+  rejection_reason?: string;
   created_by?: string;
   approved_by?: string;
   approved_at?: string;
@@ -300,7 +322,9 @@ export interface Contribution {
   donor_name: string;
   fund_id: string;
   amount: number;
-  contribution_date: string;
+  purpose?: string;
+  payment_method?: PaymentMethod;
+  contribution_date?: string;
   notes?: string;
   created_at: string;
 }
@@ -309,12 +333,15 @@ export interface Sponsorship {
   id: string;
   family_id: string;
   sponsor_name: string;
+  member_id?: string;
   sponsor_type: SponsorType;
   fund_id: string;
+  event_id?: string;
   amount: number;
-  sponsorship_date: string;
+  purpose?: string;
+  sponsorship_date?: string;
   notes?: string;
-  is_honored: boolean;
+  is_honored?: boolean;
   created_at: string;
 }
 

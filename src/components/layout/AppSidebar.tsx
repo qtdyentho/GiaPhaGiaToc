@@ -14,7 +14,9 @@ import {
   ChevronRight,
   Landmark,
   BadgePercent,
-  ReceiptText
+  ReceiptText,
+  HeartHandshake,
+  Trophy
 } from 'lucide-react';
 import { BRAND } from '../../lib/constants';
 
@@ -54,6 +56,8 @@ const navSections: { title: string; items: NavItem[] }[] = [
       { to: '/app/finance/ledger', icon: BookOpen, label: 'Sổ Quỹ Bất Biến' },
       { to: '/app/finance/income', icon: ReceiptText, label: 'Khoản Thu Định Mức' },
       { to: '/app/finance/expenses', icon: BadgePercent, label: 'Khoản Chi & Duyệt Chi' },
+      { to: '/app/finance/contributions', icon: HeartHandshake, label: 'Đóng Góp & Tài Trợ' },
+      { to: '/app/finance/honor-roll', icon: Trophy, label: 'Bảng Vàng Công Đức', badge: 'Vinh Danh' },
     ],
   },
   {
