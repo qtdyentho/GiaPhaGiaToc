@@ -26,6 +26,15 @@ dist-ssr
 *.pem
 *.key
 *.cert
+*.credentials
+*.secret
+*.id_rsa
+*.id_ed25519
+credentials.json
+token.json
+serviceAccountKey.json
+.vercel
+.netlify
 
 # Editor directories and files
 .vscode/*

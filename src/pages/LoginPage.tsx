@@ -4,8 +4,8 @@ import { Shield, Lock, Mail, ArrowRight } from 'lucide-react';
 import { BRAND } from '../lib/constants';
 
 export const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState('truongtoc.nguyen@giapha.vn');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = (e: React.FormEvent) => {
