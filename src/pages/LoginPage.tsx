@@ -141,7 +141,7 @@ export const LoginPage: React.FC = () => {
                 onClick={() => handleQuickDemoLogin('superadmin@giapha.vn')}
                 className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-800 rounded-xl text-[11px] font-bold transition text-center"
               >
-                Super Admin SaaS
+                Quản Trị Hệ Thống
               </button>
             </div>
           </div>

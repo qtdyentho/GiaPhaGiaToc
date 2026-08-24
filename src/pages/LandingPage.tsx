@@ -68,7 +68,7 @@ export const LandingPage: React.FC = () => {
           </h1>
 
           <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            Hệ thống kết nối huyết thống vĩnh cửu, tính toán ngày giỗ âm lịch chuẩn xác theo thiên văn học, ghi chép sổ quỹ kép bất biến và thanh toán công đức hiện đại.
+            Nơi lưu giữ cội nguồn gia tộc, phụng tự tiên tổ, tự động tính ngày giỗ âm lịch chuẩn xác và quản lý thu chi dòng họ minh bạch qua các thế hệ.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
@@ -76,13 +76,13 @@ export const LandingPage: React.FC = () => {
               to="/register"
               className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-[#166534] hover:bg-[#14532d] text-white font-extrabold text-base shadow-lg shadow-emerald-900/10 transition-all flex items-center justify-center gap-2"
             >
-              Bắt Đầu Dùng Thử 30 Ngày <ArrowRight className="w-5 h-5" />
+              Bắt Đầu Trải Nghiệm 30 Ngày <ArrowRight className="w-5 h-5" />
             </Link>
             <Link
               to="/pricing"
               className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 font-bold text-base border border-slate-300 shadow-sm transition-all"
             >
-              Xem Bảng Giá Dịch Vụ
+              Xem Gói Phụng Dựng Dòng Họ
             </Link>
           </div>
         </div>
@@ -92,9 +92,9 @@ export const LandingPage: React.FC = () => {
       <section id="pillars" className="py-20 border-t border-slate-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
-            <span className="text-xs font-extrabold tracking-widest text-[#166534] uppercase">Kiến Trúc Toàn Diện</span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 font-heritage">4 Trụ Cột Quản Trị Gia Tộc Hiện Đại</h2>
-            <p className="text-slate-500 text-sm">Được thiết kế chuyên sâu theo phong tục, truyền thống và quản trị tài chính dòng họ Việt Nam.</p>
+            <span className="text-xs font-extrabold tracking-widest text-[#166534] uppercase">Nền Tảng Phụng Tự</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 font-heritage">4 Trụ Cột Quản Trị Dòng Họ</h2>
+            <p className="text-slate-500 text-sm">Được thiết kế chuyên sâu theo nghi lễ, phong tục tập quán và truyền thống dòng họ Việt Nam.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -104,7 +104,7 @@ export const LandingPage: React.FC = () => {
               </div>
               <h3 className="text-lg font-bold text-slate-900">1. Cây Phả Hệ Đa Chi</h3>
               <p className="text-slate-600 text-xs leading-relaxed">
-                Trực quan hóa cây phả hệ hàng ngàn thành viên, phân chia chi/phái/nhánh, quản lý tiền nhân và hậu thế bảo mật.
+                Biên soạn và tra cứu cây gia phả nhiều thế hệ, phân định rõ chi phái cành nhánh, lưu giữ tiểu sử tiền nhân và hậu duệ.
               </p>
             </div>
 
@@ -112,9 +112,9 @@ export const LandingPage: React.FC = () => {
               <div className="w-12 h-12 rounded-2xl bg-teal-100/70 border border-teal-300 flex items-center justify-center text-teal-800 shadow-xs">
                 <Calendar className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900">2. Lịch Âm & Ngày Giỗ</h3>
+              <h3 className="text-lg font-bold text-slate-900">2. Lịch Giỗ Vạn Niên</h3>
               <p className="text-slate-600 text-xs leading-relaxed">
-                Core Engine tính toán âm dương thiên văn chuẩn xác, tự động thông báo ngày giỗ tổ tiên, tháng nhuận và lễ tế.
+                Tự động tính lịch giỗ âm dương theo thiên văn học, nhắc lễ giỗ tiên tổ, ngày kỵ nhật và các dịp tế tự lớn của dòng họ.
               </p>
             </div>
 
@@ -122,9 +122,9 @@ export const LandingPage: React.FC = () => {
               <div className="w-12 h-12 rounded-2xl bg-cyan-100/70 border border-cyan-300 flex items-center justify-center text-cyan-800 shadow-xs">
                 <Landmark className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900">3. Sổ Quỹ Kép Bất Biến</h3>
+              <h3 className="text-lg font-bold text-slate-900">3. Sổ Quỹ Gia Tộc Minh Bạch</h3>
               <p className="text-slate-600 text-xs leading-relaxed">
-                Quản lý thu chi minh bạch, không thể xóa lịch sử giao dịch (Immutable Ledger), bút toán hoàn trả chuẩn mực.
+                Ghi chép thu chi quỹ họ rõ ràng, quản lý quỹ tu bổ từ đường, quỹ khuyến học và quỹ hương khói truyền đời.
               </p>
             </div>
 
@@ -132,9 +132,9 @@ export const LandingPage: React.FC = () => {
               <div className="w-12 h-12 rounded-2xl bg-amber-100/70 border border-amber-300 flex items-center justify-center text-amber-800 shadow-xs">
                 <Award className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900">4. Công Đức & VietQR</h3>
+              <h3 className="text-lg font-bold text-slate-900">4. Bảng Vàng Công Đức</h3>
               <p className="text-slate-600 text-xs leading-relaxed">
-                Tạo mã QR chuyển khoản công đức tự động, ghi danh Bảng Vàng Công Đức vinh danh con cháu muôn đời.
+                Hỗ trợ công đức quét mã VietQR thuận tiện, ghi danh bảng vàng tri ân tấm lòng con cháu khắp mọi miền.
               </p>
             </div>
           </div>
@@ -145,7 +145,7 @@ export const LandingPage: React.FC = () => {
       <footer className="border-t border-slate-200 py-12 bg-white text-slate-500 text-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            © 2026 Gia Phả Gia Tộc SaaS. Bảo lưu mọi quyền. Dữ liệu gia tộc được mã hóa và bảo toàn vĩnh cửu.
+            © 2026 Gia Phả Gia Tộc. Nền Tảng Quản Lý Gia Phả & Tài Chính Dòng Họ Việt Nam.
           </div>
           <div className="flex items-center gap-6 font-semibold">
             <Link to="/help" className="hover:text-slate-900 transition-colors">Hướng Dẫn</Link>

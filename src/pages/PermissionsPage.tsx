@@ -26,8 +26,8 @@ export const PermissionsPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-slate-900 flex items-center space-x-2">
-            <span>Ma Trận Phân Quyền Gia Tộc (RBAC)</span>
-            <span className="text-xs bg-purple-100 text-purple-900 font-bold px-2.5 py-0.5 rounded-full border border-purple-200">
+            <span>Phân Công Nhiệm Vụ & Quyền Hạn Dòng Họ</span>
+            <span className="text-xs bg-emerald-100 text-emerald-900 font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">
               8 Cấp Độ Vai Trò
             </span>
           </h1>

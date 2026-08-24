@@ -181,8 +181,8 @@ export const FinanceDashboardPage: React.FC = () => {
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs font-bold text-slate-800">Sổ Quỹ Bất Biến</div>
-              <div className="text-[11px] text-slate-500">Tra cứu & Bút toán hoàn trả</div>
+              <div className="text-xs font-bold text-slate-800">Sổ Quỹ Gia Tộc</div>
+              <div className="text-[11px] text-slate-500">Thu chi minh bạch & lịch sử ghi sổ</div>
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#166534] transition" />
@@ -197,8 +197,8 @@ export const FinanceDashboardPage: React.FC = () => {
               <Receipt className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs font-bold text-slate-800">Thu Định Mức</div>
-              <div className="text-[11px] text-slate-500">Bổ phần định kỳ dòng họ</div>
+              <div className="text-xs font-bold text-slate-800">Đóng Góp Thường Niên</div>
+              <div className="text-[11px] text-slate-500">Định mức hương khói & việc họ</div>
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#166534] transition" />
@@ -214,7 +214,7 @@ export const FinanceDashboardPage: React.FC = () => {
             </div>
             <div>
               <div className="text-xs font-bold text-slate-800">Khoản Chi & Duyệt Chi</div>
-              <div className="text-[11px] text-slate-500">Quy trình duyệt chi 2 cấp</div>
+              <div className="text-[11px] text-slate-500">Trưởng tộc & Thủ quỹ xét duyệt</div>
             </div>
           </div>
           <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#166534] transition" />

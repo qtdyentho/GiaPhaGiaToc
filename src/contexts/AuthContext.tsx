@@ -30,6 +30,7 @@ interface AuthContextType {
   signIn: (email: string, password?: string) => Promise<{ success: boolean; activeFamily: Family | null; isSuperAdmin: boolean }>;
   signUp: (fullName: string, email: string, phone?: string, password?: string) => Promise<Profile>;
   createFamily: (data: CreateFamilyData) => Promise<Family>;
+  updateFamily: (familyId: string, updates: Partial<Family>) => Promise<Family>;
   signOut: () => Promise<void>;
 }
 
@@ -280,6 +281,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return newFam;
   };
 
+  const updateFamily = async (familyId: string, updates: Partial<Family>): Promise<Family> => {
+    setIsLoading(true);
+    let updatedTarget: Family | null = null;
+    const nextFamilies = families.map((f) => {
+      if (f.id === familyId) {
+        updatedTarget = {
+          ...f,
+          ...updates,
+          updated_at: new Date().toISOString(),
+        };
+        return updatedTarget;
+      }
+      return f;
+    });
+
+    if (!updatedTarget) {
+      // If not in state yet, update mockFamily
+      updatedTarget = {
+        ...mockFamily,
+        ...updates,
+        updated_at: new Date().toISOString(),
+      };
+      nextFamilies.push(updatedTarget);
+    }
+
+    setFamilies(nextFamilies);
+    if (activeFamily?.id === familyId || !activeFamily) {
+      setActiveFamily(updatedTarget);
+    }
+    localStorage.setItem('hl_families', JSON.stringify(nextFamilies));
+    setIsLoading(false);
+    return updatedTarget;
+  };
+
   const signIn = async (email: string, _password?: string) => {
     setIsLoading(true);
     const isSuper = email.toLowerCase().includes('admin') || email.toLowerCase().includes('super');
@@ -374,6 +409,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signIn,
         signUp,
         createFamily,
+        updateFamily,
         signOut,
       }}
     >

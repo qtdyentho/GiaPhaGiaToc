@@ -63,8 +63,8 @@ export const ReversalModal: React.FC<ReversalModalProps> = ({
               <RotateCcw className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">Đảo Bút Toán Giao Dịch</h3>
-              <p className="text-xs text-slate-500">Sổ cái bất biến (Immutable Ledger)</p>
+              <h3 className="text-base font-bold text-slate-900">Hoàn Trả Bút Toán Thu Chi</h3>
+              <p className="text-xs text-slate-500">Ghi nhận phiếu hoàn trả & bảo toàn lịch sử sổ quỹ</p>
             </div>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
@@ -93,7 +93,7 @@ export const ReversalModal: React.FC<ReversalModalProps> = ({
                   transaction.transaction_type === 'INCOME' ? 'text-emerald-700' : 'text-rose-600'
                 }`}
               >
-                {transaction.transaction_type === 'INCOME' ? 'Thu tiền' : 'Chi tiền'}
+                {transaction.transaction_type === 'INCOME' ? 'Phiếu thu' : 'Phiếu chi'}
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -109,7 +109,7 @@ export const ReversalModal: React.FC<ReversalModalProps> = ({
           <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
             <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
             <span>
-              <strong>Quy tắc bất biến:</strong> Giao dịch gốc sẽ được giữ nguyên và đánh dấu <code>REVERSED</code>. Hệ thống tự động tạo bút toán đối ứng <code>REV-{transaction.transaction_code}</code> để hoàn trả quỹ chính xác.
+              <strong>Nguyên tắc minh bạch:</strong> Chứng từ gốc được lưu giữ nguyên vẹn để đối soát. Hệ thống sẽ tạo một phiếu hoàn trả đối ứng <code>REV-{transaction.transaction_code}</code> để cân bằng số dư quỹ chính xác.
             </span>
           </div>
 

@@ -1,14 +1,19 @@
-import React from 'react';
-import { Users, Landmark, Wallet, Calendar, ArrowUpRight, Sparkles, ChevronRight, CheckCircle2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { 
+  Users, Landmark, Wallet, Calendar, ArrowUpRight, Sparkles, 
+  ChevronRight, MapPin, Camera, Image, ShieldCheck, HeartHandshake,
+  BookOpen
+} from 'lucide-react';
 import { LunarCalendarService } from '../services/LunarCalendarService';
-import { formatCurrency, formatDate } from '../lib/utils';
+import { formatCurrency } from '../lib/utils';
 import { mockFamily, mockMembers, mockFunds, mockMemorialDates, mockTransactions } from '../services/mockData';
 import { Link } from 'react-router-dom';
 import { UpcomingEventsWidget } from '../components/calendar/UpcomingEventsWidget';
 import { useAuth } from '../contexts/AuthContext';
+import { AncestralBannerModal, ANCESTRAL_PRESETS } from '../components/family/AncestralBannerModal';
 
 export const DashboardPage: React.FC = () => {
-  const { activeFamily } = useAuth();
+  const { activeFamily, isFamilyAdmin } = useAuth();
   const todayInfo = LunarCalendarService.getTodayInfo();
   
   const currentFamily = activeFamily || mockFamily;
@@ -19,33 +24,96 @@ export const DashboardPage: React.FC = () => {
   const nextMemorial = familyMemorials[0] || mockMemorialDates[0];
   const familyTransactions = mockTransactions.filter((t) => t.family_id === currentFamily.id);
 
+  const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
+
+  const bannerImageUrl = currentFamily.banner_url || ANCESTRAL_PRESETS[0].url;
+
   return (
     <div className="space-y-6 font-sans animate-fade-in">
-      {/* Top Banner: Lunar Calendar & Heritage Message */}
-      <div className="bg-gradient-to-r from-[#1E3A5F] to-[#162D4A] text-white p-6 rounded-3xl shadow-sm relative overflow-hidden">
-        <div className="absolute right-0 top-0 bottom-0 w-1/3 opacity-10 bg-[radial-gradient(#C49A3A_2px,transparent_2px)] [background-size:16px_16px]"></div>
-        
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center space-x-2 bg-amber-500/20 text-amber-300 text-xs font-semibold px-3 py-1 rounded-full mb-2 border border-amber-500/30">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Gia Tộc Hưng Thịnh — Lưu Truyền Muôn Đời</span>
+      {/* 🏛️ ANCESTRAL HERO BANNER: Không Gian Từ Đường & Phụng Tự Trang Trọng */}
+      <div className="relative rounded-3xl overflow-hidden shadow-md border border-amber-900/20 bg-slate-900 group min-h-[260px] md:min-h-[300px] flex flex-col justify-between p-6 md:p-8 text-white">
+        {/* Background Image of Ancestral Hall / Từ Đường */}
+        <img
+          src={bannerImageUrl}
+          alt={`Từ Đường ${currentFamily.name}`}
+          className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition duration-1000 ease-out"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = ANCESTRAL_PRESETS[0].url;
+          }}
+        />
+
+        {/* Traditional Heritage Gradients for Depth & Legibility */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/55 to-slate-900/30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-900/40 to-transparent" />
+
+        {/* Top Section: Motto & Lunar Calendar & Admin Edit Button */}
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Traditional Motto Badge */}
+          <div className="inline-flex items-center space-x-2 bg-amber-500/25 text-amber-200 text-xs font-semibold px-3.5 py-1.5 rounded-full border border-amber-400/40 backdrop-blur-md self-start shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+            <span className="tracking-wide">Ẩm Hà Tư Nguyên • Mộc Hữu Bản, Thủy Hữu Nguyên</span>
+          </div>
+
+          {/* Action Button: Thay Đổi Ảnh Từ Đường (Trưởng tộc / Quản trị viên) */}
+          <div className="flex items-center space-x-2 self-start sm:self-auto">
+            {isFamilyAdmin && (
+              <button
+                type="button"
+                onClick={() => setIsBannerModalOpen(true)}
+                className="inline-flex items-center space-x-1.5 bg-black/40 hover:bg-black/60 text-amber-200 hover:text-white text-xs font-semibold px-3.5 py-1.5 rounded-full border border-white/20 backdrop-blur-md transition shadow-xs hover:border-amber-400/50"
+              >
+                <Camera className="w-3.5 h-3.5 text-amber-300" />
+                <span>Đổi Ảnh Từ Đường</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom Section: Clan Name, Ancestral Hall Address & Today's Lunar Info */}
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-6 pt-6">
+          <div className="space-y-2 max-w-2xl">
+            <div className="text-xs font-bold text-amber-300/90 uppercase tracking-widest flex items-center gap-1.5 font-mono">
+              <Landmark className="w-4 h-4 text-amber-400" />
+              <span>Từ Đường & Không Gian Thờ Tự Tiên Tổ</span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
+
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight drop-shadow-md font-serif text-amber-50">
               {currentFamily.name}
             </h1>
-            <p className="text-xs md:text-sm text-slate-300 mt-1 max-w-xl">
-              {currentFamily.description} {currentFamily.origin_commune ? `• Nhà thờ tổ: ${currentFamily.origin_commune}, ${currentFamily.origin_district || ''}, ${currentFamily.origin_province}.` : ''}
+
+            {/* Address & Origin */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs md:text-sm text-slate-200">
+              {currentFamily.ancestral_hall_address && (
+                <div className="flex items-center space-x-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>{currentFamily.ancestral_hall_address}</span>
+                </div>
+              )}
+              {currentFamily.origin_commune && !currentFamily.ancestral_hall_address && (
+                <div className="flex items-center space-x-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>
+                    {currentFamily.origin_commune}, {currentFamily.origin_district ? `${currentFamily.origin_district}, ` : ''}{currentFamily.origin_province}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <p className="text-xs text-slate-300 line-clamp-2 pt-1 font-light opacity-95">
+              {currentFamily.description || 'Nơi kết nối huyết thống tiền nhân và con cháu muôn đời.'}
             </p>
           </div>
 
           {/* Today Lunar Card */}
-          <div className="bg-white/10 backdrop-blur-md border border-white/15 p-4 rounded-2xl shrink-0 text-right md:min-w-[220px]">
-            <div className="text-xs text-amber-200 font-medium">Hôm nay ({todayInfo.solarDay}/{todayInfo.solarMonth}/{todayInfo.solarYear})</div>
-            <div className="text-xl font-bold text-white mt-0.5">
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl shrink-0 text-left sm:text-right lg:min-w-[220px] shadow-sm">
+            <div className="text-[11px] text-amber-200 font-medium flex sm:justify-end items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              <span>Dương Lịch ({todayInfo.solarDay}/{todayInfo.solarMonth}/{todayInfo.solarYear})</span>
+            </div>
+            <div className="text-lg md:text-xl font-bold text-white mt-0.5">
               Ngày {todayInfo.lunarDay} Tháng {todayInfo.lunarMonth}
             </div>
-            <div className="text-xs text-amber-300 font-medium mt-0.5">
+            <div className="text-xs text-amber-300 font-semibold mt-0.5">
               Năm {todayInfo.canChiYear} (Âm Lịch)
             </div>
           </div>
@@ -54,40 +122,45 @@ export const DashboardPage: React.FC = () => {
 
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Stat 1: Thành viên */}
+        {/* Stat 1: Thành viên bà con */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-sm transition">
           <div className="flex items-center justify-between">
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Thành Viên Ghi Nhận</div>
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Bà Con Dòng Họ</div>
             <div className="p-2 bg-emerald-50 text-[#166534] rounded-xl border border-emerald-200">
               <Users className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-2 font-mono">{familyMembers.length || (currentFamily.id === mockFamily.id ? 86 : 1)} <span className="text-xs font-normal text-slate-500 font-sans">thành viên</span></div>
+          <div className="text-2xl font-black text-slate-900 mt-2 font-mono">
+            {familyMembers.length || (currentFamily.id === mockFamily.id ? 86 : 1)}{' '}
+            <span className="text-xs font-normal text-slate-500 font-sans">thành viên</span>
+          </div>
           <div className="text-xs text-slate-500 mt-1 flex items-center space-x-1">
-            <span className="text-emerald-700 font-semibold">Trực hệ</span>
-            <span>• Dòng họ chính thống</span>
+            <span className="text-emerald-700 font-semibold">Phả đồ trực hệ</span>
+            <span>• Đinh & Nữ toàn tộc</span>
           </div>
         </div>
 
-        {/* Stat 2: Quỹ gia tộc */}
+        {/* Stat 2: Sổ quỹ gia tộc */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-sm transition">
           <div className="flex items-center justify-between">
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tổng Số Dư Quỹ</div>
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Số Dư Quỹ Dòng Họ</div>
             <div className="p-2 bg-emerald-50 text-[#166534] rounded-xl border border-emerald-200">
               <Wallet className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-2 font-mono">{formatCurrency(totalBalance)}</div>
+          <div className="text-2xl font-black text-slate-900 mt-2 font-mono">
+            {formatCurrency(totalBalance)}
+          </div>
           <div className="text-xs text-slate-500 mt-1 flex items-center space-x-1">
-            <span className="text-emerald-700 font-semibold">{familyFunds.length || 3} Quỹ</span>
-            <span>• Sổ quỹ minh bạch</span>
+            <span className="text-emerald-700 font-semibold">{familyFunds.length || 3} Quỹ hoạt động</span>
+            <span>• Minh bạch thu chi</span>
           </div>
         </div>
 
         {/* Stat 3: Lễ giỗ gần nhất */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-sm transition">
           <div className="flex items-center justify-between">
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Ngày Giỗ Gần Nhất</div>
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Ngày Giỗ Tiền Nhân Gần Nhất</div>
             <div className="p-2 bg-amber-50 text-amber-700 rounded-xl border border-amber-200">
               <Sparkles className="w-5 h-5" />
             </div>
@@ -102,17 +175,20 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Stat 4: Hoạt động dòng họ */}
+        {/* Stat 4: Hoạt động & Ghi chép */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-sm transition">
           <div className="flex items-center justify-between">
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Hoạt Động / Bút Toán</div>
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Sự Kiện & Ghi Chép</div>
             <div className="p-2 bg-blue-50 text-blue-700 rounded-xl border border-blue-200">
               <Landmark className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-2 font-mono">{familyTransactions.length || (currentFamily.id === mockFamily.id ? 24 : 0)} <span className="text-xs font-normal text-slate-500 font-sans">phát sinh</span></div>
+          <div className="text-2xl font-black text-slate-900 mt-2 font-mono">
+            {familyTransactions.length || (currentFamily.id === mockFamily.id ? 24 : 0)}{' '}
+            <span className="text-xs font-normal text-slate-500 font-sans">bút toán</span>
+          </div>
           <div className="text-xs text-slate-500 mt-1 flex items-center space-x-1">
-            <span className="text-blue-700 font-semibold">Minh bạch 100%</span>
+            <span className="text-blue-700 font-semibold">Lưu truyền muôn đời</span>
           </div>
         </div>
       </div>
@@ -129,8 +205,10 @@ export const DashboardPage: React.FC = () => {
             >
               <div className="space-y-1">
                 <div className="text-xs font-bold text-[#166534] uppercase tracking-wider">Phả Hệ</div>
-                <div className="text-base font-bold text-slate-900 group-hover:text-[#166534] transition">Cây Gia Phả Dòng Họ</div>
-                <p className="text-xs text-slate-500">Tra cứu trực hệ và thông tin các thế hệ</p>
+                <div className="text-base font-bold text-slate-900 group-hover:text-[#166534] transition">
+                  Cây Gia Phả Dòng Họ
+                </div>
+                <p className="text-xs text-slate-500">Tra cứu chi cành, thứ bậc và các thế hệ tiền nhân</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-emerald-50 group-hover:bg-[#166534] text-[#166534] group-hover:text-white flex items-center justify-center transition shrink-0 border border-emerald-200">
                 <ChevronRight className="w-5 h-5" />
@@ -143,8 +221,10 @@ export const DashboardPage: React.FC = () => {
             >
               <div className="space-y-1">
                 <div className="text-xs font-bold text-[#166534] uppercase tracking-wider">Tài Chính</div>
-                <div className="text-base font-bold text-slate-900 group-hover:text-[#166534] transition">Sổ Quỹ & Công Đức</div>
-                <p className="text-xs text-slate-500">Theo dõi thu chi và bảng vàng vinh danh</p>
+                <div className="text-base font-bold text-slate-900 group-hover:text-[#166534] transition">
+                  Sổ Quỹ & Công Đức
+                </div>
+                <p className="text-xs text-slate-500">Ghi chép thu chi, hương khói và bảng vàng tri ân</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-emerald-50 group-hover:bg-[#166534] text-[#166534] group-hover:text-white flex items-center justify-center transition shrink-0 border border-emerald-200">
                 <ChevronRight className="w-5 h-5" />
@@ -194,6 +274,13 @@ export const DashboardPage: React.FC = () => {
           <UpcomingEventsWidget />
         </div>
       </div>
+
+      {/* 🖼️ Modal Thay Đổi Ảnh Từ Đường & Banner */}
+      <AncestralBannerModal
+        isOpen={isBannerModalOpen}
+        onClose={() => setIsBannerModalOpen(false)}
+        family={currentFamily}
+      />
     </div>
   );
 };

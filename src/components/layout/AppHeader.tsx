@@ -472,7 +472,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                       className="w-full px-4 py-2 text-left text-purple-700 hover:bg-purple-50 flex items-center gap-2 font-bold"
                     >
                       <Shield className="w-4 h-4 text-purple-600" />
-                      <span>Chuyển Sang Quản Trị SaaS</span>
+                      <span>Quản Trị Hệ Thống Nền Tảng</span>
                     </Link>
                   )}
                 </div>

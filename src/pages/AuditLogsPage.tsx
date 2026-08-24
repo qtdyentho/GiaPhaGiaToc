@@ -51,13 +51,13 @@ export const AuditLogsPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-slate-900 flex items-center space-x-2">
-            <span>Nhật Ký Kiểm Toán Hệ Thống (Audit Logs)</span>
-            <span className="text-xs bg-slate-100 text-slate-800 font-bold px-2.5 py-0.5 rounded-full border border-slate-300">
-              Bất Biến (Immutable)
+            <span>Nhật Ký Hoạt Động & Ghi Nhận Dòng Họ</span>
+            <span className="text-xs bg-emerald-50 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">
+              Lưu Truyền Minh Bạch
             </span>
           </h1>
           <p className="text-xs text-slate-500">
-            Theo dõi 100% các hành động tạo mới, cập nhật, duyệt chi và bút toán đảo ngược theo quy tắc BR-AUDIT-001
+            Ghi nhận toàn bộ các thao tác chỉnh sửa phả hệ, thu chi quỹ họ và duyệt phiếu chi
           </p>
         </div>
       </div>

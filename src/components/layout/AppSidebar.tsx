@@ -70,7 +70,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       items: [
         { to: '/admin/payments', icon: Landmark, label: 'Duyệt Chuyển Khoản' },
         { to: '/admin/billing/config', icon: Settings, label: 'Tài Khoản Nhận Tiền' },
-        { to: '/admin/plans', icon: CreditCard, label: 'Gói Dịch Vụ SaaS' },
+        { to: '/admin/plans', icon: CreditCard, label: 'Cấu Hình Gói Dịch Vụ' },
         { to: '/admin/subscriptions', icon: ReceiptText, label: 'Danh Sách Thuê Bao' },
       ],
     },
