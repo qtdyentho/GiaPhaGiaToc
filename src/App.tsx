@@ -35,6 +35,11 @@ import { AdminSubscriptionsPage } from './pages/AdminSubscriptionsPage';
 import { BetaControlCenterPage } from './pages/BetaControlCenterPage';
 
 import SupportCenterPage from './pages/SupportCenterPage';
+import BetaCommandCenterPage from './pages/admin/BetaCommandCenterPage';
+import IntegrityWatchdogPage from './pages/admin/IntegrityWatchdogPage';
+import FinancialReconciliationPage from './pages/admin/FinancialReconciliationPage';
+import BetaEvidencePage from './pages/admin/BetaEvidencePage';
+import BetaExitAuditPage from './pages/admin/BetaExitAuditPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -88,8 +93,12 @@ export const App: React.FC = () => {
 
           {/* Admin Routes */}
           <Route path="/admin" element={<AppLayout />}>
-            <Route index element={<Navigate to="/admin/revenue" replace />} />
-            <Route path="beta" element={<BetaControlCenterPage />} />
+            <Route index element={<Navigate to="/admin/beta" replace />} />
+            <Route path="beta" element={<BetaCommandCenterPage />} />
+            <Route path="integrity" element={<IntegrityWatchdogPage />} />
+            <Route path="reconciliation" element={<FinancialReconciliationPage />} />
+            <Route path="beta/evidence" element={<BetaEvidencePage />} />
+            <Route path="beta/exit-audit" element={<BetaExitAuditPage />} />
             <Route path="revenue" element={<AdminRevenuePage />} />
             <Route path="plans" element={<AdminPlansPage />} />
             <Route path="subscriptions" element={<AdminSubscriptionsPage />} />
