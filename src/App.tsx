@@ -1,0 +1,93 @@
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AppLayout } from './components/layout/AppLayout';
+import { DashboardPage } from './pages/DashboardPage';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
+import { GenealogyTreePage } from './pages/GenealogyTreePage';
+import { MembersListPage } from './pages/MembersListPage';
+import { FamilyCalendarPage } from './pages/FamilyCalendarPage';
+import { FinanceDashboardPage } from './pages/FinanceDashboardPage';
+import { BillingOverviewPage } from './pages/BillingOverviewPage';
+import { PricingPage } from './pages/PricingPage';
+import { CheckoutPage } from './pages/CheckoutPage';
+import { AdminRevenuePage } from './pages/AdminRevenuePage';
+import { CreateFamilyPage } from './pages/CreateFamilyPage';
+import { FamilySettingsPage } from './pages/FamilySettingsPage';
+import { MemberProfilePage } from './pages/MemberProfilePage';
+import { MemorialsPage } from './pages/MemorialsPage';
+import { EventsListPage } from './pages/EventsListPage';
+import { ReminderSettingsPage } from './pages/ReminderSettingsPage';
+import { FundLedgerPage } from './pages/FundLedgerPage';
+import { IncomeAssessmentsPage } from './pages/IncomeAssessmentsPage';
+import { ExpensesPage } from './pages/ExpensesPage';
+import { PermissionsPage } from './pages/PermissionsPage';
+import { AuditLogsPage } from './pages/AuditLogsPage';
+import { NotificationsPage } from './pages/NotificationsPage';
+import { AdminPlansPage } from './pages/AdminPlansPage';
+import { AdminSubscriptionsPage } from './pages/AdminSubscriptionsPage';
+import { BetaControlCenterPage } from './pages/BetaControlCenterPage';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    },
+  },
+});
+
+export const App: React.FC = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Routes>
+          {/* Public & Auth Routes */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/onboarding/create-family" element={<CreateFamilyPage />} />
+
+          {/* Authenticated App Shell Routes */}
+          <Route path="/app" element={<AppLayout />}>
+            <Route index element={<Navigate to="/app/dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="genealogy" element={<GenealogyTreePage />} />
+            <Route path="members" element={<MembersListPage />} />
+            <Route path="members/:id" element={<MemberProfilePage />} />
+            <Route path="calendar" element={<FamilyCalendarPage />} />
+            <Route path="memorials" element={<MemorialsPage />} />
+            <Route path="events" element={<EventsListPage />} />
+            <Route path="settings/reminders" element={<ReminderSettingsPage />} />
+            <Route path="finance" element={<FinanceDashboardPage />} />
+            <Route path="finance/ledger" element={<FundLedgerPage />} />
+            <Route path="finance/income" element={<IncomeAssessmentsPage />} />
+            <Route path="finance/expenses" element={<ExpensesPage />} />
+            <Route path="billing" element={<BillingOverviewPage />} />
+            <Route path="billing/usage" element={<BillingOverviewPage />} />
+            <Route path="billing/invoices" element={<BillingOverviewPage />} />
+            <Route path="billing/checkout" element={<CheckoutPage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="family/settings" element={<FamilySettingsPage />} />
+            <Route path="settings/permissions" element={<PermissionsPage />} />
+            <Route path="audit" element={<AuditLogsPage />} />
+          </Route>
+
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AppLayout />}>
+            <Route index element={<Navigate to="/admin/revenue" replace />} />
+            <Route path="beta" element={<BetaControlCenterPage />} />
+            <Route path="revenue" element={<AdminRevenuePage />} />
+            <Route path="plans" element={<AdminPlansPage />} />
+            <Route path="subscriptions" element={<AdminSubscriptionsPage />} />
+            <Route path="transactions" element={<AdminRevenuePage />} />
+          </Route>
+
+          {/* Default Fallback */}
+          <Route path="*" element={<Navigate to="/app/dashboard" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </QueryClientProvider>
+  );
+};
