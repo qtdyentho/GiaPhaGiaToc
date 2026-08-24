@@ -16,7 +16,8 @@ import {
   BadgePercent,
   ReceiptText,
   HeartHandshake,
-  Trophy
+  Trophy,
+  LifeBuoy
 } from 'lucide-react';
 import { BRAND } from '../../lib/constants';
 
@@ -67,6 +68,7 @@ const navSections: { title: string; items: NavItem[] }[] = [
       { to: '/app/billing', icon: CreditCard, label: 'Gói Dịch Vụ Gia Tộc', badge: 'Gia Tộc' },
       { to: '/app/billing/usage', icon: ShieldCheck, label: 'Hạn Mức & Sử Dụng' },
       { to: '/app/billing/invoices', icon: ReceiptText, label: 'Lịch Sử Hóa Đơn' },
+      { to: '/app/support', icon: LifeBuoy, label: 'Hỗ Trợ & Góp Ý', badge: 'Beta' },
     ],
   },
   {

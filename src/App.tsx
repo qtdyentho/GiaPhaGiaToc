@@ -34,6 +34,8 @@ import { AdminPlansPage } from './pages/AdminPlansPage';
 import { AdminSubscriptionsPage } from './pages/AdminSubscriptionsPage';
 import { BetaControlCenterPage } from './pages/BetaControlCenterPage';
 
+import SupportCenterPage from './pages/SupportCenterPage';
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -77,6 +79,7 @@ export const App: React.FC = () => {
             <Route path="billing/usage" element={<UsageDashboardPage />} />
             <Route path="billing/invoices" element={<InvoicesPage />} />
             <Route path="billing/checkout" element={<CheckoutPage />} />
+            <Route path="support" element={<SupportCenterPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="family/settings" element={<FamilySettingsPage />} />
             <Route path="settings/permissions" element={<PermissionsPage />} />
