@@ -32,20 +32,41 @@ export class MemorialService {
       }
     }
 
-    // Fallback Mock Store with dynamic next solar date calculation
-    return mockMemorialDates
-      .filter((m) => m.family_id === familyId)
-      .map((mem) => {
-        const next = LunarCalendarService.getNextSolarDateForMemorial(
-          mem.lunar_day,
-          mem.lunar_month,
-          mem.is_leap_month
-        );
-        return {
-          ...mem,
-          next_solar_date: next.solarDate,
-        };
-      });
+    // Fallback Mock Store with dynamic next solar date calculation + Auto-sync from deceased genealogy members
+    const deceasedMembers = mockMembers.filter(
+      (m) => m.family_id === familyId && m.life_status === 'DECEASED' && m.death_lunar_day && m.death_lunar_month
+    );
+
+    const merged = [...mockMemorialDates.filter((m) => m.family_id === familyId)];
+
+    for (const d of deceasedMembers) {
+      if (!merged.some((m) => m.member_id === d.id)) {
+        merged.push({
+          id: `auto-mem-${d.id}`,
+          family_id: d.family_id,
+          member_id: d.id,
+          title: `Lễ Giỗ: ${d.full_name.replace(/\(.*?\)/g, '').trim()}`,
+          lunar_day: d.death_lunar_day!,
+          lunar_month: d.death_lunar_month!,
+          is_leap_month: false,
+          notes: `Tự động đồng bộ từ Cây Phả Hệ (${d.burial_place || 'Khu lăng mộ Tổ'})`,
+          created_at: d.created_at,
+          updated_at: d.updated_at,
+        });
+      }
+    }
+
+    return merged.map((mem) => {
+      const next = LunarCalendarService.getNextSolarDateForMemorial(
+        mem.lunar_day,
+        mem.lunar_month,
+        mem.is_leap_month
+      );
+      return {
+        ...mem,
+        next_solar_date: next.solarDate,
+      };
+    });
   }
 
   /**
