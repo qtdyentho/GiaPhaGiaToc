@@ -1,5 +1,5 @@
 -- ============================================================
--- SEED DATA: INTERNAL ALPHA TEST DATASET (100% SCHEMA COMPLIANT)
+-- SEED DATA: INTERNAL ALPHA TEST DATASET (100% STRICT HEX UUID COMPLIANT)
 -- DỰ ÁN: GIA PHẢ GIA TỘC (GIA PHA GIA TOC ENTERPRISE)
 -- ============================================================
 
@@ -112,7 +112,7 @@ INSERT INTO family_memberships (family_id, user_id, role, status) VALUES
 ON CONFLICT (family_id, user_id) DO NOTHING;
 
 -- ------------------------------------------------------------
--- 5. GENERATIONS & BRANCHES (Có đầy đủ trường code)
+-- 5. GENERATIONS & BRANCHES (Có đầy đủ trường code & Hex UUID)
 -- ------------------------------------------------------------
 INSERT INTO generations (id, family_id, generation_number, name) VALUES
 ('a1111111-0001-0000-0000-000000000001', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 1, 'Đời thứ 1 (Thủy Tổ)'),
@@ -235,7 +235,7 @@ INSERT INTO invoices (
     id, family_id, subscription_id, invoice_number, subtotal, discount, tax, total, currency, status, issued_at, due_at, paid_at
 ) VALUES
 (
-    'i1111111-0001-0000-0000-000000000001',
+    'f0000001-0001-0000-0000-000000000001',
     'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     'd1111111-0001-0000-0000-000000000001',
     'GP-INV20260101-0001',
