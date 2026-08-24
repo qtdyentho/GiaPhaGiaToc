@@ -159,6 +159,14 @@ export interface Member {
   family_id: string;
   generation_id?: string;
   branch_id?: string;
+  father_id?: string;
+  mother_id?: string;
+  spouse_id?: string;
+  birth_order?: number;
+  generation_index?: number;
+  branch_code?: string;
+  branch_path?: string;
+  is_direct_lineage?: boolean;
   first_name: string;
   last_name: string;
   full_name: string;
@@ -179,6 +187,18 @@ export interface Member {
   bio?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface KinshipResult {
+  term_a_calls_b: string;
+  term_b_calls_a: string;
+  generation_distance: number;
+  relationship_category: string;
+  seniority: 'A_IS_SENIOR' | 'B_IS_SENIOR' | 'EQUAL';
+  lca_name: string;
+  explanation: string;
+  greeting_guide?: string;
+  connection_path?: string[];
 }
 
 export interface MemberRelationship {

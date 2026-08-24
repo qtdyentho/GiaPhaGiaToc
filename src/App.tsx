@@ -14,6 +14,7 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { GenealogyTreePage } from './pages/GenealogyTreePage';
 import { MembersListPage } from './pages/MembersListPage';
+import { KinshipCalculatorPage } from './pages/KinshipCalculatorPage';
 import { FamilyCalendarPage } from './pages/FamilyCalendarPage';
 import { FinanceDashboardPage } from './pages/FinanceDashboardPage';
 import { BillingOverviewPage } from './pages/BillingOverviewPage';
@@ -98,6 +99,7 @@ export const App: React.FC = () => {
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="genealogy" element={<GenealogyTreePage />} />
               <Route path="members" element={<MembersListPage />} />
+              <Route path="kinship" element={<KinshipCalculatorPage />} />
               <Route path="members/me" element={<MemberProfilePage />} />
               <Route path="members/:id" element={<MemberProfilePage />} />
               <Route path="calendar" element={<FamilyCalendarPage />} />

@@ -22,6 +22,7 @@ import {
   BarChart3,
   FileCheck2,
   PanelLeftClose,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { BRAND } from '../../lib/constants';
 import { UI_COPY } from '../../config/uiCopy';
@@ -97,6 +98,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       items: [
         { to: '/app/genealogy', icon: GitFork, label: UI_COPY.navigation.genealogy },
         { to: '/app/members', icon: Users, label: UI_COPY.navigation.members },
+        { to: '/app/kinship', icon: ArrowRightLeft, label: 'Tra Cứu Danh Xưng (Xưng Hô)' },
       ],
     },
     {
@@ -144,6 +146,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       items: [
         { to: '/app/genealogy', icon: GitFork, label: 'Xem Cây Gia Phả' },
         { to: '/app/members', icon: Users, label: 'Danh Sách Bà Con' },
+        { to: '/app/kinship', icon: ArrowRightLeft, label: 'Tra Cứu Xưng Hô' },
       ],
     },
     {

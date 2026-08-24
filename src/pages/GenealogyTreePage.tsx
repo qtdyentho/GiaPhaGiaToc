@@ -10,7 +10,9 @@ import {
   Heart,
   UserPlus,
   GitFork,
-  LayoutGrid
+  LayoutGrid,
+  ArrowRightLeft,
+  Sparkles
 } from 'lucide-react';
 import { Member, Generation, Branch, MemberRelationship } from '../types/database';
 import { GenealogyService, FamilyTreeData } from '../services/GenealogyService';
@@ -18,6 +20,8 @@ import { GenealogyCanvas } from '../components/genealogy/GenealogyCanvas';
 import { AddMemberRelationModal } from '../components/genealogy/AddMemberRelationModal';
 import { ExportTreeModal } from '../components/genealogy/ExportTreeModal';
 import { DataImportWizardModal } from '../components/genealogy/DataImportWizardModal';
+import { KinshipCalculatorModal } from '../components/genealogy/KinshipCalculatorModal';
+import { Link } from 'react-router-dom';
 
 export const GenealogyTreePage: React.FC = () => {
   const [treeData, setTreeData] = useState<FamilyTreeData>({
@@ -36,6 +40,7 @@ export const GenealogyTreePage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isKinshipModalOpen, setIsKinshipModalOpen] = useState(false);
   const [relationTarget, setRelationTarget] = useState<Member | null>(null);
   const [initialRelationType, setInitialRelationType] = useState<'CHILD' | 'SPOUSE' | 'PARENT'>('CHILD');
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
@@ -221,6 +226,14 @@ export const GenealogyTreePage: React.FC = () => {
             <span>Thêm Thành Viên</span>
           </button>
 
+          <Link
+            to="/app/kinship"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-amber-950 text-xs font-bold transition shadow-2xs border border-amber-400"
+          >
+            <ArrowRightLeft className="w-3.5 h-3.5" />
+            <span>Tra Cứu Xưng Hô</span>
+          </Link>
+
           <button
             onClick={() => setIsExportModalOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2 bg-[#166534] hover:bg-[#14532d] text-white font-bold text-xs rounded-xl shadow-sm transition-all"
@@ -343,24 +356,35 @@ export const GenealogyTreePage: React.FC = () => {
             </div>
 
             {/* Bottom Actions Buttons */}
-            <div className="pt-4 border-t border-slate-100 grid grid-cols-2 gap-3">
+            <div className="pt-4 border-t border-slate-100 space-y-2">
               <button
-                onClick={() => {
-                  handleOpenAddRelation(selectedMember, 'CHILD');
-                }}
-                className="py-2.5 px-4 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold rounded-xl text-xs transition-colors shadow-sm text-center"
+                type="button"
+                onClick={() => setIsKinshipModalOpen(true)}
+                className="w-full py-2.5 px-4 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-950 font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-2xs"
               >
-                Chỉnh sửa
+                <ArrowRightLeft className="w-4 h-4 text-amber-700" />
+                <span>Tra Cứu Cách Xưng Hô Với Người Này</span>
               </button>
 
-              <button
-                onClick={() => {
-                  window.location.href = `/app/members/${selectedMember.id}`;
-                }}
-                className="py-2.5 px-4 bg-[#166534] hover:bg-[#14532d] text-white font-bold rounded-xl text-xs transition-colors shadow-sm text-center"
-              >
-                Xem hồ sơ
-              </button>
+              <div className="grid grid-cols-2 gap-2.5">
+                <button
+                  onClick={() => {
+                    handleOpenAddRelation(selectedMember, 'CHILD');
+                  }}
+                  className="py-2 px-3 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold rounded-xl text-xs transition-colors shadow-sm text-center"
+                >
+                  Chỉnh sửa
+                </button>
+
+                <button
+                  onClick={() => {
+                    window.location.href = `/app/members/${selectedMember.id}`;
+                  }}
+                  className="py-2 px-3 bg-[#166534] hover:bg-[#14532d] text-white font-bold rounded-xl text-xs transition-colors shadow-sm text-center"
+                >
+                  Xem hồ sơ
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -390,6 +414,13 @@ export const GenealogyTreePage: React.FC = () => {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         onSuccess={loadTree}
+      />
+
+      {/* Tra Cứu Danh Xưng Modal */}
+      <KinshipCalculatorModal
+        isOpen={isKinshipModalOpen}
+        onClose={() => setIsKinshipModalOpen(false)}
+        initialMemberBId={selectedMember?.id}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, Plus, Download, FileSpreadsheet, Sparkles, MapPin, Users } from 'lucide-react';
+import { Search, Filter, Plus, Download, FileSpreadsheet, Sparkles, MapPin, Users, ArrowRightLeft } from 'lucide-react';
 import { mockMembers, mockGenerations, mockBranches, mockFamily } from '../services/mockData';
 import { Link } from 'react-router-dom';
 import { DataImportWizardModal } from '../components/genealogy/DataImportWizardModal';
@@ -67,6 +67,13 @@ export const MembersListPage: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center space-x-2">
+          <Link
+            to="/app/kinship"
+            className="flex items-center space-x-1.5 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-amber-950 text-xs font-bold rounded-xl transition shadow-2xs border border-amber-400"
+          >
+            <ArrowRightLeft className="w-4 h-4" />
+            <span>Tra Cứu Xưng Hô</span>
+          </Link>
           <button
             onClick={() => setIsImportModalOpen(true)}
             className="flex items-center space-x-1.5 px-3 py-2 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 text-[#166534] text-xs font-bold rounded-xl transition shadow-2xs cursor-pointer"
