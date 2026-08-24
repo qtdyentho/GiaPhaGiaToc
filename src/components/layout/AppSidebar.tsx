@@ -83,19 +83,42 @@ const navSections: { title: string; items: NavItem[] }[] = [
   },
 ];
 
-export const AppSidebar: React.FC = () => {
+export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ isOpen = false, onClose }) => {
   return (
-    <aside className="w-64 bg-heritage-navy text-slate-300 flex flex-col shrink-0 min-h-screen border-r border-slate-800">
-      {/* Brand Header */}
-      <div className="h-16 px-6 flex items-center space-x-3 border-b border-slate-700/60 bg-heritage-navy-dark">
-        <div className="w-9 h-9 rounded-lg bg-heritage-green flex items-center justify-center text-heritage-gold shadow-md font-bold text-lg">
-          GP
+    <>
+      {/* Mobile Backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      <aside
+        className={`fixed lg:static inset-y-0 left-0 z-40 w-[280px] bg-heritage-navy text-slate-300 flex flex-col shrink-0 min-h-screen border-r border-slate-800 transform transition-transform duration-200 ease-in-out ${
+          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}
+      >
+        {/* Brand Header */}
+        <div className="h-16 px-6 flex items-center justify-between border-b border-slate-700/60 bg-heritage-navy-dark">
+          <div className="flex items-center space-x-3">
+            <div className="w-9 h-9 rounded-lg bg-heritage-green flex items-center justify-center text-heritage-gold shadow-md font-bold text-lg border border-heritage-gold/30">
+              GP
+            </div>
+            <div>
+              <div className="font-bold text-sm text-white tracking-wide">{BRAND.name}</div>
+              <div className="text-[10px] text-amber-300 font-medium tracking-tight">Heritage Ledger v2.0</div>
+            </div>
+          </div>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="lg:hidden text-slate-400 hover:text-white p-1"
+            >
+              ✕
+            </button>
+          )}
         </div>
-        <div>
-          <div className="font-bold text-sm text-white tracking-wide">{BRAND.name}</div>
-          <div className="text-[10px] text-amber-300 font-medium tracking-tight">Heritage Ledger v2.0</div>
-        </div>
-      </div>
 
       {/* Navigation Links */}
       <div className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
@@ -158,6 +181,7 @@ export const AppSidebar: React.FC = () => {
           <ChevronRight className="w-3.5 h-3.5" />
         </NavLink>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 };

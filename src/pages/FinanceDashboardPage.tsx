@@ -14,12 +14,15 @@ import {
   HeartHandshake,
   Trophy,
   Landmark,
+  ChevronRight,
 } from 'lucide-react';
 import { FundService } from '../services/FundService';
 import { Fund, FinancialTransaction } from '../types/database';
 import { RecordIncomeModal } from '../components/finance/RecordIncomeModal';
 import { CreateExpenseModal } from '../components/finance/CreateExpenseModal';
 import { CreateFundModal } from '../components/finance/CreateFundModal';
+import { formatCurrency, formatDate } from '../lib/utils';
+import { Button, Card, Badge, PageHeader, StatCard } from '../components/ui';
 
 export const FinanceDashboardPage: React.FC = () => {
   const [summary, setSummary] = useState<{
@@ -39,6 +42,7 @@ export const FinanceDashboardPage: React.FC = () => {
     funds: [],
     recentTransactions: [],
   });
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Modals
@@ -49,8 +53,12 @@ export const FinanceDashboardPage: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const data = await FundService.getSummary();
-      setSummary(data);
+      const [summaryData, catData] = await Promise.all([
+        FundService.getSummary(),
+        FundService.getExpenseCategories(),
+      ]);
+      setSummary(summaryData);
+      setCategories(catData);
     } catch (err) {
       console.error('Lỗi khi tải tổng quan tài chính:', err);
     } finally {
@@ -64,265 +72,231 @@ export const FinanceDashboardPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+      {/* Page Header */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-card flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-heritage-green via-heritage-gold to-heritage-navy" />
+        
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-heritage-gold shrink-0">
             <Wallet className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2.5">
-              <span>Trung Tâm Tài Chính & Sổ Quỹ Gia Tộc</span>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-semibold">
-                Financial Core v2.0
-              </span>
-            </h1>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 font-sans tracking-tight">
+                Trung Tâm Tài Chính & Sổ Quỹ Gia Tộc
+              </h1>
+              <Badge variant="gold">Financial Core v2.0</Badge>
+              <Badge variant="success">Bất biến 100%</Badge>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
               Kế toán kép bất biến, minh bạch tuyệt đối 100% dòng tiền & công đức dòng họ
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => setIsCreateFundOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 text-slate-300 hover:text-slate-100 text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+            icon={<Landmark className="w-4 h-4 text-heritage-gold" />}
           >
-            <Landmark className="w-4 h-4 text-amber-400" />
-            <span>Tạo Quỹ Mới</span>
-          </button>
+            Tạo Quỹ Mới
+          </Button>
 
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => setIsRecordIncomeOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+            icon={<ArrowDownLeft className="w-4 h-4" />}
           >
-            <ArrowDownLeft className="w-4 h-4 text-emerald-400" />
-            <span>Ghi Thu Quỹ</span>
-          </button>
+            Ghi Thu Quỹ
+          </Button>
 
-          <button
+          <Button
+            variant="gold"
+            size="sm"
             onClick={() => setIsCreateExpenseOpen(true)}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-slate-100 text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-rose-500/20"
+            icon={<ArrowUpRight className="w-4 h-4" />}
           >
-            <Plus className="w-4 h-4" />
-            <span>Đề Xuất Chi Quỹ</span>
-          </button>
+            Đề Xuất Chi
+          </Button>
         </div>
       </div>
 
-      {/* Navigation Hub: 5 Core Modules */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      {/* KPI Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Tổng Số Dư Khả Dụng"
+          value={formatCurrency(summary.totalBalance)}
+          subtitle={`${summary.funds.length} Quỹ hoạt động`}
+          icon={<Wallet className="w-5 h-5 text-heritage-green" />}
+          variant="green"
+        />
+
+        <StatCard
+          title="Tổng Thu Lũy Kế"
+          value={formatCurrency(summary.totalIncome)}
+          subtitle="Bổ phần & Công đức"
+          icon={<TrendingUp className="w-5 h-5 text-emerald-600" />}
+          variant="default"
+        />
+
+        <StatCard
+          title="Tổng Chi Lũy Kế"
+          value={formatCurrency(summary.totalExpense)}
+          subtitle={`${summary.pendingExpensesCount} Khoản chi chờ duyệt`}
+          icon={<TrendingDown className="w-5 h-5 text-red-600" />}
+          variant="default"
+        />
+
+        <StatCard
+          title="Công Nợ Cần Thu"
+          value={formatCurrency(summary.totalReceivable)}
+          subtitle="Bổ phần định kỳ chưa thu"
+          icon={<ReceiptText className="w-5 h-5 text-amber-600" />}
+          variant="gold"
+        />
+      </div>
+
+      {/* Quick Navigation Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Link
           to="/app/finance/ledger"
-          className="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-amber-500/40 transition-all flex flex-col items-center text-center gap-2 group shadow-lg"
+          className="p-4 rounded-xl bg-white border border-slate-200 hover:border-heritage-green hover:shadow-card transition flex items-center justify-between group"
         >
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
-            <BookOpen className="w-5 h-5" />
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-emerald-50 text-heritage-green group-hover:bg-heritage-green group-hover:text-white transition">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-slate-800">Sổ Quỹ Bất Biến</div>
+              <div className="text-[11px] text-slate-500">Tra cứu & Bút toán hoàn trả</div>
+            </div>
           </div>
-          <div>
-            <h4 className="text-xs font-bold text-slate-100 group-hover:text-amber-400 transition-colors">Sổ Quỹ Bất Biến</h4>
-            <span className="text-[11px] text-slate-500">Immutable Ledger</span>
-          </div>
+          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-heritage-green transition" />
         </Link>
 
         <Link
           to="/app/finance/income"
-          className="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-emerald-500/40 transition-all flex flex-col items-center text-center gap-2 group shadow-lg"
+          className="p-4 rounded-xl bg-white border border-slate-200 hover:border-heritage-green hover:shadow-card transition flex items-center justify-between group"
         >
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
-            <ReceiptText className="w-5 h-5" />
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-emerald-50 text-heritage-green group-hover:bg-heritage-green group-hover:text-white transition">
+              <Receipt className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-slate-800">Thu Định Mức</div>
+              <div className="text-[11px] text-slate-500">Bổ phần định kỳ dòng họ</div>
+            </div>
           </div>
-          <div>
-            <h4 className="text-xs font-bold text-slate-100 group-hover:text-emerald-400 transition-colors">Định Mức Thu</h4>
-            <span className="text-[11px] text-slate-500">Phân bổ & Thực thu</span>
-          </div>
+          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-heritage-green transition" />
         </Link>
 
         <Link
           to="/app/finance/expenses"
-          className="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-rose-500/40 transition-all flex flex-col items-center text-center gap-2 group shadow-lg"
+          className="p-4 rounded-xl bg-white border border-slate-200 hover:border-heritage-green hover:shadow-card transition flex items-center justify-between group"
         >
-          <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 group-hover:scale-110 transition-transform">
-            <Receipt className="w-5 h-5" />
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-emerald-50 text-heritage-green group-hover:bg-heritage-green group-hover:text-white transition">
+              <ArrowUpRight className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-slate-800">Khoản Chi & Duyệt Chi</div>
+              <div className="text-[11px] text-slate-500">Quy trình duyệt chi 2 cấp</div>
+            </div>
           </div>
-          <div>
-            <h4 className="text-xs font-bold text-slate-100 group-hover:text-rose-400 transition-colors">Duyệt Chi Quỹ</h4>
-            <span className="text-[11px] text-slate-500">Kiểm soát giải ngân</span>
-          </div>
-        </Link>
-
-        <Link
-          to="/app/finance/contributions"
-          className="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-cyan-500/40 transition-all flex flex-col items-center text-center gap-2 group shadow-lg"
-        >
-          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
-            <HeartHandshake className="w-5 h-5" />
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-slate-100 group-hover:text-cyan-400 transition-colors">Đóng Góp & Tài Trợ</h4>
-            <span className="text-[11px] text-slate-500">Hảo tâm tự nguyện</span>
-          </div>
+          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-heritage-green transition" />
         </Link>
 
         <Link
           to="/app/finance/honor-roll"
-          className="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-amber-400/40 transition-all flex flex-col items-center text-center gap-2 group shadow-lg col-span-2 md:col-span-1"
+          className="p-4 rounded-xl bg-white border border-slate-200 hover:border-heritage-green hover:shadow-card transition flex items-center justify-between group"
         >
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-300 group-hover:scale-110 transition-transform">
-            <Trophy className="w-5 h-5" />
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-amber-50 text-heritage-gold group-hover:bg-heritage-gold group-hover:text-white transition">
+              <Trophy className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-slate-800">Bảng Vàng Danh Dự</div>
+              <div className="text-[11px] text-slate-500">Vinh danh công đức dòng họ</div>
+            </div>
           </div>
-          <div>
-            <h4 className="text-xs font-bold text-slate-100 group-hover:text-amber-300 transition-colors">Bảng Vàng Công Đức</h4>
-            <span className="text-[11px] text-slate-500">Vinh danh dòng họ</span>
-          </div>
+          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-heritage-green transition" />
         </Link>
       </div>
 
-      {/* Overview Financial Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-            <Wallet className="w-4 h-4 text-amber-400" />
-            <span>Tổng Quỹ Khả Dụng</span>
-          </div>
-          <div className="text-2xl font-black text-amber-400 font-mono mt-2">
-            {summary.totalBalance.toLocaleString()} ₫
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1">{summary.funds.length} quỹ đang hoạt động</div>
-        </div>
-
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg">
-          <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 uppercase tracking-wider">
-            <TrendingUp className="w-4 h-4" />
-            <span>Tổng Thu Vào Quỹ</span>
-          </div>
-          <div className="text-2xl font-black text-emerald-400 font-mono mt-2">
-            {summary.totalIncome.toLocaleString()} ₫
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1">Đã vào Sổ cái POSTED</div>
-        </div>
-
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg">
-          <div className="flex items-center gap-2 text-xs font-bold text-rose-400 uppercase tracking-wider">
-            <TrendingDown className="w-4 h-4" />
-            <span>Tổng Chi Đã Phê Duyệt</span>
-          </div>
-          <div className="text-2xl font-black text-rose-400 font-mono mt-2">
-            {summary.totalExpense.toLocaleString()} ₫
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1">Đã kiểm toán & trừ quỹ</div>
-        </div>
-
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg">
-          <div className="flex items-center gap-2 text-xs font-bold text-amber-300 uppercase tracking-wider">
-            <ReceiptText className="w-4 h-4" />
-            <span>Chờ Nộp / Tồn Đọng</span>
-          </div>
-          <div className="text-2xl font-black text-amber-300 font-mono mt-2">
-            {summary.totalReceivable.toLocaleString()} ₫
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1">{summary.pendingExpensesCount} phiếu chi chờ duyệt</div>
-        </div>
-      </div>
-
-      {/* Funds Cards */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-          <Landmark className="w-4 h-4 text-amber-400" />
-          <span>Danh Sách Các Quỹ Gia Tộc</span>
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {summary.funds.map((fund) => (
-            <div key={fund.id} className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-lg space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-200">{fund.name}</span>
-                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold px-2 py-0.5 rounded-full">
-                  HOẠT ĐỘNG
-                </span>
-              </div>
-              <div className="text-xl font-bold text-amber-400 font-mono">
-                {Number(fund.current_balance || 0).toLocaleString()} ₫
-              </div>
-              <div className="text-[11px] text-slate-400">
-                Số dư đầu kỳ: {Number(fund.opening_balance || 0).toLocaleString()} ₫
-              </div>
+      {/* Main Content Grid: Funds and Recent Transactions */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left 2 Cols: Funds List */}
+        <div className="lg:col-span-2 space-y-4">
+          <Card className="p-0 overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+                <Landmark className="w-4 h-4 text-heritage-green" />
+                <span>Danh Sách Quỹ Gia Tộc Hoạt Động</span>
+              </h2>
+              <Badge variant="neutral">{summary.funds.length} Quỹ</Badge>
             </div>
-          ))}
-        </div>
-      </div>
 
-      {/* Recent Ledger Transactions */}
-      <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-            <BookOpen className="w-4 h-4 text-amber-400" />
-            <span>Bút Toán Giao Dịch Gần Đây</span>
-          </h3>
-          <Link
-            to="/app/finance/ledger"
-            className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1"
-          >
-            <span>Xem tất cả sổ cái</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/80 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              <tr>
-                <th className="py-3 px-4">Mã Giao Dịch</th>
-                <th className="py-3 px-4">Ngày</th>
-                <th className="py-3 px-4">Nội Dung</th>
-                <th className="py-3 px-4">Phương Thức</th>
-                <th className="py-3 px-4 text-right">Số Tiền</th>
-                <th className="py-3 px-4 text-center">Trạng Thái</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              {summary.recentTransactions.map((tx) => (
-                <tr key={tx.id} className="hover:bg-slate-800/40 transition">
-                  <td className="py-3.5 px-4 font-mono font-bold text-slate-100">{tx.transaction_code}</td>
-                  <td className="py-3.5 px-4 text-slate-400">{tx.transaction_date}</td>
-                  <td className="py-3.5 px-4 font-medium text-slate-200">{tx.description}</td>
-                  <td className="py-3.5 px-4">
-                    <span className="px-2 py-0.5 bg-slate-800 border border-slate-700 text-slate-300 rounded font-medium text-[11px]">
-                      {tx.payment_method}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <span
-                      className={`font-bold font-mono ${
-                        tx.transaction_type === 'INCOME'
-                          ? 'text-emerald-400'
-                          : tx.transaction_type === 'REVERSAL'
-                          ? 'text-amber-400'
-                          : 'text-rose-400'
-                      }`}
-                    >
-                      {tx.transaction_type === 'INCOME' ? '+' : tx.transaction_type === 'REVERSAL' ? '↺' : '-'}
-                      {Number(tx.amount).toLocaleString()} ₫
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 text-center">
-                    <span className="px-2 py-0.5 bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-semibold rounded-full text-[10px]">
-                      POSTED
-                    </span>
-                  </td>
-                </tr>
+            <div className="divide-y divide-slate-100">
+              {summary.funds.map((fund) => (
+                <div key={fund.id} className="p-4 sm:p-5 hover:bg-slate-50/80 transition flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center font-bold text-heritage-green shrink-0">
+                      {fund.name.charAt(0)}
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900">{fund.name}</h3>
+                      <p className="text-xs text-slate-500 line-clamp-1">{fund.description || 'Quỹ chuyên dùng của dòng họ'}</p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-sm sm:text-base font-bold text-slate-900">{formatCurrency(fund.current_balance)}</div>
+                    <Badge variant={fund.current_balance > 0 ? 'success' : 'neutral'} size="sm">
+                      {fund.current_balance > 0 ? 'Có số dư' : 'Số dư 0đ'}
+                    </Badge>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </Card>
+        </div>
+
+        {/* Right 1 Col: Recent Transactions */}
+        <div className="space-y-4">
+          <Card className="p-0 overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-heritage-navy" />
+                <span>Bút Toán Gần Đây</span>
+              </h2>
+              <Link to="/app/finance/ledger" className="text-xs font-semibold text-heritage-green hover:underline">
+                Xem tất cả
+              </Link>
+            </div>
+
+            <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
+              {summary.recentTransactions.map((tx) => (
+                <div key={tx.id} className="p-3.5 hover:bg-slate-50/80 transition text-xs flex items-center justify-between gap-2">
+                  <div>
+                    <p className="font-semibold text-slate-900 line-clamp-1">{tx.description}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{formatDate(tx.transaction_date)} • {tx.transaction_type}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className={`font-bold ${tx.amount >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {tx.amount >= 0 ? '+' : ''}{formatCurrency(tx.amount)}
+                    </p>
+                    <Badge variant="neutral" size="sm">{tx.status}</Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
       </div>
 
       {/* Modals */}
-      <CreateFundModal
-        isOpen={isCreateFundOpen}
-        onClose={() => setIsCreateFundOpen(false)}
-        onSuccess={loadData}
-      />
-
       <RecordIncomeModal
         isOpen={isRecordIncomeOpen}
         onClose={() => setIsRecordIncomeOpen(false)}
@@ -335,7 +309,13 @@ export const FinanceDashboardPage: React.FC = () => {
         onClose={() => setIsCreateExpenseOpen(false)}
         onSuccess={loadData}
         funds={summary.funds}
-        categories={[]}
+        categories={categories}
+      />
+
+      <CreateFundModal
+        isOpen={isCreateFundOpen}
+        onClose={() => setIsCreateFundOpen(false)}
+        onSuccess={loadData}
       />
     </div>
   );

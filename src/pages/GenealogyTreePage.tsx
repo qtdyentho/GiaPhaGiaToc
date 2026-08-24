@@ -14,6 +14,7 @@ import {
   MapPin,
   FileText,
   ShieldCheck,
+  ChevronRight,
 } from 'lucide-react';
 import { Member, Generation, Branch, MemberRelationship } from '../types/database';
 import { GenealogyService, FamilyTreeData } from '../services/GenealogyService';
@@ -21,6 +22,7 @@ import { GenealogyCanvas } from '../components/genealogy/GenealogyCanvas';
 import { AddMemberRelationModal } from '../components/genealogy/AddMemberRelationModal';
 import { ExportTreeModal } from '../components/genealogy/ExportTreeModal';
 import { DataImportWizardModal } from '../components/genealogy/DataImportWizardModal';
+import { Button, Card, Badge, PageHeader, EmptyState } from '../components/ui';
 
 export const GenealogyTreePage: React.FC = () => {
   const [treeData, setTreeData] = useState<FamilyTreeData>({
@@ -81,24 +83,24 @@ export const GenealogyTreePage: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+    <div className="space-y-6 animate-fade-in">
+      {/* Page Header with Heritage Theme */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-card flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-heritage-green via-heritage-gold to-heritage-navy" />
+        
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-heritage-green shrink-0">
             <GitFork className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2.5">
-              <span>Cây Phả Hệ Tương Tác</span>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 font-semibold">
-                {treeData.generations.length} Thế Hệ
-              </span>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-semibold">
-                {treeData.members.length} Nhân Khẩu
-              </span>
-            </h1>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 font-sans tracking-tight">
+                Cây Phả Hệ Trực Quan
+              </h1>
+              <Badge variant="gold">{treeData.generations.length} Thế Hệ</Badge>
+              <Badge variant="success">{treeData.members.length} Nhân Khẩu</Badge>
+            </div>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
               Khám phá cội nguồn, trực quan hóa phả đồ chi phái & kết nối trực hệ dòng tộc
             </p>
           </div>
@@ -106,48 +108,51 @@ export const GenealogyTreePage: React.FC = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2.5">
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => setIsImportModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 text-slate-300 hover:text-slate-100 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+            icon={<UploadCloud className="w-4 h-4 text-heritage-green" />}
           >
-            <UploadCloud className="w-4 h-4 text-emerald-400" />
-            <span>Nhập Excel / CSV</span>
-          </button>
+            Nhập Excel / CSV
+          </Button>
 
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => setIsExportModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 text-slate-300 hover:text-slate-100 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+            icon={<Printer className="w-4 h-4 text-heritage-gold" />}
           >
-            <Printer className="w-4 h-4 text-amber-400" />
-            <span>Xuất & In Phả Đồ</span>
-          </button>
+            Xuất & In Phả Đồ
+          </Button>
 
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             onClick={handleOpenAddNewRoot}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-amber-500/20 transition-all"
+            icon={<Plus className="w-4 h-4" />}
           >
-            <Plus className="w-4 h-4" />
-            <span>Thêm Thành Viên</span>
-          </button>
+            Thêm Thành Viên
+          </Button>
         </div>
       </div>
 
       {/* Filter & View Switcher Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
-        <div className="flex items-center gap-3 flex-1 min-w-[280px] max-w-md">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
+        <div className="flex items-center gap-3 flex-1 min-w-[260px] max-w-md">
           <div className="relative w-full">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm kiếm theo tên hoặc tiểu sử thành viên..."
-              className="w-full pl-9 pr-4 py-2 bg-slate-800/80 border border-slate-700/80 rounded-xl text-slate-200 placeholder-slate-500 text-xs focus:outline-none focus:border-amber-500"
+              placeholder="Tìm kiếm theo tên hoặc tiểu sử..."
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-heritage-green focus:bg-white transition"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-xs"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -156,13 +161,13 @@ export const GenealogyTreePage: React.FC = () => {
         </div>
 
         {/* View Mode Toggle */}
-        <div className="flex items-center gap-1 bg-slate-800 p-1 rounded-xl border border-slate-700/80">
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
           <button
             onClick={() => setViewMode('CANVAS')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
               viewMode === 'CANVAS'
-                ? 'bg-amber-500 text-slate-950 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-white text-heritage-green shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <GitFork className="w-3.5 h-3.5" />
@@ -173,8 +178,8 @@ export const GenealogyTreePage: React.FC = () => {
             onClick={() => setViewMode('GRID')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
               viewMode === 'GRID'
-                ? 'bg-amber-500 text-slate-950 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-white text-heritage-green shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <LayoutGrid className="w-3.5 h-3.5" />
@@ -185,9 +190,9 @@ export const GenealogyTreePage: React.FC = () => {
 
       {/* Main Content Area */}
       {loading ? (
-        <div className="py-24 flex flex-col items-center justify-center bg-slate-900 border border-slate-800 rounded-2xl">
-          <div className="w-10 h-10 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin"></div>
-          <p className="text-xs text-slate-400 mt-4">Đang kết nối cơ sở dữ liệu và tải cây phả hệ...</p>
+        <div className="py-24 flex flex-col items-center justify-center bg-white border border-slate-200 rounded-2xl shadow-sm">
+          <div className="w-10 h-10 border-4 border-emerald-100 border-t-heritage-green rounded-full animate-spin"></div>
+          <p className="text-xs text-slate-500 mt-4 font-medium">Đang kết nối cơ sở dữ liệu và tải cây phả hệ...</p>
         </div>
       ) : viewMode === 'CANVAS' ? (
         <GenealogyCanvas
@@ -206,15 +211,15 @@ export const GenealogyTreePage: React.FC = () => {
           {treeData.generations.map((gen) => {
             const genMembers = filteredMembers.filter((m) => m.generation_id === gen.id);
             return (
-              <div key={gen.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <Card key={gen.id} className="space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                    <h3 className="text-sm font-bold text-slate-100 uppercase tracking-wide">
+                    <span className="w-2.5 h-2.5 rounded-full bg-heritage-green"></span>
+                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
                       {gen.name} (Đời thứ {gen.generation_number})
                     </h3>
                   </div>
-                  <span className="text-xs text-slate-400 font-mono">{genMembers.length} thành viên</span>
+                  <Badge variant="neutral">{genMembers.length} thành viên</Badge>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -222,30 +227,30 @@ export const GenealogyTreePage: React.FC = () => {
                     <div
                       key={member.id}
                       onClick={() => setSelectedMember(member)}
-                      className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/60 hover:border-amber-500/50 transition-all cursor-pointer flex flex-col justify-between gap-3 group"
+                      className="p-4 rounded-xl bg-slate-50/70 border border-slate-200/80 hover:border-heritage-green/50 hover:bg-white hover:shadow-card transition-all cursor-pointer flex flex-col justify-between gap-3 group"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-slate-700 border border-slate-600 flex items-center justify-center text-sm font-bold">
+                          <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-sm font-bold shadow-sm">
                             {member.gender === 'MALE' ? '👨' : '👩'}
                           </div>
                           <div>
-                            <h4 className="text-sm font-bold text-slate-100 group-hover:text-amber-400 transition-colors">
+                            <h4 className="text-sm font-bold text-slate-900 group-hover:text-heritage-green transition-colors">
                               {member.full_name}
                             </h4>
-                            <p className="text-xs text-slate-400">
-                              {member.life_status === 'DECEASED' ? '🕯️ Đã mất' : '🌿 Còn sống'}
+                            <p className="text-xs text-slate-500">
+                              {member.life_status === 'DECEASED' ? '🕯️ Đã tạ thế' : '🌿 Còn sống'}
                             </p>
                           </div>
                         </div>
                       </div>
 
                       {member.bio && (
-                        <p className="text-xs text-slate-400 line-clamp-2 italic">{member.bio}</p>
+                        <p className="text-xs text-slate-600 line-clamp-2 italic">{member.bio}</p>
                       )}
 
-                      <div className="pt-2 border-t border-slate-700/60 flex items-center justify-between text-xs">
-                        <span className="text-slate-400">
+                      <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
+                        <span className="text-slate-500">
                           {treeData.branches.find((b) => b.id === member.branch_id)?.name || 'Chi Trưởng'}
                         </span>
                         <div className="flex items-center gap-2">
@@ -254,7 +259,7 @@ export const GenealogyTreePage: React.FC = () => {
                               e.stopPropagation();
                               handleOpenAddRelation(member, 'CHILD');
                             }}
-                            className="p-1 rounded bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 text-[11px] font-medium"
+                            className="px-2 py-1 rounded bg-emerald-50 text-heritage-green hover:bg-emerald-100 text-[11px] font-semibold transition"
                           >
                             + Con
                           </button>
@@ -263,7 +268,7 @@ export const GenealogyTreePage: React.FC = () => {
                               e.stopPropagation();
                               handleOpenAddRelation(member, 'SPOUSE');
                             }}
-                            className="p-1 rounded bg-rose-500/10 text-rose-300 hover:bg-rose-500/20 text-[11px] font-medium"
+                            className="px-2 py-1 rounded bg-rose-50 text-rose-700 hover:bg-rose-100 text-[11px] font-semibold transition"
                           >
                             + Vợ/Chồng
                           </button>
@@ -272,7 +277,7 @@ export const GenealogyTreePage: React.FC = () => {
                     </div>
                   ))}
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
@@ -280,25 +285,25 @@ export const GenealogyTreePage: React.FC = () => {
 
       {/* Member Details Drawer Modal */}
       {selectedMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md h-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 flex flex-col justify-between space-y-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-end bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md h-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 flex flex-col justify-between space-y-5">
             <div>
               {/* Drawer Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-xl">
+                  <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-xl shadow-sm">
                     {selectedMember.gender === 'MALE' ? '👨' : '👩'}
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-slate-100">{selectedMember.full_name}</h3>
-                    <p className="text-xs text-amber-400">
+                    <h3 className="text-base font-bold text-slate-900">{selectedMember.full_name}</h3>
+                    <p className="text-xs text-heritage-green font-medium">
                       {treeData.generations.find((g) => g.id === selectedMember.generation_id)?.name || 'Thế hệ'}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setSelectedMember(null)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -306,29 +311,29 @@ export const GenealogyTreePage: React.FC = () => {
 
               {/* Drawer Details */}
               <div className="py-4 space-y-4 text-xs">
-                <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-2">
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400">Tình trạng nhân khẩu:</span>
-                    <span className="font-semibold text-slate-200">
+                    <span className="text-slate-500">Tình trạng nhân khẩu:</span>
+                    <span className="font-semibold text-slate-800">
                       {selectedMember.life_status === 'DECEASED' ? '🕯️ Đã tạ thế' : '🌿 Còn sống'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400">Chi phái:</span>
-                    <span className="font-semibold text-slate-200">
+                    <span className="text-slate-500">Chi phái:</span>
+                    <span className="font-semibold text-slate-800">
                       {treeData.branches.find((b) => b.id === selectedMember.branch_id)?.name || 'Chi Trưởng'}
                     </span>
                   </div>
                   {selectedMember.birth_solar_date && (
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-400">Năm sinh:</span>
-                      <span className="font-semibold text-slate-200">{selectedMember.birth_solar_date.slice(0, 4)}</span>
+                      <span className="text-slate-500">Năm sinh:</span>
+                      <span className="font-semibold text-slate-800">{selectedMember.birth_solar_date.slice(0, 4)}</span>
                     </div>
                   )}
                   {selectedMember.death_lunar_day && selectedMember.death_lunar_month && (
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-400">Ngày Giỗ Tổ (Âm lịch):</span>
-                      <span className="font-semibold text-amber-300">
+                      <span className="text-slate-500">Ngày Giỗ Tổ (Âm lịch):</span>
+                      <span className="font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
                         Ngày {selectedMember.death_lunar_day} tháng {selectedMember.death_lunar_month} ÂL
                       </span>
                     </div>
@@ -336,48 +341,52 @@ export const GenealogyTreePage: React.FC = () => {
                 </div>
 
                 {selectedMember.burial_place && (
-                  <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-700/60 space-y-1">
-                    <span className="text-slate-400 flex items-center gap-1.5 font-medium">
-                      <MapPin className="w-3.5 h-3.5 text-amber-400" /> Nơi an táng / Mộ phần:
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <span className="text-slate-500 flex items-center gap-1.5 font-medium">
+                      <MapPin className="w-3.5 h-3.5 text-heritage-green" /> Nơi an táng / Mộ phần:
                     </span>
-                    <p className="text-slate-200">{selectedMember.burial_place}</p>
+                    <p className="text-slate-800">{selectedMember.burial_place}</p>
                   </div>
                 )}
 
                 {selectedMember.bio && (
-                  <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-700/60 space-y-1">
-                    <span className="text-slate-400 flex items-center gap-1.5 font-medium">
-                      <FileText className="w-3.5 h-3.5 text-amber-400" /> Tiểu sử & Công trạng:
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                    <span className="text-slate-500 flex items-center gap-1.5 font-medium">
+                      <FileText className="w-3.5 h-3.5 text-heritage-gold" /> Tiểu sử & Công trạng:
                     </span>
-                    <p className="text-slate-200 leading-relaxed">{selectedMember.bio}</p>
+                    <p className="text-slate-800 leading-relaxed">{selectedMember.bio}</p>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Drawer Actions */}
-            <div className="pt-4 border-t border-slate-800 flex items-center gap-2">
-              <button
+            <div className="pt-4 border-t border-slate-100 flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
                 onClick={() => {
                   handleOpenAddRelation(selectedMember, 'CHILD');
                   setSelectedMember(null);
                 }}
-                className="flex-1 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                icon={<UserPlus className="w-3.5 h-3.5" />}
               >
-                <UserPlus className="w-3.5 h-3.5" />
-                <span>+ Thêm Con</span>
-              </button>
+                + Thêm Con
+              </Button>
 
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
+                className="flex-1"
                 onClick={() => {
                   handleOpenAddRelation(selectedMember, 'SPOUSE');
                   setSelectedMember(null);
                 }}
-                className="flex-1 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                icon={<Heart className="w-3.5 h-3.5 text-rose-500" />}
               >
-                <Heart className="w-3.5 h-3.5" />
-                <span>+ Thêm Vợ/Chồng</span>
-              </button>
+                + Thêm Vợ/Chồng
+              </Button>
             </div>
           </div>
         </div>
