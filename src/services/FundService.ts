@@ -76,6 +76,7 @@ export interface HonorRollItem {
   latestYear: number;
   isAnonymous: boolean;
   donorType: SponsorType;
+  contributionsCount?: number;
 }
 
 // In-memory mock stores for non-configured environment

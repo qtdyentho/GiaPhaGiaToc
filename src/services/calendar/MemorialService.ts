@@ -51,7 +51,6 @@ export class MemorialService {
           is_leap_month: false,
           notes: `Tự động đồng bộ từ Cây Phả Hệ (${d.burial_place || 'Khu lăng mộ Tổ'})`,
           created_at: d.created_at,
-          updated_at: d.updated_at,
         });
       }
     }

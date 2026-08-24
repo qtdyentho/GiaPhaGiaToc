@@ -429,7 +429,7 @@ export const FamilyCalendarPage: React.FC = () => {
                   {/* Bottom: Tiết khí / Can chi ngày (rất nhỏ) */}
                   <div className="flex items-center justify-between text-[9px] text-slate-400 truncate">
                     <span className="truncate">{day.tietKhi || day.canChiDay.split(' ')[0]}</span>
-                    {day.isHoangDao && <span className="text-amber-500 font-bold">★ H.Đạo</span>}
+                    {day.gioHoangDao && day.gioHoangDao.length > 0 && <span className="text-amber-500 font-bold">★ H.Đạo</span>}
                   </div>
                 </div>
               );
@@ -494,9 +494,16 @@ export const FamilyCalendarPage: React.FC = () => {
 
       {/* 5. Modals & Drawers */}
       <CalendarDayDetailDrawer
-        isOpen={Boolean(selectedDay)}
-        onClose={() => setSelectedDay(null)}
         dayInfo={selectedDay}
+        onClose={() => setSelectedDay(null)}
+        onAddMemorial={() => {
+          setSelectedDay(null);
+          setShowCreateMemorialModal(true);
+        }}
+        onAddEvent={() => {
+          setSelectedDay(null);
+          setShowCreateEventModal(true);
+        }}
       />
 
       <CreateMemorialModal
