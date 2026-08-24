@@ -64,6 +64,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       title: 'TỔNG QUAN NỀN TẢNG',
       items: [
         { to: '/admin/beta', icon: ShieldCheck, label: 'Kiểm Soát Vận Hành' },
+        { to: '/admin/users', icon: Users, label: 'Tài Khoản Đăng Ký' },
         { to: '/admin/revenue', icon: BarChart3, label: 'Báo Cáo Doanh Thu' },
       ],
     },

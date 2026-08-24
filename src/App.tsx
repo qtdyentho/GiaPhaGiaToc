@@ -49,6 +49,7 @@ import BetaEvidencePage from './pages/admin/BetaEvidencePage';
 import BetaExitAuditPage from './pages/admin/BetaExitAuditPage';
 import AdminPaymentsPage from './pages/admin/AdminPaymentsPage';
 import AdminBillingConfigPage from './pages/admin/AdminBillingConfigPage';
+import { AdminUsersPage } from './pages/admin/AdminUsersPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -212,6 +213,7 @@ export const App: React.FC = () => {
             >
               <Route index element={<Navigate to="/admin/beta" replace />} />
               <Route path="beta" element={<BetaCommandCenterPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
               <Route path="payments" element={<AdminPaymentsPage />} />
               <Route path="billing/config" element={<AdminBillingConfigPage />} />
               <Route path="integrity" element={<IntegrityWatchdogPage />} />
