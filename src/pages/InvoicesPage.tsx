@@ -70,7 +70,7 @@ export const InvoicesPage: React.FC = () => {
             <tbody className="divide-y divide-slate-100">
               {invoices.map((inv) => (
                 <tr key={inv.id} className="hover:bg-slate-50 transition">
-                  <td className="py-4 px-4 font-bold text-slate-900 font-mono">
+                  <td className="py-4 px-4 font-bold text-slate-900">
                     {inv.invoice_number}
                   </td>
                   <td className="py-4 px-4 text-slate-500">

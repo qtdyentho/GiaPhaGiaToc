@@ -97,7 +97,7 @@ export default function AdminBillingConfigPage() {
                       : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300'
                   }`}
                 >
-                  {b.shortName} <span className="text-[10px] opacity-70 font-mono">({b.code})</span>
+                  {b.shortName} <span className="text-[10px] opacity-70">({b.code})</span>
                 </button>
               );
             })}
@@ -162,7 +162,7 @@ export default function AdminBillingConfigPage() {
               required
               value={config.bank_code}
               onChange={(e) => setConfig({ ...config, bank_code: e.target.value.toUpperCase() })}
-              className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:border-heritage-green text-slate-900 font-mono font-bold tracking-wider"
+              className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:border-heritage-green text-slate-900 font-bold tracking-wider"
               placeholder="VD: MB"
             />
           </div>
@@ -176,7 +176,7 @@ export default function AdminBillingConfigPage() {
               required
               value={config.account_number}
               onChange={(e) => setConfig({ ...config, account_number: e.target.value.replace(/\s+/g, '') })}
-              className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:border-heritage-green text-slate-900 font-bold font-mono tracking-wider text-sm"
+              className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:border-heritage-green text-slate-900 font-bold tracking-wider text-sm"
               placeholder="VD: 088899998888"
             />
           </div>
@@ -243,8 +243,8 @@ export default function AdminBillingConfigPage() {
               Xem Trước Đồng Bộ VietQR Trực Tiếp
             </h4>
             <p className="text-[11px] text-slate-600">
-              Mã Ngân Hàng: <span className="font-mono font-bold text-heritage-green">{config.bank_code}</span> | 
-              Số TK: <span className="font-mono font-bold text-slate-900">{config.account_number}</span> | 
+              Mã Ngân Hàng: <span className="font-bold text-heritage-green">{config.bank_code}</span> | 
+              Số TK: <span className="font-bold text-slate-900">{config.account_number}</span> | 
               Chủ TK: <span className="font-bold text-slate-900">{config.account_name}</span>
             </p>
             <p className="text-[11px] text-slate-500 italic">

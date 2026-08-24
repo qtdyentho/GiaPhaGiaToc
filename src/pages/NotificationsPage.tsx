@@ -29,7 +29,7 @@ export const NotificationsPage: React.FC = () => {
             <div className="flex-1">
               <div className="flex items-center justify-between">
                 <h2 className="text-xs font-bold text-slate-900">{notif.title}</h2>
-                <span className="text-[10px] text-slate-400 font-mono">{formatDate(notif.created_at)}</span>
+                <span className="text-[10px] text-slate-400">{formatDate(notif.created_at)}</span>
               </div>
               <p className="text-xs text-slate-600 mt-1 leading-relaxed">{notif.message}</p>
             </div>

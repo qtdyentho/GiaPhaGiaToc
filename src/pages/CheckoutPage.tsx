@@ -93,7 +93,7 @@ export const CheckoutPage: React.FC = () => {
               <div className="flex justify-between items-center text-slate-500">
                 <span>Số tài khoản:</span>
                 <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-emerald-800 font-mono text-sm tracking-wider">{billingConfig.account_number}</span>
+                  <span className="font-bold text-emerald-800 text-sm tracking-wider">{billingConfig.account_number}</span>
                   <button onClick={() => handleCopy(billingConfig.account_number)} className="text-gray-400 hover:text-gray-700">
                     <Copy className="w-3.5 h-3.5" />
                   </button>
@@ -110,7 +110,7 @@ export const CheckoutPage: React.FC = () => {
               <div className="flex justify-between items-center text-slate-500 pt-2 border-t border-slate-200">
                 <span>Nội dung chuyển khoản:</span>
                 <div className="flex items-center space-x-2">
-                  <span className="font-mono font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded">
+                  <span className="font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded">
                     {refCode}
                   </span>
                   <button

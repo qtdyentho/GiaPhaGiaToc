@@ -164,7 +164,7 @@ export const FundLedgerPage: React.FC = () => {
                 <Info className="w-3.5 h-3.5 text-slate-300 group-hover:text-[#166534] transition" />
               </div>
             </div>
-            <p className="text-2xl font-black text-amber-800 font-mono">
+            <p className="text-2xl font-black text-amber-800">
               {Number(f.current_balance || 0).toLocaleString()} ₫
             </p>
             {f.description && <p className="text-[11px] text-slate-500 line-clamp-1 italic">{f.description}</p>}
@@ -255,7 +255,7 @@ export const FundLedgerPage: React.FC = () => {
 
                   return (
                     <tr key={tx.id} className="hover:bg-slate-50/80 transition">
-                      <td className="py-3.5 px-4 font-mono font-bold text-slate-900">{tx.transaction_code}</td>
+                      <td className="py-3.5 px-4 font-bold text-slate-900">{tx.transaction_code}</td>
                       <td className="py-3.5 px-4 text-slate-600">{tx.transaction_date}</td>
                       <td className="py-3.5 px-4 font-medium text-slate-800">{tx.description}</td>
                       <td className="py-3.5 px-4">
@@ -270,7 +270,7 @@ export const FundLedgerPage: React.FC = () => {
                       </td>
                       <td className="py-3.5 px-4 text-right">
                         <span
-                          className={`font-black text-sm font-mono ${
+                          className={`font-black text-sm ${
                             isReversal
                               ? 'text-amber-700'
                               : isIncome

@@ -21,6 +21,10 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  code, kbd, samp, pre {
+    font-family: var(--font-ui), 'Be Vietnam Pro', sans-serif !important;
+  }
+
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-ui);
   }

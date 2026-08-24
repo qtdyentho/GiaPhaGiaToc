@@ -260,7 +260,7 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
                     value={amountDue}
                     onChange={(e) => setAmountDue(e.target.value)}
                     placeholder="VD: 500000"
-                    className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-none focus:border-heritage-green font-mono"
+                    className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-none focus:border-heritage-green"
                     required
                   />
                 </div>
@@ -293,7 +293,7 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
                 </div>
                 <div className="text-right">
                   <span className="text-xs text-slate-500">Tổng dự thu:</span>
-                  <p className="text-base font-bold text-amber-700 font-mono">
+                  <p className="text-base font-bold text-amber-700">
                     {totalEstimatedAmount.toLocaleString()} ₫
                   </p>
                 </div>
@@ -324,7 +324,7 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
                             const val = Number(e.target.value);
                             setOverrides((prev) => ({ ...prev, [m.id]: val }));
                           }}
-                          className="w-28 px-2 py-1 bg-white border border-slate-300 rounded-lg text-slate-900 font-mono text-right focus:outline-none focus:border-heritage-green"
+                          className="w-28 px-2 py-1 bg-white border border-slate-300 rounded-lg text-slate-900 text-right focus:outline-none focus:border-heritage-green"
                         />
                         <span className="text-slate-500">₫</span>
                       </div>

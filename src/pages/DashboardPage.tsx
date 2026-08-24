@@ -72,7 +72,7 @@ export const DashboardPage: React.FC = () => {
         {/* Bottom Section: Clan Name, Ancestral Hall Address & Today's Lunar Info */}
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-6 pt-6">
           <div className="space-y-2 max-w-2xl">
-            <div className="text-xs font-bold text-amber-300/90 uppercase tracking-widest flex items-center gap-1.5 font-mono">
+            <div className="text-xs font-bold text-amber-300/90 uppercase tracking-widest flex items-center gap-1.5">
               <Landmark className="w-4 h-4 text-amber-400" />
               <span>Từ Đường & Không Gian Thờ Tự Tiên Tổ</span>
             </div>
@@ -130,7 +130,7 @@ export const DashboardPage: React.FC = () => {
               <Users className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-2 font-mono">
+          <div className="text-2xl font-black text-slate-900 mt-2">
             {familyMembers.length || (currentFamily.id === mockFamily.id ? 86 : 1)}{' '}
             <span className="text-xs font-normal text-slate-500 font-sans">thành viên</span>
           </div>
@@ -148,7 +148,7 @@ export const DashboardPage: React.FC = () => {
               <Wallet className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-2 font-mono">
+          <div className="text-2xl font-black text-slate-900 mt-2">
             {formatCurrency(totalBalance)}
           </div>
           <div className="text-xs text-slate-500 mt-1 flex items-center space-x-1">
@@ -183,7 +183,7 @@ export const DashboardPage: React.FC = () => {
               <Landmark className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-2 font-mono">
+          <div className="text-2xl font-black text-slate-900 mt-2">
             {familyTransactions.length || (currentFamily.id === mockFamily.id ? 24 : 0)}{' '}
             <span className="text-xs font-normal text-slate-500 font-sans">bút toán</span>
           </div>
@@ -258,7 +258,7 @@ export const DashboardPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-black text-slate-900 font-mono">{formatCurrency(fund.current_balance)}</div>
+                    <div className="text-sm font-black text-slate-900">{formatCurrency(fund.current_balance)}</div>
                     <div className="text-[10px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-0.5 border border-emerald-200">
                       Khả dụng
                     </div>

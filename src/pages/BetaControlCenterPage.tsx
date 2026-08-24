@@ -150,7 +150,7 @@ export const BetaControlCenterPage: React.FC = () => {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-900">TTFV-1: Khởi Tạo Cây Phả Hệ</span>
-            <span className="text-xs font-mono font-bold text-emerald-600">8m 15s</span>
+            <span className="text-xs font-bold text-emerald-600">8m 15s</span>
           </div>
           <p className="text-[11px] text-slate-500">Đăng ký $\rightarrow$ Khởi tạo gia tộc $\rightarrow$ Thành viên đầu tiên $\rightarrow$ Cây xuất hiện</p>
           <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
@@ -161,7 +161,7 @@ export const BetaControlCenterPage: React.FC = () => {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-900">TTFV-2: Import Dữ Liệu Lớn</span>
-            <span className="text-xs font-mono font-bold text-teal-600">14m 30s</span>
+            <span className="text-xs font-bold text-teal-600">14m 30s</span>
           </div>
           <p className="text-[11px] text-slate-500">Upload Excel $\rightarrow$ Auto-mapping $\rightarrow$ Validate $\rightarrow$ Preview $\rightarrow$ Commit cây</p>
           <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
@@ -172,7 +172,7 @@ export const BetaControlCenterPage: React.FC = () => {
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-900">TTFV-3: Kích Hoạt Sổ Quỹ</span>
-            <span className="text-xs font-mono font-bold text-indigo-600">18m 45s</span>
+            <span className="text-xs font-bold text-indigo-600">18m 45s</span>
           </div>
           <p className="text-[11px] text-slate-500">Tạo quỹ $\rightarrow$ Khoản thu định mức $\rightarrow$ Ghi thu tiền $\rightarrow$ Sổ cái kế toán xuất hiện</p>
           <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">

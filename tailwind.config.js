@@ -30,6 +30,7 @@ export default {
         sans: ['var(--font-ui)', '"Be Vietnam Pro"', 'sans-serif'],
         ui: ['var(--font-ui)', '"Be Vietnam Pro"', 'sans-serif'],
         heritage: ['var(--font-heritage)', '"Noto Serif"', 'serif'],
+        mono: ['var(--font-ui)', '"Be Vietnam Pro"', 'sans-serif'],
       },
       boxShadow: {
         'heritage': '0 4px 20px -2px rgba(22, 101, 52, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04)',

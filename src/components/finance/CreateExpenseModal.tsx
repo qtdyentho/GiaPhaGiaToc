@@ -166,7 +166,7 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="VD: 5000000"
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm font-mono font-bold focus:outline-none focus:ring-1 focus:ring-rose-600 focus:bg-white"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-rose-600 focus:bg-white"
                 required
               />
               {isInsufficient && (

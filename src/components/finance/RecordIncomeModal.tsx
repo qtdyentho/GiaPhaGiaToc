@@ -120,7 +120,7 @@ export const RecordIncomeModal: React.FC<RecordIncomeModalProps> = ({
               </div>
               <div className="text-right">
                 <span className="text-slate-500">Còn lại phải nộp:</span>
-                <p className="font-bold text-amber-800 font-mono text-sm">{remaining.toLocaleString()} ₫</p>
+                <p className="font-bold text-amber-800 text-sm">{remaining.toLocaleString()} ₫</p>
               </div>
             </div>
           )}
@@ -151,7 +151,7 @@ export const RecordIncomeModal: React.FC<RecordIncomeModalProps> = ({
                 step="10000"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm font-mono font-bold focus:outline-none focus:ring-1 focus:ring-[#166534] focus:bg-white"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-[#166534] focus:bg-white"
                 required
               />
             </div>
@@ -226,7 +226,7 @@ export const RecordIncomeModal: React.FC<RecordIncomeModalProps> = ({
               </div>
               <div className="text-center text-xs space-y-1">
                 <p className="text-slate-600 font-semibold">Nội dung chuyển khoản chuẩn:</p>
-                <code className="px-2.5 py-0.5 rounded-md bg-white border border-slate-300 text-amber-900 font-mono text-xs font-bold">
+                <code className="px-2.5 py-0.5 rounded-md bg-white border border-slate-300 text-amber-900 text-xs font-bold">
                   {memo}
                 </code>
                 <p className="text-[11px] text-slate-400">Quét mã bằng ứng dụng Ngân hàng để thanh toán tự động</p>

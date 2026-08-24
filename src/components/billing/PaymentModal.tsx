@@ -142,7 +142,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <div className="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100">
                   <span className="text-slate-500 font-medium">Số tài khoản:</span>
                   <div className="flex items-center space-x-2">
-                    <strong className="text-slate-900 font-mono text-sm">{intent.account_no}</strong>
+                    <strong className="text-slate-900 text-sm">{intent.account_no}</strong>
                     <button
                       onClick={() => handleCopy(intent.account_no, 'account_no')}
                       className="p-1 hover:bg-slate-200 rounded text-slate-600 transition"
@@ -160,7 +160,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 {/* Amount */}
                 <div className="flex items-center justify-between p-2.5 bg-emerald-50 rounded-xl border border-emerald-200">
                   <span className="text-emerald-800 font-medium">Số tiền chính xác:</span>
-                  <strong className="text-emerald-950 font-mono text-sm font-black">
+                  <strong className="text-emerald-950 text-sm font-black">
                     {formatCurrency(intent.amount)}
                   </strong>
                 </div>
@@ -172,7 +172,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     <span className="text-[10px] text-amber-700">(Bắt buộc giữ nguyên để tự động kích hoạt)</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <strong className="text-amber-950 font-mono text-sm font-bold bg-white px-2 py-0.5 rounded border border-amber-300">
+                    <strong className="text-amber-950 text-sm font-bold bg-white px-2 py-0.5 rounded border border-amber-300">
                       {intent.reference_code}
                     </strong>
                     <button

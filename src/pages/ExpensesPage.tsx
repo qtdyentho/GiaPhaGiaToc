@@ -103,7 +103,7 @@ export const ExpensesPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5">
           <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Đã Phê Duyệt & Xuất Quỹ</div>
-          <div className="text-2xl font-black text-rose-700 mt-1 font-mono">{totalExpenseApproved.toLocaleString()} ₫</div>
+          <div className="text-2xl font-black text-rose-700 mt-1">{totalExpenseApproved.toLocaleString()} ₫</div>
           <div className="text-xs text-slate-400 mt-0.5">
             {expenses.filter((e) => e.status === 'APPROVED').length} khoản chi đã giải ngân
           </div>
@@ -111,7 +111,7 @@ export const ExpensesPage: React.FC = () => {
 
         <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5">
           <div className="text-xs font-bold text-amber-700 uppercase tracking-wider">Đang Chờ Duyệt Chi</div>
-          <div className="text-2xl font-black text-amber-700 mt-1 font-mono">{totalExpensePending.toLocaleString()} ₫</div>
+          <div className="text-2xl font-black text-amber-700 mt-1">{totalExpensePending.toLocaleString()} ₫</div>
           <div className="text-xs text-slate-400 mt-0.5">
             {expenses.filter((e) => e.status === 'PENDING_APPROVAL').length} đề xuất cần thẩm định
           </div>
@@ -208,7 +208,7 @@ export const ExpensesPage: React.FC = () => {
                           {fund?.name || 'Quỹ Chung'}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-right font-bold text-rose-700 font-mono text-sm">
+                      <td className="py-3.5 px-4 text-right font-bold text-rose-700 text-sm">
                         {Number(exp.amount).toLocaleString()} ₫
                       </td>
                       <td className="py-3.5 px-4 text-slate-600">{exp.expense_date}</td>

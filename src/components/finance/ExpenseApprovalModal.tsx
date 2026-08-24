@@ -100,7 +100,7 @@ export const ExpenseApprovalModal: React.FC<ExpenseApprovalModalProps> = ({
               </div>
               <div className="text-right">
                 <span className="text-xs text-slate-500">Số tiền:</span>
-                <p className="text-base font-bold text-rose-600 font-mono">
+                <p className="text-base font-bold text-rose-600">
                   {Number(expense.amount).toLocaleString()} ₫
                 </p>
               </div>
@@ -137,14 +137,14 @@ export const ExpenseApprovalModal: React.FC<ExpenseApprovalModalProps> = ({
           <div className="p-3.5 rounded-xl bg-amber-50/50 border border-amber-200 space-y-1.5 text-xs">
             <div className="flex items-center justify-between">
               <span className="text-slate-500">Số dư quỹ hiện tại:</span>
-              <span className="font-mono text-slate-900">
+              <span className="text-slate-900">
                 {Number(fund?.current_balance || 0).toLocaleString()} ₫
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">Số dư sau khi duyệt:</span>
               <span
-                className={`font-mono font-bold ${
+                className={`font-bold ${
                   isBalanceSufficient ? 'text-emerald-700' : 'text-rose-600'
                 }`}
               >

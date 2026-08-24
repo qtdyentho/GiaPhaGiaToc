@@ -117,13 +117,13 @@ export const IncomeAssessmentsPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5">
           <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tổng Nghĩa Vụ Phải Thu</div>
-          <div className="text-2xl font-black text-slate-900 mt-1 font-mono">{totalDue.toLocaleString()} ₫</div>
+          <div className="text-2xl font-black text-slate-900 mt-1">{totalDue.toLocaleString()} ₫</div>
           <div className="text-xs text-slate-400 mt-0.5">{assessments.length} suất nghĩa vụ thu</div>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5">
           <div className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Đã Thực Thu (Vào Quỹ)</div>
-          <div className="text-2xl font-black text-emerald-800 mt-1 font-mono">{totalPaid.toLocaleString()} ₫</div>
+          <div className="text-2xl font-black text-emerald-800 mt-1">{totalPaid.toLocaleString()} ₫</div>
           <div className="text-xs text-slate-400 mt-0.5">
             {assessments.filter((a) => a.status === 'PAID').length} thành viên đã hoàn thành
           </div>
@@ -131,7 +131,7 @@ export const IncomeAssessmentsPage: React.FC = () => {
 
         <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5">
           <div className="text-xs font-bold text-amber-700 uppercase tracking-wider">Còn Tồn Đọng Chưa Thu</div>
-          <div className="text-2xl font-black text-amber-700 mt-1 font-mono">{totalPending.toLocaleString()} ₫</div>
+          <div className="text-2xl font-black text-amber-700 mt-1">{totalPending.toLocaleString()} ₫</div>
           <div className="text-xs text-slate-400 mt-0.5">
             {assessments.filter((a) => a.status !== 'PAID').length} thành viên chưa nộp đủ
           </div>
@@ -206,10 +206,10 @@ export const IncomeAssessmentsPage: React.FC = () => {
                     <tr key={asm.id} className="hover:bg-slate-50/80 transition">
                       <td className="py-3.5 px-4 font-bold text-slate-900">{asm.title}</td>
                       <td className="py-3.5 px-4 font-semibold text-slate-800">{member?.full_name || 'Thành viên'}</td>
-                      <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900">
+                      <td className="py-3.5 px-4 text-right font-bold text-slate-900">
                         {Number(asm.amount_due).toLocaleString()} ₫
                       </td>
-                      <td className="py-3.5 px-4 text-right font-mono font-bold text-emerald-800">
+                      <td className="py-3.5 px-4 text-right font-bold text-emerald-800">
                         {Number(asm.amount_paid).toLocaleString()} ₫
                       </td>
                       <td className="py-3.5 px-4 text-slate-600">{asm.due_date || '2026-12-31'}</td>

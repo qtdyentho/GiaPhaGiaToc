@@ -84,7 +84,7 @@ export const ReversalModal: React.FC<ReversalModalProps> = ({
           <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
             <div className="flex items-center justify-between">
               <span className="text-slate-500">Mã chứng từ:</span>
-              <span className="font-mono font-bold text-slate-900">{transaction.transaction_code}</span>
+              <span className="font-bold text-slate-900">{transaction.transaction_code}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">Loại giao dịch:</span>
@@ -98,7 +98,7 @@ export const ReversalModal: React.FC<ReversalModalProps> = ({
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">Số tiền:</span>
-              <span className="font-mono font-bold text-slate-900">{Number(transaction.amount).toLocaleString()} ₫</span>
+              <span className="font-bold text-slate-900">{Number(transaction.amount).toLocaleString()} ₫</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-500">Quỹ:</span>

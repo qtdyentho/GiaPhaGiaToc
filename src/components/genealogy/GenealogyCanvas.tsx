@@ -99,7 +99,7 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
         >
           <ZoomOut className="w-4 h-4" />
         </button>
-        <span className="text-xs font-mono font-bold px-2 text-slate-700 min-w-[48px] text-center">
+        <span className="text-xs font-bold px-2 text-slate-700 min-w-[48px] text-center">
           {Math.round(zoom * 100)}%
         </span>
         <button

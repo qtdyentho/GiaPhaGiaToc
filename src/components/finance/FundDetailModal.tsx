@@ -93,7 +93,7 @@ export const FundDetailModal: React.FC<FundDetailModalProps> = ({
                 </Badge>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Mã định danh: <span className="font-mono text-slate-700 font-semibold">{fund.id.slice(0, 13)}...</span>
+                Mã định danh: <span className="text-slate-700 font-semibold">{fund.id.slice(0, 13)}...</span>
               </p>
             </div>
           </div>
@@ -114,7 +114,7 @@ export const FundDetailModal: React.FC<FundDetailModalProps> = ({
                 <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider">Số Dư Khả Dụng</span>
                 <Wallet className="w-4 h-4 text-[#166534]" />
               </div>
-              <p className="text-2xl font-black text-[#166534] font-mono">
+              <p className="text-2xl font-black text-[#166534]">
                 {formatCurrency(fund.current_balance)}
               </p>
               <div className="text-[11px] text-emerald-800">
@@ -127,7 +127,7 @@ export const FundDetailModal: React.FC<FundDetailModalProps> = ({
                 <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tổng Thu Đã Vào</span>
                 <TrendingUp className="w-4 h-4 text-emerald-600" />
               </div>
-              <p className="text-xl font-bold text-emerald-700 font-mono">
+              <p className="text-xl font-bold text-emerald-700">
                 +{formatCurrency(totalIncome)}
               </p>
               <div className="text-[11px] text-slate-500">
@@ -140,7 +140,7 @@ export const FundDetailModal: React.FC<FundDetailModalProps> = ({
                 <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tổng Đã Giải Ngân</span>
                 <TrendingDown className="w-4 h-4 text-rose-600" />
               </div>
-              <p className="text-xl font-bold text-rose-700 font-mono">
+              <p className="text-xl font-bold text-rose-700">
                 -{formatCurrency(totalExpense)}
               </p>
               <div className="text-[11px] text-slate-500">
@@ -219,7 +219,7 @@ export const FundDetailModal: React.FC<FundDetailModalProps> = ({
                         return (
                           <tr key={tx.id} className="hover:bg-slate-50/80 transition">
                             <td className="py-3 px-3.5">
-                              <div className="font-mono font-bold text-slate-900">{tx.transaction_code}</div>
+                              <div className="font-bold text-slate-900">{tx.transaction_code}</div>
                               <div className="text-[10px] text-slate-400">{formatDate(tx.transaction_date)}</div>
                             </td>
                             <td className="py-3 px-3.5">
@@ -230,7 +230,7 @@ export const FundDetailModal: React.FC<FundDetailModalProps> = ({
                                 {tx.payment_method}
                               </span>
                             </td>
-                            <td className="py-3 px-3.5 text-right font-mono font-bold text-sm">
+                            <td className="py-3 px-3.5 text-right font-bold text-sm">
                               <span
                                 className={
                                   isReversal

@@ -45,7 +45,7 @@ export const AdminPlansPage: React.FC = () => {
                 const version = mockPlanVersions.find((v) => v.plan_id === plan.id);
                 return (
                   <tr key={plan.id} className="hover:bg-slate-50/80 transition">
-                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900">{plan.code}</td>
+                    <td className="py-3.5 px-4 font-bold text-slate-900">{plan.code}</td>
                     <td className="py-3.5 px-4">
                       <div className="font-bold text-slate-900">{plan.name}</div>
                       <div className="text-[11px] text-slate-500">{plan.short_description}</div>
@@ -60,7 +60,7 @@ export const AdminPlansPage: React.FC = () => {
                       {version?.trial_days ? `${version.trial_days} ngày` : 'Không'}
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="font-mono bg-slate-100 px-2 py-0.5 rounded text-[11px] font-bold text-slate-700">
+                      <span className="bg-slate-100 px-2 py-0.5 rounded text-[11px] font-bold text-slate-700">
                         v{version?.version_number || 1}.0
                       </span>
                     </td>

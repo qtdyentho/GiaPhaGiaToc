@@ -107,13 +107,13 @@ export const AuditLogsPage: React.FC = () => {
             <tbody className="divide-y divide-slate-100">
               {mockAuditLogs.map((log) => (
                 <tr key={log.id} className="hover:bg-slate-50/80 transition">
-                  <td className="py-3.5 px-4 text-slate-500 font-mono text-[11px]">
+                  <td className="py-3.5 px-4 text-slate-500 text-[11px]">
                     {formatDate(log.created_at)}
                   </td>
                   <td className="py-3.5 px-4 font-bold text-slate-900">{log.actor}</td>
                   <td className="py-3.5 px-4">
                     <span
-                      className={`font-mono text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                         log.action === 'POST'
                           ? 'bg-emerald-100 text-emerald-800'
                           : log.action === 'APPROVE'
@@ -126,7 +126,7 @@ export const AuditLogsPage: React.FC = () => {
                   </td>
                   <td className="py-3.5 px-4 font-semibold text-slate-600">{log.entity_type}</td>
                   <td className="py-3.5 px-4 text-slate-800">{log.description}</td>
-                  <td className="py-3.5 px-4 font-mono text-slate-400 text-[11px]">{log.ip_address}</td>
+                  <td className="py-3.5 px-4 text-slate-400 text-[11px]">{log.ip_address}</td>
                   <td className="py-3.5 px-4 text-right">
                     <button
                       onClick={() => setSelectedLog(log)}
@@ -155,14 +155,14 @@ export const AuditLogsPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div>
                 <span className="font-bold text-slate-500 uppercase text-[10px]">Dữ Liệu Cũ (Old Data):</span>
-                <pre className="mt-1 bg-slate-900 text-slate-200 p-3 rounded-lg overflow-x-auto text-[11px] font-mono">
+                <pre className="mt-1 bg-slate-900 text-slate-200 p-3 rounded-lg overflow-x-auto text-[11px]">
                   {JSON.stringify(selectedLog.old_data, null, 2)}
                 </pre>
               </div>
 
               <div>
                 <span className="font-bold text-emerald-600 uppercase text-[10px]">Dữ Liệu Mới (New Data):</span>
-                <pre className="mt-1 bg-slate-900 text-emerald-300 p-3 rounded-lg overflow-x-auto text-[11px] font-mono">
+                <pre className="mt-1 bg-slate-900 text-emerald-300 p-3 rounded-lg overflow-x-auto text-[11px]">
                   {JSON.stringify(selectedLog.new_data, null, 2)}
                 </pre>
               </div>

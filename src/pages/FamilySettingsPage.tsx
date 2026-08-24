@@ -137,7 +137,7 @@ export const FamilySettingsPage: React.FC = () => {
                   type="text"
                   disabled
                   value={currentFamily.code}
-                  className="mt-1 block w-full px-3.5 py-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl text-slate-500"
+                  className="mt-1 block w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-500"
                 />
               </div>
             </div>
@@ -234,7 +234,7 @@ export const FamilySettingsPage: React.FC = () => {
 
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
               <div className="text-[11px] font-semibold text-slate-600">Đường dẫn mời tham gia:</div>
-              <div className="text-xs font-mono font-bold text-[#166534] break-all bg-white p-2 rounded-lg border border-slate-200">
+              <div className="text-xs font-bold text-[#166534] break-all bg-white p-2 rounded-lg border border-slate-200">
                 https://giapha.vn/join?token={generatedToken}
               </div>
 

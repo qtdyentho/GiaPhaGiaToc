@@ -74,7 +74,7 @@ export const AdminRevenuePage: React.FC = () => {
             <tbody className="divide-y divide-slate-100">
               {mockPlans.map((plan) => (
                 <tr key={plan.id} className="hover:bg-slate-50 transition">
-                  <td className="py-3 px-4 font-mono font-bold text-slate-900">{plan.code}</td>
+                  <td className="py-3 px-4 font-bold text-slate-900">{plan.code}</td>
                   <td className="py-3 px-4 font-semibold text-slate-800">{plan.name}</td>
                   <td className="py-3 px-4 font-bold text-heritage-green">
                     {plan.code === 'FREE' ? 'Miễn phí' : plan.code === 'FAMILY' ? '490.000 ₫' : plan.code === 'GIA_TOC' ? '990.000 ₫' : plan.code === 'DONG_HO' ? '1.990.000 ₫' : '4.990.000 ₫'}

@@ -95,7 +95,7 @@ export const CreateFamilyPage: React.FC = () => {
                     placeholder="VD: VU-DINH-ND"
                     value={code}
                     onChange={(e) => setCode(e.target.value.toUpperCase())}
-                    className="mt-1 block w-full px-3 py-2 text-xs font-mono border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534] bg-slate-50 focus:bg-white uppercase transition"
+                    className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534] bg-slate-50 focus:bg-white uppercase transition"
                   />
                 </div>
               </div>

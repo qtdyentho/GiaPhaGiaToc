@@ -159,7 +159,7 @@ export const MembersListPage: React.FC = () => {
                       <span className="text-[10px] text-[#166534] font-semibold">{getBranchName(member.branch_id)}</span>
                     </div>
                   </td>
-                  <td className="py-3.5 px-4 font-mono font-medium text-slate-700">
+                  <td className="py-3.5 px-4 font-medium text-slate-700">
                     {formatLifeSpan(member)}
                   </td>
                   <td className="py-3.5 px-4">

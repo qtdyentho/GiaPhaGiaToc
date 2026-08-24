@@ -89,7 +89,7 @@ export const ContributionsPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm">
           <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Tổng Tiền Đóng Góp</span>
-          <p className="text-2xl font-black text-amber-700 font-mono mt-1">
+          <p className="text-2xl font-black text-amber-700 mt-1">
             {totalContributions.toLocaleString()} ₫
           </p>
         </div>
@@ -101,7 +101,7 @@ export const ContributionsPage: React.FC = () => {
 
         <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm">
           <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Bình Quân / Lượt</span>
-          <p className="text-2xl font-bold text-emerald-800 font-mono mt-1">
+          <p className="text-2xl font-bold text-emerald-800 mt-1">
             {contributions.length > 0
               ? Math.round(totalContributions / contributions.length).toLocaleString()
               : 0}{' '}
@@ -204,7 +204,7 @@ export const ContributionsPage: React.FC = () => {
                         </span>
                       </td>
 
-                      <td className="py-4 px-4 text-right font-mono font-bold text-base text-amber-800">
+                      <td className="py-4 px-4 text-right font-bold text-base text-amber-800">
                         {Number(c.amount).toLocaleString()} ₫
                       </td>
                     </tr>

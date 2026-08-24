@@ -277,7 +277,7 @@ export const FinanceDashboardPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="text-sm sm:text-base font-bold text-slate-900 font-mono">{formatCurrency(fund.current_balance)}</div>
+                    <div className="text-sm sm:text-base font-bold text-slate-900">{formatCurrency(fund.current_balance)}</div>
                     <Badge variant={fund.current_balance > 0 ? 'success' : 'neutral'} size="sm">
                       {fund.current_balance > 0 ? 'Có số dư' : 'Số dư 0đ'}
                     </Badge>
@@ -309,7 +309,7 @@ export const FinanceDashboardPage: React.FC = () => {
                     <p className="text-[10px] text-slate-400 mt-0.5">{formatDate(tx.transaction_date)} • {tx.transaction_type}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className={`font-bold font-mono ${tx.amount >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                    <p className={`font-bold ${tx.amount >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
                       {tx.amount >= 0 ? '+' : ''}{formatCurrency(tx.amount)}
                     </p>
                     <Badge variant="neutral" size="sm">{tx.status}</Badge>

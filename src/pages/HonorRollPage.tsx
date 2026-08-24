@@ -134,7 +134,7 @@ export const HonorRollPage: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-6 border-t border-amber-200/80">
           <div className="p-3.5 rounded-2xl bg-white/90 border border-amber-200 shadow-xs">
             <span className="text-xs text-slate-500 font-semibold uppercase">Tổng Tiền Công Đức:</span>
-            <p className="text-xl font-black text-amber-800 font-mono mt-0.5">
+            <p className="text-xl font-black text-amber-800 mt-0.5">
               {totalSponsorshipAmount.toLocaleString()} ₫
             </p>
           </div>
@@ -242,7 +242,7 @@ export const HonorRollPage: React.FC = () => {
                           🥉
                         </span>
                       ) : (
-                        <span className="font-mono font-bold text-slate-600">{idx + 1}</span>
+                        <span className="font-bold text-slate-600">{idx + 1}</span>
                       )}
                     </td>
 
@@ -279,7 +279,7 @@ export const HonorRollPage: React.FC = () => {
                       </div>
                     </td>
 
-                    <td className="py-4 px-4 text-right font-mono font-bold text-base text-amber-800">
+                    <td className="py-4 px-4 text-right font-bold text-base text-amber-800">
                       {item.totalAmount.toLocaleString()} ₫
                     </td>
 

@@ -69,7 +69,7 @@ export const AdminSubscriptionsPage: React.FC = () => {
                 <tr key={sub.id} className="hover:bg-slate-50/80 transition">
                   <td className="py-3.5 px-4 font-bold text-slate-900">{sub.family_name}</td>
                   <td className="py-3.5 px-4">
-                    <span className="font-mono bg-slate-100 font-bold px-2 py-0.5 rounded text-heritage-navy">
+                    <span className="bg-slate-100 font-bold px-2 py-0.5 rounded text-heritage-navy">
                       {sub.plan_code}
                     </span>
                   </td>

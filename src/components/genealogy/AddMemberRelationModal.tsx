@@ -422,7 +422,7 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
                   value={birthYearOnly}
                   onChange={(e) => setBirthYearOnly(e.target.value)}
                   placeholder="VD: 1895, 1912..."
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[#166534]"
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
                 />
               </div>
             )}
@@ -460,7 +460,7 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
                     value={birthSolarYear}
                     onChange={(e) => setBirthSolarYear(e.target.value)}
                     placeholder="VD: 1988"
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[#166534]"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
                   />
                 </div>
               </div>
@@ -499,7 +499,7 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
                     value={birthLunarYear}
                     onChange={(e) => setBirthLunarYear(e.target.value)}
                     placeholder="VD: 1952"
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[#166534]"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
                   />
                 </div>
               </div>
@@ -593,7 +593,7 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
                       value={deathLunarYear}
                       onChange={(e) => setDeathLunarYear(e.target.value)}
                       placeholder="VD: 1980"
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[#166534]"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
                     />
                   </div>
                 </div>
@@ -607,7 +607,7 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
                     value={deathYearOnly}
                     onChange={(e) => setDeathYearOnly(e.target.value)}
                     placeholder="VD: 1968, 1975..."
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[#166534]"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
                   />
                 </div>
               )}
