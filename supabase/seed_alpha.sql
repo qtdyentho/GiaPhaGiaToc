@@ -1,5 +1,5 @@
 -- ============================================================
--- SEED DATA: INTERNAL ALPHA TEST DATASET (100% STRICT UUID COMPLIANT)
+-- SEED DATA: INTERNAL ALPHA TEST DATASET (100% SCHEMA COMPLIANT)
 -- DỰ ÁN: GIA PHẢ GIA TỘC (GIA PHA GIA TOC ENTERPRISE)
 -- ============================================================
 
@@ -112,7 +112,7 @@ INSERT INTO family_memberships (family_id, user_id, role, status) VALUES
 ON CONFLICT (family_id, user_id) DO NOTHING;
 
 -- ------------------------------------------------------------
--- 5. GENERATIONS & BRANCHES (Family Alpha - Chuẩn UUID)
+-- 5. GENERATIONS & BRANCHES (Có đầy đủ trường code)
 -- ------------------------------------------------------------
 INSERT INTO generations (id, family_id, generation_number, name) VALUES
 ('a1111111-0001-0000-0000-000000000001', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 1, 'Đời thứ 1 (Thủy Tổ)'),
@@ -122,24 +122,24 @@ INSERT INTO generations (id, family_id, generation_number, name) VALUES
 ('a1111111-0005-0000-0000-000000000005', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 5, 'Đời thứ 5 (Hiện Tại)')
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO branches (id, family_id, name, description) VALUES
-('b1111111-0001-0000-0000-000000000001', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Chi Trưởng (Chi 1)', 'Chi Trưởng Định Công'),
-('b1111111-0002-0000-0000-000000000002', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Chi Hai (Chi 2)', 'Chi Hai Giáp Bát'),
-('b1111111-0003-0000-0000-000000000003', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Chi Ba (Chi 3)', 'Chi Ba Thanh Trì')
+INSERT INTO branches (id, family_id, name, code, description) VALUES
+('b1111111-0001-0000-0000-000000000001', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Chi Trưởng (Chi 1)', 'CHI-1', 'Chi Trưởng Định Công'),
+('b1111111-0002-0000-0000-000000000002', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Chi Hai (Chi 2)', 'CHI-2', 'Chi Hai Giáp Bát'),
+('b1111111-0003-0000-0000-000000000003', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Chi Ba (Chi 3)', 'CHI-3', 'Chi Ba Thanh Trì')
 ON CONFLICT (id) DO NOTHING;
 
 -- ------------------------------------------------------------
--- 6. MEMBERS & RELATIONSHIPS (Chuẩn UUID)
+-- 6. MEMBERS & RELATIONSHIPS
 -- ------------------------------------------------------------
-INSERT INTO members (id, family_id, branch_id, generation_id, first_name, last_name, full_name, gender, life_status, birth_solar_year, death_lunar_day, death_lunar_month, death_lunar_year, burial_place, bio) VALUES
-('c1111111-0001-0000-0000-000000000001', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b1111111-0001-0000-0000-000000000001', 'a1111111-0001-0000-0000-000000000001', 'Phúc', 'Nguyễn Văn', 'Cụ Nguyễn Văn Phúc', 'MALE', 'DECEASED', 1885, 15, 1, 1952, 'Khu lăng mộ Tổ họ Nguyễn, Định Công, Hà Nội', 'Cụ Thủy Tổ khai sơn lập họ, có công khai hoang lập ấp vùng Định Công.'),
-('c1111111-0002-0000-0000-000000000002', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b1111111-0001-0000-0000-000000000001', 'a1111111-0001-0000-0000-000000000001', 'Mai', 'Trần Thị', 'Cụ Bà Trần Thị Mai', 'FEMALE', 'DECEASED', 1888, 10, 8, 1958, 'An táng cạnh cụ ông tại Lăng mộ Tổ', 'Chính thất Cụ Thủy Tổ.'),
-('c1111111-0003-0000-0000-000000000003', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b1111111-0001-0000-0000-000000000001', 'a1111111-0002-0000-0000-000000000002', 'Khang', 'Nguyễn Văn', 'Cụ Nguyễn Văn Khang (Trưởng Chi 1)', 'MALE', 'DECEASED', 1910, 18, 5, 1980, NULL, NULL),
-('c1111111-0004-0000-0000-000000000004', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b1111111-0002-0000-0000-000000000002', 'a1111111-0002-0000-0000-000000000002', 'Ninh', 'Nguyễn Văn', 'Cụ Nguyễn Văn Ninh (Trưởng Chi 2)', 'MALE', 'DECEASED', 1913, 22, 11, 1985, NULL, NULL),
-('c1111111-0005-0000-0000-000000000005', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b1111111-0003-0000-0000-000000000003', 'a1111111-0002-0000-0000-000000000002', 'Thịnh', 'Nguyễn Văn', 'Cụ Nguyễn Văn Thịnh (Trưởng Chi 3)', 'MALE', 'DECEASED', 1916, 5, 4, 1990, NULL, NULL),
-('c1111111-0006-0000-0000-000000000006', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b1111111-0001-0000-0000-000000000001', 'a1111111-0003-0000-0000-000000000003', 'Trọng', 'Nguyễn Văn', 'Ông Nguyễn Văn Trọng', 'MALE', 'DECEASED', 1940, NULL, NULL, NULL, NULL, NULL),
-('c1111111-0007-0000-0000-000000000007', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b1111111-0001-0000-0000-000000000001', 'a1111111-0004-0000-0000-000000000004', 'Hoàng', 'Nguyễn Văn', 'Nguyễn Văn Hoàng (Trưởng Họ)', 'MALE', 'ALIVE', 1975, NULL, NULL, NULL, NULL, NULL),
-('c1111111-0008-0000-0000-000000000008', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b1111111-0001-0000-0000-000000000001', 'a1111111-0005-0000-0000-000000000005', 'Nam', 'Nguyễn Văn', 'Nguyễn Văn Nam (Cháu đích tôn)', 'MALE', 'ALIVE', 2005, NULL, NULL, NULL, NULL, NULL)
+INSERT INTO members (id, family_id, branch_id, generation_id, full_name, gender, status, is_deceased, date_of_death_lunar_day, date_of_death_lunar_month, date_of_death_lunar_year, burial_place, biography) VALUES
+('c1111111-0001-0000-0000-000000000001', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b1111111-0001-0000-0000-000000000001', 'a1111111-0001-0000-0000-000000000001', 'Cụ Nguyễn Văn Phúc', 'MALE', 'DECEASED', true, 15, 1, 1952, 'Khu lăng mộ Tổ họ Nguyễn, Định Công, Hà Nội', 'Cụ Thủy Tổ khai sơn lập họ, có công khai hoang lập ấp vùng Định Công.'),
+('c1111111-0002-0000-0000-000000000002', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b1111111-0001-0000-0000-000000000001', 'a1111111-0001-0000-0000-000000000001', 'Cụ Bà Trần Thị Mai', 'FEMALE', 'DECEASED', true, 10, 8, 1958, 'An táng cạnh cụ ông tại Lăng mộ Tổ', 'Chính thất Cụ Thủy Tổ.'),
+('c1111111-0003-0000-0000-000000000003', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b1111111-0001-0000-0000-000000000001', 'a1111111-0002-0000-0000-000000000002', 'Cụ Nguyễn Văn Khang (Trưởng Chi 1)', 'MALE', 'DECEASED', true, 18, 5, 1980, NULL, NULL),
+('c1111111-0004-0000-0000-000000000004', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b1111111-0002-0000-0000-000000000002', 'a1111111-0002-0000-0000-000000000002', 'Cụ Nguyễn Văn Ninh (Trưởng Chi 2)', 'MALE', 'DECEASED', true, 22, 11, 1985, NULL, NULL),
+('c1111111-0005-0000-0000-000000000005', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b1111111-0003-0000-0000-000000000003', 'a1111111-0002-0000-0000-000000000002', 'Cụ Nguyễn Văn Thịnh (Trưởng Chi 3)', 'MALE', 'DECEASED', true, 5, 4, 1990, NULL, NULL),
+('c1111111-0006-0000-0000-000000000006', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b1111111-0001-0000-0000-000000000001', 'a1111111-0003-0000-0000-000000000003', 'Ông Nguyễn Văn Trọng', 'MALE', 'DECEASED', true, NULL, NULL, NULL, NULL, NULL),
+('c1111111-0007-0000-0000-000000000007', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b1111111-0001-0000-0000-000000000001', 'a1111111-0004-0000-0000-000000000004', 'Nguyễn Văn Hoàng (Trưởng Họ)', 'MALE', 'ALIVE', false, NULL, NULL, NULL, NULL, NULL),
+('c1111111-0008-0000-0000-000000000008', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'b1111111-0001-0000-0000-000000000001', 'a1111111-0005-0000-0000-000000000005', 'Nguyễn Văn Nam (Cháu đích tôn)', 'MALE', 'ALIVE', false, NULL, NULL, NULL, NULL, NULL)
 ON CONFLICT (id) DO NOTHING;
 
 -- Quan hệ gia tộc
@@ -156,14 +156,14 @@ ON CONFLICT (id) DO NOTHING;
 -- ------------------------------------------------------------
 -- 7. MEMORIAL DATES
 -- ------------------------------------------------------------
-INSERT INTO memorial_dates (family_id, member_id, title, lunar_day, lunar_month, is_leap_month, solar_date_approx, notes) VALUES
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'c1111111-0001-0000-0000-000000000001', 'Giỗ Cụ Thủy Tổ Nguyễn Văn Phúc', 15, 1, false, '2026-03-03', 'Đại lễ Giỗ Tổ thường niên, toàn bộ con cháu 3 chi tề tựu tại Từ đường.'),
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'c1111111-0002-0000-0000-000000000002', 'Giỗ Cụ Bà Trần Thị Mai', 10, 8, false, '2026-09-20', 'Giỗ Tổ Mẫu tại nhà thờ họ.'),
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'c1111111-0003-0000-0000-000000000003', 'Giỗ Cụ Nguyễn Văn Khang (Chi 1)', 18, 5, false, '2026-07-02', 'Giỗ Chi Trưởng.'),
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'c1111111-0004-0000-0000-000000000004', 'Giỗ Cụ Nguyễn Văn Ninh (Chi 2)', 22, 11, false, '2026-12-30', 'Giỗ Chi Hai.'),
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'c1111111-0005-0000-0000-000000000005', 'Giỗ Cụ Nguyễn Văn Thịnh (Chi 3)', 5, 4, false, '2026-05-20', 'Giỗ Chi Ba.'),
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'c1111111-0006-0000-0000-000000000006', 'Giỗ Ông Nguyễn Văn Trọng (Tháng Nhuận)', 15, 6, true, '2026-08-15', 'Trường hợp kiểm thử ngày giỗ rơi vào tháng 6 nhuận âm lịch.'),
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'c1111111-0003-0000-0000-000000000003', 'Giỗ Tiền Hiền Cụ Trọng (Ngày 30 Tết Âm)', 30, 12, false, '2027-02-05', 'Giỗ tất niên ngày 30 tháng Chạp.')
+INSERT INTO memorial_dates (family_id, member_id, lunar_day, lunar_month, is_leap_month, recurrence, notes) VALUES
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'c1111111-0001-0000-0000-000000000001', 15, 1, false, 'YEARLY_LUNAR', 'Đại lễ Giỗ Tổ thường niên, toàn bộ con cháu 3 chi tề tựu tại Từ đường.'),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'c1111111-0002-0000-0000-000000000002', 10, 8, false, 'YEARLY_LUNAR', 'Giỗ Tổ Mẫu tại nhà thờ họ.'),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'c1111111-0003-0000-0000-000000000003', 18, 5, false, 'YEARLY_LUNAR', 'Giỗ Chi Trưởng.'),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'c1111111-0004-0000-0000-000000000004', 22, 11, false, 'YEARLY_LUNAR', 'Giỗ Chi Hai.'),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'c1111111-0005-0000-0000-000000000005', 5, 4, false, 'YEARLY_LUNAR', 'Giỗ Chi Ba.'),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'c1111111-0006-0000-0000-000000000006', 15, 6, true, 'YEARLY_LUNAR', 'Trường hợp kiểm thử ngày giỗ rơi vào tháng 6 nhuận âm lịch.'),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'c1111111-0003-0000-0000-000000000003', 30, 12, false, 'YEARLY_LUNAR', 'Giỗ tất niên ngày 30 tháng Chạp.')
 ON CONFLICT (id) DO NOTHING;
 
 -- ------------------------------------------------------------
@@ -176,7 +176,7 @@ INSERT INTO events (family_id, title, event_type, scope, lunar_day, lunar_month,
 ON CONFLICT (id) DO NOTHING;
 
 -- ------------------------------------------------------------
--- 9. FUNDS & TRANSACTIONS (Chuẩn UUID)
+-- 9. FUNDS & TRANSACTIONS
 -- ------------------------------------------------------------
 INSERT INTO funds (id, family_id, name, opening_balance, current_balance, status) VALUES
 ('f1111111-0001-0000-0000-000000000001', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Quỹ Hoạt Động Thường Niên', 10000000, 15000000, 'ACTIVE'),
@@ -194,7 +194,7 @@ INSERT INTO financial_transactions (id, family_id, fund_id, transaction_code, tr
 ON CONFLICT (id) DO NOTHING;
 
 -- ------------------------------------------------------------
--- 10. PLANS & SUBSCRIPTIONS (Chuẩn UUID & Dynamic Subquery)
+-- 10. PLANS & SUBSCRIPTIONS
 -- ------------------------------------------------------------
 INSERT INTO subscriptions (
     id, family_id, plan_id, plan_version_id, billing_cycle, current_period_start, current_period_end, status
@@ -231,15 +231,22 @@ INSERT INTO subscriptions (
 )
 ON CONFLICT (family_id) DO NOTHING;
 
-INSERT INTO invoices (id, family_id, subscription_id, invoice_number, subtotal_amount, total_amount, status, due_date) VALUES
+INSERT INTO invoices (
+    id, family_id, subscription_id, invoice_number, subtotal, discount, tax, total, currency, status, issued_at, due_at, paid_at
+) VALUES
 (
     'i1111111-0001-0000-0000-000000000001',
     'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     'd1111111-0001-0000-0000-000000000001',
     'GP-INV20260101-0001',
     990000,
+    0,
+    0,
     990000,
+    'VND',
     'PAID',
-    '2026-01-15'
+    NOW(),
+    NOW() + INTERVAL '14 days',
+    NOW()
 )
 ON CONFLICT (id) DO NOTHING;
