@@ -115,6 +115,9 @@ export interface Family {
   ancestral_hall_address?: string;
   logo_url?: string;
   banner_url?: string;
+  covenant_title?: string;
+  covenant_preamble?: string;
+  covenant_articles?: string[];
   created_by: string;
   created_at: string;
   updated_at: string;

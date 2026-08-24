@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom';
 import { UpcomingEventsWidget } from '../components/calendar/UpcomingEventsWidget';
 import { useAuth } from '../contexts/AuthContext';
 import { AncestralBannerModal, ANCESTRAL_PRESETS } from '../components/family/AncestralBannerModal';
+import { ClanCovenantCard } from '../components/family/ClanCovenantCard';
 
 export const DashboardPage: React.FC = () => {
   const { activeFamily, isFamilyAdmin } = useAuth();
@@ -274,6 +275,9 @@ export const DashboardPage: React.FC = () => {
           <UpcomingEventsWidget />
         </div>
       </div>
+
+      {/* 📜 HƯƠNG ƯỚC & TỘC QUY DÒNG HỌ */}
+      <ClanCovenantCard family={currentFamily} />
 
       {/* 🖼️ Modal Thay Đổi Ảnh Từ Đường & Banner */}
       <AncestralBannerModal

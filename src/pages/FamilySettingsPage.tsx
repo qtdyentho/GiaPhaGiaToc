@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { 
   Shield, MapPin, Building, Copy, Plus, UserCheck, Key, CheckCircle2,
-  Image, Camera, Sparkles, Landmark, Check
+  Image, Camera, Sparkles, Landmark, Check, Scroll
 } from 'lucide-react';
 import { mockFamily, mockMemberships } from '../services/mockData';
 import { ROLE_LABELS } from '../lib/constants';
 import { useAuth } from '../contexts/AuthContext';
 import { AncestralBannerModal, ANCESTRAL_PRESETS } from '../components/family/AncestralBannerModal';
+import { ClanCovenantModal } from '../components/family/ClanCovenantModal';
 
 export const FamilySettingsPage: React.FC = () => {
   const { activeFamily, updateFamily } = useAuth();
@@ -15,6 +16,7 @@ export const FamilySettingsPage: React.FC = () => {
   const [inviteRole, setInviteRole] = useState('MEMBER');
   const [generatedToken, setGeneratedToken] = useState('GP-INVITE-2026-HN01');
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
+  const [isCovenantModalOpen, setIsCovenantModalOpen] = useState(false);
 
   // Form states
   const [familyName, setFamilyName] = useState(currentFamily.name);
@@ -206,8 +208,38 @@ export const FamilySettingsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Right 1 Col: Mã mời & Liên kết tham gia */}
+        {/* Right 1 Col: Mã mời & Hương ước */}
         <div className="space-y-6">
+          {/* Box: Quản trị Hương Ước Dòng Họ */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+            <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2 border-b border-slate-100 pb-2">
+              <Scroll className="w-4 h-4 text-amber-700" />
+              <span>Hương Ước & Tộc Quy</span>
+            </h2>
+
+            <p className="text-xs text-slate-500">
+              Quy tắc nếp sống, rèn đức luyện tài, hiếu kính tổ tiên và giữ gìn gia phong dòng họ.
+            </p>
+
+            <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl space-y-1.5">
+              <div className="text-xs font-bold text-amber-950 font-serif line-clamp-1">
+                {currentFamily.covenant_title || 'Hương Ước & Tộc Quy Dòng Họ'}
+              </div>
+              <div className="text-[11px] text-amber-900 line-clamp-2 italic font-serif">
+                "{currentFamily.covenant_preamble || 'Cây có cội mới trổ cành xanh lá, nước có nguồn mới biển rộng sông sâu...'}"
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsCovenantModalOpen(true)}
+              className="w-full py-2 bg-amber-800 hover:bg-amber-900 text-white text-xs font-bold rounded-xl flex items-center justify-center space-x-1.5 transition shadow-xs"
+            >
+              <Scroll className="w-3.5 h-3.5" />
+              <span>Soạn Thảo / Sửa Hương Ước</span>
+            </button>
+          </div>
+
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
             <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2 border-b border-slate-100 pb-2">
               <Key className="w-4 h-4 text-amber-600" />
@@ -259,6 +291,13 @@ export const FamilySettingsPage: React.FC = () => {
       <AncestralBannerModal
         isOpen={isBannerModalOpen}
         onClose={() => setIsBannerModalOpen(false)}
+        family={currentFamily}
+      />
+
+      {/* Modal Chỉnh Sửa Hương Ước */}
+      <ClanCovenantModal
+        isOpen={isCovenantModalOpen}
+        onClose={() => setIsCovenantModalOpen(false)}
         family={currentFamily}
       />
     </div>
