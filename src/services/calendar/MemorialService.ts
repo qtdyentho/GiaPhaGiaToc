@@ -1,12 +1,12 @@
 import { MemorialDate } from '../../types/database';
-import { mockMemorialDates, mockMembers } from '../mockData';
+import { mockMemorialDates, mockMembers, mockGenerations, mockBranches } from '../mockData';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { LunarCalendarService } from './LunarCalendarService';
 import { getDaysInLunarMonth, getLeapMonth } from '../../lib/lunar';
 
 export class MemorialService {
   /**
-   * Lấy danh sách ngày giỗ theo gia tộc
+   * Lấy danh sách ngày giỗ theo gia tộc kèm thông tin chi cành và thế hệ
    */
   static async getMemorials(familyId: string = 'fam-0000-0001'): Promise<MemorialDate[]> {
     if (isSupabaseConfigured()) {
@@ -24,9 +24,17 @@ export class MemorialService {
             mem.lunar_month,
             mem.is_leap_month
           );
+          const member = mockMembers.find((m) => m.id === mem.member_id);
+          const generation = mockGenerations.find((g) => g.id === member?.generation_id);
+          const branch = mockBranches.find((b) => b.id === member?.branch_id);
+
           return {
             ...mem,
             next_solar_date: next.solarDate,
+            generation_name: generation?.name || (member ? 'Đời thứ ' + (member.generation_id || 1) : undefined),
+            generation_number: generation?.generation_number || 1,
+            branch_name: branch?.name || 'Chi Trưởng',
+            burial_place: member?.burial_place,
           };
         });
       }
@@ -61,9 +69,17 @@ export class MemorialService {
         mem.lunar_month,
         mem.is_leap_month
       );
+      const member = mockMembers.find((m) => m.id === mem.member_id);
+      const generation = mockGenerations.find((g) => g.id === member?.generation_id);
+      const branch = mockBranches.find((b) => b.id === member?.branch_id);
+
       return {
         ...mem,
         next_solar_date: next.solarDate,
+        generation_name: generation?.name || (member ? 'Đời thứ ' + (member.generation_id || 1) : undefined),
+        generation_number: generation?.generation_number || 1,
+        branch_name: branch?.name || 'Chi Trưởng',
+        burial_place: member?.burial_place,
       };
     });
   }

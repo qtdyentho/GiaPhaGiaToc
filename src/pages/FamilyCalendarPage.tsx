@@ -472,16 +472,21 @@ export const FamilyCalendarPage: React.FC = () => {
                   {day.memorials.map((m) => (
                     <span
                       key={m.id}
-                      className="px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-900 rounded-lg text-xs font-bold flex items-center gap-1"
+                      className="px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs"
                     >
-                      <Sparkles className="w-3 h-3 text-amber-600" />
-                      {m.title}
+                      <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      <span>{m.title}</span>
+                      {(m.generation_name || m.branch_name) && (
+                        <span className="text-[10px] text-amber-700 bg-amber-100/80 px-1.5 py-0.2 rounded font-semibold border border-amber-300/50">
+                          {m.generation_name || ''}{m.generation_name && m.branch_name ? ' • ' : ''}{m.branch_name || ''}
+                        </span>
+                      )}
                     </span>
                   ))}
                   {day.events.map((e) => (
                     <span
                       key={e.id}
-                      className="px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-lg text-xs font-bold"
+                      className="px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl text-xs font-bold shadow-2xs"
                     >
                       {e.title}
                     </span>

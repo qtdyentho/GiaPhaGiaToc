@@ -165,10 +165,12 @@ export interface Member {
   birth_lunar_day?: number;
   birth_lunar_month?: number;
   birth_lunar_year?: number;
+  birth_year?: number;
   death_solar_date?: string;
   death_lunar_day?: number;
   death_lunar_month?: number;
   death_lunar_year?: number;
+  death_year?: number;
   burial_place?: string;
   avatar_url?: string;
   bio?: string;
@@ -197,6 +199,12 @@ export interface MemorialDate {
   is_leap_month: boolean;
   notes?: string;
   next_solar_date?: string;
+  generation_name?: string;
+  generation_number?: number;
+  branch_name?: string;
+  burial_place?: string;
+  birth_year?: string | number;
+  death_year?: string | number;
   created_at: string;
 }
 

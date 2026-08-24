@@ -109,13 +109,36 @@ export const CalendarDayDetailDrawer: React.FC<CalendarDayDetailDrawerProps> = (
               </div>
             ) : (
               dayInfo.memorials.map((mem) => (
-                <div key={mem.id} className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl space-y-1">
-                  <div className="text-xs font-bold text-amber-950">{mem.title}</div>
-                  <div className="text-[11px] text-amber-800 font-semibold">
-                    Ngày {mem.lunar_day}/{mem.lunar_month} Âm Lịch {mem.is_leap_month ? '(Tháng Nhuận)' : ''}
+                <div key={mem.id} className="p-3.5 bg-amber-50/90 border border-amber-200 rounded-2xl space-y-1.5 shadow-2xs">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="text-xs font-bold text-amber-950">{mem.title}</div>
+                    <span className="text-[10px] px-2 py-0.5 bg-amber-200/60 text-amber-900 font-bold rounded-full shrink-0 border border-amber-300/60">
+                      {mem.lunar_day}/{mem.lunar_month} Âm lịch
+                    </span>
                   </div>
+
+                  {/* Chi Cành & Thế Hệ Badges */}
+                  <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                    {mem.generation_name && (
+                      <span className="text-[10px] bg-amber-100/80 text-amber-900 border border-amber-300/80 px-2 py-0.5 rounded-md font-bold">
+                        {mem.generation_name}
+                      </span>
+                    )}
+                    {mem.branch_name && (
+                      <span className="text-[10px] bg-emerald-100/80 text-[#166534] border border-emerald-300/80 px-2 py-0.5 rounded-md font-bold">
+                        {mem.branch_name}
+                      </span>
+                    )}
+                    {mem.burial_place && (
+                      <span className="text-[10px] text-slate-600 bg-white/80 border border-slate-200 px-2 py-0.5 rounded-md flex items-center gap-1 font-medium">
+                        <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
+                        <span className="truncate max-w-[150px]">{mem.burial_place}</span>
+                      </span>
+                    )}
+                  </div>
+
                   {mem.notes && (
-                    <p className="text-[10px] text-slate-600 bg-white/70 p-2 rounded-lg mt-1 border border-amber-200/50">
+                    <p className="text-[10px] text-slate-600 bg-white/90 p-2 rounded-xl mt-1 border border-amber-200/60 leading-relaxed">
                       {mem.notes}
                     </p>
                   )}
