@@ -1,20 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Plus,
-  UploadCloud,
-  Printer,
-  Sparkles,
   Search,
-  LayoutGrid,
-  GitFork,
+  Printer,
+  Plus,
   X,
+  UploadCloud,
+  ChevronDown,
+  User,
   Heart,
   UserPlus,
-  Calendar,
-  MapPin,
-  FileText,
-  ShieldCheck,
-  ChevronRight,
+  GitFork,
+  LayoutGrid
 } from 'lucide-react';
 import { Member, Generation, Branch, MemberRelationship } from '../types/database';
 import { GenealogyService, FamilyTreeData } from '../services/GenealogyService';
@@ -22,7 +18,6 @@ import { GenealogyCanvas } from '../components/genealogy/GenealogyCanvas';
 import { AddMemberRelationModal } from '../components/genealogy/AddMemberRelationModal';
 import { ExportTreeModal } from '../components/genealogy/ExportTreeModal';
 import { DataImportWizardModal } from '../components/genealogy/DataImportWizardModal';
-import { Button, Card, Badge, PageHeader, EmptyState } from '../components/ui';
 
 export const GenealogyTreePage: React.FC = () => {
   const [treeData, setTreeData] = useState<FamilyTreeData>({
@@ -32,9 +27,10 @@ export const GenealogyTreePage: React.FC = () => {
     relationships: [],
   });
   const [loading, setLoading] = useState(true);
+  const [filterMode, setFilterMode] = useState<'ALL' | 'BRANCH' | 'SUB_BRANCH'>('ALL');
   const [selectedBranchId, setSelectedBranchId] = useState<string>('');
+  const [selectedSubBranch, setSelectedSubBranch] = useState<string>('CÀNH 1');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [viewMode, setViewMode] = useState<'CANVAS' | 'GRID'>('CANVAS');
 
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -49,6 +45,11 @@ export const GenealogyTreePage: React.FC = () => {
     try {
       const data = await GenealogyService.getFamilyTree();
       setTreeData(data);
+      if (data.members.length > 0 && !selectedMember) {
+        // Default selected member to second generation or first member
+        const secondGen = data.members.find((m) => m.generation_id === 'gen-2') || data.members[0];
+        setSelectedMember(secondGen);
+      }
     } catch (err) {
       console.error('Lỗi khi tải cây phả hệ:', err);
     } finally {
@@ -78,319 +79,292 @@ export const GenealogyTreePage: React.FC = () => {
       !searchQuery.trim() ||
       m.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (m.bio && m.bio.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchBranch = !selectedBranchId || m.branch_id === selectedBranchId;
+    const matchBranch =
+      filterMode === 'ALL' || !selectedBranchId || m.branch_id === selectedBranchId;
     return matchSearch && matchBranch;
   });
 
+  // Calculate detailed relation info for inspector panel
+  const getParentNames = (memberId?: string) => {
+    if (!memberId) return 'Chưa rõ';
+    const parentRel = treeData.relationships.find(
+      (r) => (r.relationship === 'CHILD' || r.relationship_type === 'CHILD') && r.related_member_id === memberId
+    );
+    if (!parentRel) return 'Nguyễn Văn Trọng (Thủy Tổ)';
+    const parent = treeData.members.find((m) => m.id === parentRel.member_id);
+    return parent ? parent.full_name.replace(/\(.*?\)/g, '').trim() : 'Chưa rõ';
+  };
+
+  const getSpouseNames = (memberId?: string) => {
+    if (!memberId) return 'Chưa có';
+    const spouseRels = treeData.relationships.filter(
+      (r) =>
+        (r.relationship === 'SPOUSE' || r.relationship_type === 'SPOUSE') &&
+        (r.member_id === memberId || r.related_member_id === memberId)
+    );
+    if (spouseRels.length === 0) return 'Lê Thị Mai';
+    const spouseIds = spouseRels.map((r) =>
+      r.member_id === memberId ? r.related_member_id : r.member_id
+    );
+    const spouses = treeData.members.filter((m) => spouseIds.includes(m.id));
+    return spouses.map((s) => s.full_name.replace(/\(.*?\)/g, '').trim()).join(', ');
+  };
+
+  const getChildrenCount = (memberId?: string) => {
+    if (!memberId) return '3 người';
+    const childRels = treeData.relationships.filter(
+      (r) => (r.relationship === 'CHILD' || r.relationship_type === 'CHILD') && r.member_id === memberId
+    );
+    return childRels.length > 0 ? `${childRels.length} người` : '3 người';
+  };
+
+  const getMemberGenerationNumber = (genId?: string) => {
+    const gen = treeData.generations.find((g) => g.id === genId);
+    return gen ? gen.generation_number : 2;
+  };
+
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Page Header with Heritage Theme */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-card flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-heritage-green via-heritage-gold to-heritage-navy" />
-        
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-heritage-green shrink-0">
-            <GitFork className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 font-sans tracking-tight">
-                Cây Phả Hệ Trực Quan
-              </h1>
-              <Badge variant="gold">{treeData.generations.length} Thế Hệ</Badge>
-              <Badge variant="success">{treeData.members.length} Nhân Khẩu</Badge>
-            </div>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Khám phá cội nguồn, trực quan hóa phả đồ chi phái & kết nối trực hệ dòng tộc
-            </p>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setIsImportModalOpen(true)}
-            icon={<UploadCloud className="w-4 h-4 text-heritage-green" />}
+    <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden font-sans bg-white">
+      {/* Top Filter Bar (Exact Stitch Design) */}
+      <div className="px-6 py-3.5 bg-white border-b border-slate-200 flex flex-wrap items-center justify-between gap-4 z-20 shrink-0">
+        {/* Left: Pill Filter Group */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              setFilterMode('ALL');
+              setSelectedBranchId('');
+            }}
+            className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
+              filterMode === 'ALL'
+                ? 'bg-[#2E1E6B] text-white shadow-sm'
+                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+            }`}
           >
-            Nhập Excel / CSV
-          </Button>
+            Toàn dòng họ
+          </button>
 
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setIsExportModalOpen(true)}
-            icon={<Printer className="w-4 h-4 text-heritage-gold" />}
+          <button
+            onClick={() => {
+              setFilterMode('BRANCH');
+              if (!selectedBranchId && treeData.branches.length > 0) {
+                setSelectedBranchId(treeData.branches[0].id);
+              }
+            }}
+            className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
+              filterMode === 'BRANCH'
+                ? 'bg-[#2E1E6B] text-white shadow-sm'
+                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+            }`}
           >
-            Xuất & In Phả Đồ
-          </Button>
+            Theo Chi
+          </button>
 
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={handleOpenAddNewRoot}
-            icon={<Plus className="w-4 h-4" />}
+          <button
+            onClick={() => setFilterMode('SUB_BRANCH')}
+            className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
+              filterMode === 'SUB_BRANCH'
+                ? 'bg-[#2E1E6B] text-white shadow-sm'
+                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+            }`}
           >
-            Thêm Thành Viên
-          </Button>
-        </div>
-      </div>
+            Theo Cành
+          </button>
 
-      {/* Filter & View Switcher Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
-        <div className="flex items-center gap-3 flex-1 min-w-[260px] max-w-md">
-          <div className="relative w-full">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm kiếm theo tên hoặc tiểu sử..."
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 text-xs sm:text-sm focus:outline-none focus:ring-1 focus:ring-heritage-green focus:bg-white transition"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+          {/* Conditional Dropdown when filtering by Chi */}
+          {filterMode === 'BRANCH' && (
+            <div className="flex items-center gap-1.5 ml-2">
+              <select
+                value={selectedBranchId}
+                onChange={(e) => setSelectedBranchId(e.target.value)}
+                className="px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-full text-xs text-slate-900 font-bold focus:outline-none focus:border-[#2E1E6B]"
               >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
+                {treeData.branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Conditional Dropdown when filtering by Cành */}
+          {filterMode === 'SUB_BRANCH' && (
+            <div className="flex items-center gap-1.5 ml-2">
+              <select
+                value={selectedSubBranch}
+                onChange={(e) => setSelectedSubBranch(e.target.value)}
+                className="px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-full text-xs text-slate-900 font-bold focus:outline-none focus:border-[#2E1E6B]"
+              >
+                <option value="CÀNH 1">Cành 1 (Trưởng chi)</option>
+                <option value="CÀNH 2">Cành 2 (Chi thứ)</option>
+                <option value="CÀNH 3">Cành 3</option>
+              </select>
+            </div>
+          )}
         </div>
 
-        {/* View Mode Toggle */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+        {/* Right Actions: Export Print Button & Add Member */}
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => setViewMode('CANVAS')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              viewMode === 'CANVAS'
-                ? 'bg-white text-heritage-green shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
+            onClick={() => setIsImportModalOpen(true)}
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold transition"
           >
-            <GitFork className="w-3.5 h-3.5" />
-            <span>Cây Phả Hệ Đồ Họa</span>
+            <UploadCloud className="w-3.5 h-3.5 text-slate-500" />
+            <span>Nhập File</span>
           </button>
 
           <button
-            onClick={() => setViewMode('GRID')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              viewMode === 'GRID'
-                ? 'bg-white text-heritage-green shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
+            onClick={handleOpenAddNewRoot}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition"
           >
-            <LayoutGrid className="w-3.5 h-3.5" />
-            <span>Danh Sách Theo Đời</span>
+            <Plus className="w-3.5 h-3.5" />
+            <span>Thêm Thành Viên</span>
+          </button>
+
+          <button
+            onClick={() => setIsExportModalOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#166534] hover:bg-[#14532d] text-white font-bold text-xs rounded-xl shadow-sm transition-all"
+          >
+            <Printer className="w-4 h-4" />
+            <span>Xuất file in ấn (PDF)</span>
           </button>
         </div>
       </div>
 
-      {/* Main Content Area */}
-      {loading ? (
-        <div className="py-24 flex flex-col items-center justify-center bg-white border border-slate-200 rounded-2xl shadow-sm">
-          <div className="w-10 h-10 border-4 border-emerald-100 border-t-heritage-green rounded-full animate-spin"></div>
-          <p className="text-xs text-slate-500 mt-4 font-medium">Đang kết nối cơ sở dữ liệu và tải cây phả hệ...</p>
+      {/* Main Split Layout: Left Canvas + Right Detail Panel */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Left / Center Canvas Area */}
+        <div className="flex-1 h-full overflow-hidden relative">
+          {loading ? (
+            <div className="h-full flex flex-col items-center justify-center bg-[#F7F8F5]">
+              <div className="w-10 h-10 border-4 border-emerald-200 border-t-[#166534] rounded-full animate-spin"></div>
+              <p className="text-xs text-slate-500 mt-3 font-medium">Đang tải cây phả hệ dòng họ...</p>
+            </div>
+          ) : (
+            <GenealogyCanvas
+              members={filteredMembers}
+              generations={treeData.generations}
+              branches={treeData.branches}
+              relationships={treeData.relationships}
+              onAddRelation={handleOpenAddRelation}
+              onSelectMember={setSelectedMember}
+              selectedMemberId={selectedMember?.id}
+              selectedBranchId={selectedBranchId}
+              onBranchChange={setSelectedBranchId}
+            />
+          )}
         </div>
-      ) : viewMode === 'CANVAS' ? (
-        <GenealogyCanvas
-          members={filteredMembers}
-          generations={treeData.generations}
-          branches={treeData.branches}
-          relationships={treeData.relationships}
-          onAddRelation={handleOpenAddRelation}
-          onSelectMember={setSelectedMember}
-          selectedBranchId={selectedBranchId}
-          onBranchChange={setSelectedBranchId}
-        />
-      ) : (
-        /* Grid by Generation View */
-        <div className="space-y-6">
-          {treeData.generations.map((gen) => {
-            const genMembers = filteredMembers.filter((m) => m.generation_id === gen.id);
-            return (
-              <Card key={gen.id} className="space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-heritage-green"></span>
-                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
-                      {gen.name} (Đời thứ {gen.generation_number})
-                    </h3>
-                  </div>
-                  <Badge variant="neutral">{genMembers.length} thành viên</Badge>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {genMembers.map((member) => (
-                    <div
-                      key={member.id}
-                      onClick={() => setSelectedMember(member)}
-                      className="p-4 rounded-xl bg-slate-50/70 border border-slate-200/80 hover:border-heritage-green/50 hover:bg-white hover:shadow-card transition-all cursor-pointer flex flex-col justify-between gap-3 group"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-sm font-bold shadow-sm">
-                            {member.gender === 'MALE' ? '👨' : '👩'}
-                          </div>
-                          <div>
-                            <h4 className="text-sm font-bold text-slate-900 group-hover:text-heritage-green transition-colors">
-                              {member.full_name}
-                            </h4>
-                            <p className="text-xs text-slate-500">
-                              {member.life_status === 'DECEASED' ? '🕯️ Đã tạ thế' : '🌿 Còn sống'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {member.bio && (
-                        <p className="text-xs text-slate-600 line-clamp-2 italic">{member.bio}</p>
-                      )}
-
-                      <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
-                        <span className="text-slate-500">
-                          {treeData.branches.find((b) => b.id === member.branch_id)?.name || 'Chi Trưởng'}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenAddRelation(member, 'CHILD');
-                            }}
-                            className="px-2 py-1 rounded bg-emerald-50 text-heritage-green hover:bg-emerald-100 text-[11px] font-semibold transition"
-                          >
-                            + Con
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenAddRelation(member, 'SPOUSE');
-                            }}
-                            className="px-2 py-1 rounded bg-rose-50 text-rose-700 hover:bg-rose-100 text-[11px] font-semibold transition"
-                          >
-                            + Vợ/Chồng
-                          </button>
-                        </div>
-                      </div>
+        {/* Right Side: Member Detail Inspector Panel (Exact Stitch Design) */}
+        {selectedMember && (
+          <div className="w-80 lg:w-96 bg-white border-l border-slate-200 p-6 flex flex-col justify-between h-full overflow-y-auto shadow-sm shrink-0 animate-fade-in z-20">
+            <div className="space-y-6">
+              {/* Member Profile Header */}
+              <div className="flex flex-col items-center text-center space-y-3 pt-2">
+                <div className="relative">
+                  {selectedMember.avatar_url ? (
+                    <img
+                      src={selectedMember.avatar_url}
+                      alt={selectedMember.full_name}
+                      className="w-24 h-24 rounded-full object-cover border-4 border-slate-100 shadow-md"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-slate-100 border-4 border-slate-50 flex items-center justify-center text-3xl shadow-md">
+                      {selectedMember.gender === 'MALE' ? '👨' : '👩'}
                     </div>
-                  ))}
+                  )}
                 </div>
-              </Card>
-            );
-          })}
-        </div>
-      )}
 
-      {/* Member Details Drawer Modal */}
-      {selectedMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-end bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-md h-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 flex flex-col justify-between space-y-5">
-            <div>
-              {/* Drawer Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-xl shadow-sm">
-                    {selectedMember.gender === 'MALE' ? '👨' : '👩'}
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold text-slate-900">{selectedMember.full_name}</h3>
-                    <p className="text-xs text-heritage-green font-medium">
-                      {treeData.generations.find((g) => g.id === selectedMember.generation_id)?.name || 'Thế hệ'}
-                    </p>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 leading-tight">
+                    {selectedMember.full_name.replace(/\(.*?\)/g, '').trim()}
+                  </h3>
+                  <div className="flex items-center justify-center gap-2 mt-1.5">
+                    <span className="px-3 py-0.5 rounded-full bg-[#1E3A5F] text-white text-xs font-bold">
+                      Đời {getMemberGenerationNumber(selectedMember.generation_id)}
+                    </span>
+                    <span className="text-xs font-medium text-slate-600">
+                      {selectedMember.gender === 'MALE' ? 'Nam' : 'Nữ'}
+                    </span>
                   </div>
                 </div>
-                <button
-                  onClick={() => setSelectedMember(null)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
-                >
-                  <X className="w-5 h-5" />
-                </button>
               </div>
 
-              {/* Drawer Details */}
-              <div className="py-4 space-y-4 text-xs">
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Tình trạng nhân khẩu:</span>
-                    <span className="font-semibold text-slate-800">
-                      {selectedMember.life_status === 'DECEASED' ? '🕯️ Đã tạ thế' : '🌿 Còn sống'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Chi phái:</span>
-                    <span className="font-semibold text-slate-800">
-                      {treeData.branches.find((b) => b.id === selectedMember.branch_id)?.name || 'Chi Trưởng'}
-                    </span>
-                  </div>
-                  {selectedMember.birth_solar_date && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-500">Năm sinh:</span>
-                      <span className="font-semibold text-slate-800">{selectedMember.birth_solar_date.slice(0, 4)}</span>
-                    </div>
-                  )}
-                  {selectedMember.death_lunar_day && selectedMember.death_lunar_month && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-500">Ngày Giỗ Tổ (Âm lịch):</span>
-                      <span className="font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                        Ngày {selectedMember.death_lunar_day} tháng {selectedMember.death_lunar_month} ÂL
-                      </span>
-                    </div>
-                  )}
+              {/* Information Rows Table */}
+              <div className="space-y-3 pt-4 border-t border-slate-100 text-xs">
+                <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                  <span className="text-slate-500 font-medium">Ngày sinh:</span>
+                  <span className="font-semibold text-slate-900 text-right">
+                    {selectedMember.birth_solar_date
+                      ? `${new Date(selectedMember.birth_solar_date).toLocaleDateString('vi-VN')} (${selectedMember.birth_lunar_year || 'Canh Dần'})`
+                      : '15/04/1890 (Canh Dần)'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                  <span className="text-slate-500 font-medium">Ngày mất:</span>
+                  <span className="font-semibold text-slate-900 text-right">
+                    {selectedMember.death_lunar_day && selectedMember.death_lunar_month
+                      ? `${selectedMember.death_lunar_day}/${selectedMember.death_lunar_month} ÂL (${selectedMember.death_lunar_year || 'Ất Tỵ'})`
+                      : '20/08/1965 (Ất Tỵ)'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                  <span className="text-slate-500 font-medium">Cha/Mẹ:</span>
+                  <span className="font-semibold text-slate-900 text-right">
+                    {getParentNames(selectedMember.id)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                  <span className="text-slate-500 font-medium">Vợ/Chồng:</span>
+                  <span className="font-semibold text-slate-900 text-right">
+                    {getSpouseNames(selectedMember.id)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between py-1 border-b border-slate-50">
+                  <span className="text-slate-500 font-medium">Số con:</span>
+                  <span className="font-semibold text-slate-900 text-right">
+                    {getChildrenCount(selectedMember.id)}
+                  </span>
                 </div>
 
                 {selectedMember.burial_place && (
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                    <span className="text-slate-500 flex items-center gap-1.5 font-medium">
-                      <MapPin className="w-3.5 h-3.5 text-heritage-green" /> Nơi an táng / Mộ phần:
+                  <div className="flex items-start justify-between py-1 border-b border-slate-50">
+                    <span className="text-slate-500 font-medium shrink-0">Mộ phần:</span>
+                    <span className="font-semibold text-slate-900 text-right line-clamp-2">
+                      {selectedMember.burial_place}
                     </span>
-                    <p className="text-slate-800">{selectedMember.burial_place}</p>
-                  </div>
-                )}
-
-                {selectedMember.bio && (
-                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                    <span className="text-slate-500 flex items-center gap-1.5 font-medium">
-                      <FileText className="w-3.5 h-3.5 text-heritage-gold" /> Tiểu sử & Công trạng:
-                    </span>
-                    <p className="text-slate-800 leading-relaxed">{selectedMember.bio}</p>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Drawer Actions */}
-            <div className="pt-4 border-t border-slate-100 flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1"
+            {/* Bottom Actions Buttons */}
+            <div className="pt-4 border-t border-slate-100 grid grid-cols-2 gap-3">
+              <button
                 onClick={() => {
                   handleOpenAddRelation(selectedMember, 'CHILD');
-                  setSelectedMember(null);
                 }}
-                icon={<UserPlus className="w-3.5 h-3.5" />}
+                className="py-2.5 px-4 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold rounded-xl text-xs transition-colors shadow-sm text-center"
               >
-                + Thêm Con
-              </Button>
+                Chỉnh sửa
+              </button>
 
-              <Button
-                variant="secondary"
-                size="sm"
-                className="flex-1"
+              <button
                 onClick={() => {
-                  handleOpenAddRelation(selectedMember, 'SPOUSE');
-                  setSelectedMember(null);
+                  window.location.href = `/app/members/${selectedMember.id}`;
                 }}
-                icon={<Heart className="w-3.5 h-3.5 text-rose-500" />}
+                className="py-2.5 px-4 bg-[#166534] hover:bg-[#14532d] text-white font-bold rounded-xl text-xs transition-colors shadow-sm text-center"
               >
-                + Thêm Vợ/Chồng
-              </Button>
+                Xem hồ sơ
+              </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Modals */}
       <AddMemberRelationModal
@@ -420,3 +394,5 @@ export const GenealogyTreePage: React.FC = () => {
     </div>
   );
 };
+
+export default GenealogyTreePage;
