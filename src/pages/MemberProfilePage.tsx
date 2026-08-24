@@ -3,13 +3,23 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, User, Calendar, MapPin, Heart, GitFork, Sparkles, Edit3, Plus, ShieldCheck } from 'lucide-react';
 import { mockMembers, mockRelationships, mockMemorialDates } from '../services/mockData';
 import { formatLunarDate, formatDate } from '../lib/utils';
+import { CreateMemorialModal } from '../components/calendar/CreateMemorialModal';
+import { LunarCalendarService } from '../services/calendar/LunarCalendarService';
 
 export const MemberProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<'info' | 'relations' | 'memorial'>('info');
+  const [showAddMemorialModal, setShowAddMemorialModal] = useState(false);
 
   const member = mockMembers.find((m) => m.id === id) || mockMembers[0];
   const memorial = mockMemorialDates.find((m) => m.member_id === member.id);
+
+  const nextOccurrence = LunarCalendarService.getNextSolarDateForMemorial(
+    member.death_lunar_day || 15,
+    member.death_lunar_month || 1,
+    false
+  );
+  const nextSolarDate = memorial?.next_solar_date || nextOccurrence.solarDate;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -159,19 +169,34 @@ export const MemberProfilePage: React.FC = () => {
 
       {activeTab === 'memorial' && member.life_status === 'DECEASED' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-          <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-            <Sparkles className="w-4 h-4 text-heritage-gold" />
-            <span>Thông Tin Ngày Giỗ & Phần Mộ Tổ Tiên</span>
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
+              <Sparkles className="w-4 h-4 text-heritage-gold" />
+              <span>Thông Tin Ngày Giỗ & Phần Mộ Tiền Nhân</span>
+            </h2>
+
+            <button
+              onClick={() => setShowAddMemorialModal(true)}
+              className="flex items-center space-x-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition shadow-xs"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Thiết Lập Ngày Giỗ</span>
+            </button>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-xl space-y-2 text-xs">
-              <div className="font-bold text-amber-950">Lễ Giỗ Thường Niên</div>
+              <div className="font-bold text-amber-950 flex items-center justify-between">
+                <span>Lễ Giỗ Âm Lịch Thường Niên</span>
+                <span className="text-[10px] font-bold bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded-full">
+                  Lặp hàng năm
+                </span>
+              </div>
               <div className="text-sm font-extrabold text-amber-900">
-                Ngày {member.death_lunar_day} Tháng {member.death_lunar_month} (Âm Lịch)
+                Ngày {member.death_lunar_day || 15} Tháng {member.death_lunar_month || 1} (Âm Lịch)
               </div>
               <div className="text-[11px] text-amber-800">
-                Tự động tính ngày Dương lịch và gửi thông báo nhắc lễ trước 30-15-7-3-1 ngày.
+                Dương lịch dự kiến năm nay: <strong className="text-slate-900">{formatDate(nextSolarDate)}</strong>
               </div>
             </div>
 
@@ -183,8 +208,18 @@ export const MemberProfilePage: React.FC = () => {
               <div className="text-slate-700 font-medium">
                 {member.burial_place || 'Chưa cập nhật vị trí lăng mộ'}
               </div>
+              <div className="text-[10px] text-slate-400">
+                Tọa độ GPS & hình ảnh nhà thờ / lăng mộ
+              </div>
             </div>
           </div>
+
+          <CreateMemorialModal
+            isOpen={showAddMemorialModal}
+            onClose={() => setShowAddMemorialModal(false)}
+            onSuccess={() => {}}
+            defaultMemberId={member.id}
+          />
         </div>
       )}
     </div>

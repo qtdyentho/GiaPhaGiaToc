@@ -47,6 +47,7 @@ const navSections: { title: string; items: NavItem[] }[] = [
       { to: '/app/calendar', icon: Calendar, label: 'Lịch Gia Tộc (Âm/Dương)' },
       { to: '/app/memorials', icon: Sparkles, label: 'Ngày Giỗ Tổ Tiên' },
       { to: '/app/events', icon: Landmark, label: 'Sự Kiện & Đại Lễ' },
+      { to: '/app/reminders', icon: Settings, label: 'Cấu Hình Nhắc Lễ' },
     ],
   },
   {

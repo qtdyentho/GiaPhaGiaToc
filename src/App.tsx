@@ -17,7 +17,8 @@ import { CreateFamilyPage } from './pages/CreateFamilyPage';
 import { FamilySettingsPage } from './pages/FamilySettingsPage';
 import { MemberProfilePage } from './pages/MemberProfilePage';
 import { MemorialsPage } from './pages/MemorialsPage';
-import { EventsListPage } from './pages/EventsListPage';
+import { EventListPage } from './pages/EventListPage';
+import { EventDetailPage } from './pages/EventDetailPage';
 import { ReminderSettingsPage } from './pages/ReminderSettingsPage';
 import { FundLedgerPage } from './pages/FundLedgerPage';
 import { IncomeAssessmentsPage } from './pages/IncomeAssessmentsPage';
@@ -60,7 +61,9 @@ export const App: React.FC = () => {
             <Route path="members/:id" element={<MemberProfilePage />} />
             <Route path="calendar" element={<FamilyCalendarPage />} />
             <Route path="memorials" element={<MemorialsPage />} />
-            <Route path="events" element={<EventsListPage />} />
+            <Route path="events" element={<EventListPage />} />
+            <Route path="events/:id" element={<EventDetailPage />} />
+            <Route path="reminders" element={<ReminderSettingsPage />} />
             <Route path="settings/reminders" element={<ReminderSettingsPage />} />
             <Route path="finance" element={<FinanceDashboardPage />} />
             <Route path="finance/ledger" element={<FundLedgerPage />} />

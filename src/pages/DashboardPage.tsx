@@ -4,6 +4,7 @@ import { LunarCalendarService } from '../services/LunarCalendarService';
 import { formatCurrency } from '../lib/utils';
 import { mockFamily, mockMembers, mockFunds, mockMemorialDates, mockTransactions } from '../services/mockData';
 import { Link } from 'react-router-dom';
+import { UpcomingEventsWidget } from '../components/calendar/UpcomingEventsWidget';
 
 export const DashboardPage: React.FC = () => {
   const todayInfo = LunarCalendarService.getTodayInfo();
@@ -108,6 +109,9 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Upcoming Events & Memorials Widget */}
+      <UpcomingEventsWidget />
 
       {/* Main Grid: Cây Gia Phả Nổi Bật & Lịch Sử Thu Chi */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
