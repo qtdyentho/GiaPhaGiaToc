@@ -101,31 +101,31 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto font-sans">
+      <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-fade-in">
         {/* Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-amber-600/20 via-slate-800 to-slate-900 border-b border-slate-700 flex items-center justify-between">
+        <div className="px-6 py-4.5 bg-gradient-to-r from-emerald-50 via-white to-emerald-50/30 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100/70 border border-emerald-300 flex items-center justify-center text-emerald-800 shadow-xs">
               <UserPlus className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 Thêm Thành Viên Vào Phả Hệ
-                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-normal">
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-900 font-bold">
                   Cây Gia Phả
                 </span>
               </h3>
               {targetMember && (
-                <p className="text-xs text-slate-400">
-                  Quan hệ gắn liền với: <strong className="text-amber-400">{targetMember.full_name}</strong>
+                <p className="text-xs text-slate-500">
+                  Quan hệ trực hệ với: <strong className="text-[#166534]">{targetMember.full_name}</strong>
                 </p>
               )}
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -134,15 +134,15 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
           {error && (
-            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm">
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm font-semibold">
               {error}
             </div>
           )}
 
-          {/* Chọn Mối Quan Hệ (nếu có targetMember) */}
+          {/* Chọn Mối Quan Hệ */}
           {targetMember && (
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                 Xác định quan hệ họ tộc
               </label>
               <div className="grid grid-cols-3 gap-3">
@@ -152,14 +152,14 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
                     setRelationType('CHILD');
                     setGender('MALE');
                   }}
-                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
+                  className={`p-3 rounded-2xl border flex flex-col items-center gap-1.5 transition-all ${
                     relationType === 'CHILD'
-                      ? 'bg-amber-500/10 border-amber-500 text-amber-400 shadow-sm shadow-amber-500/20'
-                      : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                      ? 'bg-emerald-50 border-[#166534] text-[#166534] shadow-xs font-bold'
+                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
                   <Users className="w-5 h-5" />
-                  <span className="text-xs font-medium">Là Con (Hậu duệ)</span>
+                  <span className="text-xs">Là Con (Hậu duệ)</span>
                 </button>
 
                 <button
@@ -168,27 +168,27 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
                     setRelationType('SPOUSE');
                     setGender(targetMember.gender === 'MALE' ? 'FEMALE' : 'MALE');
                   }}
-                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
+                  className={`p-3 rounded-2xl border flex flex-col items-center gap-1.5 transition-all ${
                     relationType === 'SPOUSE'
-                      ? 'bg-rose-500/10 border-rose-500 text-rose-400 shadow-sm shadow-rose-500/20'
-                      : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                      ? 'bg-rose-50 border-rose-500 text-rose-800 shadow-xs font-bold'
+                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
                   <Heart className="w-5 h-5" />
-                  <span className="text-xs font-medium">Là Vợ / Chồng</span>
+                  <span className="text-xs">Là Vợ / Chồng</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setRelationType('PARENT')}
-                  className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
+                  className={`p-3 rounded-2xl border flex flex-col items-center gap-1.5 transition-all ${
                     relationType === 'PARENT'
-                      ? 'bg-indigo-500/10 border-indigo-500 text-indigo-400 shadow-sm shadow-indigo-500/20'
-                      : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                      ? 'bg-indigo-50 border-indigo-500 text-indigo-900 shadow-xs font-bold'
+                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
                   <Sparkles className="w-5 h-5" />
-                  <span className="text-xs font-medium">Là Cha / Mẹ</span>
+                  <span className="text-xs">Là Cha / Mẹ</span>
                 </button>
               </div>
             </div>
@@ -197,29 +197,29 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
           {/* Thông Tin Cơ Bản */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Họ và tên thành viên <span className="text-rose-400">*</span>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                Họ và tên thành viên <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="VD: Cụ Nguyễn Văn An / Nguyễn Văn Bình..."
-                className="w-full px-3.5 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-sm"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#166534] focus:bg-white text-sm"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Giới tính</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">Giới tính</label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setGender('MALE')}
-                  className={`py-2 px-3 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
+                  className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                     gender === 'MALE'
-                      ? 'bg-blue-500/20 border-blue-500 text-blue-300'
-                      : 'bg-slate-800/50 border-slate-700 text-slate-400'
+                      ? 'bg-blue-50 border-blue-500 text-blue-900 shadow-xs'
+                      : 'bg-slate-50 border-slate-200 text-slate-600'
                   }`}
                 >
                   👨 Nam (Đinh)
@@ -227,10 +227,10 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setGender('FEMALE')}
-                  className={`py-2 px-3 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
+                  className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                     gender === 'FEMALE'
-                      ? 'bg-pink-500/20 border-pink-500 text-pink-300'
-                      : 'bg-slate-800/50 border-slate-700 text-slate-400'
+                      ? 'bg-pink-50 border-pink-500 text-pink-900 shadow-xs'
+                      : 'bg-slate-50 border-slate-200 text-slate-600'
                   }`}
                 >
                   👩 Nữ
@@ -239,15 +239,15 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Tình trạng nhân khẩu</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">Tình trạng nhân khẩu</label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setLifeStatus('ALIVE')}
-                  className={`py-2 px-3 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
+                  className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                     lifeStatus === 'ALIVE'
-                      ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300'
-                      : 'bg-slate-800/50 border-slate-700 text-slate-400'
+                      ? 'bg-emerald-50 border-emerald-500 text-emerald-900 shadow-xs'
+                      : 'bg-slate-50 border-slate-200 text-slate-600'
                   }`}
                 >
                   🌿 Còn sống
@@ -255,23 +255,23 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setLifeStatus('DECEASED')}
-                  className={`py-2 px-3 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
+                  className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                     lifeStatus === 'DECEASED'
-                      ? 'bg-amber-500/20 border-amber-500 text-amber-300'
-                      : 'bg-slate-800/50 border-slate-700 text-slate-400'
+                      ? 'bg-amber-50 border-amber-400 text-amber-900 shadow-xs'
+                      : 'bg-slate-50 border-slate-200 text-slate-600'
                   }`}
                 >
-                  🕯️ Đã tạ thế (Hưởng thọ)
+                  🕯️ Đã tạ thế
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Thuộc Chi / Nhánh Họ</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">Thuộc Chi / Nhánh Họ</label>
               <select
                 value={selectedBranchId}
                 onChange={(e) => setSelectedBranchId(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-none focus:border-amber-500"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-[#166534]"
               >
                 {branches.map((b) => (
                   <option key={b.id} value={b.id}>
@@ -282,26 +282,26 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Năm sinh (Dương lịch)</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">Năm sinh (Dương lịch)</label>
               <input
                 type="number"
                 value={birthYear}
                 onChange={(e) => setBirthYear(e.target.value)}
                 placeholder="VD: 1985"
-                className="w-full px-3.5 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-slate-100 text-sm placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#166534] focus:bg-white"
               />
             </div>
           </div>
 
           {/* Phần Dành Riêng Cho Người Đã Mất */}
           {lifeStatus === 'DECEASED' && (
-            <div className="p-4 rounded-xl bg-slate-800/40 border border-amber-500/20 space-y-3">
-              <div className="flex items-center gap-2 text-amber-400 font-semibold text-xs">
+            <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200 space-y-3">
+              <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
                 <span>🕯️ Thông tin ngày giỗ & an táng</span>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Ngày Giỗ (Âm lịch)</label>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Ngày Giỗ (Âm lịch)</label>
                   <input
                     type="number"
                     min="1"
@@ -309,11 +309,11 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
                     value={deathLunarDay}
                     onChange={(e) => setDeathLunarDay(e.target.value)}
                     placeholder="Ngày (1-30)"
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 text-xs focus:outline-none focus:border-amber-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Tháng Giỗ (Âm lịch)</label>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Tháng Giỗ (Âm lịch)</label>
                   <input
                     type="number"
                     min="1"
@@ -321,29 +321,29 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
                     value={deathLunarMonth}
                     onChange={(e) => setDeathLunarMonth(e.target.value)}
                     placeholder="Tháng (1-12)"
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 text-xs focus:outline-none focus:border-amber-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Năm tạ thế</label>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Năm tạ thế</label>
                   <input
                     type="number"
                     value={deathLunarYear}
                     onChange={(e) => setDeathLunarYear(e.target.value)}
                     placeholder="VD: 1980"
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 text-xs focus:outline-none focus:border-amber-500"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] text-slate-400 mb-1">Nơi an táng / Mộ phần</label>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">Nơi an táng / Mộ phần</label>
                 <input
                   type="text"
                   value={burialPlace}
                   onChange={(e) => setBurialPlace(e.target.value)}
                   placeholder="VD: Khu Lăng Mộ Tổ, Nghĩa trang Thôn Đông Khê..."
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 text-xs focus:outline-none focus:border-amber-500"
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
                 />
               </div>
             </div>
@@ -351,7 +351,7 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
 
           {/* Tiểu sử tóm tắt */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">
               Tiểu sử, công trạng & ghi chú
             </label>
             <textarea
@@ -359,23 +359,23 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="VD: Có công lập ấp, cử nhân Nho học, đóng góp xây dựng từ đường..."
-              className="w-full px-3.5 py-2 bg-slate-800/80 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-amber-500"
+              className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534] focus:bg-white"
             />
           </div>
 
           {/* Footer Actions */}
-          <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-3">
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
             >
               Hủy
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-semibold text-sm shadow-lg shadow-amber-500/20 flex items-center gap-2 transition-all disabled:opacity-50"
+              className="px-5 py-2.5 rounded-xl bg-[#166534] hover:bg-[#14532d] text-white text-xs font-bold shadow-sm flex items-center gap-2 transition-all disabled:opacity-50"
             >
               {loading ? (
                 <span>Đang lưu...</span>
@@ -392,3 +392,5 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
     </div>
   );
 };
+
+export default AddMemberRelationModal;

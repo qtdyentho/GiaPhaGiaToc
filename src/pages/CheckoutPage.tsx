@@ -172,7 +172,7 @@ export const CheckoutPage: React.FC = () => {
                 <div className="flex gap-2 pt-1">
                   <button
                     onClick={() => navigate('/app/billing')}
-                    className="flex-1 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition"
+                    className="flex-1 py-2 bg-[#166534] hover:bg-[#14532d] text-white font-bold rounded-xl transition shadow-xs"
                   >
                     Xem Lịch Sử Hóa Đơn
                   </button>

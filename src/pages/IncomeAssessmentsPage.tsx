@@ -3,14 +3,8 @@ import {
   ReceiptText,
   Plus,
   CheckCircle2,
-  QrCode,
   Search,
-  Filter,
   ArrowDownLeft,
-  Clock,
-  Layers,
-  Calendar,
-  DollarSign,
 } from 'lucide-react';
 import { FundService } from '../services/FundService';
 import { GenealogyService } from '../services/GenealogyService';
@@ -20,7 +14,6 @@ import {
   IncomeCategory,
   Branch,
   Generation,
-  Member,
 } from '../types/database';
 import { BulkAssessmentModal } from '../components/finance/BulkAssessmentModal';
 import { RecordIncomeModal } from '../components/finance/RecordIncomeModal';
@@ -87,29 +80,30 @@ export const IncomeAssessmentsPage: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
+    <div className="space-y-6 animate-fade-in font-sans">
+      {/* Header Banner */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#166534] via-[#C49A3A] to-[#1E3A5F]" />
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-800 shadow-sm">
             <ReceiptText className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2.5">
               <span>Định Mức Thu Phí Thành Viên</span>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 font-semibold">
-                BR-FUND-001
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-100 border border-amber-300 text-amber-900 font-bold">
+                Bổ Phần Định Kỳ
               </span>
             </h1>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Tách bạch giữa Nghĩa vụ thu (Assessment) và Thực thu (Payment)
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              Tách bạch giữa Nghĩa vụ thu (Assessment) và Thực thu (Payment) cho từng suất đinh & hộ gia đình
             </p>
           </div>
         </div>
 
         <button
           onClick={() => setIsBulkModalOpen(true)}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-amber-500/20"
+          className="px-4 py-2.5 rounded-xl bg-[#166534] hover:bg-[#14532d] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Lập Đợt Thu Hàng Loạt</span>
@@ -118,23 +112,23 @@ export const IncomeAssessmentsPage: React.FC = () => {
 
       {/* Campaign Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-lg p-5">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tổng Nghĩa Vụ Phải Thu</div>
-          <div className="text-2xl font-black text-slate-100 mt-1 font-mono">{totalDue.toLocaleString()} ₫</div>
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5">
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tổng Nghĩa Vụ Phải Thu</div>
+          <div className="text-2xl font-black text-slate-900 mt-1 font-mono">{totalDue.toLocaleString()} ₫</div>
           <div className="text-xs text-slate-400 mt-0.5">{assessments.length} suất nghĩa vụ thu</div>
         </div>
 
-        <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-lg p-5">
-          <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Đã Thực Thu (Vào Quỹ)</div>
-          <div className="text-2xl font-black text-emerald-400 mt-1 font-mono">{totalPaid.toLocaleString()} ₫</div>
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5">
+          <div className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Đã Thực Thu (Vào Quỹ)</div>
+          <div className="text-2xl font-black text-emerald-800 mt-1 font-mono">{totalPaid.toLocaleString()} ₫</div>
           <div className="text-xs text-slate-400 mt-0.5">
             {assessments.filter((a) => a.status === 'PAID').length} thành viên đã hoàn thành
           </div>
         </div>
 
-        <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-lg p-5">
-          <div className="text-xs font-bold text-amber-400 uppercase tracking-wider">Còn Tồn Đọng Chưa Thu</div>
-          <div className="text-2xl font-black text-amber-400 mt-1 font-mono">{totalPending.toLocaleString()} ₫</div>
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5">
+          <div className="text-xs font-bold text-amber-700 uppercase tracking-wider">Còn Tồn Đọng Chưa Thu</div>
+          <div className="text-2xl font-black text-amber-700 mt-1 font-mono">{totalPending.toLocaleString()} ₫</div>
           <div className="text-xs text-slate-400 mt-0.5">
             {assessments.filter((a) => a.status !== 'PAID').length} thành viên chưa nộp đủ
           </div>
@@ -142,27 +136,27 @@ export const IncomeAssessmentsPage: React.FC = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
         <div className="relative flex-1 min-w-[240px]">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Tìm theo tên thành viên hoặc tên khoản thu..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-amber-500"
+            className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#166534] focus:bg-white transition"
           />
         </div>
 
-        <div className="flex items-center gap-1 bg-slate-800 p-1 rounded-xl border border-slate-700">
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
           {['ALL', 'PENDING', 'PAID'].map((status) => (
             <button
               key={status}
               onClick={() => setSelectedStatus(status)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 selectedStatus === status
-                  ? 'bg-amber-500 text-slate-950 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               {status === 'ALL' ? 'Tất cả' : status === 'PENDING' ? 'Chưa nộp đủ' : 'Đã nộp đủ'}
@@ -172,10 +166,10 @@ export const IncomeAssessmentsPage: React.FC = () => {
       </div>
 
       {/* Assessments List Table */}
-      <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/80 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+          <table className="w-full text-left text-xs text-slate-700">
+            <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
               <tr>
                 <th className="py-3.5 px-4">Khoản Thu / Chiến Dịch</th>
                 <th className="py-3.5 px-4">Thành Viên Phải Nộp</th>
@@ -186,17 +180,17 @@ export const IncomeAssessmentsPage: React.FC = () => {
                 <th className="py-3.5 px-4 text-right">Thao Tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-500">
-                    <div className="w-8 h-8 border-2 border-amber-500/20 border-t-amber-500 rounded-full animate-spin mx-auto mb-2" />
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                    <div className="w-8 h-8 border-2 border-emerald-500/20 border-t-[#166534] rounded-full animate-spin mx-auto mb-2" />
                     Đang tải danh sách định mức thu...
                   </td>
                 </tr>
               ) : filteredAssessments.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-500">
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
                     Không có khoản thu nào trong danh sách
                   </td>
                 </tr>
@@ -206,22 +200,22 @@ export const IncomeAssessmentsPage: React.FC = () => {
                   const isPaid = asm.status === 'PAID';
 
                   return (
-                    <tr key={asm.id} className="hover:bg-slate-800/40 transition">
-                      <td className="py-3.5 px-4 font-bold text-slate-100">{asm.title}</td>
-                      <td className="py-3.5 px-4 font-medium text-slate-200">{member?.full_name || 'Thành viên'}</td>
-                      <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-100">
+                    <tr key={asm.id} className="hover:bg-slate-50/80 transition">
+                      <td className="py-3.5 px-4 font-bold text-slate-900">{asm.title}</td>
+                      <td className="py-3.5 px-4 font-semibold text-slate-800">{member?.full_name || 'Thành viên'}</td>
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900">
                         {Number(asm.amount_due).toLocaleString()} ₫
                       </td>
-                      <td className="py-3.5 px-4 text-right font-mono font-semibold text-emerald-400">
+                      <td className="py-3.5 px-4 text-right font-mono font-bold text-emerald-800">
                         {Number(asm.amount_paid).toLocaleString()} ₫
                       </td>
-                      <td className="py-3.5 px-4 text-slate-400">{asm.due_date || '2026-12-31'}</td>
+                      <td className="py-3.5 px-4 text-slate-600">{asm.due_date || '2026-12-31'}</td>
                       <td className="py-3.5 px-4 text-center">
                         <span
                           className={`font-bold px-2.5 py-0.5 rounded-full text-[10px] ${
                             isPaid
-                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                              : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                              : 'bg-amber-50 text-amber-900 border border-amber-300 font-bold'
                           }`}
                         >
                           {isPaid ? 'ĐÃ NỘP ĐỦ' : 'CHỜ NỘP'}
@@ -231,14 +225,14 @@ export const IncomeAssessmentsPage: React.FC = () => {
                         {!isPaid ? (
                           <button
                             onClick={() => setRecordTarget(asm)}
-                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold rounded-xl text-xs transition shadow-sm inline-flex items-center gap-1"
+                            className="px-3 py-1.5 bg-[#166534] hover:bg-[#14532d] text-white font-bold rounded-xl text-xs transition shadow-xs inline-flex items-center gap-1"
                           >
                             <ArrowDownLeft className="w-3.5 h-3.5" />
                             <span>Ghi Thu Tiền</span>
                           </button>
                         ) : (
-                          <span className="text-slate-400 font-semibold text-xs flex items-center justify-end gap-1">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          <span className="text-emerald-700 font-semibold text-xs flex items-center justify-end gap-1">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                             <span>Đã vào quỹ</span>
                           </span>
                         )}
@@ -273,3 +267,5 @@ export const IncomeAssessmentsPage: React.FC = () => {
     </div>
   );
 };
+
+export default IncomeAssessmentsPage;

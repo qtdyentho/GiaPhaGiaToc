@@ -3,12 +3,8 @@ import {
   Receipt,
   Plus,
   CheckCircle2,
-  Clock,
   XCircle,
   Search,
-  Filter,
-  ShieldCheck,
-  Building,
   UserCheck,
 } from 'lucide-react';
 import { FundService } from '../services/FundService';
@@ -70,29 +66,30 @@ export const ExpensesPage: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
+    <div className="space-y-6 animate-fade-in font-sans">
+      {/* Header Banner */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-600 via-amber-500 to-[#166534]" />
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
+          <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-700 shadow-sm">
             <Receipt className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2.5">
-              <span>Quản Lý Khoản Chi & Quy Trình Phê Duyệt</span>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-rose-500/20 border border-rose-500/30 text-rose-300 font-semibold">
-                BR-EXP-001
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2.5">
+              <span>Quản Lý Khoản Chi & Duyệt Chi</span>
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-rose-50 border border-rose-200 text-rose-800 font-bold">
+                Quy Trình 2 Cấp
               </span>
             </h1>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Duyệt chi nghiêm ngặt bởi Ban Kiểm Soát (Chỉ trừ quỹ khi APPROVED)
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              Duyệt chi nghiêm ngặt bởi Ban Kiểm Soát & Trưởng Tộc (Chỉ xuất quỹ khi đã APPROVED)
             </p>
           </div>
         </div>
 
         <button
           onClick={() => setIsCreateModalOpen(true)}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-slate-100 text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-rose-500/20"
+          className="px-4 py-2.5 rounded-xl bg-rose-700 hover:bg-rose-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Tạo Đề Xuất Chi Mới</span>
@@ -101,51 +98,51 @@ export const ExpensesPage: React.FC = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-lg p-5">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tổng Đã Phê Duyệt & Xuất Quỹ</div>
-          <div className="text-2xl font-black text-rose-400 mt-1 font-mono">{totalExpenseApproved.toLocaleString()} ₫</div>
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5">
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Đã Phê Duyệt & Xuất Quỹ</div>
+          <div className="text-2xl font-black text-rose-700 mt-1 font-mono">{totalExpenseApproved.toLocaleString()} ₫</div>
           <div className="text-xs text-slate-400 mt-0.5">
             {expenses.filter((e) => e.status === 'APPROVED').length} khoản chi đã giải ngân
           </div>
         </div>
 
-        <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-lg p-5">
-          <div className="text-xs font-bold text-amber-400 uppercase tracking-wider">Đang Chờ Duyệt Chi</div>
-          <div className="text-2xl font-black text-amber-400 mt-1 font-mono">{totalExpensePending.toLocaleString()} ₫</div>
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5">
+          <div className="text-xs font-bold text-amber-700 uppercase tracking-wider">Đang Chờ Duyệt Chi</div>
+          <div className="text-2xl font-black text-amber-700 mt-1 font-mono">{totalExpensePending.toLocaleString()} ₫</div>
           <div className="text-xs text-slate-400 mt-0.5">
             {expenses.filter((e) => e.status === 'PENDING_APPROVAL').length} đề xuất cần thẩm định
           </div>
         </div>
 
-        <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-lg p-5">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tổng Số Đề Xuất Chi</div>
-          <div className="text-2xl font-black text-slate-100 mt-1">{expenses.length} hồ sơ</div>
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5">
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tổng Số Đề Xuất Chi</div>
+          <div className="text-2xl font-bold text-slate-900 mt-1">{expenses.length} hồ sơ</div>
           <div className="text-xs text-slate-400 mt-0.5">Toàn bộ chi phái & ban ngành</div>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
         <div className="relative flex-1 min-w-[240px]">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Tìm theo nội dung chi hoặc người nhận..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-rose-500"
+            className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-1 focus:ring-rose-600 focus:bg-white transition"
           />
         </div>
 
-        <div className="flex items-center gap-1 bg-slate-800 p-1 rounded-xl border border-slate-700">
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
           {['ALL', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED'].map((status) => (
             <button
               key={status}
               onClick={() => setSelectedStatus(status)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 selectedStatus === status
-                  ? 'bg-rose-500 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               {status === 'ALL'
@@ -161,10 +158,10 @@ export const ExpensesPage: React.FC = () => {
       </div>
 
       {/* Expenses Table */}
-      <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/80 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+          <table className="w-full text-left text-xs text-slate-700">
+            <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
               <tr>
                 <th className="py-3.5 px-4">Khoản Chi / Mục Đích</th>
                 <th className="py-3.5 px-4">Quỹ Chi Trả</th>
@@ -175,17 +172,17 @@ export const ExpensesPage: React.FC = () => {
                 <th className="py-3.5 px-4 text-right">Thao Tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-500">
-                    <div className="w-8 h-8 border-2 border-rose-500/20 border-t-rose-500 rounded-full animate-spin mx-auto mb-2" />
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                    <div className="w-8 h-8 border-2 border-rose-500/20 border-t-rose-600 rounded-full animate-spin mx-auto mb-2" />
                     Đang tải danh sách khoản chi...
                   </td>
                 </tr>
               ) : filteredExpenses.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-500">
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
                     Không có đề xuất chi nào trong danh sách
                   </td>
                 </tr>
@@ -196,31 +193,31 @@ export const ExpensesPage: React.FC = () => {
                   const isRejected = exp.status === 'REJECTED';
 
                   return (
-                    <tr key={exp.id} className="hover:bg-slate-800/40 transition">
+                    <tr key={exp.id} className="hover:bg-slate-50/80 transition">
                       <td className="py-3.5 px-4">
-                        <div className="font-bold text-slate-100">{exp.title}</div>
+                        <div className="font-bold text-slate-900">{exp.title}</div>
                         {exp.description && (
-                          <div className="text-[11px] text-slate-400 line-clamp-1 italic">{exp.description}</div>
+                          <div className="text-[11px] text-slate-500 line-clamp-1 italic">{exp.description}</div>
                         )}
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className="font-semibold text-slate-300 bg-slate-800 px-2 py-0.5 rounded">
+                        <span className="font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                           {fund?.name || 'Quỹ Chung'}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-right font-black text-rose-400 font-mono text-sm">
+                      <td className="py-3.5 px-4 text-right font-bold text-rose-700 font-mono text-sm">
                         {Number(exp.amount).toLocaleString()} ₫
                       </td>
-                      <td className="py-3.5 px-4 text-slate-400">{exp.expense_date}</td>
-                      <td className="py-3.5 px-4 font-medium text-slate-200">{exp.recipient_name || 'Nhà cung cấp'}</td>
+                      <td className="py-3.5 px-4 text-slate-600">{exp.expense_date}</td>
+                      <td className="py-3.5 px-4 font-semibold text-slate-800">{exp.recipient_name || 'Nhà cung cấp'}</td>
                       <td className="py-3.5 px-4 text-center">
                         <span
                           className={`font-bold px-2.5 py-0.5 rounded-full text-[10px] ${
                             isApproved
-                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                               : isRejected
-                              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                              : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                              ? 'bg-rose-50 text-rose-800 border border-rose-200'
+                              : 'bg-amber-50 text-amber-900 border border-amber-300 font-bold'
                           }`}
                         >
                           {isApproved ? 'ĐÃ DUYỆT CHI' : isRejected ? 'ĐÃ TỪ CHỐI' : 'CHỜ DUYỆT'}
@@ -228,19 +225,19 @@ export const ExpensesPage: React.FC = () => {
                       </td>
                       <td className="py-3.5 px-4 text-right">
                         {isApproved ? (
-                          <span className="text-slate-400 font-semibold text-xs flex items-center justify-end gap-1">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                          <span className="text-emerald-700 font-semibold text-xs flex items-center justify-end gap-1">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                             <span>Đã trừ quỹ</span>
                           </span>
                         ) : isRejected ? (
-                          <span className="text-rose-400 font-semibold text-xs flex items-center justify-end gap-1">
+                          <span className="text-rose-700 font-semibold text-xs flex items-center justify-end gap-1">
                             <XCircle className="w-4 h-4" />
                             <span>Đã hủy</span>
                           </span>
                         ) : (
                           <button
                             onClick={() => setApprovalTarget(exp)}
-                            className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition shadow-sm inline-flex items-center gap-1"
+                            className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs transition shadow-xs inline-flex items-center gap-1"
                           >
                             <UserCheck className="w-3.5 h-3.5" />
                             <span>Thẩm Định / Duyệt</span>
@@ -275,3 +272,5 @@ export const ExpensesPage: React.FC = () => {
     </div>
   );
 };
+
+export default ExpensesPage;

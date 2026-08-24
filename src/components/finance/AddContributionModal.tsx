@@ -82,20 +82,23 @@ export const AddContributionModal: React.FC<AddContributionModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto font-sans">
+      <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-fade-in">
         {/* Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-amber-600/20 via-slate-800 to-slate-900 border-b border-slate-700 flex items-center justify-between">
+        <div className="px-6 py-4.5 bg-gradient-to-r from-amber-50 via-white to-amber-50/30 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <div className="w-10 h-10 rounded-xl bg-amber-100/70 border border-amber-300 flex items-center justify-center text-amber-800 shadow-xs">
               <HeartHandshake className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-100">Ghi Nhận Đóng Góp / Công Đức</h3>
-              <p className="text-xs text-slate-400">Vinh danh công đức dòng họ</p>
+              <h3 className="text-base font-bold text-slate-900">Ghi Nhận Đóng Góp / Công Đức</h3>
+              <p className="text-xs text-slate-500">Vinh danh công đức dòng họ</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800">
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -103,22 +106,22 @@ export const AddContributionModal: React.FC<AddContributionModalProps> = ({
         {/* Content */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
           {error && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">
               {error}
             </div>
           )}
 
           {/* Donor Type */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Đối tượng đóng góp</label>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">Đối tượng đóng góp</label>
             <div className="grid grid-cols-3 gap-2.5">
               <button
                 type="button"
                 onClick={() => setDonorType('MEMBER')}
-                className={`p-2 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
+                className={`p-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                   donorType === 'MEMBER'
-                    ? 'bg-amber-500/15 border-amber-500 text-amber-300'
-                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-750'
+                    ? 'bg-amber-50 border-amber-400 text-amber-900 shadow-xs'
+                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                 }`}
               >
                 <User className="w-3.5 h-3.5" />
@@ -128,23 +131,23 @@ export const AddContributionModal: React.FC<AddContributionModalProps> = ({
               <button
                 type="button"
                 onClick={() => setDonorType('BUSINESS')}
-                className={`p-2 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
+                className={`p-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                   donorType === 'BUSINESS'
-                    ? 'bg-amber-500/15 border-amber-500 text-amber-300'
-                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-750'
+                    ? 'bg-amber-50 border-amber-400 text-amber-900 shadow-xs'
+                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                 }`}
               >
                 <Building className="w-3.5 h-3.5" />
-                <span>Doanh Nghiệp / Tổ Chức</span>
+                <span>Doanh Nghiệp</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setDonorType('ANONYMOUS')}
-                className={`p-2 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
+                className={`p-2 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                   donorType === 'ANONYMOUS'
-                    ? 'bg-amber-500/15 border-amber-500 text-amber-300'
-                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-750'
+                    ? 'bg-amber-50 border-amber-400 text-amber-900 shadow-xs'
+                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                 }`}
               >
                 <EyeOff className="w-3.5 h-3.5" />
@@ -155,11 +158,11 @@ export const AddContributionModal: React.FC<AddContributionModalProps> = ({
 
           {donorType === 'MEMBER' ? (
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Chọn thành viên trong gia tộc</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">Chọn thành viên trong gia tộc</label>
               <select
                 value={selectedMemberId}
                 onChange={(e) => setSelectedMemberId(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-xs focus:outline-none focus:border-amber-500"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-[#166534]"
               >
                 {mockMembers.map((m) => (
                   <option key={m.id} value={m.id}>
@@ -170,15 +173,15 @@ export const AddContributionModal: React.FC<AddContributionModalProps> = ({
             </div>
           ) : donorType === 'BUSINESS' || donorType === 'OTHER' ? (
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Tên cá nhân / Doanh nghiệp tài trợ <span className="text-rose-400">*</span>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                Tên cá nhân / Doanh nghiệp tài trợ <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 value={customDonorName}
                 onChange={(e) => setCustomDonorName(e.target.value)}
                 placeholder="VD: Công ty TNHH Xây dựng Thành Đạt..."
-                className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-xs focus:outline-none focus:border-amber-500"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534] focus:bg-white"
                 required
               />
             </div>
@@ -186,11 +189,11 @@ export const AddContributionModal: React.FC<AddContributionModalProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">Quỹ tiếp nhận</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">Quỹ tiếp nhận</label>
               <select
                 value={fundId}
                 onChange={(e) => setFundId(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-xs focus:outline-none focus:border-amber-500"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-[#166534]"
               >
                 {funds.map((f) => (
                   <option key={f.id} value={f.id}>
@@ -201,8 +204,8 @@ export const AddContributionModal: React.FC<AddContributionModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Số tiền công đức (VNĐ) <span className="text-rose-400">*</span>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                Số tiền công đức (VNĐ) <span className="text-rose-500">*</span>
               </label>
               <input
                 type="number"
@@ -210,26 +213,26 @@ export const AddContributionModal: React.FC<AddContributionModalProps> = ({
                 step="100000"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-sm font-mono focus:outline-none focus:border-amber-500"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm font-mono font-bold focus:outline-none focus:ring-1 focus:ring-[#166534] focus:bg-white"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Mục đích / Hạng mục tài trợ</label>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">Mục đích / Hạng mục tài trợ</label>
             <input
               type="text"
               value={purpose}
               onChange={(e) => setPurpose(e.target.value)}
               placeholder="VD: Tài trợ ngói âm dương lợp nhà thờ, Học bổng thủ khoa..."
-              className="w-full px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-xs focus:outline-none focus:border-amber-500"
+              className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534] focus:bg-white"
             />
           </div>
 
           {/* Payment Method */}
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1.5">Hình thức tiếp nhận</label>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">Hình thức tiếp nhận</label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
@@ -237,13 +240,13 @@ export const AddContributionModal: React.FC<AddContributionModalProps> = ({
                   setPaymentMethod('VIETQR');
                   setShowQR(true);
                 }}
-                className={`p-2.5 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
+                className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                   paymentMethod === 'VIETQR'
-                    ? 'bg-amber-500/15 border-amber-500 text-amber-300'
-                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-750'
+                    ? 'bg-amber-50 border-amber-400 text-amber-900 shadow-xs'
+                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                <QrCode className="w-4 h-4" />
+                <QrCode className="w-4 h-4 text-emerald-700" />
                 <span>Mã VietQR Chuyển Khoản</span>
               </button>
 
@@ -253,26 +256,26 @@ export const AddContributionModal: React.FC<AddContributionModalProps> = ({
                   setPaymentMethod('BANK_TRANSFER');
                   setShowQR(false);
                 }}
-                className={`p-2.5 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
+                className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
                   paymentMethod === 'BANK_TRANSFER'
-                    ? 'bg-amber-500/15 border-amber-500 text-amber-300'
-                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-750'
+                    ? 'bg-amber-50 border-amber-400 text-amber-900 shadow-xs'
+                    : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                <Check className="w-4 h-4" />
+                <Check className="w-4 h-4 text-slate-700" />
                 <span>Chuyển Khoản Trực Tiếp / Khác</span>
               </button>
             </div>
           </div>
 
           {paymentMethod === 'VIETQR' && showQR && (
-            <div className="p-4 rounded-xl bg-slate-950 border border-amber-500/30 flex flex-col items-center gap-3">
-              <div className="p-2 bg-white rounded-xl shadow-lg">
-                <img src={qrUrl} alt="VietQR" className="w-44 h-44 object-contain rounded-lg" />
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col items-center gap-3">
+              <div className="p-2.5 bg-white rounded-2xl shadow-sm border border-slate-200">
+                <img src={qrUrl} alt="VietQR" className="w-44 h-44 object-contain rounded-xl" />
               </div>
               <div className="text-center text-xs space-y-1">
-                <p className="text-slate-300">Nội dung chuyển khoản:</p>
-                <code className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-amber-300 font-mono text-xs">
+                <p className="text-slate-600 font-semibold">Nội dung chuyển khoản:</p>
+                <code className="px-2.5 py-0.5 rounded-md bg-white border border-slate-300 text-amber-900 font-mono text-xs font-bold">
                   {memo}
                 </code>
               </div>
@@ -280,18 +283,18 @@ export const AddContributionModal: React.FC<AddContributionModalProps> = ({
           )}
 
           {/* Footer Actions */}
-          <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-3">
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
             >
               Hủy
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-amber-500/20 disabled:opacity-50"
+              className="px-5 py-2.5 rounded-xl bg-[#166534] hover:bg-[#14532d] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all disabled:opacity-50"
             >
               {loading ? (
                 <span>Đang ghi nhận...</span>
@@ -308,3 +311,5 @@ export const AddContributionModal: React.FC<AddContributionModalProps> = ({
     </div>
   );
 };
+
+export default AddContributionModal;
