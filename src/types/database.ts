@@ -50,7 +50,7 @@ export type NotificationType = 'MEMORIAL_REMINDER' | 'EVENT_REMINDER' | 'PAYMENT
 export type SubscriptionStatus = 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELLED' | 'EXPIRED' | 'SUSPENDED' | 'READ_ONLY';
 export type InvoiceStatus = 'DRAFT' | 'OPEN' | 'PAID' | 'VOID' | 'UNCOLLECTIBLE' | 'REFUNDED';
 export type PlanTier = 'FREE' | 'FAMILY' | 'GIA_TOC' | 'DONG_HO' | 'PREMIUM';
-export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'CANCELLED' | 'REFUNDED';
+export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'CANCELLED' | 'REFUNDED' | 'PARTIAL';
 export type RefundStatus = 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'PROCESSED';
 
 export type SubscriptionEventType =

@@ -527,6 +527,24 @@ export const mockInvoices: Invoice[] = [
   }
 ];
 
+export const mockPayments: Payment[] = [
+  {
+    id: 'pay-001',
+    family_id: 'fam-0000-0001',
+    subscription_id: 'sub-001',
+    invoice_id: 'inv-001',
+    payment_code: 'PAY-NAPAS-20260101-0089',
+    amount: 990000,
+    currency: 'VND',
+    payment_method: 'VIETQR',
+    provider: 'VIETQR',
+    status: 'SUCCESS',
+    paid_at: '2026-01-01T10:15:00Z',
+    created_at: '2026-01-01T10:15:00Z',
+    updated_at: '2026-01-01T10:15:00Z',
+  }
+];
+
 export const mockNotifications: Notification[] = [
   {
     id: 'notif-1',

@@ -10,6 +10,8 @@ import { MembersListPage } from './pages/MembersListPage';
 import { FamilyCalendarPage } from './pages/FamilyCalendarPage';
 import { FinanceDashboardPage } from './pages/FinanceDashboardPage';
 import { BillingOverviewPage } from './pages/BillingOverviewPage';
+import { UsageDashboardPage } from './pages/UsageDashboardPage';
+import { InvoicesPage } from './pages/InvoicesPage';
 import { PricingPage } from './pages/PricingPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { AdminRevenuePage } from './pages/AdminRevenuePage';
@@ -72,8 +74,8 @@ export const App: React.FC = () => {
             <Route path="finance/contributions" element={<ContributionsPage />} />
             <Route path="finance/honor-roll" element={<HonorRollPage />} />
             <Route path="billing" element={<BillingOverviewPage />} />
-            <Route path="billing/usage" element={<BillingOverviewPage />} />
-            <Route path="billing/invoices" element={<BillingOverviewPage />} />
+            <Route path="billing/usage" element={<UsageDashboardPage />} />
+            <Route path="billing/invoices" element={<InvoicesPage />} />
             <Route path="billing/checkout" element={<CheckoutPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="family/settings" element={<FamilySettingsPage />} />

@@ -128,7 +128,7 @@ export const PricingPage: React.FC = () => {
 
               <div className="mt-6 pt-4">
                 <Link
-                  to="/app/billing/checkout"
+                  to={`/app/billing/checkout?plan=${plan.id}&cycle=${isYearly ? 'YEARLY' : 'MONTHLY'}`}
                   className={`w-full py-2 px-3 text-xs font-bold rounded-lg flex items-center justify-center space-x-1.5 transition ${
                     isFeatured
                       ? 'bg-heritage-gold hover:bg-heritage-gold-light text-slate-950 shadow'
