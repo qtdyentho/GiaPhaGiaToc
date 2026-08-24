@@ -12,8 +12,8 @@ export const BillingOverviewPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Gói Dịch Vụ & Quản Lý Thuê Bao</h1>
-          <p className="text-xs text-slate-500">Quản lý hạn mức thành viên, dung lượng lưu trữ và hóa đơn gia tộc</p>
+          <h1 className="text-xl font-bold text-slate-900">Gói Dịch Vụ Gia Tộc</h1>
+          <p className="text-xs text-slate-500">Quản lý hạn mức thành viên, dung lượng lưu trữ và lịch sử thanh toán</p>
         </div>
         <div className="flex items-center space-x-2">
           <Link
@@ -32,7 +32,7 @@ export const BillingOverviewPage: React.FC = () => {
           <div>
             <div className="inline-flex items-center space-x-2 bg-emerald-500/20 text-emerald-300 text-xs font-bold px-3 py-1 rounded-full mb-3 border border-emerald-500/30">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Đang Kích Hoạt (Gói 1 Năm)</span>
+              <span>Đang Hoạt Động (Gói 1 Năm)</span>
             </div>
             <h2 className="text-2xl font-extrabold text-white">{currentPlan.name}</h2>
             <p className="text-xs text-slate-300 mt-1 max-w-lg">
@@ -47,7 +47,7 @@ export const BillingOverviewPage: React.FC = () => {
           </div>
 
           <div className="bg-white/10 backdrop-blur-md p-5 rounded-xl border border-white/15 text-right shrink-0">
-            <div className="text-xs text-slate-300 font-medium">Chi phí thuê bao</div>
+            <div className="text-xs text-slate-300 font-medium">Chi phí duy trì gói</div>
             <div className="text-2xl font-black text-heritage-gold mt-1">990.000 ₫ <span className="text-xs font-normal text-slate-300">/ năm</span></div>
             <div className="text-[11px] text-emerald-300 mt-1">Tự động gia hạn khi đến hạn</div>
           </div>

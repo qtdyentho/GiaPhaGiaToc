@@ -57,8 +57,8 @@ export const ReminderSettingsPage: React.FC = () => {
         <div>
           <h1 className="text-xl font-bold text-slate-900 flex items-center space-x-2">
             <span>Cấu Hình Nhắc Lịch & Thông Báo Lễ Giỗ</span>
-            <span className="text-xs bg-amber-100 text-amber-900 font-bold px-2.5 py-0.5 rounded-full border border-amber-300">
-              BR-REMINDER-001
+            <span className="text-xs bg-emerald-100 text-emerald-900 font-bold px-2.5 py-0.5 rounded-full border border-emerald-300">
+              Tự Động Nhắc Lễ
             </span>
           </h1>
           <p className="text-xs text-slate-500">

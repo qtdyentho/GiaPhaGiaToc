@@ -35,13 +35,13 @@ export const UsageDashboardPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-slate-900 flex items-center space-x-2">
-            <span>Đo Lường Hạn Mức & Tài Nguyên Gia Tộc</span>
+            <span>Hạn Mức Sử Dụng Gia Tộc</span>
             <span className="text-xs bg-emerald-100 text-emerald-900 font-bold px-2.5 py-0.5 rounded-full border border-emerald-300">
               Gói Gia Tộc
             </span>
           </h1>
           <p className="text-xs text-slate-500">
-            Giám sát mức độ sử dụng thành viên, dung lượng lưu trữ, sự kiện và lượt xuất báo cáo
+            Theo dõi số lượng thành viên, dung lượng lưu trữ và các tính năng khả dụng
           </p>
         </div>
 

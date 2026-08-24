@@ -121,7 +121,7 @@ export const EventDetailPage: React.FC = () => {
             </div>
             <div>
               <h2 className="text-sm font-bold text-slate-900">Ngân Sách & Quyết Toán Sự Kiện</h2>
-              <p className="text-[11px] text-slate-500">Đối soát trực tiếp từ Sổ Cái Bất Biến (Phase 2 Financial Core)</p>
+              <p className="text-[11px] text-slate-500">Trích xuất trực tiếp từ sổ quỹ dòng họ</p>
             </div>
           </div>
 
@@ -129,7 +129,7 @@ export const EventDetailPage: React.FC = () => {
             to="/app/finance/ledger"
             className="text-xs font-semibold text-heritage-green hover:underline flex items-center space-x-1"
           >
-            <span>Xem Sổ Cái</span>
+            <span>Xem Sổ Quỹ</span>
           </Link>
         </div>
 

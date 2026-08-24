@@ -185,7 +185,7 @@ export const CreateMemorialModal: React.FC<CreateMemorialModalProps> = ({
                   onChange={(e) => setIsLeapMonth(e.target.checked)}
                   className="rounded text-amber-600 focus:ring-amber-500"
                 />
-                <span>Đây là ngày giỗ ghi nhận vào Tháng Nhuận (BR-MEMORIAL-003)</span>
+                <span>Ngày giỗ thuộc Tháng Nhuận âm lịch</span>
               </label>
             </div>
           </div>

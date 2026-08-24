@@ -96,13 +96,13 @@ export const FundLedgerPage: React.FC = () => {
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2.5">
-              <span>Sổ Quỹ Gia Tộc Bất Biến</span>
+              <span>Sổ Quỹ Gia Tộc</span>
               <span className="text-xs bg-emerald-50 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">
-                Immutable Ledger
+                Lưu Trữ Vĩnh Viễn
               </span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Mọi bút toán POSTED không xóa vật lý, chỉ cho phép đảo ngược đối ứng (BR-REV-001)
+              Mọi khoản thu chi đã ghi sổ đều được lưu giữ vĩnh viễn, trường hợp sai sót sẽ thực hiện hoàn tác đối ứng
             </p>
           </div>
         </div>
@@ -287,7 +287,7 @@ export const FundLedgerPage: React.FC = () => {
                               : 'bg-amber-50 text-amber-900 border border-amber-300'
                           }`}
                         >
-                          {tx.status}
+                          {tx.status === 'POSTED' ? 'Đã Ghi Sổ' : 'Đã Hoàn Tác'}
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-right">
@@ -297,7 +297,7 @@ export const FundLedgerPage: React.FC = () => {
                             className="text-amber-800 hover:text-amber-900 hover:bg-amber-50 border border-amber-200 px-2 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1 transition shadow-xs"
                           >
                             <RotateCcw className="w-3.5 h-3.5" />
-                            <span>Đảo bút toán</span>
+                            <span>Hoàn tác giao dịch</span>
                           </button>
                         ) : (
                           <span className="text-slate-400 text-[11px]">—</span>

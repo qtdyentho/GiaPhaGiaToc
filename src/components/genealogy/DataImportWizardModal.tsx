@@ -75,8 +75,8 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                 <FileSpreadsheet className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-base font-bold text-slate-900">Trợ Lý Nhập Dữ Liệu Gia Phả (Auto-Mapping Engine)</h1>
-                <p className="text-xs text-slate-500">Tự động nhận diện cột, kiểm tra lỗi logic và hỗ trợ Hoàn Tác (Undo Batch)</p>
+                <h1 className="text-base font-bold text-slate-900">Nhập Dữ Liệu Gia Phả Từ Tệp</h1>
+                <p className="text-xs text-slate-500">Tự động ghép cột thông tin, kiểm tra tính hợp lệ và hỗ trợ hoàn tác khi cần</p>
               </div>
             </div>
             <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
@@ -88,7 +88,7 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
               1. Tải Lên
             </div>
             <div className={`p-1.5 rounded-lg ${step >= 2 ? 'bg-emerald-50 text-heritage-green border border-emerald-200' : 'bg-slate-50 text-slate-400'}`}>
-              2. Ánh Xạ Cột
+              2. Ghép Cột
             </div>
             <div className={`p-1.5 rounded-lg ${step >= 3 ? 'bg-emerald-50 text-heritage-green border border-emerald-200' : 'bg-slate-50 text-slate-400'}`}>
               3. Kiểm Tra
