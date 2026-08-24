@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Shield, MapPin, User, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Shield, MapPin, User, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export const CreateFamilyPage: React.FC = () => {
@@ -13,12 +13,19 @@ export const CreateFamilyPage: React.FC = () => {
   const [founderName, setFounderName] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { createFamily } = useAuth();
+  const { createFamily, user, families, memberships, activeFamily } = useAuth();
+
+  const currentUserId = user?.id || 'usr-0000-0001';
+  const existingOwnedFamily = families.find(
+    (f) => f.created_by === currentUserId || memberships.some((m) => m.user_id === currentUserId && m.family_id === f.id && m.role === 'OWNER')
+  );
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMsg(null);
     try {
       await createFamily({
         name,
@@ -32,12 +39,55 @@ export const CreateFamilyPage: React.FC = () => {
       });
       // Redirect straight to dashboard of newly created family
       navigate('/app/dashboard');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Lỗi khi tạo dòng họ:', err);
+      setErrorMsg(err?.message || 'Có lỗi xảy ra khi tạo dòng họ. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
   };
+
+  // If user already owns a family, show clear dignified single-family policy notice
+  if (existingOwnedFamily) {
+    return (
+      <div className="min-h-screen bg-heritage-bg py-12 px-4 sm:px-6 lg:px-8 font-sans flex items-center justify-center animate-fade-in">
+        <div className="max-w-md w-full bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-8 text-center space-y-5">
+          <div className="w-16 h-16 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-center justify-center mx-auto text-[#166534]">
+            <CheckCircle2 className="w-8 h-8" />
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-xl font-bold text-slate-900">
+              Tài Khoản Đã Khởi Tạo Dòng Họ
+            </h2>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Bạn đang là chủ quản trị của <strong>{existingOwnedFamily.name}</strong> ({existingOwnedFamily.code}).
+            </p>
+          </div>
+
+          <div className="p-3.5 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-950 text-left space-y-1">
+            <div className="font-bold flex items-center gap-1.5 text-amber-900">
+              <Shield className="w-4 h-4 text-amber-700" />
+              <span>Quy định hệ sinh thái:</span>
+            </div>
+            <p className="text-[11px] text-amber-800 leading-relaxed">
+              Mỗi tài khoản người dùng chỉ được khởi tạo và quản lý duy nhất <strong>1 dòng họ</strong> nhằm bảo toàn tính toàn vẹn dữ liệu và phân quyền gia tộc chuẩn mực.
+            </p>
+          </div>
+
+          <div className="pt-2">
+            <Link
+              to="/app/dashboard"
+              className="w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#166534] hover:bg-[#14532D] text-white text-xs font-bold rounded-xl transition shadow-sm"
+            >
+              <span>Về Bảng Quản Trị Dòng Họ</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-heritage-bg py-10 px-4 sm:px-6 lg:px-8 font-sans animate-fade-in">
@@ -55,6 +105,12 @@ export const CreateFamilyPage: React.FC = () => {
 
         {/* Wizard Form Card */}
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8">
+          {errorMsg && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-xs rounded-2xl flex items-center gap-2 font-medium animate-fade-in">
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
           <form className="space-y-6" onSubmit={handleCreate}>
             {/* Step 1: Thông tin cơ bản */}
             <div>

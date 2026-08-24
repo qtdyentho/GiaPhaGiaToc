@@ -208,43 +208,60 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           {isFamilyMenuOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setIsFamilyMenuOpen(false)} />
-              <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-50 animate-fade-in divide-y divide-slate-100">
+              <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-50 animate-fade-in divide-y divide-slate-100 font-sans">
                 <div className="px-3.5 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                  <span>Dòng họ của bạn ({families.length})</span>
-                  <span className="text-[10px] text-[#166534] font-semibold">Chuyển đổi tức thì</span>
+                  <span>Dòng họ quản lý (1)</span>
+                  <span className="text-[10px] text-[#166534] font-bold">Chính thức</span>
                 </div>
-                <div className="py-1 max-h-60 overflow-y-auto">
+                <div className="py-1">
                   {families.map((fam) => (
-                    <button
+                    <div
                       key={fam.id}
-                      onClick={() => {
-                        switchFamily(fam.id);
-                        setIsFamilyMenuOpen(false);
-                      }}
-                      className={`w-full px-3.5 py-2.5 text-left text-xs hover:bg-emerald-50/70 flex items-center justify-between transition group cursor-pointer ${
-                        activeFamily?.id === fam.id ? 'bg-emerald-50/50' : ''
-                      }`}
+                      className="px-3.5 py-2.5 bg-emerald-50/50 flex items-center justify-between"
                     >
                       <div className="pr-2 truncate">
-                        <div className={`font-bold truncate ${activeFamily?.id === fam.id ? 'text-[#166534]' : 'text-slate-900 group-hover:text-[#166534]'}`}>
+                        <div className="font-bold text-[#166534] text-xs truncate">
                           {fam.name}
                         </div>
-                        <div className="text-[10px] text-slate-400 truncate">
+                        <div className="text-[10px] text-slate-500 truncate mt-0.5">
                           {fam.code} • {fam.origin_commune ? `${fam.origin_commune}, ` : ''}{fam.origin_province}
                         </div>
                       </div>
-                      {activeFamily?.id === fam.id && <Check className="w-4 h-4 text-[#166534] shrink-0" />}
-                    </button>
+                      <span className="px-2 py-0.5 bg-[#166534] text-white text-[10px] font-bold rounded-full shrink-0 shadow-2xs">
+                        Đang quản lý
+                      </span>
+                    </div>
                   ))}
+                  {families.length === 0 && (
+                    <div className="p-3 text-center text-xs text-slate-500">
+                      Chưa có dòng họ nào được liên kết
+                    </div>
+                  )}
                 </div>
-                <div className="p-2">
-                  <Link
-                    to="/onboarding/create-family"
-                    onClick={() => setIsFamilyMenuOpen(false)}
-                    className="w-full text-center px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#166534] text-xs font-bold rounded-xl block transition border border-emerald-200"
-                  >
-                    + Khởi Tạo Dòng Họ Mới
-                  </Link>
+
+                <div className="p-2 space-y-1">
+                  {families.length > 0 ? (
+                    <div className="p-2 bg-slate-50 rounded-xl border border-slate-200 text-center space-y-1.5">
+                      <p className="text-[10px] text-slate-500 leading-tight">
+                        Mỗi tài khoản người dùng chỉ được khởi tạo và quản lý duy nhất <strong>1 dòng họ</strong>.
+                      </p>
+                      <Link
+                        to="/app/family/settings"
+                        onClick={() => setIsFamilyMenuOpen(false)}
+                        className="w-full text-center px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-800 text-xs font-bold rounded-lg block transition border border-slate-200"
+                      >
+                        Cài Đặt Dòng Họ
+                      </Link>
+                    </div>
+                  ) : (
+                    <Link
+                      to="/onboarding/create-family"
+                      onClick={() => setIsFamilyMenuOpen(false)}
+                      className="w-full text-center px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#166534] text-xs font-bold rounded-xl block transition border border-emerald-200"
+                    >
+                      + Khởi Tạo Dòng Họ Mới
+                    </Link>
+                  )}
                 </div>
               </div>
             </>

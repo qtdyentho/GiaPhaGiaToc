@@ -38,20 +38,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const INITIAL_FAMILIES: Family[] = [
   mockFamily,
-  {
-    id: 'fam-0000-0002',
-    name: 'Đại Tộc Trần Lê',
-    code: 'TRAN-LE-HP',
-    slug: 'tran-le-hai-phong',
-    description: 'Dòng họ Trần Lê tại Thủy Nguyên, Hải Phòng.',
-    origin_province: 'Hải Phòng',
-    origin_district: 'Thủy Nguyên',
-    origin_commune: 'Hoa Động',
-    ancestral_hall_address: 'Thôn 3, Xã Hoa Động, Thủy Nguyên, Hải Phòng',
-    created_by: 'usr-0000-0001',
-    created_at: '2026-02-01T00:00:00Z',
-    updated_at: '2026-08-24T00:00:00Z',
-  },
 ];
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -71,7 +57,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const saved = localStorage.getItem('hl_families');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed: Family[] = JSON.parse(saved);
+        // Enforce 1 family per user constraint (clean up any legacy mock duplicates)
+        const sanitized = parsed.filter(
+          (f) => f.id === 'fam-0000-0001' || f.created_by !== 'usr-0000-0001'
+        );
+        if (sanitized.length > 0) return sanitized;
       } catch (e) {
         // ignore
       }
@@ -175,6 +166,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const createFamily = async (data: CreateFamilyData): Promise<Family> => {
     setIsLoading(true);
+    const currentUserId = user?.id || 'usr-0000-0001';
+
+    // 🔒 Enforce strictly 1 owned family per user account
+    const existingOwnedFamily = families.find(
+      (f) => f.created_by === currentUserId || memberships.some((m) => m.user_id === currentUserId && m.family_id === f.id && m.role === 'OWNER')
+    );
+
+    if (existingOwnedFamily) {
+      setIsLoading(false);
+      throw new Error(`Mỗi tài khoản người dùng chỉ được khởi tạo và quản lý duy nhất 1 dòng họ (Hiện đang quản lý: ${existingOwnedFamily.name}).`);
+    }
+
     const newFamilyId = `fam-${Date.now()}`;
     const newFam: Family = {
       id: newFamilyId,
@@ -186,7 +189,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       origin_district: data.originDistrict,
       origin_commune: data.originCommune,
       ancestral_hall_address: data.ancestralHallAddress,
-      created_by: user?.id || 'usr-0000-0001',
+      created_by: currentUserId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

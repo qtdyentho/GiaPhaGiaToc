@@ -22,6 +22,7 @@ import {
   BarChart3,
   FileCheck2,
   PanelLeftClose,
+  PanelLeftOpen,
   ArrowRightLeft,
 } from 'lucide-react';
 import { BRAND } from '../../lib/constants';
@@ -191,50 +192,78 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed top-0 left-0 bottom-0 z-50 w-64 bg-[#1E3A5F] text-white flex flex-col transition-all duration-300 ease-in-out shadow-xl ${
-          isOpen ? 'translate-x-0' : isCollapsed ? '-translate-x-full' : 'translate-x-0 max-lg:-translate-x-full'
+        className={`fixed top-0 left-0 bottom-0 z-50 bg-[#1E3A5F] text-white flex flex-col transition-all duration-300 ease-in-out shadow-xl ${
+          isOpen
+            ? 'translate-x-0 w-64'
+            : isCollapsed
+            ? 'max-lg:-translate-x-full lg:w-20 lg:translate-x-0'
+            : 'translate-x-0 w-64 max-lg:-translate-x-full'
         }`}
       >
         {/* Brand Header */}
-        <div className="h-16 px-4 flex items-center justify-between border-b border-white/10 bg-[#162D4A] shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#166534] flex items-center justify-center font-bold text-white shadow-xs text-sm border border-emerald-400/30 shrink-0">
-              GP
-            </div>
-            <div className="flex flex-col truncate">
-              <span className="font-extrabold text-sm tracking-tight text-white leading-tight font-sans truncate">
-                {BRAND.name}
-              </span>
-              <span className="text-[10px] text-amber-300 font-semibold tracking-wider uppercase font-sans truncate">
-                {isAdminSpace ? 'Quản Trị Nền Tảng' : isFamilyAdmin ? (activeFamily?.name || 'Quản Trị Dòng Họ') : 'Không Gian Gia Tộc'}
-              </span>
-            </div>
-          </div>
+        <div
+          className={`h-16 px-3 flex items-center border-b border-white/10 bg-[#162D4A] shrink-0 ${
+            isCollapsed ? 'justify-center' : 'justify-between'
+          }`}
+        >
+          {isCollapsed ? (
+            <button
+              onClick={onToggleCollapse}
+              className="w-10 h-10 rounded-xl bg-[#166534] flex items-center justify-center font-bold text-white shadow-xs text-sm border border-emerald-400/30 hover:scale-105 transition cursor-pointer group relative"
+              title="Nhấn để mở rộng Menu"
+            >
+              <span>GP</span>
+              <div className="absolute left-full ml-3 px-2.5 py-1 bg-slate-900 text-amber-300 text-xs font-bold rounded-lg whitespace-nowrap shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition z-50 border border-slate-700">
+                Mở rộng Menu (Gia Phả Gia Tộc)
+              </div>
+            </button>
+          ) : (
+            <>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-[#166534] flex items-center justify-center font-bold text-white shadow-xs text-sm border border-emerald-400/30 shrink-0">
+                  GP
+                </div>
+                <div className="flex flex-col truncate">
+                  <span className="font-extrabold text-sm tracking-tight text-white leading-tight font-sans truncate">
+                    {BRAND.name}
+                  </span>
+                  <span className="text-[10px] text-amber-300 font-semibold tracking-wider uppercase font-sans truncate">
+                    {isAdminSpace ? 'Quản Trị Nền Tảng' : isFamilyAdmin ? (activeFamily?.name || 'Quản Trị Dòng Họ') : 'Không Gian Gia Tộc'}
+                  </span>
+                </div>
+              </div>
 
-          {/* Close / Collapse Button */}
-          <button
-            onClick={() => {
-              if (window.innerWidth < 1024) {
-                onClose?.();
-              } else {
-                onToggleCollapse?.();
-              }
-            }}
-            className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition cursor-pointer shrink-0"
-            title="Ẩn thanh điều hướng"
-          >
-            <PanelLeftClose className="w-5 h-5" />
-          </button>
+              {/* Close / Collapse Button */}
+              <button
+                onClick={() => {
+                  if (window.innerWidth < 1024) {
+                    onClose?.();
+                  } else {
+                    onToggleCollapse?.();
+                  }
+                }}
+                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition cursor-pointer shrink-0"
+                title="Ẩn thanh điều hướng (Thu gọn thành Icon)"
+              >
+                <PanelLeftClose className="w-5 h-5" />
+              </button>
+            </>
+          )}
         </div>
 
         {/* Navigation Sections */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6 custom-scrollbar font-sans">
+        <div className={`flex-1 overflow-y-auto ${isCollapsed ? 'px-2 py-4 space-y-3' : 'px-3 py-4 space-y-6'} custom-scrollbar font-sans`}>
           {activeSections.map((section, idx) => (
-            <div key={idx} className="space-y-1">
-              <h3 className="px-3 text-[11px] font-bold text-slate-300/80 uppercase tracking-wider">
-                {section.title}
-              </h3>
-              <div className="space-y-0.5 mt-1">
+            <div key={idx} className={isCollapsed ? 'space-y-1' : 'space-y-1'}>
+              {!isCollapsed ? (
+                <h3 className="px-3 text-[11px] font-bold text-slate-300/80 uppercase tracking-wider">
+                  {section.title}
+                </h3>
+              ) : idx > 0 ? (
+                <div className="border-t border-white/10 my-2 mx-1" />
+              ) : null}
+
+              <div className="space-y-1 mt-1">
                 {section.items.map((item) => {
                   const Icon = item.icon;
                   return (
@@ -246,21 +275,52 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                         if (window.innerWidth < 1024) onClose?.();
                       }}
                       className={({ isActive }) =>
-                        `flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
-                          isActive
-                            ? 'bg-[#166534] text-white shadow-xs font-bold'
-                            : 'text-slate-200 hover:text-white hover:bg-white/10'
-                        }`
+                        isCollapsed
+                          ? `relative group flex items-center justify-center w-12 h-11 mx-auto rounded-xl transition-all ${
+                              isActive
+                                ? 'bg-[#166534] text-white shadow-md border border-emerald-400/40 font-bold'
+                                : 'text-slate-200 hover:text-white hover:bg-white/10'
+                            }`
+                          : `flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
+                              isActive
+                                ? 'bg-[#166534] text-white shadow-xs font-bold'
+                                : 'text-slate-200 hover:text-white hover:bg-white/10'
+                            }`
                       }
                     >
-                      <div className="flex items-center gap-3">
-                        <Icon className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110 text-slate-300 group-hover:text-white" />
-                        <span>{item.label}</span>
-                      </div>
-                      {item.badge && (
-                        <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-white/20 text-white">
-                          {item.badge}
-                        </span>
+                      {({ isActive }) => (
+                        <>
+                          {isCollapsed ? (
+                            <>
+                              <Icon className="w-5 h-5 shrink-0 transition-transform group-hover:scale-110" />
+                              {item.badge && (
+                                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-amber-400 border-2 border-[#1E3A5F] rounded-full" />
+                              )}
+                              {/* Hover Floating Tooltip */}
+                              <div className="absolute left-full ml-3 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-xl whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-150 z-50 border border-slate-700 flex items-center gap-2">
+                                <span>{item.label}</span>
+                                {item.badge && (
+                                  <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-amber-500 text-amber-950">
+                                    {item.badge}
+                                  </span>
+                                )}
+                                <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-slate-900" />
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-center gap-3">
+                                <Icon className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110 text-slate-300 group-hover:text-white" />
+                                <span>{item.label}</span>
+                              </div>
+                              {item.badge && (
+                                <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-white/20 text-white">
+                                  {item.badge}
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </>
                       )}
                     </NavLink>
                   );
@@ -271,28 +331,48 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         </div>
 
         {/* Footer / User Profile summary */}
-        <div className="p-3 border-t border-white/10 bg-[#162D4A]/60 flex items-center justify-between text-xs font-sans shrink-0">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-amber-100 border border-amber-300 text-amber-900 flex items-center justify-center font-bold text-xs shrink-0">
-              {user?.full_name?.charAt(0) || 'U'}
+        <div
+          className={`p-3 border-t border-white/10 bg-[#162D4A]/60 flex items-center text-xs font-sans shrink-0 ${
+            isCollapsed ? 'justify-center' : 'justify-between'
+          }`}
+        >
+          {isCollapsed ? (
+            <div className="relative group">
+              <div className="w-9 h-9 rounded-full bg-amber-100 border border-amber-300 text-amber-900 flex items-center justify-center font-bold text-xs shadow-xs cursor-pointer">
+                {user?.full_name?.charAt(0) || 'U'}
+              </div>
+              <div className="absolute left-full ml-3 bottom-0 px-3 py-2 bg-slate-900 text-white text-xs rounded-xl whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-150 z-50 border border-slate-700">
+                <div className="font-bold text-white">{user?.full_name || 'Người dùng'}</div>
+                <div className="text-[10px] text-amber-300">
+                  {isAdminSpace ? 'Super Admin' : activeMembership?.role === 'OWNER' ? 'Trưởng Tộc' : isFamilyAdmin ? 'Hội Đồng Dòng Họ' : 'Thành Viên'}
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className="font-bold text-white text-[11px] truncate">
-                {user?.full_name || 'Người dùng'}
-              </span>
-              <span className="text-[10px] text-slate-300 truncate">
-                {isAdminSpace ? 'Super Admin' : activeMembership?.role === 'OWNER' ? 'Trưởng Tộc' : isFamilyAdmin ? 'Hội Đồng Dòng Họ' : 'Thành Viên'}
-              </span>
-            </div>
-          </div>
-          {isFamilyAdmin && !isAdminSpace && (
-            <NavLink
-              to="/app/family/settings"
-              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition shrink-0"
-              title="Cài đặt gia tộc"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </NavLink>
+          ) : (
+            <>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-full bg-amber-100 border border-amber-300 text-amber-900 flex items-center justify-center font-bold text-xs shrink-0">
+                  {user?.full_name?.charAt(0) || 'U'}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="font-bold text-white text-[11px] truncate">
+                    {user?.full_name || 'Người dùng'}
+                  </span>
+                  <span className="text-[10px] text-slate-300 truncate">
+                    {isAdminSpace ? 'Super Admin' : activeMembership?.role === 'OWNER' ? 'Trưởng Tộc' : isFamilyAdmin ? 'Hội Đồng Dòng Họ' : 'Thành Viên'}
+                  </span>
+                </div>
+              </div>
+              {isFamilyAdmin && !isAdminSpace && (
+                <NavLink
+                  to="/app/family/settings"
+                  className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition shrink-0"
+                  title="Cài đặt gia tộc"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </NavLink>
+              )}
+            </>
           )}
         </div>
       </aside>
