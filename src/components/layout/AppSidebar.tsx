@@ -21,6 +21,7 @@ import {
   ShieldAlert,
   BarChart3,
   FileCheck2,
+  PanelLeftClose,
 } from 'lucide-react';
 import { BRAND } from '../../lib/constants';
 import { UI_COPY } from '../../config/uiCopy';
@@ -38,12 +39,24 @@ interface NavSection {
   items: NavItem[];
 }
 
-export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ isOpen = false, onClose }) => {
+interface AppSidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
+}
+
+export const AppSidebar: React.FC<AppSidebarProps> = ({
+  isOpen = false,
+  onClose,
+  isCollapsed = false,
+  onToggleCollapse,
+}) => {
   const { user, isSuperAdmin, isFamilyAdmin, activeFamily, activeMembership } = useAuth();
   const location = useLocation();
   const isAdminSpace = location.pathname.startsWith('/admin');
 
-  // 1. Super Admin Platform Navigation
+  // 1. Super Admin Platform Navigation (ONLY in /admin space)
   const superAdminSections: NavSection[] = [
     {
       title: 'TỔNG QUAN NỀN TẢNG',
@@ -71,7 +84,7 @@ export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
     },
   ];
 
-  // 2. Family Admin Navigation
+  // 2. Family Admin / Owner Navigation (Trưởng tộc & Hội đồng quản trị dòng họ)
   const familyAdminSections: NavSection[] = [
     {
       title: 'TỔNG QUAN',
@@ -118,7 +131,7 @@ export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
     },
   ];
 
-  // 3. Family Member Navigation
+  // 3. Family Member Navigation (Thành viên bà con xem phả hệ & công đức)
   const familyMemberSections: NavSection[] = [
     {
       title: 'TRANG CHỦ',
@@ -149,14 +162,14 @@ export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
       ],
     },
     {
-      title: 'CÁ NHÂN',
+      title: 'HỖ TRỢ & HƯỚNG DẪN',
       items: [
         { to: '/app/support', icon: LifeBuoy, label: 'Hỗ Trợ & Góp Ý' },
       ],
     },
   ];
 
-  // Select active sections
+  // Strictly route sections by current space and role
   const activeSections = isAdminSpace
     ? superAdminSections
     : isFamilyAdmin
@@ -168,32 +181,47 @@ export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
       {/* Mobile Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-slate-900/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-slate-900/60 z-40 lg:hidden backdrop-blur-xs"
           onClick={onClose}
         />
       )}
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed top-0 left-0 bottom-0 z-50 w-64 bg-[#1E3A5F] text-white flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed top-0 left-0 bottom-0 z-50 w-64 bg-[#1E3A5F] text-white flex flex-col transition-all duration-300 ease-in-out shadow-xl ${
+          isOpen ? 'translate-x-0' : isCollapsed ? '-translate-x-full' : 'translate-x-0 max-lg:-translate-x-full'
         }`}
       >
         {/* Brand Header */}
-        <div className="h-16 px-5 flex items-center justify-between border-b border-white/10 bg-[#162D4A]">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#166534] flex items-center justify-center font-bold text-white shadow-sm text-sm border border-emerald-400/30">
+        <div className="h-16 px-4 flex items-center justify-between border-b border-white/10 bg-[#162D4A] shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#166534] flex items-center justify-center font-bold text-white shadow-xs text-sm border border-emerald-400/30 shrink-0">
               GP
             </div>
-            <div className="flex flex-col">
-              <span className="font-extrabold text-sm tracking-tight text-white leading-tight font-sans">
+            <div className="flex flex-col truncate">
+              <span className="font-extrabold text-sm tracking-tight text-white leading-tight font-sans truncate">
                 {BRAND.name}
               </span>
-              <span className="text-[10px] text-amber-300 font-semibold tracking-wider uppercase font-sans">
-                {isAdminSpace ? 'Quản Trị Nền Tảng' : isFamilyAdmin ? 'Quản Trị Dòng Họ' : 'Không Gian Gia Tộc'}
+              <span className="text-[10px] text-amber-300 font-semibold tracking-wider uppercase font-sans truncate">
+                {isAdminSpace ? 'Quản Trị Nền Tảng' : isFamilyAdmin ? (activeFamily?.name || 'Quản Trị Dòng Họ') : 'Không Gian Gia Tộc'}
               </span>
             </div>
           </div>
+
+          {/* Close / Collapse Button */}
+          <button
+            onClick={() => {
+              if (window.innerWidth < 1024) {
+                onClose?.();
+              } else {
+                onToggleCollapse?.();
+              }
+            }}
+            className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition cursor-pointer shrink-0"
+            title="Ẩn thanh điều hướng"
+          >
+            <PanelLeftClose className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Navigation Sections */}
@@ -211,11 +239,13 @@ export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
                       key={item.to}
                       to={item.to}
                       end={item.to === '/app/dashboard' || item.to === '/admin/beta'}
-                      onClick={onClose}
+                      onClick={() => {
+                        if (window.innerWidth < 1024) onClose?.();
+                      }}
                       className={({ isActive }) =>
                         `flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
                           isActive
-                            ? 'bg-[#166534] text-white shadow-sm font-bold'
+                            ? 'bg-[#166534] text-white shadow-xs font-bold'
                             : 'text-slate-200 hover:text-white hover:bg-white/10'
                         }`
                       }
@@ -238,24 +268,24 @@ export const AppSidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = 
         </div>
 
         {/* Footer / User Profile summary */}
-        <div className="p-3 border-t border-white/10 bg-[#162D4A]/50 flex items-center justify-between text-xs font-sans">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-amber-100 border border-amber-300 text-amber-900 flex items-center justify-center font-bold text-xs">
+        <div className="p-3 border-t border-white/10 bg-[#162D4A]/60 flex items-center justify-between text-xs font-sans shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-amber-100 border border-amber-300 text-amber-900 flex items-center justify-center font-bold text-xs shrink-0">
               {user?.full_name?.charAt(0) || 'U'}
             </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-white text-[11px] truncate max-w-[120px]">
+            <div className="flex flex-col min-w-0">
+              <span className="font-bold text-white text-[11px] truncate">
                 {user?.full_name || 'Người dùng'}
               </span>
-              <span className="text-[10px] text-slate-300">
-                {isAdminSpace ? 'Quản Trị Nền Tảng' : activeMembership?.role === 'OWNER' ? 'Trưởng Tộc' : isFamilyAdmin ? 'Hội Đồng Gia Tộc' : 'Thành Viên'}
+              <span className="text-[10px] text-slate-300 truncate">
+                {isAdminSpace ? 'Super Admin' : activeMembership?.role === 'OWNER' ? 'Trưởng Tộc' : isFamilyAdmin ? 'Hội Đồng Dòng Họ' : 'Thành Viên'}
               </span>
             </div>
           </div>
           {isFamilyAdmin && !isAdminSpace && (
             <NavLink
               to="/app/family/settings"
-              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition"
+              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition shrink-0"
               title="Cài đặt gia tộc"
             >
               <ChevronRight className="w-4 h-4" />

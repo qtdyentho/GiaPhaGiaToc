@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Bell, Search, Calendar, ChevronDown, User, Shield, Menu, Check, 
-  LogOut, Settings, Sparkles, X, ArrowUpRight, DollarSign, Users, Clock
+  LogOut, Settings, Sparkles, X, ArrowUpRight, DollarSign, Users, Clock,
+  PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import { LunarCalendarService } from '../../services/LunarCalendarService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -17,7 +18,17 @@ interface SearchResultItem {
   link: string;
 }
 
-export const AppHeader: React.FC<{ onMenuToggle?: () => void }> = ({ onMenuToggle }) => {
+interface AppHeaderProps {
+  onMenuToggle?: () => void;
+  isSidebarCollapsed?: boolean;
+  onToggleCollapse?: () => void;
+}
+
+export const AppHeader: React.FC<AppHeaderProps> = ({
+  onMenuToggle,
+  isSidebarCollapsed = false,
+  onToggleCollapse,
+}) => {
   const { user, families, activeFamily, activeMembership, isSuperAdmin, isFamilyAdmin, switchFamily, signOut } = useAuth();
   const todayInfo = LunarCalendarService.getTodayInfo();
   const navigate = useNavigate();
@@ -149,17 +160,29 @@ export const AppHeader: React.FC<{ onMenuToggle?: () => void }> = ({ onMenuToggl
 
   return (
     <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs font-sans">
-      {/* Left: Mobile Toggle & Active Family & Lunar Widget */}
-      <div className="flex items-center space-x-3 sm:space-x-4">
-        {onMenuToggle && (
-          <button
-            onClick={onMenuToggle}
-            className="lg:hidden p-2 text-slate-600 hover:text-emerald-700 hover:bg-slate-100 rounded-xl transition cursor-pointer"
-            title="Mở menu"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-        )}
+      {/* Left: Menu Toggle & Active Family & Lunar Widget */}
+      <div className="flex items-center space-x-2 sm:space-x-3">
+        {/* Toggle Sidebar Button (Desktop & Mobile) */}
+        <button
+          onClick={() => {
+            if (window.innerWidth < 1024) {
+              onMenuToggle?.();
+            } else {
+              onToggleCollapse?.();
+            }
+          }}
+          className="p-2 text-slate-600 hover:text-[#166534] hover:bg-emerald-50 rounded-xl transition cursor-pointer flex items-center gap-1.5 border border-slate-200 shadow-2xs"
+          title={isSidebarCollapsed ? 'Mở rộng Menu' : 'Thu gọn / Ẩn Menu'}
+        >
+          {isSidebarCollapsed ? (
+            <PanelLeftOpen className="w-5 h-5 text-[#166534]" />
+          ) : (
+            <PanelLeftClose className="w-5 h-5 text-slate-600" />
+          )}
+          <span className="text-xs font-bold hidden xl:inline text-slate-700">
+            {isSidebarCollapsed ? 'Hiện Menu' : 'Ẩn Menu'}
+          </span>
+        </button>
 
         {/* Dynamic Family Switcher */}
         <div className="relative">

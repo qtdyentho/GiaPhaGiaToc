@@ -213,6 +213,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         current_balance: 0,
         status: 'ACTIVE',
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       },
       {
         id: `fund-${newFamilyId}-2`,
@@ -223,6 +224,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         current_balance: 0,
         status: 'ACTIVE',
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       },
       {
         id: `fund-${newFamilyId}-3`,
@@ -233,6 +235,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         current_balance: 0,
         status: 'ACTIVE',
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       },
     ];
     mockFunds.push(...initialFunds);
