@@ -13,7 +13,7 @@ export const CreateFundModal: React.FC<CreateFundModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  familyId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  familyId = 'fam-0000-0001',
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');

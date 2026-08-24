@@ -23,7 +23,7 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
   categories,
   branches,
   generations,
-  familyId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  familyId = 'fam-0000-0001',
 }) => {
   const [step, setStep] = useState<1 | 2>(1);
   const [title, setTitle] = useState('Đóng góp Quỹ Gia Tộc Thường Niên 2026');

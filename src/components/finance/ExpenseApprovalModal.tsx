@@ -19,7 +19,7 @@ export const ExpenseApprovalModal: React.FC<ExpenseApprovalModalProps> = ({
   onSuccess,
   expense,
   funds,
-  familyId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  familyId = 'fam-0000-0001',
   currentUserId = '11111111-1111-1111-1111-111111111111',
 }) => {
   const [rejectMode, setRejectMode] = useState(false);

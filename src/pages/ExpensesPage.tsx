@@ -11,8 +11,10 @@ import { FundService } from '../services/FundService';
 import { ExpenseRecord, Fund, ExpenseCategory } from '../types/database';
 import { CreateExpenseModal } from '../components/finance/CreateExpenseModal';
 import { ExpenseApprovalModal } from '../components/finance/ExpenseApprovalModal';
+import { useAuth } from '../contexts/AuthContext';
 
 export const ExpensesPage: React.FC = () => {
+  const { activeFamily } = useAuth();
   const [expenses, setExpenses] = useState<ExpenseRecord[]>([]);
   const [funds, setFunds] = useState<Fund[]>([]);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
@@ -29,10 +31,11 @@ export const ExpensesPage: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
+      const famId = activeFamily?.id || 'fam-0000-0001';
       const [expData, fundsData, catData] = await Promise.all([
-        FundService.getExpenses(),
-        FundService.getFunds(),
-        FundService.getExpenseCategories(),
+        FundService.getExpenses(famId),
+        FundService.getFunds(famId),
+        FundService.getExpenseCategories(famId),
       ]);
       setExpenses(expData);
       setFunds(fundsData);
@@ -46,7 +49,7 @@ export const ExpensesPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [activeFamily?.id]);
 
   const totalExpenseApproved = expenses
     .filter((e) => e.status === 'APPROVED')
@@ -260,6 +263,7 @@ export const ExpensesPage: React.FC = () => {
         onSuccess={loadData}
         funds={funds}
         categories={categories}
+        familyId={activeFamily?.id}
       />
 
       <ExpenseApprovalModal
@@ -268,6 +272,7 @@ export const ExpensesPage: React.FC = () => {
         onSuccess={loadData}
         expense={approvalTarget}
         funds={funds}
+        familyId={activeFamily?.id}
       />
     </div>
   );

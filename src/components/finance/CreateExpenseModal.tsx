@@ -18,7 +18,7 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
   onSuccess,
   funds,
   categories,
-  familyId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  familyId = 'fam-0000-0001',
 }) => {
   const [title, setTitle] = useState('');
   const [fundId, setFundId] = useState(funds[0]?.id || '');

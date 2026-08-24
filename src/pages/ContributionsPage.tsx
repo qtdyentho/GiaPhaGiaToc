@@ -11,8 +11,10 @@ import {
 import { FundService } from '../services/FundService';
 import { Contribution, Fund } from '../types/database';
 import { AddContributionModal } from '../components/finance/AddContributionModal';
+import { useAuth } from '../contexts/AuthContext';
 
 export const ContributionsPage: React.FC = () => {
+  const { activeFamily } = useAuth();
   const [contributions, setContributions] = useState<Contribution[]>([]);
   const [funds, setFunds] = useState<Fund[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,9 +25,10 @@ export const ContributionsPage: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
+      const famId = activeFamily?.id || 'fam-0000-0001';
       const [ctbData, fundsData] = await Promise.all([
-        FundService.getContributions(),
-        FundService.getFunds(),
+        FundService.getContributions(famId),
+        FundService.getFunds(famId),
       ]);
       setContributions(ctbData);
       setFunds(fundsData);
@@ -38,7 +41,7 @@ export const ContributionsPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [activeFamily?.id]);
 
   const totalContributions = contributions.reduce((sum, c) => sum + Number(c.amount || 0), 0);
 
@@ -218,6 +221,7 @@ export const ContributionsPage: React.FC = () => {
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={loadData}
         funds={funds}
+        familyId={activeFamily?.id}
       />
     </div>
   );

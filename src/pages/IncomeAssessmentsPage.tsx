@@ -18,8 +18,10 @@ import {
 import { BulkAssessmentModal } from '../components/finance/BulkAssessmentModal';
 import { RecordIncomeModal } from '../components/finance/RecordIncomeModal';
 import { mockMembers } from '../services/mockData';
+import { useAuth } from '../contexts/AuthContext';
 
 export const IncomeAssessmentsPage: React.FC = () => {
+  const { activeFamily } = useAuth();
   const [assessments, setAssessments] = useState<IncomeAssessment[]>([]);
   const [funds, setFunds] = useState<Fund[]>([]);
   const [categories, setCategories] = useState<IncomeCategory[]>([]);
@@ -38,11 +40,12 @@ export const IncomeAssessmentsPage: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
+      const famId = activeFamily?.id || 'fam-0000-0001';
       const [asmData, fundsData, catData, treeData] = await Promise.all([
-        FundService.getAssessments(),
-        FundService.getFunds(),
-        FundService.getIncomeCategories(),
-        GenealogyService.getFamilyTree(),
+        FundService.getAssessments(famId),
+        FundService.getFunds(famId),
+        FundService.getIncomeCategories(famId),
+        GenealogyService.getFamilyTree(famId),
       ]);
       setAssessments(asmData);
       setFunds(fundsData);
@@ -58,7 +61,7 @@ export const IncomeAssessmentsPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [activeFamily?.id]);
 
   const totalDue = assessments.reduce((sum, a) => sum + Number(a.amount_due || 0), 0);
   const totalPaid = assessments.reduce((sum, a) => sum + Number(a.amount_paid || 0), 0);
@@ -255,6 +258,7 @@ export const IncomeAssessmentsPage: React.FC = () => {
         categories={categories}
         branches={branches}
         generations={generations}
+        familyId={activeFamily?.id}
       />
 
       <RecordIncomeModal
@@ -263,6 +267,7 @@ export const IncomeAssessmentsPage: React.FC = () => {
         onSuccess={loadData}
         assessment={recordTarget}
         funds={funds}
+        familyId={activeFamily?.id}
       />
     </div>
   );

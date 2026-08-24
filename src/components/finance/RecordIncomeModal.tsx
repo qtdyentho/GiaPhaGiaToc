@@ -20,7 +20,7 @@ export const RecordIncomeModal: React.FC<RecordIncomeModalProps> = ({
   onSuccess,
   assessment,
   funds,
-  familyId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  familyId = 'fam-0000-0001',
 }) => {
   const member = mockMembers.find((m) => m.id === assessment?.member_id);
   const remaining = assessment ? Math.max(0, Number(assessment.amount_due) - Number(assessment.amount_paid)) : 500000;

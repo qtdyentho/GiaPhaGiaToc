@@ -15,8 +15,10 @@ import { ReversalModal } from '../components/finance/ReversalModal';
 import { CreateFundModal } from '../components/finance/CreateFundModal';
 import { RecordIncomeModal } from '../components/finance/RecordIncomeModal';
 import { FundDetailModal } from '../components/finance/FundDetailModal';
+import { useAuth } from '../contexts/AuthContext';
 
 export const FundLedgerPage: React.FC = () => {
+  const { activeFamily } = useAuth();
   const [funds, setFunds] = useState<Fund[]>([]);
   const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,9 +37,10 @@ export const FundLedgerPage: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
+      const famId = activeFamily?.id || 'fam-0000-0001';
       const [fData, txData] = await Promise.all([
-        FundService.getFunds(),
-        FundService.getLedger(),
+        FundService.getFunds(famId),
+        FundService.getLedger(famId),
       ]);
       setFunds(fData);
       setTransactions(txData);
@@ -50,7 +53,7 @@ export const FundLedgerPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [activeFamily?.id]);
 
   const filteredTransactions = transactions.filter((tx) => {
     const matchFund = selectedFundId === 'ALL' || tx.fund_id === selectedFundId;
@@ -326,12 +329,14 @@ export const FundLedgerPage: React.FC = () => {
         onSuccess={loadData}
         transaction={reversalTarget}
         funds={funds}
+        familyId={activeFamily?.id}
       />
 
       <CreateFundModal
         isOpen={isCreateFundOpen}
         onClose={() => setIsCreateFundOpen(false)}
         onSuccess={loadData}
+        familyId={activeFamily?.id}
       />
 
       <RecordIncomeModal
@@ -339,6 +344,7 @@ export const FundLedgerPage: React.FC = () => {
         onClose={() => setIsRecordIncomeOpen(false)}
         onSuccess={loadData}
         funds={funds}
+        familyId={activeFamily?.id}
       />
     </div>
   );

@@ -18,7 +18,7 @@ export const ReversalModal: React.FC<ReversalModalProps> = ({
   onSuccess,
   transaction,
   funds,
-  familyId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  familyId = 'fam-0000-0001',
 }) => {
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);

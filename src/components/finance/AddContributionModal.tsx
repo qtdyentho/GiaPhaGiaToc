@@ -18,7 +18,7 @@ export const AddContributionModal: React.FC<AddContributionModalProps> = ({
   onClose,
   onSuccess,
   funds,
-  familyId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  familyId = 'fam-0000-0001',
 }) => {
   const [donorType, setDonorType] = useState<SponsorType>('MEMBER');
   const [selectedMemberId, setSelectedMemberId] = useState(mockMembers[0]?.id || '');

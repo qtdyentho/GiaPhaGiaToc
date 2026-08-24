@@ -22,8 +22,10 @@ import { CreateFundModal } from '../components/finance/CreateFundModal';
 import { FundDetailModal } from '../components/finance/FundDetailModal';
 import { formatCurrency, formatDate } from '../lib/utils';
 import { Button, Card, Badge, StatCard } from '../components/ui';
+import { useAuth } from '../contexts/AuthContext';
 
 export const FinanceDashboardPage: React.FC = () => {
+  const { activeFamily } = useAuth();
   const [summary, setSummary] = useState<{
     totalBalance: number;
     totalIncome: number;
@@ -55,9 +57,10 @@ export const FinanceDashboardPage: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
+      const famId = activeFamily?.id || 'fam-0000-0001';
       const [summaryData, catData] = await Promise.all([
-        FundService.getSummary(),
-        FundService.getExpenseCategories(),
+        FundService.getSummary(famId),
+        FundService.getExpenseCategories(famId),
       ]);
       setSummary(summaryData);
       setCategories(catData);
@@ -70,7 +73,7 @@ export const FinanceDashboardPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [activeFamily?.id]);
 
   return (
     <div className="space-y-6 animate-fade-in font-sans">
@@ -339,6 +342,7 @@ export const FinanceDashboardPage: React.FC = () => {
         onClose={() => setIsRecordIncomeOpen(false)}
         onSuccess={loadData}
         funds={targetIncomeFund ? [targetIncomeFund, ...summary.funds.filter((f) => f.id !== targetIncomeFund.id)] : summary.funds}
+        familyId={activeFamily?.id}
       />
 
       <CreateExpenseModal
@@ -347,12 +351,14 @@ export const FinanceDashboardPage: React.FC = () => {
         onSuccess={loadData}
         funds={targetExpenseFund ? [targetExpenseFund, ...summary.funds.filter((f) => f.id !== targetExpenseFund.id)] : summary.funds}
         categories={categories}
+        familyId={activeFamily?.id}
       />
 
       <CreateFundModal
         isOpen={isCreateFundOpen}
         onClose={() => setIsCreateFundOpen(false)}
         onSuccess={loadData}
+        familyId={activeFamily?.id}
       />
     </div>
   );

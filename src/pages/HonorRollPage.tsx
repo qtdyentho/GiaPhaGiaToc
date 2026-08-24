@@ -14,8 +14,10 @@ import {
 import { FundService, HonorRollItem } from '../services/FundService';
 import { Fund } from '../types/database';
 import { AddContributionModal } from '../components/finance/AddContributionModal';
+import { useAuth } from '../contexts/AuthContext';
 
 export const HonorRollPage: React.FC = () => {
+  const { activeFamily } = useAuth();
   const [honorList, setHonorList] = useState<HonorRollItem[]>([]);
   const [funds, setFunds] = useState<Fund[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,9 +28,10 @@ export const HonorRollPage: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
+      const famId = activeFamily?.id || 'fam-0000-0001';
       const [data, fundsData] = await Promise.all([
-        FundService.getHonorRoll(),
-        FundService.getFunds(),
+        FundService.getHonorRoll(famId),
+        FundService.getFunds(famId),
       ]);
       setHonorList(data);
       setFunds(fundsData);
@@ -41,7 +44,7 @@ export const HonorRollPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [activeFamily?.id]);
 
   const totalSponsorshipAmount = honorList.reduce((sum, item) => sum + item.totalAmount, 0);
 
@@ -296,6 +299,7 @@ export const HonorRollPage: React.FC = () => {
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={loadData}
         funds={funds}
+        familyId={activeFamily?.id}
       />
     </div>
   );
