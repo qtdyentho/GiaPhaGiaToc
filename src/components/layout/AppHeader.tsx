@@ -2,10 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Bell, Search, Calendar, ChevronDown, User, Shield, Menu, Check, 
   LogOut, Settings, Sparkles, X, ArrowUpRight, DollarSign, Users, Clock,
-  PanelLeftClose, PanelLeftOpen, Megaphone
+  PanelLeftClose, PanelLeftOpen, Megaphone, Sun, Moon
 } from 'lucide-react';
 import { LunarCalendarService } from '../../services/LunarCalendarService';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { mockMembers, mockMemorialDates, mockFunds } from '../../services/mockData';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatCurrency } from '../../lib/utils';
@@ -31,6 +32,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onToggleCollapse,
 }) => {
   const { user, families, activeFamily, activeMembership, isSuperAdmin, isFamilyAdmin, switchFamily, signOut } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const todayInfo = LunarCalendarService.getTodayInfo();
   const navigate = useNavigate();
 
@@ -76,7 +78,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     },
   ];
 
-  // Perform search across active family scope
+  // Perform debounced search (300ms) across active family scope
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -85,56 +87,61 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     }
 
     setIsSearching(true);
-    const query = searchQuery.toLowerCase();
-    const results: SearchResultItem[] = [];
-    const currentFamId = activeFamily?.id || 'fam-0000-0001';
+    const timer = setTimeout(() => {
+      const query = searchQuery.toLowerCase();
+      const results: SearchResultItem[] = [];
+      const currentFamId = activeFamily?.id || 'fam-0000-0001';
 
-    // 1. Search Members
-    const familyMembers = mockMembers.filter(m => m.family_id === currentFamId);
-    familyMembers
-      .filter(m => m.full_name.toLowerCase().includes(query) || (m.bio && m.bio.toLowerCase().includes(query)))
-      .slice(0, 4)
-      .forEach(m => {
-        results.push({
-          id: m.id,
-          type: 'MEMBER',
-          title: m.full_name,
-          subtitle: `Thành viên • ${m.life_status === 'DECEASED' ? 'Đã mất' : 'Còn sống'}`,
-          link: `/app/genealogy?member=${m.id}`,
+      // 1. Search Members
+      const familyMembers = mockMembers.filter(m => m.family_id === currentFamId);
+      familyMembers
+        .filter(m => m.full_name.toLowerCase().includes(query) || (m.bio && m.bio.toLowerCase().includes(query)))
+        .slice(0, 4)
+        .forEach(m => {
+          results.push({
+            id: m.id,
+            type: 'MEMBER',
+            title: m.full_name,
+            subtitle: `Thành viên • ${m.life_status === 'DECEASED' ? 'Đã mất' : 'Còn sống'}`,
+            link: `/app/genealogy?member=${m.id}`,
+          });
         });
-      });
 
-    // 2. Search Memorial Dates
-    const familyMemorials = mockMemorialDates.filter(m => m.family_id === currentFamId);
-    familyMemorials
-      .filter(m => m.title.toLowerCase().includes(query))
-      .slice(0, 3)
-      .forEach(m => {
-        results.push({
-          id: m.id,
-          type: 'MEMORIAL',
-          title: m.title,
-          subtitle: `Ngày Giỗ • ${m.lunar_day}/${m.lunar_month} Âm lịch`,
-          link: '/app/calendar',
+      // 2. Search Memorial Dates
+      const familyMemorials = mockMemorialDates.filter(m => m.family_id === currentFamId);
+      familyMemorials
+        .filter(m => m.title.toLowerCase().includes(query))
+        .slice(0, 3)
+        .forEach(m => {
+          results.push({
+            id: m.id,
+            type: 'MEMORIAL',
+            title: m.title,
+            subtitle: `Ngày Giỗ • ${m.lunar_day}/${m.lunar_month} Âm lịch`,
+            link: '/app/calendar',
+          });
         });
-      });
 
-    // 3. Search Funds
-    const familyFunds = mockFunds.filter(f => f.family_id === currentFamId);
-    familyFunds
-      .filter(f => f.name.toLowerCase().includes(query))
-      .slice(0, 2)
-      .forEach(f => {
-        results.push({
-          id: f.id,
-          type: 'FUND',
-          title: f.name,
-          subtitle: `Quỹ Gia Tộc • Số dư: ${formatCurrency(f.current_balance)}`,
-          link: '/app/finance',
+      // 3. Search Funds
+      const familyFunds = mockFunds.filter(f => f.family_id === currentFamId);
+      familyFunds
+        .filter(f => f.name.toLowerCase().includes(query))
+        .slice(0, 2)
+        .forEach(f => {
+          results.push({
+            id: f.id,
+            type: 'FUND',
+            title: f.name,
+            subtitle: `Quỹ Gia Tộc • Số dư: ${formatCurrency(f.current_balance)}`,
+            link: '/app/finance',
+          });
         });
-      });
 
-    setSearchResults(results);
+      setSearchResults(results);
+      setIsSearching(false);
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [searchQuery, activeFamily]);
 
   // Click outside to close search dropdown
@@ -161,7 +168,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   };
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs font-sans">
+    <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs font-sans transition-colors duration-200">
       {/* Left: Menu Toggle & Active Family & Lunar Widget */}
       <div className="flex items-center space-x-2 sm:space-x-3">
         {/* Toggle Sidebar Button (Desktop & Mobile) */}
@@ -173,15 +180,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               onToggleCollapse?.();
             }
           }}
-          className="p-2 text-slate-600 hover:text-[#166534] hover:bg-emerald-50 rounded-xl transition cursor-pointer flex items-center gap-1.5 border border-slate-200 shadow-2xs"
+          aria-label={isSidebarCollapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
+          className="p-2 text-slate-600 dark:text-slate-300 hover:text-[#166534] dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-2xs"
           title={isSidebarCollapsed ? 'Mở rộng Menu' : 'Thu gọn / Ẩn Menu'}
         >
           {isSidebarCollapsed ? (
-            <PanelLeftOpen className="w-5 h-5 text-[#166534]" />
+            <PanelLeftOpen className="w-5 h-5 text-[#166534] dark:text-emerald-400" />
           ) : (
-            <PanelLeftClose className="w-5 h-5 text-slate-600" />
+            <PanelLeftClose className="w-5 h-5 text-slate-600 dark:text-slate-300" />
           )}
-          <span className="text-xs font-bold hidden xl:inline text-slate-700">
+          <span className="text-xs font-bold hidden xl:inline text-slate-700 dark:text-slate-200">
             {isSidebarCollapsed ? 'Hiện Menu' : 'Ẩn Menu'}
           </span>
         </button>
@@ -190,14 +198,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <div className="relative">
           <div
             onClick={() => setIsFamilyMenuOpen(!isFamilyMenuOpen)}
-            className="flex items-center space-x-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300 cursor-pointer transition select-none shadow-2xs"
+            role="button"
+            aria-haspopup="true"
+            aria-expanded={isFamilyMenuOpen}
+            aria-label="Chọn dòng họ quản lý"
+            className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 cursor-pointer transition select-none shadow-2xs"
           >
-            <Shield className="w-4 h-4 text-[#166534] shrink-0" />
+            <Shield className="w-4 h-4 text-[#166534] dark:text-emerald-400 shrink-0" />
             <div className="text-left">
-              <span className="text-xs sm:text-sm font-bold text-slate-900 truncate max-w-[140px] sm:max-w-[200px] block leading-tight">
+              <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate max-w-[140px] sm:max-w-[200px] block leading-tight">
                 {activeFamily?.name || 'Chưa chọn dòng họ'}
               </span>
-              <span className="text-[10px] text-slate-400 font-medium block leading-none mt-0.5">
+              <span className="text-[10px] text-slate-400 dark:text-slate-400 font-medium block leading-none mt-0.5">
                 {activeFamily?.code || 'Gia Tộc'}
               </span>
             </div>
@@ -208,26 +220,26 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           {isFamilyMenuOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setIsFamilyMenuOpen(false)} />
-              <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-50 animate-fade-in divide-y divide-slate-100 font-sans">
+              <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl py-2 z-50 animate-fade-in divide-y divide-slate-100 dark:divide-slate-800 font-sans">
                 <div className="px-3.5 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
                   <span>Dòng họ quản lý (1)</span>
-                  <span className="text-[10px] text-[#166534] font-bold">Chính thức</span>
+                  <span className="text-[10px] text-[#166534] dark:text-emerald-400 font-bold">Chính thức</span>
                 </div>
                 <div className="py-1">
                   {families.map((fam) => (
                     <div
                       key={fam.id}
-                      className="px-3.5 py-2.5 bg-emerald-50/50 flex items-center justify-between"
+                      className="px-3.5 py-2.5 bg-emerald-50/50 dark:bg-emerald-950/30 flex items-center justify-between"
                     >
                       <div className="pr-2 truncate">
-                        <div className="font-bold text-[#166534] text-xs truncate">
+                        <div className="font-bold text-[#166534] dark:text-emerald-400 text-xs truncate">
                           {fam.name}
                         </div>
-                        <div className="text-[10px] text-slate-500 truncate mt-0.5">
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                           {fam.code} • {fam.origin_commune ? `${fam.origin_commune}, ` : ''}{fam.origin_province}
                         </div>
                       </div>
-                      <span className="px-2 py-0.5 bg-[#166534] text-white text-[10px] font-bold rounded-full shrink-0 shadow-2xs">
+                      <span className="px-2 py-0.5 bg-[#166534] dark:bg-emerald-700 text-white text-[10px] font-bold rounded-full shrink-0 shadow-2xs">
                         Đang quản lý
                       </span>
                     </div>
@@ -241,14 +253,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
                 <div className="p-2 space-y-1">
                   {families.length > 0 ? (
-                    <div className="p-2 bg-slate-50 rounded-xl border border-slate-200 text-center space-y-1.5">
-                      <p className="text-[10px] text-slate-500 leading-tight">
+                    <div className="p-2 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 text-center space-y-1.5">
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
                         Mỗi tài khoản người dùng chỉ được khởi tạo và quản lý duy nhất <strong>1 dòng họ</strong>.
                       </p>
                       <Link
                         to="/app/family/settings"
                         onClick={() => setIsFamilyMenuOpen(false)}
-                        className="w-full text-center px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-800 text-xs font-bold rounded-lg block transition border border-slate-200"
+                        className="w-full text-center px-3 py-1.5 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-800 dark:text-white text-xs font-bold rounded-lg block transition border border-slate-200 dark:border-slate-600"
                       >
                         Cài Đặt Dòng Họ
                       </Link>
@@ -257,7 +269,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     <Link
                       to="/onboarding/create-family"
                       onClick={() => setIsFamilyMenuOpen(false)}
-                      className="w-full text-center px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#166534] text-xs font-bold rounded-xl block transition border border-emerald-200"
+                      className="w-full text-center px-3 py-2 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 text-[#166534] dark:text-emerald-300 text-xs font-bold rounded-xl block transition border border-emerald-200 dark:border-emerald-800"
                     >
                       + Khởi Tạo Dòng Họ Mới
                     </Link>
@@ -268,20 +280,21 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           )}
         </div>
 
-        {/* Interactive Lunar Date Pill */}
+        {/* Interactive Lunar Date Pill (High contrast WCAG AA compliant) */}
         <Link
           to="/app/calendar"
+          aria-label={`Hôm nay ngày ${todayInfo.solarDay} tháng ${todayInfo.solarMonth} năm ${todayInfo.solarYear}, âm lịch ngày ${todayInfo.lunarDay} tháng ${todayInfo.lunarMonth}`}
           title="Bấm để xem chi tiết Lịch Gia Tộc & Ngày Giỗ"
-          className="hidden md:flex items-center space-x-2 bg-amber-50/80 hover:bg-amber-100/90 px-3 py-1.5 rounded-full border border-amber-200 text-xs font-medium text-amber-900 shadow-2xs transition group"
+          className="hidden md:flex items-center space-x-2 bg-amber-50/90 dark:bg-amber-950/40 hover:bg-amber-100/90 dark:hover:bg-amber-900/50 px-3 py-1.5 rounded-full border border-amber-300/80 dark:border-amber-800/80 text-xs font-medium text-amber-950 dark:text-amber-200 shadow-2xs transition group"
         >
-          <Calendar className="w-3.5 h-3.5 text-amber-700 group-hover:scale-110 transition" />
+          <Calendar className="w-3.5 h-3.5 text-amber-800 dark:text-amber-400 group-hover:scale-110 transition" />
           <span>Hôm nay: {todayInfo.solarDay}/{todayInfo.solarMonth}/{todayInfo.solarYear}</span>
-          <span className="text-amber-400">•</span>
-          <span className="font-bold text-[#166534]">Âm lịch: {todayInfo.lunarDay}/{todayInfo.lunarMonth} ({todayInfo.canChiYear})</span>
+          <span className="text-amber-500">•</span>
+          <span className="font-bold text-[#166534] dark:text-emerald-400">Âm lịch: {todayInfo.lunarDay}/{todayInfo.lunarMonth} ({todayInfo.canChiYear})</span>
         </Link>
       </div>
 
-      {/* Right: Search, Notifications, Profile */}
+      {/* Right: Search, Dark Mode, Notifications, Profile */}
       <div className="flex items-center space-x-2 sm:space-x-3">
         {/* Interactive Real-Time Search */}
         <div ref={searchContainerRef} className="relative hidden md:block w-48 lg:w-64">
@@ -293,8 +306,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             onFocus={() => {
               if (searchQuery.trim()) setIsSearching(true);
             }}
+            aria-label="Tìm kiếm thành viên, ngày giỗ, quỹ"
             placeholder="Tìm thành viên, ngày giỗ..."
-            className="w-full pl-9 pr-7 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534] focus:bg-white transition"
+            className="w-full pl-9 pr-7 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534] dark:focus:ring-emerald-400 focus:bg-white dark:focus:bg-slate-800 transition"
           />
           {searchQuery && (
             <button
@@ -303,7 +317,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 setSearchResults([]);
                 setIsSearching(false);
               }}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+              aria-label="Xóa tìm kiếm"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -311,7 +326,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
           {/* Search Results Dropdown */}
           {isSearching && searchResults.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-50 animate-fade-in divide-y divide-slate-100 max-h-80 overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl py-2 z-50 animate-fade-in divide-y divide-slate-100 dark:divide-slate-800 max-h-80 overflow-y-auto">
               <div className="px-3.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                 Kết quả tìm kiếm ({searchResults.length})
               </div>
@@ -324,20 +339,20 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                       setIsSearching(false);
                       setSearchQuery('');
                     }}
-                    className="px-3.5 py-2 hover:bg-slate-50 flex items-center justify-between text-xs transition group block"
+                    className="px-3.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center justify-between text-xs transition group block"
                   >
                     <div className="flex items-center space-x-2.5">
                       <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
-                        item.type === 'MEMBER' ? 'bg-blue-50 text-blue-700' :
-                        item.type === 'MEMORIAL' ? 'bg-amber-50 text-amber-700' :
-                        'bg-emerald-50 text-emerald-700'
+                        item.type === 'MEMBER' ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300' :
+                        item.type === 'MEMORIAL' ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300' :
+                        'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300'
                       }`}>
                         {item.type === 'MEMBER' && <Users className="w-3.5 h-3.5" />}
                         {item.type === 'MEMORIAL' && <Sparkles className="w-3.5 h-3.5" />}
                         {item.type === 'FUND' && <DollarSign className="w-3.5 h-3.5" />}
                       </div>
                       <div>
-                        <div className="font-bold text-slate-900 group-hover:text-[#166534] transition truncate max-w-[150px]">
+                        <div className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-[#166534] dark:group-hover:text-emerald-400 transition truncate max-w-[150px]">
                           {item.title}
                         </div>
                         <div className="text-[10px] text-slate-400">{item.subtitle}</div>
@@ -351,21 +366,38 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           )}
 
           {isSearching && searchQuery.trim() && searchResults.length === 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-slate-200 shadow-xl p-4 z-50 text-center text-xs text-slate-400">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl p-4 z-50 text-center text-xs text-slate-400">
               Không tìm thấy thông tin phù hợp với "{searchQuery}"
             </div>
           )}
         </div>
 
+        {/* Interactive Dark / Light Mode Toggle Button */}
+        <button
+          onClick={toggleTheme}
+          aria-label={isDark ? 'Chuyển sang giao diện Sáng' : 'Chuyển sang giao diện Tối'}
+          title={isDark ? 'Giao diện Sáng' : 'Giao diện Tối'}
+          className="p-2 text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer flex items-center justify-center border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+        >
+          {isDark ? (
+            <Sun className="w-5 h-5 text-amber-400 transition-transform hover:rotate-45" />
+          ) : (
+            <Moon className="w-5 h-5 text-slate-600 transition-transform hover:-rotate-12" />
+          )}
+        </button>
+
         {/* Interactive Notifications Bell Popover */}
         <div className="relative">
           <button
             onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+            aria-label="Thông báo dòng họ"
+            aria-haspopup="true"
+            aria-expanded={isNotificationOpen}
             title="Thông báo dòng họ"
-            className="p-2 text-slate-500 hover:text-[#166534] hover:bg-slate-100 rounded-xl relative transition cursor-pointer"
+            className="p-2 text-slate-500 dark:text-slate-400 hover:text-[#166534] dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl relative transition cursor-pointer"
           >
             <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-slate-900"></span>
           </button>
 
           {isNotificationOpen && (

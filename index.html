@@ -6,12 +6,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gia Phả Gia Tộc — Lưu giữ cội nguồn, kết nối các thế hệ</title>
     <meta name="description" content="Nền tảng quản lý gia phả số, lịch gia tộc, ngày giỗ âm dương và sổ quỹ tài chính họ tộc minh bạch." />
-    <!-- Google Fonts: Be Vietnam Pro (UI) & Noto Serif (Heritage Display) -->
+    <!-- Google Fonts: Be Vietnam Pro (UI) & Lora (Classical Heritage Serif with 100% Vietnamese support) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600;1,700&display=swap" rel="stylesheet">
   </head>
-  <body class="bg-heritage-bg text-slate-800 font-sans antialiased min-h-screen">
+  <body class="bg-heritage-bg text-slate-800 font-sans antialiased min-h-screen selection:bg-amber-200 selection:text-amber-900">
+    <!-- A11y: Skip-to-content accessible anchor for screen readers and keyboard navigation -->
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-emerald-800 focus:text-white focus:text-xs focus:font-bold focus:rounded-xl focus:shadow-xl focus:outline-none focus:ring-2 focus:ring-amber-400"
+    >
+      Chuyển nhanh đến nội dung chính (Skip to Content)
+    </a>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

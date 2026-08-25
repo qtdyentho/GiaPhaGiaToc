@@ -1,9 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, ArrowLeft, AlertTriangle } from 'lucide-react';
 
 export const DevTestLoginPage: React.FC = () => {
   const navigate = useNavigate();
+
+  // SECURITY GUARD: Trang này chỉ dành cho DEV/demo mode.
+  // Khi Supabase đã được cấu hình (production/staging), redirect về login thực.
+  useEffect(() => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? '';
+    const isProduction = supabaseUrl && !supabaseUrl.includes('sample-project');
+    if (isProduction) {
+      console.warn('[Security] DevTestLoginPage disabled in production. Redirecting to /login.');
+      navigate('/login', { replace: true });
+    }
+  }, [navigate]);
 
   const handleTestLogin = (role: 'ALPHA' | 'BETA' | 'GAMMA' | 'SUPER_ADMIN') => {
     // In dev environment, set mock session state and navigate

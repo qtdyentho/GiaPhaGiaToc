@@ -15,18 +15,18 @@ export const Badge: React.FC<BadgeProps> = ({
   ...props
 }) => {
   const sizeClasses = {
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-2.5 py-1 text-xs font-medium',
+    sm: 'px-2 py-0.5 text-[10px]',
+    md: 'px-2.5 py-1 text-xs font-semibold',
   };
 
   const variantClasses = {
-    success: 'bg-emerald-50 text-heritage-green border border-emerald-200/60',
-    danger: 'bg-red-50 text-red-700 border border-red-200/60',
-    warning: 'bg-amber-50 text-amber-800 border border-amber-200/60',
-    info: 'bg-blue-50 text-blue-700 border border-blue-200/60',
-    neutral: 'bg-slate-100 text-slate-700 border border-slate-200',
-    gold: 'bg-amber-50 text-amber-900 border border-amber-300 font-semibold',
-    navy: 'bg-slate-800 text-white font-medium',
+    success: 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800',
+    danger: 'bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800',
+    warning: 'bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-800',
+    info: 'bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800',
+    neutral: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700',
+    gold: 'bg-amber-50 dark:bg-amber-950/50 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 font-bold',
+    navy: 'bg-slate-800 dark:bg-slate-700 text-white font-medium',
   };
 
   return (

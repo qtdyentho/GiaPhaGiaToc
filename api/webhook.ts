@@ -4,13 +4,22 @@ import * as crypto from 'crypto';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || '';
-const webhookSecret = process.env.BANK_WEBHOOK_SECRET || 'secret-alpha-key-2026';
+
+// SECURITY: Không bao giờ có fallback hardcode cho webhook secret.
+// Nếu thiếu env var → fail fast, trả 503 rõ ràng.
+const webhookSecret = process.env.BANK_WEBHOOK_SECRET;
 
 const supabase = createClient(supabaseUrl, serviceRoleKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // SECURITY: Fail fast nếu thiếu secret — không dùng fallback yếu
+  if (!webhookSecret) {
+    console.error('[FATAL] BANK_WEBHOOK_SECRET env var is not configured.');
+    return res.status(503).json({ success: false, error: 'Webhook service not configured. Contact administrator.' });
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method Not Allowed' });
   }

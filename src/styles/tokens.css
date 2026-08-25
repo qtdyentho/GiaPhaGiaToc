@@ -1,0 +1,82 @@
+@layer base {
+  /* ─── LIGHT THEME (Default) ───────────────────────────────────────────────── */
+  :root {
+    /* Fonts */
+    --font-ui: 'Be Vietnam Pro', sans-serif;
+    --font-heritage: 'Lora', 'Noto Serif', serif;
+
+    /* Semantic Colors (RGB Channels: r g b) */
+    --color-primary: 22 101 52;            /* #166534 - Living Archival Green */
+    --color-primary-hover: 17 75 39;       /* #114b27 */
+    --color-secondary: 30 58 95;          /* #1E3A5F - Archival Navy */
+    --color-secondary-hover: 20 39 64;    /* #142740 */
+    --color-accent: 196 154 58;           /* #C49A3A - Heritage Gold */
+    --color-accent-hover: 166 128 40;     /* #a68028 */
+    
+    /* Backgrounds & Surfaces */
+    --color-bg-page: 247 248 245;         /* #F7F8F5 - Warm Papyrus */
+    --color-bg-surface: 255 255 255;      /* #FFFFFF */
+    --color-bg-surface-subtle: 248 250 252; /* #F8FAFC */
+    --color-border: 226 232 240;          /* #E2E8F0 */
+    --color-border-subtle: 241 245 249;   /* #F1F5F9 */
+
+    /* Typography */
+    --color-text-primary: 30 41 59;       /* #1E293B */
+    --color-text-secondary: 71 85 105;    /* #475569 */
+    --color-text-muted: 148 163 184;      /* #94A3B8 */
+
+    /* Feedback Colors */
+    --color-danger: 220 38 38;            /* #DC2626 */
+    --color-success: 22 163 74;           /* #16A34A */
+    --color-warning: 217 119 6;           /* #D97706 */
+
+    /* Spacing Units */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+    --space-12: 48px;
+    --space-16: 64px;
+
+    /* Heritage Shadows */
+    --shadow-heritage: 0 4px 20px -2px rgba(22, 101, 52, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+    --shadow-heritage-hover: 0 10px 25px -3px rgba(22, 101, 52, 0.12), 0 4px 10px -2px rgba(0, 0, 0, 0.06);
+  }
+
+  /* ─── DARK THEME ─────────────────────────────────────────────────────────── */
+  .dark,
+  [data-theme="dark"] {
+    /* Semantic Colors in Dark Mode */
+    --color-primary: 34 197 94;           /* #22c55e - Emerald Green */
+    --color-primary-hover: 22 163 74;     /* #16a34a */
+    --color-secondary: 96 165 250;        /* #60a5fa - Slate Blue */
+    --color-secondary-hover: 59 130 246;  /* #3b82f6 */
+    --color-accent: 251 191 36;           /* #fbbf24 - Warm Amber Gold */
+    --color-accent-hover: 245 158 11;     /* #f59e0b */
+
+    /* Backgrounds & Surfaces */
+    --color-bg-page: 15 23 42;            /* #0F172A - Deep Night Slate */
+    --color-bg-surface: 30 41 59;         /* #1E293B - Card Surface */
+    --color-bg-surface-subtle: 51 65 85;  /* #334155 */
+    --color-border: 51 65 85;             /* #334155 */
+    --color-border-subtle: 71 85 105;     /* #475569 */
+
+    /* Typography */
+    --color-text-primary: 248 250 252;    /* #F8FAFC */
+    --color-text-secondary: 203 213 225;   /* #CBD5E1 */
+    --color-text-muted: 148 163 184;      /* #94A3B8 */
+
+    /* Feedback Colors */
+    --color-danger: 239 68 68;            /* #EF4444 */
+    --color-success: 34 197 94;           /* #22C55E */
+    --color-warning: 245 158 11;          /* #F59E0B */
+
+    /* Heritage Shadows for Dark Mode */
+    --shadow-heritage: 0 4px 20px -2px rgba(0, 0, 0, 0.4), 0 2px 6px -1px rgba(0, 0, 0, 0.3);
+    --shadow-heritage-hover: 0 10px 25px -3px rgba(0, 0, 0, 0.6), 0 4px 10px -2px rgba(0, 0, 0, 0.4);
+  }
+}

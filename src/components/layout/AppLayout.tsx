@@ -9,7 +9,7 @@ export const AppLayout: React.FC = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-heritage-bg font-sans">
+    <div className="flex min-h-screen bg-heritage-bg dark:bg-slate-950 font-sans transition-colors duration-200 text-slate-800 dark:text-slate-100">
       {/* Sidebar */}
       <AppSidebar
         isOpen={isMobileSidebarOpen}
@@ -29,7 +29,11 @@ export const AppLayout: React.FC = () => {
           isSidebarCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
         />
-        <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto max-w-7xl w-full mx-auto animate-fade-in">
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto max-w-7xl w-full mx-auto animate-fade-in outline-none focus:ring-0"
+        >
           <Outlet />
         </main>
       </div>

@@ -210,6 +210,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           {isCollapsed ? (
             <button
               onClick={onToggleCollapse}
+              aria-label="Mở rộng menu thanh điều hướng"
+              aria-expanded={false}
               className="w-10 h-10 rounded-xl bg-[#166534] flex items-center justify-center font-bold text-white shadow-xs text-sm border border-emerald-400/30 hover:scale-105 transition cursor-pointer group relative"
               title="Nhấn để mở rộng Menu"
             >
@@ -243,6 +245,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                     onToggleCollapse?.();
                   }
                 }}
+                aria-label="Thu gọn menu thanh điều hướng"
+                aria-expanded={true}
                 className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition cursor-pointer shrink-0"
                 title="Ẩn thanh điều hướng (Thu gọn thành Icon)"
               >

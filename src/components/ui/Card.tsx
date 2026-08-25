@@ -14,16 +14,16 @@ export const Card: React.FC<CardProps> = ({
 }) => {
   const paddingClasses = {
     none: '',
-    sm: 'p-4',
-    md: 'p-6',
-    lg: 'p-8',
+    sm: 'p-component-sm',
+    md: 'p-component-md',
+    lg: 'p-component-lg',
   };
 
   const variantClasses = {
-    default: 'bg-white border border-slate-200/80 rounded-xl shadow-card',
-    elevated: 'bg-white border border-slate-100 rounded-xl shadow-heritage',
-    bordered: 'bg-white border-2 border-slate-200 rounded-xl',
-    heritage: 'bg-white border border-heritage-gold/30 rounded-xl shadow-sm relative overflow-hidden',
+    default: 'bg-heritage-surface dark:bg-slate-900 border border-heritage-border dark:border-slate-800 rounded-2xl shadow-card transition-colors duration-200',
+    elevated: 'bg-heritage-surface dark:bg-slate-900 border border-heritage-border/60 dark:border-slate-800 rounded-2xl shadow-heritage transition-colors duration-200',
+    bordered: 'bg-heritage-surface dark:bg-slate-900 border-2 border-heritage-border dark:border-slate-700 rounded-2xl transition-colors duration-200',
+    heritage: 'bg-heritage-surface dark:bg-slate-900 border border-heritage-gold/30 dark:border-amber-500/30 rounded-2xl shadow-xs relative overflow-hidden transition-colors duration-200',
   };
 
   return (

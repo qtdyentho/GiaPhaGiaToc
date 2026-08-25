@@ -14,4 +14,17 @@ export default defineConfig({
     port: 3000,
     open: false,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-query': ['@tanstack/react-query'],
+          'vendor-icons': ['lucide-react'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 600,
+  },
 });

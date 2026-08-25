@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Profile, Family, FamilyMembership, MembershipRole, Fund } from '../types/database';
 import { mockProfile, mockFamily, mockMemberships, mockFunds, mockGenerations, mockMembers } from '../services/mockData';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export type PlatformRole = 'SUPER_ADMIN' | 'USER';
 
@@ -318,19 +319,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return updatedTarget;
   };
 
-  const signIn = async (email: string, _password?: string) => {
-    setIsLoading(true);
+  /**
+   * [DEV ONLY] Mock sign-in — chỉ chạy khi Supabase chưa được cấu hình.
+   * KHÔNG dùng trong production. Sẽ bị tắt tự động khi có env vars.
+   */
+  const _mockSignIn = async (email: string): Promise<{ success: boolean; activeFamily: Family | null; isSuperAdmin: boolean }> => {
+    console.warn(
+      '[⚠️ DEV MOCK AUTH] Đang dùng mock authentication.\n' +
+      'Cấu hình VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY để bật Supabase Auth thực.'
+    );
     const isSuper = email.toLowerCase().includes('admin') || email.toLowerCase().includes('super');
-    
-    if (isSuper) {
-      setPlatformRole('SUPER_ADMIN');
-      localStorage.setItem('hl_platform_role', 'SUPER_ADMIN');
-    } else {
-      setPlatformRole('USER');
-      localStorage.setItem('hl_platform_role', 'USER');
-    }
+    const role: PlatformRole = isSuper ? 'SUPER_ADMIN' : 'USER';
+    setPlatformRole(role);
+    localStorage.setItem('hl_platform_role', role);
 
-    // Check if user is Nguyen Van demo account
+    // Demo account shortcut
     if (email === 'truongtoc.nguyen@giapha.vn' || email === 'demo@giapha.vn') {
       setUser(mockProfile);
       setActiveFamily(mockFamily);
@@ -341,7 +344,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: true, activeFamily: mockFamily, isSuperAdmin: isSuper };
     }
 
-    // Check if user already exists in saved users
     const existingUser: Profile = {
       id: `usr-${email.replace(/[^a-zA-Z0-9]/g, '')}`,
       email,
@@ -351,7 +353,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
     setUser(existingUser);
 
-    // Resolve user's family membership
     const userMem = memberships.find((m) => m.user_id === existingUser.id);
     if (userMem) {
       const fam = families.find((f) => f.id === userMem.family_id) || null;
@@ -365,13 +366,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: true, activeFamily: fam, isSuperAdmin: isSuper };
     }
 
-    // User has no family yet
     setActiveFamily(null);
     setActiveMembership(null);
     sessionStorage.removeItem('active_family_id');
     localStorage.removeItem('hl_active_family_id');
     setIsLoading(false);
     return { success: true, activeFamily: null, isSuperAdmin: isSuper };
+  };
+
+  /**
+   * Sign-in chính: dùng Supabase Auth thực khi đã cấu hình env vars;
+   * fallback về mock mode khi chạy DEV chưa có Supabase.
+   */
+  const signIn = async (email: string, password?: string): Promise<{ success: boolean; activeFamily: Family | null; isSuperAdmin: boolean }> => {
+    setIsLoading(true);
+
+    // ── PATH A: Supabase Auth thực (production/staging) ─────────────────
+    if (isSupabaseConfigured()) {
+      if (!password) {
+        setIsLoading(false);
+        return { success: false, activeFamily: null, isSuperAdmin: false };
+      }
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error || !data.user) {
+        setIsLoading(false);
+        console.error('[Auth] Supabase signIn error:', error?.message);
+        return { success: false, activeFamily: null, isSuperAdmin: false };
+      }
+
+      // Lấy profile từ DB
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
+
+      const isSuper = (profile?.platform_role ?? '') === 'SUPER_ADMIN';
+      setUser(profile ?? { id: data.user.id, email, full_name: email, created_at: '', updated_at: '' });
+      setPlatformRole(isSuper ? 'SUPER_ADMIN' : 'USER');
+      localStorage.setItem('hl_platform_role', isSuper ? 'SUPER_ADMIN' : 'USER');
+
+      // Lấy family membership đầu tiên
+      const { data: mems } = await supabase
+        .from('family_memberships')
+        .select('*, families(*)')
+        .eq('user_id', data.user.id)
+        .eq('status', 'ACTIVE')
+        .limit(1);
+
+      const firstMem = mems?.[0] ?? null;
+      const firstFam = (firstMem as any)?.families ?? null;
+      setActiveFamily(firstFam);
+      setActiveMembership(firstMem);
+      if (firstFam?.id) {
+        sessionStorage.setItem('active_family_id', firstFam.id);
+        localStorage.setItem('hl_active_family_id', firstFam.id);
+      }
+      setIsLoading(false);
+      return { success: true, activeFamily: firstFam, isSuperAdmin: isSuper };
+    }
+
+    // ── PATH B: DEV Mock (chỉ khi Supabase chưa cấu hình) ───────────────
+    return _mockSignIn(email);
   };
 
   const signOut = async () => {

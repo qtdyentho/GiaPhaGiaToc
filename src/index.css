@@ -1,24 +1,17 @@
+@import './styles/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --font-ui: 'Be Vietnam Pro', sans-serif;
-    --font-heritage: 'Noto Serif', serif;
-
-    --primary: 22 101 52;
-    --secondary: 30 58 95;
-    --accent: 196 154 58;
-    --background: 247 248 245;
-  }
-
   body {
-    background-color: #F7F8F5;
-    color: #1E293B;
+    background-color: rgb(var(--color-bg-page));
+    color: rgb(var(--color-text-primary));
     font-family: var(--font-ui);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   code, kbd, samp, pre {
@@ -47,16 +40,16 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #F1F5F9;
+  background: rgb(var(--color-border-subtle));
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: rgb(var(--color-border));
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: rgb(var(--color-text-muted));
 }
 
 /* Custom Animations */

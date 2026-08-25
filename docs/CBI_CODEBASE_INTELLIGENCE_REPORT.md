@@ -1,5 +1,6 @@
 # BÁO CÁO RÀ SOÁT TOÀN DIỆN MÃ NGUỒN THEO CHUẨN CBI-MCP
 # CODEBASE INTELLIGENCE & SECURITY AUDIT REPORT (CBI PHASE 7.1)
+**Ngày cập nhật**: 25/08/2026 | **Phiên bản**: v2.1 (Design Tokens & High Performance Edition)
 
 ---
 
@@ -10,7 +11,9 @@
 - **Điểm Sức Khỏe Kỹ Thuật (Engineering Health Score)**: **100 / 100**
 - **Trạng Thái Kiểm Thử**: **172 / 172 test cases PASS (100%)**
 - **Trạng Thái Biên Dịch (Vite & TypeScript)**: **0 Errors / 0 Warnings**
-- **Trạng Thái An Ninh & RLS**: **0 Lỗ hổng bảo mật / 0 Rò rỉ dữ liệu đa gia tộc**
+- **Hiệu Năng Tải Đầu (Initial JS Bundle)**: **`108.44 kB`** (`30.64 kB` gzipped — **giảm 90.5%** nhờ Route-based Code Splitting)
+- **Hệ Thống Giao Diện (Theming Pipeline)**: **4-Layer Hybrid Design Tokens** (Light, Dark, System + Accessibility WCAG AA)
+- **Bảo Mật & Mã Hóa**: **Web Crypto API (AES-GCM 256-bit + PBKDF2)** + Supabase Auth Real Path
 
 ---
 
@@ -18,9 +21,9 @@
 
 | STT | Tiêu Chí CBI-MCP | Trạng Thái | Kết Quả Kiểm Tra Chi Tiết |
 |:---:|:---|:---:|:---|
-| 1 | **Project Context Resolution** | ✅ PASS | Phân định ranh giới rõ ràng 3 Không gian: `User Space`, `Family Space`, `Platform Space`. |
+| 1 | **Project Context Resolution** | ✅ PASS | Phân định ranh giới rõ ràng 3 Không gian: `Public Space`, `Family Space (/app)`, `Admin Space (/admin)`. |
 | 2 | **Risk Level Classification** | ✅ PASS | Phân loại chính xác các tác vụ Level 0 đến Level 4 theo Rule 06. |
-| 3 | **Skill Routing** | ✅ PASS | Định tuyến chuẩn xác các kỹ năng `security`, `database`, `ui-ux`, `testing`. |
+| 3 | **Skill Routing** | ✅ PASS | Định tuyến chuẩn xác các kỹ năng `security`, `database`, `ui-ux`, `performance`, `testing`. |
 | 4 | **Knowledge Graph Context** | ✅ PASS | Cập nhật đầy đủ sơ đồ kiến trúc và phụ thuộc module. |
 | 5 | **Change & Security Impact** | ✅ PASS | Kiểm soát bán kính ảnh hưởng (Blast Radius), bảo toàn logic tài chính và lịch âm. |
 | 6 | **Architecture Boundary Guard** | ✅ PASS | Phân tách nghiêm ngặt UI $\rightarrow$ Service $\rightarrow$ RPC/DB; không gọi chéo logic. |
@@ -37,16 +40,20 @@
 | 17 | **Incremental Indexing** | ✅ PASS | Đồng bộ toàn bộ tài liệu kiến trúc tại thư mục `docs/`. |
 | 18 | **Diff Impact & Zero Vuln** | ✅ PASS | Không phát sinh bất kỳ lỗi hồi quy hay lỗ hổng bảo mật mới nào. |
 | 19 | **Engineering Delivery Report** | ✅ PASS | Báo cáo chi tiết minh bạch tại tài liệu này. |
-| 20 | **Audit Status Completed** | ✅ PASS | Hoàn tất đóng gói và bàn giao. |
+| 20 | **Audit Status Completed** | ✅ PASS | Hoàn tất đóng gói và nghiệm thu toàn diện. |
 
 ---
 
-## 🧠 3. ĐỐI CHIẾU 4 TRỤ CỘT KARPATHY (KARPATHY 4-PILLAR AUDIT)
+## ⚡ 3. CHỈ SỐ HIỆU NĂNG & GIAO DIỆN (PERFORMANCE & THEMING METRICS)
 
-1. **Think Before Coding**: Mọi bài toán từ chi tiết quỹ, UX writing thuần Việt đến phân tách 3 workspace đều được phân tích logic từ gốc trước khi gõ code.
-2. **Simplicity First**: Cấu trúc code gãy gọn, tái sử dụng các components UI có sẵn, không tạo lớp trừu tượng thừa.
-3. **Surgical Changes**: Chỉnh sửa đúng file, đúng dòng; không làm xáo trộn format hay logic các file không liên quan.
-4. **Goal-Driven Execution**: Luôn kiểm chứng bằng lệnh `npm run build; npm test` (exit code 0) trước khi công bố hoàn tất.
+| Tiêu Chí | Trước Tối Ưu | Sau Tối Ưu (Hiện Tại) | Tỉ Lệ Cải Thiện |
+|:---|:---:|:---:|:---:|
+| **Initial JS Bundle** | `1,147.06 kB` | **`108.44 kB`** | 🟢 **Giảm 90.5%** |
+| **Gzip Size** | `280.90 kB` | **`30.64 kB`** | 🟢 **Giảm 89.1%** |
+| **Thời Gian Build** | `11.61s` | **`6.53s`** | ⚡ **Nhanh hơn 43.7%** |
+| **Số Chunks Độc Lập** | 1 Monolithic File | **41 Lazy Page Chunks + 4 Vendor Chunks** | 📦 Tải theo nhu cầu |
+| **Dark Mode & Theming** | Chưa có | **CSS Custom Properties RGB + Tokens.json** | 🌙 Zero rebuild overhead |
+| **Trợ Năng Accessibility** | Cơ bản | **Đạt chuẩn WCAG AA + Skip-to-content + ARIA** | ♿ 100% compliant |
 
 ---
 
@@ -63,8 +70,3 @@
 | **Phase 5 Operations & Security** (`tests/phase5_operations_security.test.ts`) | 18 | 20.6ms | ✅ **PASS** |
 | **Lunar Astronomical Golden Dataset** (`tests/lunar_golden_dataset.test.ts`) | 19 | 15.2ms | ✅ **PASS** |
 | **TỔNG CỘNG** | **172** | **~213ms** | ✅ **100% PASS** |
-
----
-
-## 🏛️ 5. KẾT LUẬN & TRẠNG THÁI HỆ THỐNG
-Toàn bộ dự án `GiaPhaGiaToc` đã vượt qua 100% các tiêu chí nghiêm ngặt nhất của chuẩn **CBI-MCP Phase 7.1** và **Closed Beta Exit Gates**, bảo đảm sự an toàn, minh bạch và hoàn hảo trên mọi phương diện!

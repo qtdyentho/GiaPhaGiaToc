@@ -1,57 +1,70 @@
 # KIẾN TRÚC ĐIỀU HƯỚNG & PHÂN TẦNG ĐƯỜNG DẪN SAAS (ROUTING ARCHITECTURE)
-# GIA PHẢ GIA TỘC SaaS
+# GIA PHẢ GIA TỘC SaaS — Dynamic Code-Splitting Architecture
 
 ---
 
-## 🏛️ 1. PHÂN TẦNG 3 VÙNG ĐIỀU HƯỚNG
+## 🏛️ 1. PHÂN TẦNG 3 KHÔNG GIAN ĐIỀU HƯỚNG
 
-Hệ thống phân chia rõ ràng 3 không gian điều hướng độc lập, đảm bảo bảo mật và trải nghiệm người dùng:
+Hệ thống phân chia rõ ràng 3 không gian điều hướng độc lập với **41 Tuyến Đường (Routes)** được tải động theo yêu cầu (*Dynamic Code-Splitting via `React.lazy`*):
 
 ```
                       INTERNET / USER
                             │
             ┌───────────────┴───────────────┐
             ▼                               ▼
-    [Public Area]                  [Developer Test]
-    /                               /dev/test-login (Dev only)
+    [Public Space]                  [Developer Guarded]
+    /                               /dev/test-login (Guard: redirect in Prod)
     /pricing
     /help
     /login
     /register
     /invite/:code
-            │ (Authenticate)
+            │ (Authenticate via Supabase Auth)
             ▼
-    [Authenticated User]
+    [Authenticated Workspace]
             │
-    ┌───────┴───────────────────────┐
-    ▼                               ▼
-[Family App]                [Admin Center]
-/app                        /admin
-/app/genealogy              /admin/payments
-/app/members                /admin/billing/config
-/app/calendar               /admin/beta
-/app/memorials              /admin/integrity
-/app/funds                  /admin/reconciliation
-/app/billing                /admin/subscriptions
+    ┌───────┴───────────────────────────────────────┐
+    ▼                                               ▼
+[Family App Space (/app/*)]             [Super Admin Center (/admin/*)]
+/app/dashboard                          /admin/beta (Command Center)
+/app/genealogy (Interactive Tree)       /admin/users (User Accounts)
+/app/members & /app/members/:id         /admin/payments (Bank Approvals)
+/app/kinship (Kinship Calculator)       /admin/billing/config (Bank Config)
+/app/calendar (Lịch Vạn Niên 2021-2036) /admin/plans (Service Plans)
+/app/memorials (Quản Lý Ngày Giỗ)       /admin/subscriptions (Active Subscriptions)
+/app/events & /app/events/:id           /admin/revenue (Revenue Analytics)
+/app/finance (Sổ Quỹ & Kế Toán)        /admin/integrity (Watchdog Monitor)
+/app/finance/ledger                     /admin/reconciliation (3-Way Rec)
+/app/finance/income                     /admin/beta/evidence (Audit Evidence)
+/app/finance/expenses                   /admin/beta/exit-audit (Exit Checklist)
+/app/finance/contributions
+/app/finance/honor-roll (Bảng Vàng)
+/app/billing & /app/billing/usage
+/app/billing/invoices & checkout
+/app/support & /app/notifications
+/app/family/settings & /app/audit
+/app/settings/permissions & reminders
 ```
 
 ---
 
-## 🛡️ 2. QUY TẮC BẢO VỆ ĐƯỜNG DẪN
+## ⚡ 2. CƠ CHẾ ROUTE CODE-SPLITTING & HIỆU NĂNG
 
-1. **Khách vãng lai (Anonymous / Unauthenticated)**:
-   - Truy cập `/` $\rightarrow$ Hiển thị Landing Page giới thiệu sản phẩm.
-   - Truy cập `/app` hoặc `/app/*` $\rightarrow$ Chuyển hướng sang `/login`.
-   - Truy cập `/admin` hoặc `/admin/*` $\rightarrow$ Chuyển hướng sang `/login` hoặc trả về 403.
+Toàn bộ 41 route pages được import theo cơ chế tải động:
+```tsx
+const DashboardPage = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
+```
+- **Suspense Fallback**: Sử dụng `<PageSkeleton />` với animation di sản đồng bộ bảng màu Heritage.
+- **Kích thước Bundle Tải Đầu**: Giảm từ **`1,147.06 kB`** xuống chỉ còn **`108.44 kB`** (sau gzip chỉ còn **`30.64 kB`** — **giảm ~90.5%**).
+- **Phân tách Vendor**: 4 Chunks vendor độc lập (`vendor-react`, `vendor-supabase`, `vendor-query`, `vendor-icons`).
 
-2. **Thành viên dòng họ (Family User)**:
-   - Truy cập `/app` $\rightarrow$ Mở Bảng điều khiển của dòng họ mình thuộc về.
-   - Tuyệt đối không hardcode mở dòng họ Alpha hay tự động đăng nhập tài khoản test trong môi trường production.
-   - Truy cập `/admin` $\rightarrow$ Bị chặn quyền truy cập (Forbidden 403).
+---
 
-3. **Ban Quản Trị (Super Admin / Billing Admin)**:
-   - Truy cập `/admin` $\rightarrow$ Mở Trung tâm Quản trị và Duyệt thanh toán.
+## 🛡️ 3. MA TRẬN BẢO VỆ ĐƯỜNG DẪN (SECURITY GUARDS)
 
-4. **Bảng Đăng Nhập Dev (Dev Test Login Panel)**:
-   - Đường dẫn `/dev/test-login` chỉ được cung cấp khi `import.meta.env.DEV` hoặc `VITE_ENABLE_TEST_MODE = true`.
-   - Bị loại bỏ hoàn toàn trong bản build Production thực tế.
+| Không Gian | Guard Component | Ràng Buộc Truy Cập |
+|:---|:---|:---|
+| **Public** | Không | Cho phép khách truy cập, SEO tags tối ưu |
+| **Family App** | `<ProtectedRoute>` + `<RoleGuard>` | Bắt buộc đăng nhập; các trang tài chính `/app/finance/*` và cài đặt `/app/family/settings` yêu cầu quyền `OWNER`, `ADMIN`, hoặc `TREASURER` |
+| **Super Admin** | `<ProtectedRoute>` + `<RoleGuard requireSuperAdmin={true}>` | Chỉ tài khoản có `platformRole = 'SUPER_ADMIN'` mới được phép truy cập |
+| **Dev Mode** | `useEffect` Production Check | Tự động redirect về `/login` nếu phát hiện kết nối CSDL Supabase chính thức |

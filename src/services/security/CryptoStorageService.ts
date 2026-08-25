@@ -31,8 +31,33 @@ export interface MaskedUserView {
   is_pii_revealed?: boolean;
 }
 
-// Master encryption secret key derivation (Fallback to deterministic workspace salt in browser)
-const PII_STORAGE_SECRET = 'GiaPhaGiaToc_HeritageLedger_SecuredMasterKey_2026_AES256';
+// Master encryption secret — trong production, derive từ env var qua PBKDF2
+// Client-side local storage only — không bao giờ lưu trữ PII nhạy cảm lên DB không có RLS
+const PII_STORAGE_SECRET = typeof import.meta !== 'undefined' && import.meta.env?.VITE_PII_STORAGE_SECRET
+  ? import.meta.env.VITE_PII_STORAGE_SECRET as string
+  : 'GiaPhaGiaToc_HeritageLedger_SecuredMasterKey_2026_AES256';
+
+// Cạch trong key derivation tạm dùng — production nên thêm PBKDF2 + salt ngẫbắn per-user
+const KEY_SALT = 'GiaPha2026_Salt_v2';
+
+/** Derive AES-GCM key từ secret string qua PBKDF2 */
+async function deriveKey(): Promise<CryptoKey> {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(PII_STORAGE_SECRET.slice(0, 32).padEnd(32, '0')),
+    { name: 'PBKDF2' },
+    false,
+    ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: enc.encode(KEY_SALT), iterations: 100_000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
 
 export class CryptoStorageService {
   /**
@@ -63,36 +88,32 @@ export class CryptoStorageService {
   }
 
   /**
-   * Mã hóa đối xứng AES-GCM chuỗi ký tự sang Base64
+   * Mã hóa AES-GCM 256-bit thực (Web Crypto API)
+   * Output format: aes:v2:<base64-iv>:<base64-ciphertext>
    */
   static async encrypt(plaintext: string): Promise<string> {
     if (!plaintext) return '';
-    try {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(plaintext);
-      
-      // Pseudo-encryption wrapper with salted HMAC Base64 payload for client-side storage
-      const salt = Math.random().toString(36).substring(2, 8);
-      const payload = JSON.stringify({
-        salt,
-        data: Array.from(data).map(b => (b ^ 0x5A).toString(16).padStart(2, '0')).join(''),
-        ts: Date.now(),
-        algo: 'AES-256-GCM-EQUIV'
-      });
-      
-      return `enc:v1:${btoa(unescape(encodeURIComponent(payload)))}`;
-    } catch (e) {
-      console.error('Lỗi mã hóa dữ liệu:', e);
+    // Fallback an toàn nếu môi trường không có Web Crypto (SSR/test)
+    if (typeof crypto === 'undefined' || !crypto.subtle) {
       return `enc:v1:${btoa(plaintext)}`;
+    }
+    try {
+      const key = await deriveKey();
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const encoded = new TextEncoder().encode(plaintext);
+      const cipherBuffer = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
+
+      const ivB64 = btoa(String.fromCharCode(...iv));
+      const ctB64 = btoa(String.fromCharCode(...new Uint8Array(cipherBuffer)));
+      return `aes:v2:${ivB64}:${ctB64}`;
+    } catch (e) {
+      console.error('[Crypto] Encrypt error, falling back to base64:', e);
+      return `enc:v1:${btoa(unescape(encodeURIComponent(plaintext)))}`;
     }
   }
 
-  /**
-   * Giải mã chuỗi đã mã hóa
-   */
-  static async decrypt(encryptedText: string): Promise<string> {
-    if (!encryptedText) return '';
-    if (!encryptedText.startsWith('enc:v1:')) return encryptedText;
+  /** Giải mã định dạng cũ enc:v1 (XOR 0x5A) cho backward-compatibility */
+  private static _decryptLegacyXOR(encryptedText: string): string {
     try {
       const rawBase64 = encryptedText.replace('enc:v1:', '');
       const jsonStr = decodeURIComponent(escape(atob(rawBase64)));
@@ -103,14 +124,47 @@ export class CryptoStorageService {
         for (let i = 0; i < hexStr.length; i += 2) {
           bytes.push(parseInt(hexStr.substring(i, i + 2), 16) ^ 0x5A);
         }
-        const decoder = new TextDecoder();
-        return decoder.decode(new Uint8Array(bytes));
+        return new TextDecoder().decode(new Uint8Array(bytes));
       }
       return jsonStr;
-    } catch (e) {
-      // Fallback
+    } catch {
       return encryptedText.replace('enc:v1:', '');
     }
+  }
+
+  /**
+   * Giải mã — hỗ trợ cả 2 format:
+   * - aes:v2:<iv>:<ct> → AES-GCM (mới)
+   * - enc:v1:<base64>  → XOR legacy (tương thích ngược)
+   */
+  static async decrypt(encryptedText: string): Promise<string> {
+    if (!encryptedText) return '';
+
+    // FORMAT MỚI: AES-GCM
+    if (encryptedText.startsWith('aes:v2:')) {
+      if (typeof crypto === 'undefined' || !crypto.subtle) return encryptedText;
+      try {
+        const parts = encryptedText.split(':');
+        // parts: ['aes', 'v2', '<iv>', '<ct>'] — iv & ct có thể chứa '=' padding
+        const ivB64 = parts[2];
+        const ctB64 = parts.slice(3).join(':');
+        const iv = Uint8Array.from(atob(ivB64), (c) => c.charCodeAt(0));
+        const ct = Uint8Array.from(atob(ctB64), (c) => c.charCodeAt(0));
+        const key = await deriveKey();
+        const plainBuffer = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+        return new TextDecoder().decode(plainBuffer);
+      } catch (e) {
+        console.error('[Crypto] AES-GCM decrypt error:', e);
+        return '';
+      }
+    }
+
+    // FORMAT CŨ: XOR legacy — giữ để đọc dữ liệu cũ không mất
+    if (encryptedText.startsWith('enc:v1:')) {
+      return this._decryptLegacyXOR(encryptedText);
+    }
+
+    return encryptedText;
   }
 
   /**
