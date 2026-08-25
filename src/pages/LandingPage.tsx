@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Trees, Calendar, Landmark, Sparkles, ArrowRight, Award, ShieldCheck, 
@@ -20,6 +20,62 @@ export const LandingPage: React.FC = () => {
   const [showSampleTreeModal, setShowSampleTreeModal] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
   const [consultSuccess, setConsultSuccess] = useState(false);
+
+  // 4 Thematic Ancestral Carousel Slides Data
+  const carouselSlides = [
+    {
+      id: 'slide-1',
+      shortTab: '1. Nối Dòng Tiên Tổ',
+      tag: '⚜️ Cội Nguồn Tiên Tổ • Bách Niên Hưng Long',
+      titleLine1: 'Gìn Vàng Giữ Ngọc • Nối Dòng Tiên Tổ',
+      titleLine2: 'Lưu Truyền Bách Đại — Hưng Thịnh Vĩnh Cửu',
+      description: 'Lưu giữ cội nguồn huyết thống ngàn năm truyền thừa, trăm đời rạng danh. Số hóa cây phả hệ, gìn giữ gia quy và truyền lại cho muôn đời con cháu phụng dựng.',
+      primaryCta: 'Khởi Tạo Dòng Họ (30 Ngày)',
+      secondaryCta: 'Xem Cây Phả Hệ Mẫu'
+    },
+    {
+      id: 'slide-2',
+      shortTab: '2. Ngọc Phả Di Sản',
+      tag: '📜 Chuẩn Mực Tộc Ước • Phân Chi Minh Bạch',
+      titleLine1: 'Ngọc Phả Di Sản & Quản Trị Gia Tộc',
+      titleLine2: 'Phân Vai Xưng Hô — Chuẩn Mực Gia Lễ',
+      description: 'Công nghệ phân định cây LTree vô cực, tự động xác định danh xưng vai vế theo chuẩn mực gia phong « Bé bằng củ khoai, cứ vai mà gọi », con Bác luôn ở vế trên.',
+      primaryCta: 'Thử Nghiệm Tra Cứu Vai Vế',
+      secondaryCta: 'Xem Bản Đồ Chi Phái'
+    },
+    {
+      id: 'slide-3',
+      shortTab: '3. Lịch Giỗ Thiên Văn',
+      tag: '🏮 Thiên Văn UTC+7 • 16 Năm Vạn Niên',
+      titleLine1: 'Ẩm Thủy Tư Nguyên • Lịch Giỗ Thiên Văn',
+      titleLine2: 'Chu Toàn Lễ Tiết — Báo Giỗ Đúng Ngày',
+      description: 'Phụng định lịch giỗ âm dương chính xác theo thiên văn học trọn vẹn 16 năm (2021 — 2036), nhận diện năm nhuận, tháng Chạp thiếu và gửi thông báo nhắc lễ chu đáo.',
+      primaryCta: 'Xem Lịch Giỗ Vạn Niên',
+      secondaryCta: 'Tra Cứu Ngày Âm Dương'
+    },
+    {
+      id: 'slide-4',
+      shortTab: '4. Bảng Vàng Công Đức',
+      tag: '🏆 Bảng Vàng VietQR • Sổ Quỹ Bất Biến',
+      titleLine1: 'Tổ Đức Vun Trồng • Bảng Vàng Công Đức',
+      titleLine2: 'Sổ Quỹ Kép 100% — Tri Ân Tấm Lòng',
+      description: 'Sổ quỹ kép bất biến minh bạch tuyệt đối, tự động sinh mã VietQR công đức theo từng quỹ từ đường, khuyến học, tu bổ và khắc ghi tấm lòng phụng sự của con cháu.',
+      primaryCta: 'Trải Nghiệm Sổ Quỹ Mẫu',
+      secondaryCta: 'Tạo Thử Mã VietQR'
+    }
+  ];
+
+  // Carousel Active State & Auto-Play (5.5s timer)
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isCarouselPaused, setIsCarouselPaused] = useState(false);
+
+  useEffect(() => {
+    if (isCarouselPaused) return;
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
+    }, 5500);
+    return () => clearInterval(timer);
+  }, [isCarouselPaused, carouselSlides.length]);
 
   // Hero Tree Interactive States
   const [treeZoom, setTreeZoom] = useState(1);
@@ -393,13 +449,18 @@ export const LandingPage: React.FC = () => {
         )}
       </header>
 
-      {/* Hero Section: Di Sản Cổ Điển Gặp SaaS Hiện Đại */}
-      <section className="relative overflow-hidden pt-12 pb-16 lg:pt-16 lg:pb-24 bg-gradient-to-b from-white via-[#F7F8F5] to-[#FBFBF9] dark:from-slate-900 dark:via-slate-950 dark:to-slate-950">
+      {/* Hero Section: Di Sản Cổ Điển Gặp SaaS Hiện Đại — Carousel 4 Slide */}
+      <section 
+        className="relative overflow-hidden pt-8 pb-16 lg:pt-12 lg:pb-24 bg-gradient-to-b from-white via-[#F7F8F5] to-[#FBFBF9] dark:from-slate-900 dark:via-slate-950 dark:to-slate-950"
+        onMouseEnter={() => setIsCarouselPaused(true)}
+        onMouseLeave={() => setIsCarouselPaused(false)}
+      >
+        {/* Background Subtle Watermark Overlay */}
         <div className="absolute inset-0 pointer-events-none opacity-5 dark:opacity-10 bg-[radial-gradient(#166534_1px,transparent_1px)] [background-size:24px_24px]" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-7 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-10">
           {/* Classical Imperial Seal & Heritage Scroll Banner */}
-          <div className="flex flex-col items-center justify-center space-y-3">
+          <div className="flex flex-col items-center justify-center space-y-2.5 text-center">
             {/* Ancient Seal Badge (Kim Bài / Dấu Ấn Triện Chu Sa) */}
             <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-2xl bg-gradient-to-r from-amber-100/90 via-amber-50 to-amber-100/90 dark:from-amber-950/60 dark:via-slate-900 dark:to-amber-950/60 border-2 border-amber-500/60 dark:border-amber-600/60 shadow-lg shadow-amber-950/5 relative">
               {/* Antique Red Seal Stamp */}
@@ -425,54 +486,247 @@ export const LandingPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Main Hero Title — Khí Chất Đại Tự Gia Phả Cổ Truyền */}
-          <div className="space-y-4 max-w-4xl mx-auto">
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-tight font-serif">
-              <span className="block text-slate-900 dark:text-slate-100">
-                Gìn Vàng Giữ Ngọc • Nối Dòng Tiên Tổ
-              </span>
-              <span className="mt-1 block text-transparent bg-clip-text bg-gradient-to-r from-[#14532D] via-[#166534] to-[#B45309] dark:from-emerald-400 dark:via-teal-300 dark:to-amber-400">
-                Ngọc Phả Di Sản & Quản Trị Gia Tộc
-              </span>
-            </h1>
+          {/* MAIN HERO CAROUSEL CONTAINER */}
+          <div className="relative bg-white/95 dark:bg-slate-900/90 rounded-3xl border-2 border-amber-200/80 dark:border-amber-900/40 shadow-2xl overflow-hidden p-6 sm:p-8 lg:p-10 backdrop-blur-md">
+            {/* Decorative Corner Flourishes (4 Góc Hồi Văn Cổ Điển) */}
+            <div className="absolute top-2 left-2 text-amber-500/30 dark:text-amber-400/20 text-xs font-serif select-none pointer-events-none">╔══</div>
+            <div className="absolute top-2 right-2 text-amber-500/30 dark:text-amber-400/20 text-xs font-serif select-none pointer-events-none">══╗</div>
+            <div className="absolute bottom-2 left-2 text-amber-500/30 dark:text-amber-400/20 text-xs font-serif select-none pointer-events-none">╚══</div>
+            <div className="absolute bottom-2 right-2 text-amber-500/30 dark:text-amber-400/20 text-xs font-serif select-none pointer-events-none">══╝</div>
 
-            {/* Traditional Ornamental Divider (Hoa Văn Hồi Văn & Triện Cổ) */}
-            <div className="flex items-center justify-center gap-3 py-1 text-amber-700 dark:text-amber-400 opacity-80">
-              <span className="w-12 sm:w-24 h-0.5 bg-gradient-to-r from-transparent via-amber-500 to-amber-600 rounded-full" />
-              <div className="flex items-center gap-1.5 text-xs font-serif font-bold">
-                <span>✦</span>
-                <span className="text-sm">⚜️</span>
-                <span>✦</span>
+            {/* Slide Content with Crossfade & Slide Transition */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[380px]">
+              {/* Left Column: Text & Call To Actions (7 Cols) */}
+              <div className="lg:col-span-7 space-y-5 text-left animate-fade-in key={currentSlide}">
+                {/* Slide Tag */}
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 text-[#166534] dark:text-emerald-300 text-xs font-bold font-serif">
+                  <span>{carouselSlides[currentSlide].tag}</span>
+                </div>
+
+                {/* Grand Title */}
+                <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-tight font-serif">
+                  <span className="block text-slate-900 dark:text-slate-100">
+                    {carouselSlides[currentSlide].titleLine1}
+                  </span>
+                  <span className="mt-1 block text-transparent bg-clip-text bg-gradient-to-r from-[#14532D] via-[#166534] to-[#B45309] dark:from-emerald-400 dark:via-teal-300 dark:to-amber-400">
+                    {carouselSlides[currentSlide].titleLine2}
+                  </span>
+                </h1>
+
+                {/* Classical Ornamental Divider */}
+                <div className="flex items-center gap-2 py-0.5 text-amber-700 dark:text-amber-400 opacity-80">
+                  <span className="w-12 h-0.5 bg-gradient-to-r from-amber-500 to-transparent rounded-full" />
+                  <span className="text-xs">✦ ⚜️ ✦</span>
+                  <span className="w-24 h-0.5 bg-gradient-to-l from-transparent via-amber-500 to-transparent rounded-full" />
+                </div>
+
+                {/* Subtitle Description */}
+                <p className="text-xs sm:text-sm lg:text-base text-slate-700 dark:text-slate-300 leading-relaxed font-serif">
+                  {carouselSlides[currentSlide].description}
+                </p>
+
+                {/* Call To Action Buttons for Active Slide */}
+                <div className="flex flex-wrap items-center gap-3 pt-2">
+                  <Link
+                    to="/register"
+                    className="px-6 py-3.5 rounded-2xl bg-[#166534] hover:bg-[#14532D] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-bold text-xs shadow-xl shadow-emerald-950/20 hover:scale-102 transition-all flex items-center gap-2"
+                  >
+                    <span>{carouselSlides[currentSlide].primaryCta}</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+
+                  <button
+                    onClick={() => {
+                      if (currentSlide === 0) setShowSampleTreeModal(true);
+                      else if (currentSlide === 1) {
+                        const el = document.getElementById('kinship-tool');
+                        el?.scrollIntoView({ behavior: 'smooth' });
+                      } else if (currentSlide === 2) {
+                        const el = document.getElementById('calendar-demo');
+                        el?.scrollIntoView({ behavior: 'smooth' });
+                      } else {
+                        setShowQrModal(true);
+                      }
+                    }}
+                    className="px-5 py-3.5 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 font-bold text-xs border border-slate-300 dark:border-slate-700 shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+                  >
+                    <span>{carouselSlides[currentSlide].secondaryCta}</span>
+                    <ArrowUpRight className="w-4 h-4 text-[#166534] dark:text-emerald-400" />
+                  </button>
+                </div>
               </div>
-              <span className="w-12 sm:w-24 h-0.5 bg-gradient-to-l from-transparent via-amber-500 to-amber-600 rounded-full" />
+
+              {/* Right Column: High-Art Classical Visual Representation (5 Cols) */}
+              <div className="lg:col-span-5 flex justify-center items-center">
+                <div className="w-full max-w-sm rounded-3xl p-6 bg-gradient-to-b from-amber-50/90 via-emerald-50/40 to-slate-50 dark:from-slate-800/90 dark:via-slate-800/60 dark:to-slate-800/40 border-2 border-amber-300/80 dark:border-slate-700 shadow-xl relative overflow-hidden group">
+                  {/* Glowing Aura Effect */}
+                  <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-400/20 rounded-full blur-2xl pointer-events-none" />
+                  <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-emerald-500/15 rounded-full blur-2xl pointer-events-none" />
+
+                  {/* Render Visual based on Current Slide */}
+                  {currentSlide === 0 && (
+                    /* Slide 1 Visual: Ancient Tree & Lineage Roots */
+                    <div className="space-y-4 text-center py-2 animate-fade-in">
+                      <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-emerald-700 via-[#166534] to-emerald-900 text-amber-300 flex items-center justify-center shadow-lg border-2 border-amber-300/80 transform group-hover:scale-105 transition-transform">
+                        <Trees className="w-10 h-10" />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="font-bold text-slate-900 dark:text-white font-serif text-base">
+                          Cội Nguồn Bách Niên
+                        </div>
+                        <div className="text-xs text-[#166534] dark:text-emerald-400 font-serif italic">
+                          « Cây Đại Thụ Phụng Dựng Ngàn Thu »
+                        </div>
+                      </div>
+                      <div className="p-3 bg-white/90 dark:bg-slate-900/90 rounded-2xl border border-amber-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-1 text-left">
+                        <div className="flex justify-between text-[11px] font-bold">
+                          <span>Chi Trưởng (Chi Cả):</span>
+                          <span className="text-[#166534] dark:text-emerald-400">Đời 1 ➔ Đời 6</span>
+                        </div>
+                        <div className="flex justify-between text-[11px] font-bold">
+                          <span>Chi Thứ (Chi Hai):</span>
+                          <span className="text-amber-700 dark:text-amber-400">Đời 1 ➔ Đời 5</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {currentSlide === 1 && (
+                    /* Slide 2 Visual: Ancient Genealogy Scroll & Red Seal */
+                    <div className="space-y-4 text-center py-2 animate-fade-in">
+                      <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-amber-700 via-amber-800 to-amber-950 text-amber-200 flex items-center justify-center shadow-lg border-2 border-amber-300/80 transform group-hover:scale-105 transition-transform">
+                        <ScrollText className="w-10 h-10" />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="font-bold text-slate-900 dark:text-white font-serif text-base">
+                          Ngọc Phả Hoàng Triều
+                        </div>
+                        <div className="text-xs text-amber-800 dark:text-amber-300 font-serif italic">
+                          « Tộc Ước Phân Minh • Vai Vế Tự Động »
+                        </div>
+                      </div>
+                      <div className="p-3 bg-white/90 dark:bg-slate-900/90 rounded-2xl border border-amber-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-1 text-left font-serif">
+                        <div className="text-[11px] font-bold text-slate-900 dark:text-white">Thuật toán LTree LCA:</div>
+                        <div className="text-[10px] text-emerald-800 dark:text-emerald-300">✓ Con Bác ➔ Anh/Chị Vế Trên</div>
+                        <div className="text-[10px] text-amber-800 dark:text-amber-300">✓ Con Chú ➔ Em Vế Dưới</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {currentSlide === 2 && (
+                    /* Slide 3 Visual: Celestial Lunar Calendar & Incense */
+                    <div className="space-y-4 text-center py-2 animate-fade-in">
+                      <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-teal-700 via-teal-800 to-emerald-950 text-amber-200 flex items-center justify-center shadow-lg border-2 border-amber-300/80 transform group-hover:scale-105 transition-transform">
+                        <Calendar className="w-10 h-10" />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="font-bold text-slate-900 dark:text-white font-serif text-base">
+                          Lịch Vạn Niên 2021 — 2036
+                        </div>
+                        <div className="text-xs text-teal-800 dark:text-teal-300 font-serif italic">
+                          « Âm Dương Lễ Tiết • Nhắc Giỗ Tiên Tổ »
+                        </div>
+                      </div>
+                      <div className="p-3 bg-white/90 dark:bg-slate-900/90 rounded-2xl border border-teal-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-1 text-left">
+                        <div className="flex justify-between text-[11px] font-bold">
+                          <span>Giỗ Cụ Thủy Tổ:</span>
+                          <span className="text-[#166534] dark:text-emerald-400">Rằm Tháng Giêng</span>
+                        </div>
+                        <div className="flex justify-between text-[11px] font-bold">
+                          <span>Xử lý tháng nhuận:</span>
+                          <span className="text-emerald-700 dark:text-emerald-300 font-mono">100% UTC+7</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {currentSlide === 3 && (
+                    /* Slide 4 Visual: Golden Plaque & Merit Honor Roll */
+                    <div className="space-y-4 text-center py-2 animate-fade-in">
+                      <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-amber-600 via-yellow-600 to-amber-900 text-white flex items-center justify-center shadow-lg border-2 border-amber-300/80 transform group-hover:scale-105 transition-transform">
+                        <Award className="w-10 h-10 text-amber-200" />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="font-bold text-slate-900 dark:text-white font-serif text-base">
+                          Bảng Vàng Công Đức
+                        </div>
+                        <div className="text-xs text-amber-800 dark:text-amber-300 font-serif italic">
+                          « Sổ Quỹ Bất Biến • Quét Mã VietQR »
+                        </div>
+                      </div>
+                      <div className="p-3 bg-white/90 dark:bg-slate-900/90 rounded-2xl border border-amber-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-1 text-left">
+                        <div className="flex justify-between text-[11px] font-bold">
+                          <span>3 Quỹ Phụng Tự:</span>
+                          <span className="text-blue-700 dark:text-blue-300">Từ Đường, Học, Hội</span>
+                        </div>
+                        <div className="flex justify-between text-[11px] font-bold">
+                          <span>Bút toán Reversal:</span>
+                          <span className="text-emerald-700 dark:text-emerald-400">Minh bạch 100%</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Carousel Navigation Toolbar & Slide Selector Tabs */}
+            <div className="mt-8 pt-6 border-t border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
+              {/* Prev / Next Arrows */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentSlide((currentSlide - 1 + carouselSlides.length) % carouselSlides.length)}
+                  className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition cursor-pointer"
+                  title="Câu trước"
+                >
+                  <ChevronRight className="w-4 h-4 rotate-180" />
+                </button>
+
+                <div className="flex items-center gap-1.5 px-2">
+                  {carouselSlides.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentSlide(idx)}
+                      className={`h-2.5 rounded-full transition-all cursor-pointer ${
+                        currentSlide === idx
+                          ? 'w-8 bg-[#166534] dark:bg-emerald-500'
+                          : 'w-2.5 bg-slate-300 dark:bg-slate-700 hover:bg-amber-400'
+                      }`}
+                      title={`Chuyển đến Slide ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setCurrentSlide((currentSlide + 1) % carouselSlides.length)}
+                  className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition cursor-pointer"
+                  title="Câu kế tiếp"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* 4 Quick Selector Pill Tabs */}
+              <div className="hidden md:flex items-center gap-2">
+                {carouselSlides.map((slide, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentSlide(idx)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-serif font-bold transition cursor-pointer border ${
+                      currentSlide === idx
+                        ? 'bg-amber-100 dark:bg-amber-950 text-amber-950 dark:text-amber-200 border-amber-400 shadow-xs'
+                        : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-amber-300'
+                    }`}
+                  >
+                    {slide.shortTab}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Subtitle — Văn Phong Gia Lễ Chuẩn Mực */}
-          <p className="text-sm sm:text-base lg:text-lg text-slate-700 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed font-serif">
-            Nền tảng số hóa ngọc phả đa chi phái, chuẩn hóa phân vai xưng hô theo tục ước cổ truyền <span className="font-bold text-[#166534] dark:text-emerald-400">« Bé bằng củ khoai, cứ vai mà gọi »</span>, phụng định lịch giỗ thiên văn vạn niên và minh bạch 100% sổ quỹ từ đường dòng họ.
-          </p>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2">
-            <Link
-              to="/register"
-              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-[#166534] hover:bg-[#14532D] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-extrabold text-sm shadow-xl shadow-emerald-950/20 hover:shadow-2xl hover:scale-102 transition-all flex items-center justify-center gap-2"
-            >
-              <span>Khởi Tạo Dòng Họ Miễn Phí (30 Ngày)</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <button
-              onClick={() => setShowSampleTreeModal(true)}
-              className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 font-bold text-sm border border-slate-300 dark:border-slate-700 shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Trees className="w-4 h-4 text-[#166534] dark:text-emerald-400" />
-              <span>Xem Cây Gia Phả Mẫu Toàn Bộ</span>
-            </button>
-          </div>
-
           {/* Interactive Hero Showcase: Mini Tree Viewer with Zoom & Branch Filter */}
-          <div id="interactive-tree" className="pt-8 max-w-5xl mx-auto text-left">
+          <div id="interactive-tree" className="pt-4 max-w-5xl mx-auto text-left">
             <div className="bg-white dark:bg-slate-900 rounded-3xl border-2 border-slate-200/90 dark:border-slate-800 shadow-2xl p-5 sm:p-7 lg:p-8 space-y-6">
               {/* Header Bar */}
               <div className="flex flex-wrap items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 gap-3">
