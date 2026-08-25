@@ -16,6 +16,7 @@ const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m
 const RegisterPage = lazy(() => import('./pages/RegisterPage').then(m => ({ default: m.RegisterPage })));
 const InviteRegisterPage = lazy(() => import('./pages/InviteRegisterPage').then(m => ({ default: m.InviteRegisterPage })));
 const DevTestLoginPage = lazy(() => import('./pages/DevTestLoginPage').then(m => ({ default: m.DevTestLoginPage })));
+const ClanPassUnlockPage = lazy(() => import('./pages/ClanPassUnlockPage').then(m => ({ default: m.ClanPassUnlockPage })));
 
 // ─── Onboarding & Core Family Pages (Lazy Loaded) ─────────────────────────────
 const CreateFamilyPage = lazy(() => import('./pages/CreateFamilyPage').then(m => ({ default: m.CreateFamilyPage })));
@@ -86,6 +87,8 @@ export const App: React.FC = () => {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/invite/:code" element={<InviteRegisterPage />} />
+              <Route path="/clan-pass/:token" element={<ClanPassUnlockPage />} />
+              <Route path="/qr/:token" element={<ClanPassUnlockPage />} />
 
               {/* Dev / Test Mode Routes */}
               <Route path="/dev/test-login" element={<DevTestLoginPage />} />

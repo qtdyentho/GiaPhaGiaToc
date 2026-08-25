@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Shield, MapPin, Building, Copy, Plus, UserCheck, Key, CheckCircle2,
-  Image, Camera, Sparkles, Landmark, Check, Scroll
+  Image, Camera, Sparkles, Landmark, Check, Scroll, QrCode, RefreshCw, Lock, Eye, EyeOff
 } from 'lucide-react';
 import { mockFamily, mockMemberships } from '../services/mockData';
 import { ROLE_LABELS } from '../lib/constants';
 import { useAuth } from '../contexts/AuthContext';
 import { AncestralBannerModal, ANCESTRAL_PRESETS } from '../components/family/AncestralBannerModal';
 import { ClanCovenantModal } from '../components/family/ClanCovenantModal';
+import { PrintableClanQRCodeModal } from '../components/family/PrintableClanQRCodeModal';
+import { ClanPassService } from '../services/security/ClanPassService';
 
 export const FamilySettingsPage: React.FC = () => {
   const { activeFamily, updateFamily } = useAuth();
@@ -17,6 +19,16 @@ export const FamilySettingsPage: React.FC = () => {
   const [generatedToken, setGeneratedToken] = useState('GP-INVITE-2026-HN01');
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [isCovenantModalOpen, setIsCovenantModalOpen] = useState(false);
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+
+  // Clan Access Pass & PIN states
+  const [passToken, setPassToken] = useState<string>('CP-FAM-NGUYEN-VAN-2026-X89');
+  const [clanPin, setClanPin] = useState<string>('');
+  const [showPin, setShowPin] = useState<boolean>(false);
+  const [isSavingPin, setIsSavingPin] = useState<boolean>(false);
+  const [pinSuccess, setPinSuccess] = useState<boolean>(false);
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
 
   // Form states
   const [familyName, setFamilyName] = useState(currentFamily.name);
@@ -27,10 +39,61 @@ export const FamilySettingsPage: React.FC = () => {
 
   const bannerImageUrl = currentFamily.banner_url || ANCESTRAL_PRESETS[0].url;
 
+  useEffect(() => {
+    async function loadPass() {
+      if (currentFamily?.id) {
+        const config = await ClanPassService.getFamilyPassConfig(currentFamily.id);
+        setPassToken(config.pass_token);
+      }
+    }
+    loadPass();
+  }, [currentFamily?.id]);
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(`https://giapha.vn/join?token=${generatedToken}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSavePin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!clanPin.trim() || clanPin.trim().length < 4) {
+      setPinError('Mã PIN phải có tối thiểu 4 chữ số.');
+      return;
+    }
+    setIsSavingPin(true);
+    setPinError(null);
+    try {
+      const res = await ClanPassService.setClanPin(currentFamily.id, clanPin.trim());
+      if (res.success) {
+        setPinSuccess(true);
+        setClanPin('');
+        setTimeout(() => setPinSuccess(false), 3000);
+      } else {
+        setPinError(res.error || 'Lỗi khi cập nhật mã PIN.');
+      }
+    } catch (err: any) {
+      setPinError(err.message || 'Đã có lỗi xảy ra.');
+    } finally {
+      setIsSavingPin(false);
+    }
+  };
+
+  const handleRegenerateToken = async () => {
+    if (!window.confirm('Bạn có chắc chắn muốn thu hồi mã QR cũ và sinh mã mới? Các bản in cũ tại Từ Đường sẽ không còn sử dụng được.')) {
+      return;
+    }
+    setIsRegenerating(true);
+    try {
+      const res = await ClanPassService.regeneratePassToken(currentFamily.id);
+      if (res.success && res.newToken) {
+        setPassToken(res.newToken);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsRegenerating(false);
+    }
   };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -57,7 +120,7 @@ export const FamilySettingsPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-slate-900">Cài Đặt & Quản Trị Gia Tộc</h1>
-          <p className="text-xs text-slate-500">Cấu hình thông tin dòng họ, hình ảnh Từ Đường và phân công ban quản trị</p>
+          <p className="text-xs text-slate-500">Cấu hình thông tin dòng họ, Mã QR Từ Đường và phân công ban quản trị</p>
         </div>
       </div>
 
@@ -99,12 +162,7 @@ export const FamilySettingsPage: React.FC = () => {
                     <Sparkles className="w-3 h-3 text-amber-300" />
                     <span>Ẩm Hà Tư Nguyên • Nơi Lưu Giữ Cội Nguồn</span>
                   </div>
-                  <h3 className="text-xl font-bold font-serif text-amber-50">
-                    {currentFamily.name}
-                  </h3>
-                  <p className="text-xs text-slate-200 mt-0.5 opacity-90">
-                    {currentFamily.ancestral_hall_address || 'Chưa cập nhật địa chỉ nhà thờ tổ'}
-                  </p>
+                  <h3 className="text-lg sm:text-xl font-bold font-serif">{familyName}</h3>
                 </div>
               </div>
             </div>
@@ -114,27 +172,27 @@ export const FamilySettingsPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Box 2: Thông tin cơ bản */}
+          {/* Box 2: Thông tin cơ bản dòng họ */}
           <form onSubmit={handleSaveProfile} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
             <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2 border-b border-slate-100 pb-2">
-              <Shield className="w-4 h-4 text-[#166534]" />
-              <span>Hồ Sơ Gia Tộc</span>
+              <Building className="w-4 h-4 text-[#166534]" />
+              <span>Thông Tin Nhận Diện Gia Tộc</span>
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase">Tên Gia Tộc</label>
+                <label className="block text-xs font-bold text-slate-700 uppercase">Tên Dòng Họ</label>
                 <input
                   type="text"
                   value={familyName}
                   onChange={(e) => setFamilyName(e.target.value)}
-                  required
                   className="mt-1 block w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534]"
+                  required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase">Mã Gia Tộc (Code)</label>
+                <label className="block text-xs font-bold text-slate-700 uppercase">Mã Gia Tộc (Hệ Thống)</label>
                 <input
                   type="text"
                   disabled
@@ -208,8 +266,101 @@ export const FamilySettingsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Right 1 Col: Mã mời & Hương ước */}
+        {/* Right 1 Col: Mã QR & Hương ước */}
         <div className="space-y-6">
+          {/* Box A: Mã QR & Mã PIN Tra Cứu Gia Tộc (Định danh không cần tài khoản) */}
+          <div className="bg-gradient-to-br from-amber-50/90 via-white to-amber-50/40 p-6 rounded-2xl border border-amber-300 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-amber-200/80 pb-2">
+              <h2 className="text-sm font-bold text-amber-950 flex items-center space-x-2">
+                <QrCode className="w-4 h-4 text-amber-800" />
+                <span>Mã QR & PIN Tra Cứu Từ Đường</span>
+              </h2>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                Bảo Mật SHA-256
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Con cháu quét mã QR và nhập <strong>Mã PIN bí mật</strong> để xem trọn vẹn Cây Phả Hệ, Ngày Giỗ & <strong>Số Dư Sổ Quỹ</strong> mà không cần đăng ký tài khoản.
+            </p>
+
+            <div className="p-3 bg-white border border-amber-200 rounded-xl space-y-2 text-center shadow-xs">
+              <div className="text-[11px] font-semibold text-slate-500">Mã Token Định Danh Dòng Họ:</div>
+              <div className="text-xs font-mono font-bold text-[#166534] break-all bg-amber-50/50 p-2 rounded-lg border border-amber-200">
+                {passToken}
+              </div>
+
+              <div className="pt-1 flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsQRModalOpen(true)}
+                  className="w-full py-2.5 bg-[#166534] hover:bg-[#14532D] text-white text-xs font-bold rounded-xl flex items-center justify-center space-x-1.5 transition shadow-xs"
+                >
+                  <QrCode className="w-4 h-4" />
+                  <span>Xem & In Mã QR Dán Từ Đường</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleRegenerateToken}
+                  disabled={isRegenerating}
+                  className="w-full py-1.5 text-slate-500 hover:text-rose-700 text-[11px] font-semibold flex items-center justify-center gap-1 transition"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isRegenerating ? 'animate-spin' : ''}`} />
+                  <span>Thu hồi & Cấp mã QR mới</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Form Thiết lập Mã PIN */}
+            <form onSubmit={handleSavePin} className="space-y-3 pt-2 border-t border-amber-200">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-amber-950 flex items-center gap-1">
+                  <Lock className="w-3.5 h-3.5 text-amber-800" />
+                  <span>Mã PIN Gia Tộc (4 – 6 Số)</span>
+                </label>
+                {pinSuccess && (
+                  <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-1">
+                    <Check className="w-3.5 h-3.5" /> Đã cập nhật PIN!
+                  </span>
+                )}
+              </div>
+
+              {pinError && (
+                <div className="p-2 bg-rose-50 text-rose-700 text-[11px] font-semibold rounded-lg border border-rose-200">
+                  {pinError}
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type={showPin ? 'text' : 'password'}
+                    maxLength={8}
+                    value={clanPin}
+                    onChange={(e) => setClanPin(e.target.value)}
+                    placeholder="Đặt PIN mới (VD: 1986)"
+                    className="w-full px-3 py-2 text-xs font-mono font-bold bg-white border border-amber-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPin(!showPin)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                  >
+                    {showPin ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+                <button
+                  type="submit"
+                  disabled={isSavingPin || !clanPin}
+                  className="px-4 py-2 bg-amber-800 hover:bg-amber-900 text-white text-xs font-bold rounded-xl transition shadow-xs disabled:opacity-50 shrink-0"
+                >
+                  {isSavingPin ? 'Đang lưu...' : 'Lưu PIN'}
+                </button>
+              </div>
+            </form>
+          </div>
+
           {/* Box: Quản trị Hương Ước Dòng Họ */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
             <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2 border-b border-slate-100 pb-2">
@@ -238,51 +389,6 @@ export const FamilySettingsPage: React.FC = () => {
               <Scroll className="w-3.5 h-3.5" />
               <span>Soạn Thảo / Sửa Hương Ước</span>
             </button>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2 border-b border-slate-100 pb-2">
-              <Key className="w-4 h-4 text-amber-600" />
-              <span>Mời Bà Con Vào Xem Gia Phả</span>
-            </h2>
-
-            <p className="text-xs text-slate-500">
-              Tạo đường dẫn chia sẻ cho con cháu trong dòng họ cùng truy cập xem phả hệ, ngày giỗ và đóng góp công đức.
-            </p>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase">Vai Trò Khi Tham Gia</label>
-              <select
-                value={inviteRole}
-                onChange={(e) => setInviteRole(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534]"
-              >
-                <option value="MEMBER">Bà con gia tộc (Xem phả hệ, lịch giỗ & đóng quỹ)</option>
-                <option value="GENEALOGY_ADMIN">Ban Gia Phả (Biên soạn & chỉnh sửa cây)</option>
-                <option value="TREASURER">Thủ Quỹ (Ghi chép thu chi dòng họ)</option>
-                <option value="VIEWER">Khách viếng thăm (Chỉ xem)</option>
-              </select>
-            </div>
-
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
-              <div className="text-[11px] font-semibold text-slate-600">Đường dẫn mời tham gia:</div>
-              <div className="text-xs font-bold text-[#166534] break-all bg-white p-2 rounded-lg border border-slate-200">
-                https://giapha.vn/join?token={generatedToken}
-              </div>
-
-              <button
-                type="button"
-                onClick={handleCopyLink}
-                className="w-full py-2 bg-[#166534] hover:bg-[#14532D] text-white text-xs font-bold rounded-xl flex items-center justify-center space-x-1.5 transition shadow-xs"
-              >
-                <Copy className="w-3.5 h-3.5" />
-                <span>{copied ? 'Đã sao chép link!' : 'Sao chép link mời'}</span>
-              </button>
-            </div>
-
-            <div className="text-[11px] text-slate-400">
-              * Mã mời có giá trị kết nối trực tiếp con cháu vào gia tộc một cách an toàn và thuận tiện.
-            </div>
           </div>
         </div>
       </div>

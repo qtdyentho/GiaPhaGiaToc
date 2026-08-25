@@ -82,35 +82,80 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return localStorage.getItem('hl_platform_role') === 'SUPER_ADMIN' ? 'SUPER_ADMIN' : 'USER';
   });
 
-  // Chỉ kích hoạt activeFamily khi thuộc về đúng tài khoản user đang đăng nhập
+  // Chỉ kích hoạt activeFamily khi thuộc về đúng tài khoản user đang đăng nhập hoặc có ClanPassSession
   const [activeFamily, setActiveFamily] = useState<Family | null>(() => {
     const savedUserStr = localStorage.getItem('hl_auth_user');
     const savedUser: Profile | null = savedUserStr ? JSON.parse(savedUserStr) : null;
-    if (!savedUser) return null;
+    
+    // Check Clan Pass Session if not logged in as a normal user
+    const clanPassStr = localStorage.getItem('hl_clan_pass_session');
+    const clanPass = clanPassStr ? JSON.parse(clanPassStr) : null;
+
+    if (!savedUser && !clanPass) return null;
 
     const savedFamiliesStr = localStorage.getItem('hl_families');
     const allFamilies: Family[] = savedFamiliesStr ? JSON.parse(savedFamiliesStr) : INITIAL_FAMILIES;
 
-    const savedMembershipsStr = localStorage.getItem('hl_memberships');
-    const allMemberships: FamilyMembership[] = savedMembershipsStr ? JSON.parse(savedMembershipsStr) : mockMemberships;
+    if (savedUser) {
+      const savedMembershipsStr = localStorage.getItem('hl_memberships');
+      const allMemberships: FamilyMembership[] = savedMembershipsStr ? JSON.parse(savedMembershipsStr) : mockMemberships;
 
-    // Lọc các dòng họ mà user này thực sự có quyền truy cập
-    const userFamilies = allFamilies.filter(
-      (f) => f.created_by === savedUser.id || allMemberships.some((m) => m.user_id === savedUser.id && m.family_id === f.id)
-    );
+      // Lọc các dòng họ mà user này thực sự có quyền truy cập
+      const userFamilies = allFamilies.filter(
+        (f) => f.created_by === savedUser.id || allMemberships.some((m) => m.user_id === savedUser.id && m.family_id === f.id)
+      );
 
-    const savedFamilyId = sessionStorage.getItem('active_family_id') || localStorage.getItem('hl_active_family_id');
-    if (savedFamilyId) {
-      const found = userFamilies.find((f) => f.id === savedFamilyId);
-      if (found) return found;
+      const savedFamilyId = sessionStorage.getItem('active_family_id') || localStorage.getItem('hl_active_family_id');
+      if (savedFamilyId) {
+        const found = userFamilies.find((f) => f.id === savedFamilyId);
+        if (found) return found;
+      }
+
+      return userFamilies[0] || null;
     }
 
-    return userFamilies[0] || null;
+    if (clanPass) {
+      const found = allFamilies.find((f) => f.id === clanPass.family_id);
+      if (found) return found;
+      return {
+        id: clanPass.family_id,
+        name: clanPass.family_name || 'Gia Tộc',
+        code: clanPass.family_code || 'CLAN',
+        slug: (clanPass.family_name || 'gia-toc').toLowerCase().replace(/\s+/g, '-'),
+        origin_province: 'Việt Nam',
+        banner_url: clanPass.banner_url,
+        created_by: 'system',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+    }
+
+    return null;
   });
 
   const [activeMembership, setActiveMembership] = useState<FamilyMembership | null>(() => {
-    if (!user || !activeFamily) return null;
-    return memberships.find((m) => m.user_id === user.id && m.family_id === activeFamily.id) || null;
+    if (user && activeFamily) {
+      return memberships.find((m) => m.user_id === user.id && m.family_id === activeFamily.id) || null;
+    }
+    const clanPassStr = localStorage.getItem('hl_clan_pass_session');
+    if (clanPassStr && activeFamily) {
+      try {
+        const clanPass = JSON.parse(clanPassStr);
+        return {
+          id: `pass-mem-${clanPass.family_id}`,
+          family_id: clanPass.family_id,
+          user_id: 'guest-clan-member',
+          role: 'MEMBER' as MembershipRole,
+          status: 'ACTIVE' as const,
+          joined_at: clanPass.unlocked_at || new Date().toISOString(),
+          created_at: clanPass.unlocked_at || new Date().toISOString(),
+          updated_at: clanPass.unlocked_at || new Date().toISOString(),
+        };
+      } catch {
+        return null;
+      }
+    }
+    return null;
   });
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -450,6 +495,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('hl_auth_user');
     localStorage.removeItem('hl_active_family_id');
     localStorage.removeItem('hl_platform_role');
+    localStorage.removeItem('hl_clan_pass_session');
   };
 
   const isSuperAdmin = platformRole === 'SUPER_ADMIN';
@@ -471,7 +517,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         memberships,
         activeFamily,
         activeMembership,
-        isAuthenticated: Boolean(user),
+        isAuthenticated: Boolean(user || activeMembership),
         isLoading,
         isSuperAdmin,
         isFamilyAdmin,
