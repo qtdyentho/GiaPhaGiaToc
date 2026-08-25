@@ -169,13 +169,15 @@ export class FundService {
 
   static async createFund(fund: Partial<Fund>): Promise<{ success: boolean; fund?: Fund; error?: string }> {
     const payload = {
-      family_id: fund.family_id || 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      family_id: fund.family_id || '',
       name: fund.name || 'Quỹ Mới',
       description: fund.description,
       opening_balance: Number(fund.opening_balance || 0),
       current_balance: Number(fund.opening_balance || 0),
       status: fund.status || 'ACTIVE',
     };
+
+
 
     if (isSupabaseConfigured()) {
       const { data, error } = await supabase.from('funds').insert([payload]).select().single();
@@ -693,14 +695,16 @@ export class FundService {
     error?: string;
   }> {
     const payload = {
-      family_id: contribution.family_id || 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      family_id: contribution.family_id || '',
       member_id: contribution.member_id,
       donor_name: contribution.donor_name || 'Nhà hảo tâm',
-      fund_id: contribution.fund_id || mockFunds[0].id,
+      fund_id: contribution.fund_id || mockFunds[0]?.id,
       amount: Number(contribution.amount || 0),
       purpose: contribution.purpose || 'Đóng góp công đức dòng họ',
       payment_method: contribution.payment_method || 'BANK_TRANSFER',
     };
+
+
 
     if (isSupabaseConfigured()) {
       const { data, error } = await supabase.from('contributions').insert([payload]).select().single();

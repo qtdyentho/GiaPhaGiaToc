@@ -1,12 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-
-/**
- * Multi-Tenant Cross-Access Isolation Test
- * Kiểm tra xác thực 2 tài khoản khác nhau thuộc 2 dòng họ khác nhau:
- * User Alpha: truongtoc.alpha@giapha.vn -> Họ Nguyễn
- * User Beta: truongtoc.beta@giapha.vn  -> Họ Trần
- */
-
 import fs from 'fs';
 import path from 'path';
 
@@ -32,72 +24,82 @@ const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
-
 async function runCrossTenantTest() {
   console.log('===============================================================');
-  console.log('🧪 BẮT ĐẦU KIỂM TRA CÁCH LY DỮ LIỆU ĐA GIA TỘC (CROSS-TENANT)');
+  console.log('🧪 BẮT ĐẦU KIỂM TRA CÁCH LY ĐA GIA TỘC VỚI UUID V4 NGẪU NHIÊN');
   console.log('===============================================================');
 
-  const USER_ALPHA_ID = '11111111-1111-1111-1111-111111111111'; // Họ Nguyễn
-  const USER_BETA_ID  = '22222222-2222-2222-2222-222222222222'; // Họ Trần
+  // Lấy User Alpha & Beta
+  const { data: users } = await supabaseAdmin.from('family_memberships').select('user_id, family_id, role, families(name, surname)');
 
-  // 1. Kiểm tra quyền xem của User Alpha (Họ Nguyễn)
-  console.log('\n--- 1. Kiểm tra quyền xem của User Alpha (Họ Nguyễn) ---');
-  const { data: alphaMembers } = await supabaseAdmin
+  const membershipAlpha = users?.find(u => (u.families as any)?.name?.includes('Yên Mô'));
+  const membershipBeta  = users?.find(u => (u.families as any)?.name?.includes('Gia Viễn'));
+
+  if (!membershipAlpha || !membershipBeta) {
+    throw new Error('Không tìm thấy dữ liệu memberships của 2 gia tộc thử nghiệm!');
+  }
+
+  const familyAId = membershipAlpha.family_id;
+  const familyBId = membershipBeta.family_id;
+  const userAlphaId = membershipAlpha.user_id;
+  const userBetaId = membershipBeta.user_id;
+
+  console.log(`📌 Gia tộc A: ${(membershipAlpha.families as any)?.name} (UUID: ${familyAId})`);
+  console.log(`📌 Gia tộc B: ${(membershipBeta.families as any)?.name} (UUID: ${familyBId})`);
+
+  // 1. Kiểm tra thành viên
+  console.log('\n--- 1. Kiểm tra phân bổ thành viên theo UUID ngẫu nhiên ---');
+  const { data: allMembers } = await supabaseAdmin
     .from('members')
     .select('full_name, family_id')
-    .in('family_id', ['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb']);
+    .in('family_id', [familyAId, familyBId]);
 
-  const nguyenMembers = alphaMembers?.filter(m => m.family_id === 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa') || [];
-  const tranMembers = alphaMembers?.filter(m => m.family_id === 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb') || [];
+  const nguyenMembers = allMembers?.filter(m => m.family_id === familyAId) || [];
+  const tranMembers = allMembers?.filter(m => m.family_id === familyBId) || [];
 
-  console.log(`✅ [Gia tộc A] Dữ liệu Họ Nguyễn tìm thấy: ${nguyenMembers.length} thành viên (${nguyenMembers.map(m => m.full_name).join(', ')})`);
-  console.log(`✅ [Gia tộc B] Dữ liệu Họ Trần tìm thấy: ${tranMembers.length} thành viên (${tranMembers.map(m => m.full_name).join(', ')})`);
+  console.log(`✅ [Gia tộc A] Thành viên Họ Nguyễn (${nguyenMembers.length}): ${nguyenMembers.map(m => m.full_name).join(', ')}`);
+  console.log(`✅ [Gia tộc B] Thành viên Họ Trần (${tranMembers.length}): ${tranMembers.map(m => m.full_name).join(', ')}`);
 
-
-  // 2. Kiểm tra truy vấn theo Tenant Context của User A
+  // 2. Kiểm tra truy vấn cô lập Tenant User Alpha
   console.log('\n--- 2. Kiểm tra truy vấn cô lập Tenant User Alpha ---');
   const { data: alphaTenants } = await supabaseAdmin
     .from('family_memberships')
     .select('family_id, role, families(name)')
-    .eq('user_id', USER_ALPHA_ID);
+    .eq('user_id', userAlphaId);
 
-  console.log('Gia tộc User Alpha có quyền truy cập:', JSON.stringify(alphaTenants));
-  const hasAccessToTran = alphaTenants?.some(t => t.family_id === 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb');
+  const hasAccessToTran = alphaTenants?.some(t => t.family_id === familyBId);
   if (hasAccessToTran) {
     throw new Error('❌ BẢO MẬT THẤT BẠI: User Alpha có quyền truy cập vào Họ Trần!');
   }
   console.log('🔒 XÁC NHẬN: User Alpha KHÔNG THỂ truy cập dữ liệu Họ Trần (Cách ly 100%)');
 
-  // 3. Kiểm tra truy vấn cô lập Tenant User B
+  // 3. Kiểm tra truy vấn cô lập Tenant User Beta
   console.log('\n--- 3. Kiểm tra truy vấn cô lập Tenant User Beta ---');
   const { data: betaTenants } = await supabaseAdmin
     .from('family_memberships')
     .select('family_id, role, families(name)')
-    .eq('user_id', USER_BETA_ID);
+    .eq('user_id', userBetaId);
 
-  console.log('Gia tộc User Beta có quyền truy cập:', JSON.stringify(betaTenants));
-  const hasAccessToNguyen = betaTenants?.some(t => t.family_id === 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+  const hasAccessToNguyen = betaTenants?.some(t => t.family_id === familyAId);
   if (hasAccessToNguyen) {
     throw new Error('❌ BẢO MẬT THẤT BẠI: User Beta có quyền truy cập vào Họ Nguyễn!');
   }
   console.log('🔒 XÁC NHẬN: User Beta KHÔNG THỂ truy cập dữ liệu Họ Nguyễn (Cách ly 100%)');
 
-  // 4. Kiểm tra Quỹ & Giao dịch cách ly
-  console.log('\n--- 4. Kiểm tra Quỹ & Sổ Quỹ Kép Bất Biến ---');
+  // 4. Kiểm tra Quỹ & Sổ Quỹ Kép Bất Biến
+  console.log('\n--- 4. Kiểm tra Quỹ theo UUID ngẫu nhiên ---');
   const { data: allFunds } = await supabaseAdmin
     .from('funds')
     .select('name, family_id, current_balance')
-    .in('family_id', ['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb']);
+    .in('family_id', [familyAId, familyBId]);
 
-  console.log('Danh sách Quỹ phân bổ theo từng gia tộc:');
   allFunds?.forEach(f => {
-    const clan = f.family_id === 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' ? 'HỌ NGUYỄN' : 'HỌ TRẦN';
-    console.log(` - [${clan}] ${f.name}: ${Number(f.current_balance).toLocaleString('vi-VN')} VNĐ`);
+    const clan = f.family_id === familyAId ? 'HỌ NGUYỄN' : 'HỌ TRẦN';
+    console.log(` - [${clan}] ${f.name} (UUID: ${f.family_id}): ${Number(f.current_balance).toLocaleString('vi-VN')} VNĐ`);
   });
 
   console.log('\n===============================================================');
-  console.log('🎉 TOÀN BỘ KIỂM TRA CÁCH LY ĐA GIA TỘC (MULTI-TENANCY) ĐẠT 100%');
+  console.log('🎉 TOÀN BỘ KIỂM TRA CÁCH LY ĐA GIA TỘC (UUID v4 NGẪU NHIÊN) PASS 100%');
   console.log('===============================================================');
 }
 

@@ -108,8 +108,9 @@ export class GenealogyService {
   ): Promise<{ success: boolean; member?: Member; error?: string }> {
     const isDeceased = member.life_status === 'DECEASED';
     const memberPayload = {
-      family_id: member.family_id || 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      family_id: member.family_id,
       branch_id: member.branch_id,
+
       generation_id: member.generation_id,
       full_name: member.full_name,
       gender: member.gender || 'MALE',
@@ -161,7 +162,7 @@ export class GenealogyService {
 
     const newMember: Member = {
       id: `mb-${Date.now()}`,
-      family_id: member.family_id || 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      family_id: member.family_id || `fam-${Date.now()}`,
       branch_id: member.branch_id,
       generation_id: member.generation_id,
       first_name: member.first_name || member.full_name?.split(' ').pop() || '',
@@ -211,13 +212,14 @@ export class GenealogyService {
 
     mockRelationships.push({
       id: `rel-${Date.now()}`,
-      family_id: rel.family_id || 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      family_id: rel.family_id || `fam-${Date.now()}`,
       member_id: rel.member_id || '',
       related_member_id: rel.related_member_id || '',
       relationship: relType,
       relationship_type: relType,
       created_at: new Date().toISOString(),
     });
+
 
     return { success: true };
   }
