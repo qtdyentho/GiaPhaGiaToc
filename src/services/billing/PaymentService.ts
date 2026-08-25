@@ -39,7 +39,14 @@ export class PaymentService {
     updated_at: new Date().toISOString(),
   };
 
-  private static readonly WEBHOOK_SECRET = 'secret-alpha-key-2026';
+  private static get WEBHOOK_SECRET(): string {
+    if (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_WEBHOOK_SECRET) {
+      return (import.meta as any).env.VITE_WEBHOOK_SECRET;
+    }
+    return typeof process !== 'undefined' && process.env?.VITE_WEBHOOK_SECRET
+      ? process.env.VITE_WEBHOOK_SECRET
+      : 'secret-alpha-key-2026';
+  }
 
   /**
    * Lấy cấu hình tài khoản thụ hưởng hiện tại

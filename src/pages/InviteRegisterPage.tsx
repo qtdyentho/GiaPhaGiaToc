@@ -1,18 +1,34 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Mail, KeyRound, ShieldCheck, Trees, ArrowRight, UserPlus } from 'lucide-react';
+import { UserPlus, ArrowRight, AlertCircle } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export const InviteRegisterPage: React.FC = () => {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
+  const { signUp } = useAuth();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate invitation acceptance & registration
-    navigate('/app/dashboard');
+    if (!fullName || !email || !password) {
+      setError('Vui lòng điền đầy đủ thông tin đăng ký.');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      await signUp(fullName, email, undefined, password);
+      navigate('/app/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Lỗi khi đăng ký tài khoản.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

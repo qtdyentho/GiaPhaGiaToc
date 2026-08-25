@@ -1134,6 +1134,14 @@ ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_notification_preferences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
+-- Helper function lấy danh sách family_id mà user hiện tại có quyền truy cập
+CREATE OR REPLACE FUNCTION current_user_family_ids()
+RETURNS UUID[] LANGUAGE sql SECURITY DEFINER STABLE AS $$
+    SELECT COALESCE(ARRAY_AGG(family_id), '{}'::UUID[]) 
+    FROM family_memberships 
+    WHERE user_id = auth.uid() AND status = 'ACTIVE';
+$$;
+
 -- Helper function lấy vai trò của user trong family
 CREATE OR REPLACE FUNCTION get_user_family_role(p_family_id UUID)
 RETURNS membership_role AS $$
@@ -1144,8 +1152,14 @@ RETURNS membership_role AS $$
     LIMIT 1;
 $$ LANGUAGE sql SECURITY DEFINER STABLE;
 
--- RLS Policy cho PROFILES
-CREATE POLICY profiles_read_all ON profiles FOR SELECT TO authenticated USING (true);
+-- RLS Policy cho PROFILES (Tenant-isolated: Chỉ đọc profile cùng dòng họ hoặc chính mình)
+CREATE POLICY profiles_read_tenant ON profiles FOR SELECT TO authenticated USING (
+    id = auth.uid()
+    OR id IN (
+        SELECT user_id FROM family_memberships 
+        WHERE family_id IN (SELECT unnest(current_user_family_ids())) AND status = 'ACTIVE'
+    )
+);
 CREATE POLICY profiles_update_self ON profiles FOR UPDATE TO authenticated USING (id = auth.uid());
 
 -- RLS Policy cho FAMILIES

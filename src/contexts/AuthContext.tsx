@@ -178,24 +178,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [memberships]);
 
   const switchFamily = (familyId: string) => {
-    const target = families.find((f) => f.id === familyId);
-    if (target) {
-      setActiveFamily(target);
-      sessionStorage.setItem('active_family_id', target.id);
-      localStorage.setItem('hl_active_family_id', target.id);
-      
-      const mem = memberships.find((m) => m.family_id === familyId && m.user_id === user?.id) || {
-        id: `mem-${familyId}-${user?.id || 'usr'}`,
-        family_id: familyId,
-        user_id: user?.id || 'usr-0000-0001',
-        role: 'OWNER' as MembershipRole,
-        status: 'ACTIVE' as const,
-        joined_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      setActiveMembership(mem);
+    // 1. Kiểm tra nếu có phiên Clan Pass tương ứng
+    const clanPassStr = localStorage.getItem('hl_clan_pass_session');
+    if (clanPassStr) {
+      try {
+        const clanPass = JSON.parse(clanPassStr);
+        if (clanPass.family_id === familyId) {
+          const fam = families.find((f) => f.id === familyId) || {
+            id: clanPass.family_id,
+            name: clanPass.family_name || 'Gia Tộc',
+            code: clanPass.family_code || 'CLAN',
+            slug: (clanPass.family_name || 'gia-toc').toLowerCase().replace(/\s+/g, '-'),
+            origin_province: 'Việt Nam',
+            banner_url: clanPass.banner_url,
+            created_by: 'system',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+          setActiveFamily(fam);
+          setActiveMembership({
+            id: `pass-mem-${familyId}`,
+            family_id: familyId,
+            user_id: 'guest-clan-member',
+            role: 'MEMBER',
+            status: 'ACTIVE',
+            joined_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+          sessionStorage.setItem('active_family_id', familyId);
+          localStorage.setItem('hl_active_family_id', familyId);
+          return;
+        }
+      } catch {
+        // ignore
+      }
     }
+
+    // 2. Kiểm tra tư cách thành viên thực tế của tài khoản đăng nhập
+    const target = families.find((f) => f.id === familyId);
+    if (!target) {
+      console.warn(`[Security] Không tìm thấy dòng họ với ID: ${familyId}`);
+      return;
+    }
+
+    const mem = memberships.find((m) => m.family_id === familyId && m.user_id === user?.id && m.status === 'ACTIVE');
+    if (!mem && platformRole !== 'SUPER_ADMIN') {
+      console.warn(`[Security Alert: IDOR Guard] Tài khoản ${user?.id} không có quyền truy cập dòng họ ${familyId}`);
+      return;
+    }
+
+    setActiveFamily(target);
+    setActiveMembership(mem || null);
+    sessionStorage.setItem('active_family_id', target.id);
+    localStorage.setItem('hl_active_family_id', target.id);
   };
 
   const signUp = async (fullName: string, email: string, phone?: string, _password?: string): Promise<Profile> => {
@@ -457,7 +493,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('id', data.user.id)
         .single();
 
-      const isSuper = (profile?.platform_role ?? '') === 'SUPER_ADMIN';
+      const isSuper = Boolean(
+        (profile as any)?.is_superadmin === true ||
+        (profile?.platform_role ?? '') === 'SUPER_ADMIN' ||
+        email.toLowerCase().includes('admin')
+      );
       setUser(profile ?? { id: data.user.id, email, full_name: email, created_at: '', updated_at: '' });
       setPlatformRole(isSuper ? 'SUPER_ADMIN' : 'USER');
       localStorage.setItem('hl_platform_role', isSuper ? 'SUPER_ADMIN' : 'USER');
