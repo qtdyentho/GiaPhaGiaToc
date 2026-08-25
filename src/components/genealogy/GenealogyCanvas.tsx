@@ -17,6 +17,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { Member, Generation, Branch, MemberRelationship } from '../../types/database';
+import { getLineageHierarchyInfo } from '../../utils/lineageHierarchy';
 
 interface GenealogyCanvasProps {
   members: Member[];
@@ -280,6 +281,7 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
                     const children = getChildren(m.id);
                     const isSelected = selectedMemberId === m.id;
                     const isDeceased = m.life_status === 'DECEASED';
+                    const lineageInfo = getLineageHierarchyInfo(m, generations, branches, members);
 
                     // Mark spouses as rendered in this nuclear unit
                     spouses.forEach((s) => renderedSpouseIds.add(s.id));
@@ -298,10 +300,10 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
                                 : 'border-slate-200 dark:border-slate-700 hover:border-emerald-500'
                             }`}
                           >
-                            {/* Card Top Pill */}
+                            {/* Card Top Pill: Lineage Level Badge (Thủy Tổ / Chi / Cành / Nhánh) */}
                             <div className="flex items-center justify-between gap-1 pb-2 mb-2 border-b border-slate-100 dark:border-slate-700">
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950 font-serif">
-                                {branch ? branch.name : 'Chi Trưởng'}
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border font-serif truncate max-w-[140px] ${lineageInfo.badgeColor}`}>
+                                {lineageInfo.badgeLabel}
                               </span>
                               <span className={`text-[10px] font-bold ${isDeceased ? 'text-slate-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
                                 {isDeceased ? '🕯️ Tiên Tổ' : '🌿 Còn Sống'}
@@ -344,14 +346,14 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
                               </div>
                             </div>
 
-                            {/* Card Footer Actions */}
+                            {/* Card Footer Actions & Hierarchy Level */}
                             <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs">
                               <span className="text-[10px] text-[#166534] dark:text-emerald-400 font-bold flex items-center gap-0.5">
                                 <Eye className="w-3 h-3" />
                                 <span>Xem 360°</span>
                               </span>
-                              <span className="text-[10px] text-slate-500 font-medium">
-                                Đời Thứ {gen.generation_number}
+                              <span className="text-[10px] text-slate-500 font-medium font-serif">
+                                {lineageInfo.levelName} (Đời {gen.generation_number})
                               </span>
                             </div>
                           </div>
