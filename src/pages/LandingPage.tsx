@@ -398,25 +398,59 @@ export const LandingPage: React.FC = () => {
         <div className="absolute inset-0 pointer-events-none opacity-5 dark:opacity-10 bg-[radial-gradient(#166534_1px,transparent_1px)] [background-size:24px_24px]" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-7 relative z-10">
-          {/* Classical Imperial Seal Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-300/80 dark:border-amber-700/80 text-amber-950 dark:text-amber-200 text-xs font-bold uppercase tracking-wider shadow-2xs">
-            <span className="w-2 h-2 rounded-full bg-red-600 animate-ping shrink-0" />
-            <span className="font-serif">Quốc Âm Di Sản Số 2026</span>
-            <span className="text-amber-400">•</span>
-            <span>Phụng Dựng Tiên Tổ — Nối Dòng Truyền Thống</span>
+          {/* Classical Imperial Seal & Heritage Scroll Banner */}
+          <div className="flex flex-col items-center justify-center space-y-3">
+            {/* Ancient Seal Badge (Kim Bài / Dấu Ấn Triện Chu Sa) */}
+            <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-2xl bg-gradient-to-r from-amber-100/90 via-amber-50 to-amber-100/90 dark:from-amber-950/60 dark:via-slate-900 dark:to-amber-950/60 border-2 border-amber-500/60 dark:border-amber-600/60 shadow-lg shadow-amber-950/5 relative">
+              {/* Antique Red Seal Stamp */}
+              <span className="w-5 h-5 rounded-md bg-gradient-to-br from-red-700 to-red-900 text-amber-200 flex items-center justify-center font-serif text-[10px] font-black border border-amber-300 shadow-xs rotate-3">
+                ẤN
+              </span>
+              <span className="font-serif font-black text-amber-950 dark:text-amber-200 text-xs tracking-wider uppercase">
+                Ẩm Thủy Tư Nguyên • Quốc Âm Ngọc Phả 2026
+              </span>
+              <span className="text-amber-500 text-xs">❖</span>
+              <span className="text-[11px] font-bold text-emerald-900 dark:text-emerald-300 font-serif tracking-wide hidden sm:inline">
+                Phụng Dựng Tiên Tổ — Bách Niên Hưng Long
+              </span>
+            </div>
+
+            {/* Classical Horizontal Paired Proverb (Đôi Câu Đối Cổ) */}
+            <div className="flex items-center justify-center gap-2 sm:gap-4 text-[11px] sm:text-xs text-amber-900/90 dark:text-amber-300/90 font-serif italic tracking-wide">
+              <span className="hidden md:inline-block w-8 sm:w-16 h-px bg-gradient-to-r from-transparent to-amber-500/60" />
+              <span>« Tổ Tông Công Đức Thiên Niên Thịnh</span>
+              <span className="text-amber-500">❖</span>
+              <span>Tử Hiếu Tôn Hiền Vạn Đại Vinh »</span>
+              <span className="hidden md:inline-block w-8 sm:w-16 h-px bg-gradient-to-l from-transparent to-amber-500/60" />
+            </div>
           </div>
 
-          {/* Main Hero Title */}
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white max-w-4xl mx-auto leading-tight font-serif">
-            Lưu Giữ Huyết Thống Cội Nguồn, <br className="hidden sm:block" />
-            <span className="text-[#166534] dark:text-emerald-400 underline decoration-amber-400 dark:decoration-amber-500 decoration-wavy decoration-2">
-              Số Hóa & Quản Trị Gia Tộc
-            </span>
-          </h1>
+          {/* Main Hero Title — Khí Chất Đại Tự Gia Phả Cổ Truyền */}
+          <div className="space-y-4 max-w-4xl mx-auto">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-tight font-serif">
+              <span className="block text-slate-900 dark:text-slate-100">
+                Gìn Vàng Giữ Ngọc • Nối Dòng Tiên Tổ
+              </span>
+              <span className="mt-1 block text-transparent bg-clip-text bg-gradient-to-r from-[#14532D] via-[#166534] to-[#B45309] dark:from-emerald-400 dark:via-teal-300 dark:to-amber-400">
+                Ngọc Phả Di Sản & Quản Trị Gia Tộc
+              </span>
+            </h1>
 
-          {/* Subtitle */}
-          <p className="text-sm sm:text-base lg:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed font-sans">
-            Nền tảng phụng dựng gia phả đa chi phái, tự động xác định vai vế xưng hô chuẩn tục ước, nhắc lễ giỗ âm dương chính xác theo thiên văn học và minh bạch 100% sổ quỹ tài chính dòng họ.
+            {/* Traditional Ornamental Divider (Hoa Văn Hồi Văn & Triện Cổ) */}
+            <div className="flex items-center justify-center gap-3 py-1 text-amber-700 dark:text-amber-400 opacity-80">
+              <span className="w-12 sm:w-24 h-0.5 bg-gradient-to-r from-transparent via-amber-500 to-amber-600 rounded-full" />
+              <div className="flex items-center gap-1.5 text-xs font-serif font-bold">
+                <span>✦</span>
+                <span className="text-sm">⚜️</span>
+                <span>✦</span>
+              </div>
+              <span className="w-12 sm:w-24 h-0.5 bg-gradient-to-l from-transparent via-amber-500 to-amber-600 rounded-full" />
+            </div>
+          </div>
+
+          {/* Subtitle — Văn Phong Gia Lễ Chuẩn Mực */}
+          <p className="text-sm sm:text-base lg:text-lg text-slate-700 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed font-serif">
+            Nền tảng số hóa ngọc phả đa chi phái, chuẩn hóa phân vai xưng hô theo tục ước cổ truyền <span className="font-bold text-[#166534] dark:text-emerald-400">« Bé bằng củ khoai, cứ vai mà gọi »</span>, phụng định lịch giỗ thiên văn vạn niên và minh bạch 100% sổ quỹ từ đường dòng họ.
           </p>
 
           {/* CTA Buttons */}
