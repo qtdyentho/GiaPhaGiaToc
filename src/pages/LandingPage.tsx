@@ -273,14 +273,12 @@ export const LandingPage: React.FC = () => {
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-6 text-xs font-bold text-slate-600 dark:text-slate-300">
-            <a href="#features" className="hover:text-[#166534] dark:hover:text-emerald-400 transition-colors">6 Trụ Cột</a>
-            <a href="#interactive-tree" className="hover:text-[#166534] dark:hover:text-emerald-400 transition-colors">Cây Phả Hệ Mini</a>
-            <a href="#kinship-tool" className="hover:text-[#166534] dark:hover:text-emerald-400 transition-colors">Tra Cứu Vai Vế</a>
-            <a href="#calendar-demo" className="hover:text-[#166534] dark:hover:text-emerald-400 transition-colors">Lịch Vạn Niên</a>
+          {/* Desktop Navigation — Giản Lược Gọn Gàng */}
+          <nav className="hidden lg:flex items-center gap-7 text-xs font-bold text-slate-700 dark:text-slate-200">
+            <a href="#features" className="hover:text-[#166534] dark:hover:text-emerald-400 transition-colors">Tính Năng Cốt Lõi</a>
+            <a href="#interactive-tree" className="hover:text-[#166534] dark:hover:text-emerald-400 transition-colors">Cây Phả Hệ Mẫu</a>
             <a href="#pricing" className="hover:text-[#166534] dark:hover:text-emerald-400 transition-colors">Bảng Giá</a>
-            <a href="#consult" className="hover:text-[#166534] dark:hover:text-emerald-400 transition-colors">Tư Vấn Miễn Phí</a>
+            <a href="#consult" className="hover:text-[#166534] dark:hover:text-emerald-400 transition-colors">Tư Vấn Dòng Họ</a>
             <a href="#faq" className="hover:text-[#166534] dark:hover:text-emerald-400 transition-colors">Hỏi Đáp</a>
           </nav>
 
@@ -330,7 +328,7 @@ export const LandingPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile Dropdown Menu */}
+        {/* Mobile Dropdown Menu — Giản Lược Gọn Gàng */}
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-5 space-y-3 animate-fade-in shadow-xl">
             <a 
@@ -338,28 +336,14 @@ export const LandingPage: React.FC = () => {
               onClick={() => setMobileMenuOpen(false)}
               className="block py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-[#166534]"
             >
-              6 Trụ Cột Đột Phá
+              Tính Năng Cốt Lõi
             </a>
             <a 
               href="#interactive-tree" 
               onClick={() => setMobileMenuOpen(false)}
               className="block py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-[#166534]"
             >
-              Cây Phả Hệ Mini Live
-            </a>
-            <a 
-              href="#kinship-tool" 
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-[#166534]"
-            >
-              Tra Cứu Vai Vế Xưng Hô
-            </a>
-            <a 
-              href="#calendar-demo" 
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-[#166534]"
-            >
-              Lịch Vạn Niên 2021-2036
+              Cây Phả Hệ Mẫu
             </a>
             <a 
               href="#pricing" 
@@ -373,7 +357,14 @@ export const LandingPage: React.FC = () => {
               onClick={() => setMobileMenuOpen(false)}
               className="block py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-[#166534]"
             >
-              Đăng Ký Tư Vấn Dòng Họ
+              Đăng Ký Tư Vấn
+            </a>
+            <a 
+              href="#faq" 
+              onClick={() => setMobileMenuOpen(false)}
+              className="block py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-[#166534]"
+            >
+              Hỏi Đáp Thường Gặp
             </a>
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex gap-2">
               <Link 
@@ -393,20 +384,18 @@ export const LandingPage: React.FC = () => {
         )}
       </header>
 
-      {/* Hero Section: Di Sản Cổ Điển Gặp SaaS Hiện Đại — 4 Trụ Cột Ngọc Phả Hoàng Triều */}
+      {/* Hero Section: Di Sản Cổ Điển Gặp SaaS Hiện Đại */}
       <section 
         className="relative overflow-hidden pt-10 pb-16 lg:pt-14 lg:pb-24 bg-gradient-to-b from-white via-[#F8F9F6] to-[#FAFBF9] dark:from-slate-900 dark:via-slate-950 dark:to-slate-950"
       >
         {/* Background Subtle Lineage Watermark & Radial Glow */}
         <div className="absolute inset-0 pointer-events-none opacity-5 dark:opacity-10 bg-[radial-gradient(#166534_1px,transparent_1px)] [background-size:28px_28px]" />
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-amber-400/10 dark:bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-amber-400/10 dark:bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10 relative z-10 text-center">
-          {/* Classical Imperial Seal & Heritage Scroll Banner */}
-          <div className="flex flex-col items-center justify-center space-y-3">
-            {/* Ancient Seal Badge (Kim Bài / Dấu Ấn Triện Chu Sa) */}
+          {/* Classical Imperial Seal & Heritage Tag */}
+          <div className="flex justify-center">
             <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-2xl bg-gradient-to-r from-amber-100/95 via-amber-50 to-amber-100/95 dark:from-amber-950/70 dark:via-slate-900 dark:to-amber-950/70 border-2 border-amber-500/70 dark:border-amber-600/70 shadow-lg shadow-amber-950/10 relative">
-              {/* Antique Red Seal Stamp */}
               <span className="w-5 h-5 rounded-md bg-gradient-to-br from-red-700 to-red-900 text-amber-200 flex items-center justify-center font-serif text-[10px] font-black border border-amber-300 shadow-xs rotate-3">
                 ẤN
               </span>
@@ -418,41 +407,118 @@ export const LandingPage: React.FC = () => {
                 Phụng Dựng Tiên Tổ — Bách Niên Hưng Long
               </span>
             </div>
+          </div>
 
-            {/* Classical Horizontal Paired Proverb (Đôi Câu Đối Cổ) */}
-            <div className="flex items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm text-amber-900/90 dark:text-amber-300/90 font-serif italic tracking-wide">
-              <span className="hidden md:inline-block w-8 sm:w-16 h-px bg-gradient-to-r from-transparent to-amber-500/60" />
-              <span>« Tổ Tông Công Đức Thiên Niên Thịnh</span>
-              <span className="text-amber-500">❖</span>
-              <span>Tử Hiếu Tôn Hiền Vạn Đại Vinh »</span>
-              <span className="hidden md:inline-block w-8 sm:w-16 h-px bg-gradient-to-l from-transparent to-amber-500/60" />
+          {/* ĐÔI LIỄN CÂU ĐỐI SƠN SON THẾP VÀNG HOÀNG TRIỀU — NỔI BẬT TRANG NGHIÊM */}
+          <div className="max-w-4xl mx-auto rounded-3xl p-5 sm:p-7 bg-gradient-to-r from-[#2B0909] via-[#450A0A] to-[#2B0909] dark:from-slate-950 dark:via-red-950/90 dark:to-slate-950 border-2 border-amber-400/90 dark:border-amber-500/80 shadow-2xl shadow-red-950/30 relative overflow-hidden group">
+            {/* 4 Góc Hồi Văn Thếp Vàng Cổ Điển */}
+            <div className="absolute top-2 left-3 text-amber-300/40 text-xs font-serif select-none pointer-events-none">╔══</div>
+            <div className="absolute top-2 right-3 text-amber-300/40 text-xs font-serif select-none pointer-events-none">══╗</div>
+            <div className="absolute bottom-2 left-3 text-amber-300/40 text-xs font-serif select-none pointer-events-none">╚══</div>
+            <div className="absolute bottom-2 right-3 text-amber-300/40 text-xs font-serif select-none pointer-events-none">══╝</div>
+
+            <div className="grid grid-cols-1 md:grid-cols-11 gap-4 items-center relative z-10">
+              {/* Vế Đối Trái (5 Cols) */}
+              <div className="md:col-span-5 text-center md:text-right space-y-1">
+                <div className="text-base sm:text-xl lg:text-2xl font-serif font-black tracking-wide text-amber-200 drop-shadow-md">
+                  « Tổ Tông Công Đức Thiên Niên Thịnh
+                </div>
+                <div className="text-[11px] sm:text-xs text-amber-300/80 font-serif italic">
+                  Trăm đời phụng dưỡng • Cội nguồn bền lâu
+                </div>
+              </div>
+
+              {/* Con Dấu Triện Hoàng Triều Trung Tâm (1 Col) */}
+              <div className="md:col-span-1 flex flex-col items-center justify-center">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-300 to-amber-500 text-red-950 flex items-center justify-center font-serif text-sm font-black shadow-lg border border-amber-200 rotate-45 transform group-hover:rotate-0 transition-transform duration-500">
+                  <span className="-rotate-45 font-bold text-xs">ẤN</span>
+                </div>
+                <span className="text-[9px] font-serif font-bold text-amber-300 mt-2 uppercase tracking-widest hidden md:inline">
+                  TỘC ƯỚC
+                </span>
+              </div>
+
+              {/* Vế Đối Phải (5 Cols) */}
+              <div className="md:col-span-5 text-center md:text-left space-y-1">
+                <div className="text-base sm:text-xl lg:text-2xl font-serif font-black tracking-wide text-amber-200 drop-shadow-md">
+                  Tử Hiếu Tôn Hiền Vạn Đại Vinh »
+                </div>
+                <div className="text-[11px] sm:text-xs text-amber-300/80 font-serif italic">
+                  Muôn thuở rạng danh • Phúc ấm lưu truyền
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Main Hero Title — Khí Chất Đại Tự Gia Phả Cổ Truyền */}
-          <div className="space-y-4 max-w-4xl mx-auto">
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-tight font-serif">
-              <span className="block text-slate-900 dark:text-slate-100">
-                Gìn Vàng Giữ Ngọc • Nối Dòng Tiên Tổ
+          {/* 4 BỨC ĐẠI TỰ TÁCH RỜI RIÊNG BIỆT — KHÍ CHẤT GIA PHẢ HOÀNG GIA */}
+          <div className="max-w-5xl mx-auto space-y-6">
+            <div className="text-center space-y-1">
+              <span className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest font-serif">
+                ✦ TỨ ĐẠI TÔN KÍNH PHỤNG SỰ GIA TỘC ✦
               </span>
-              <span className="mt-1 block text-transparent bg-clip-text bg-gradient-to-r from-[#14532D] via-[#166534] to-[#B45309] dark:from-emerald-400 dark:via-teal-300 dark:to-amber-400">
-                Ngọc Phả Di Sản & Quản Trị Gia Tộc
-              </span>
-            </h1>
-
-            {/* Traditional Ornamental Divider (Hoa Văn Hồi Văn & Triện Cổ) */}
-            <div className="flex items-center justify-center gap-3 py-1 text-amber-700 dark:text-amber-400 opacity-80">
-              <span className="w-12 sm:w-24 h-0.5 bg-gradient-to-r from-transparent via-amber-500 to-amber-600 rounded-full" />
-              <div className="flex items-center gap-1.5 text-xs font-serif font-bold">
-                <span>✦</span>
-                <span className="text-sm">⚜️</span>
-                <span>✦</span>
-              </div>
-              <span className="w-12 sm:w-24 h-0.5 bg-gradient-to-l from-transparent via-amber-500 to-amber-600 rounded-full" />
             </div>
 
-            {/* Subtitle — Văn Phong Gia Lễ Chuẩn Mực */}
-            <p className="text-sm sm:text-base lg:text-lg text-slate-700 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed font-serif pt-1">
+            {/* 4 Khối Đại Tự Tách Rời (Grid 4 Thẻ Độc Lập) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+              {/* Đại Tự 1: Gìn Vàng Giữ Ngọc */}
+              <div className="p-5 rounded-3xl bg-gradient-to-b from-white via-amber-50/50 to-white dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-900 border-2 border-amber-300/90 dark:border-amber-800/60 shadow-xl hover:shadow-2xl hover:scale-103 transition-all duration-300 relative overflow-hidden group">
+                <div className="text-2xl mb-2">💎</div>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-amber-100 font-serif tracking-tight">
+                  Gìn Vàng Giữ Ngọc
+                </h2>
+                <div className="text-xs text-[#166534] dark:text-emerald-400 font-serif italic mt-1">
+                  Cội Nguồn Bách Niên
+                </div>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-2 line-clamp-2">
+                  Lưu giữ cội nguồn huyết thống, gia phong và ngọc phả muôn đời rạng rỡ.
+                </p>
+              </div>
+
+              {/* Đại Tự 2: Nối Dòng Tiên Tổ */}
+              <div className="p-5 rounded-3xl bg-gradient-to-b from-white via-amber-50/50 to-white dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-900 border-2 border-amber-300/90 dark:border-amber-800/60 shadow-xl hover:shadow-2xl hover:scale-103 transition-all duration-300 relative overflow-hidden group">
+                <div className="text-2xl mb-2">🌿</div>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-amber-100 font-serif tracking-tight">
+                  Nối Dòng Tiên Tổ
+                </h2>
+                <div className="text-xs text-amber-800 dark:text-amber-400 font-serif italic mt-1">
+                  Truyền Thừa Ngàn Thu
+                </div>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-2 line-clamp-2">
+                  Gắn kết huyết mạch con cháu từ đường, truyền lửa gia phong bất diệt.
+                </p>
+              </div>
+
+              {/* Đại Tự 3: Ngọc Phả Di Sản */}
+              <div className="p-5 rounded-3xl bg-gradient-to-b from-white via-amber-50/50 to-white dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-900 border-2 border-amber-300/90 dark:border-amber-800/60 shadow-xl hover:shadow-2xl hover:scale-103 transition-all duration-300 relative overflow-hidden group">
+                <div className="text-2xl mb-2">📜</div>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-amber-100 font-serif tracking-tight">
+                  Ngọc Phả Di Sản
+                </h2>
+                <div className="text-xs text-teal-800 dark:text-teal-400 font-serif italic mt-1">
+                  Tộc Ước Phân Minh
+                </div>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-2 line-clamp-2">
+                  Số hóa gia phả đa chi phái, phân vai xưng hô chuẩn mực tục ước cổ truyền.
+                </p>
+              </div>
+
+              {/* Đại Tự 4: Quản Trị Gia Tộc */}
+              <div className="p-5 rounded-3xl bg-gradient-to-b from-white via-amber-50/50 to-white dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-900 border-2 border-amber-300/90 dark:border-amber-800/60 shadow-xl hover:shadow-2xl hover:scale-103 transition-all duration-300 relative overflow-hidden group">
+                <div className="text-2xl mb-2">🏛️</div>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-amber-100 font-serif tracking-tight">
+                  Quản Trị Gia Tộc
+                </h2>
+                <div className="text-xs text-amber-800 dark:text-amber-400 font-serif italic mt-1">
+                  Vạn Đại Hưng Long
+                </div>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-2 line-clamp-2">
+                  Minh bạch sổ quỹ từ đường 100%, lịch giỗ thiên văn và gắn kết tông môn.
+                </p>
+              </div>
+            </div>
+
+            {/* Subtitle — Lời Tựa Phụng Dựng */}
+            <p className="text-xs sm:text-sm lg:text-base text-slate-700 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed font-serif pt-2">
               Nền tảng số hóa ngọc phả đa chi phái, chuẩn hóa phân vai xưng hô theo tục ước cổ truyền <span className="font-bold text-[#166534] dark:text-emerald-400">« Bé bằng củ khoai, cứ vai mà gọi »</span>, phụng định lịch giỗ thiên văn vạn niên và minh bạch 100% sổ quỹ từ đường dòng họ.
             </p>
           </div>
