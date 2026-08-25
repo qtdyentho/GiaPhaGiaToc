@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, UserPlus, Heart, Users, Sparkles, Calendar, Moon, Sun, Clock, MapPin } from 'lucide-react';
 import { Member, Generation, Branch, RelationshipType, GenderType, MemberLifeStatus, ChildLineageType } from '../../types/database';
 import { GenealogyService } from '../../services/GenealogyService';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface AddMemberRelationModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
   generations,
   branches,
 }) => {
+  const { activeFamily, families } = useAuth();
   const [relationType, setRelationType] = useState<RelationshipType>(initialRelationType);
   const [childLineageType, setChildLineageType] = useState<ChildLineageType>('BIOLOGICAL');
   const [fullName, setFullName] = useState('');
@@ -59,7 +61,10 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Calculate target generation based on relation
+  // Lấy family_id chuẩn xác của gia tộc đang chọn
+  const resolvedFamilyId = targetMember?.family_id || activeFamily?.id || (families[0]?.id || '');
+
+  // Tính toán đời thế hệ
   const targetGenIndex = generations.findIndex((g) => g.id === targetMember?.generation_id);
   let calculatedGenId = targetMember?.generation_id || generations[0]?.id;
   if (relationType === 'CHILD' && targetGenIndex !== -1 && targetGenIndex + 1 < generations.length) {
@@ -72,6 +77,11 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
     e.preventDefault();
     if (!fullName.trim()) {
       setError('Vui lòng nhập họ và tên thành viên');
+      return;
+    }
+
+    if (!resolvedFamilyId) {
+      setError('Chưa xác định được mã gia tộc. Vui lòng tải lại trang.');
       return;
     }
 
@@ -130,9 +140,9 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
 
       const res = await GenealogyService.addMember(
         {
-          family_id: targetMember?.family_id || 'fam-0000-0001',
+          family_id: resolvedFamilyId,
           generation_id: calculatedGenId,
-          branch_id: selectedBranchId,
+          branch_id: selectedBranchId || branches[0]?.id,
           first_name: firstName,
           last_name: lastName,
           full_name: fullName.trim(),
@@ -148,6 +158,7 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
           death_lunar_month: computed_death_lunar_month,
           death_lunar_year: computed_death_lunar_year,
           death_year: computed_death_year,
+
           burial_place: burialPlace.trim() || undefined,
           bio: bio.trim() || undefined,
         },
@@ -267,11 +278,11 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
             </div>
           )}
 
-          {/* Phân Loại Nguồn Gốc Con Cái (Con Đẻ / Con Riêng Của Mẹ / Con Nuôi) */}
+          {/* Phân Loại Nhánh Con Cái */}
           {relationType === 'CHILD' && (
             <div className="p-3.5 bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl space-y-2">
               <label className="block text-xs font-bold text-amber-900 dark:text-amber-200">
-                Phân loại nguồn gốc con cái (Huyết thống / Con riêng của mẹ)
+                Phân loại quan hệ con cái
               </label>
               <div className="grid grid-cols-3 gap-2">
                 <button
@@ -283,7 +294,7 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
                       : 'bg-amber-100/50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 hover:bg-white'
                   }`}
                 >
-                  👑 Con Đẻ Trực Hệ
+                  Con Trực Hệ
                 </button>
                 <button
                   type="button"
@@ -294,7 +305,7 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
                       : 'bg-amber-100/50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 hover:bg-white'
                   }`}
                 >
-                  🤱 Con Riêng Của Mẹ
+                  Con Kế / Con Riêng
                 </button>
                 <button
                   type="button"
@@ -305,13 +316,13 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
                       : 'bg-amber-100/50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 hover:bg-white'
                   }`}
                 >
-                  🤝 Con Nuôi Nhập Tịch
+                  Con Nuôi (Thừa Tự)
                 </button>
               </div>
-              <div className="text-[11px] text-amber-800 dark:text-amber-300 italic">
-                {childLineageType === 'BIOLOGICAL' && '• Mang huyết thống trực hệ của gia tộc, thừa kế chi phái chuẩn mực.'}
-                {childLineageType === 'MATERNAL_STEPCHILD' && '• Là con riêng của mẹ mang theo khi kết hôn vào dòng họ. Được lưu danh trân trọng trên phả đồ.'}
-                {childLineageType === 'ADOPTED' && '• Con nuôi được dòng họ làm lễ bái tổ nhận tự và gia nhập gia phả.'}
+              <div className="text-[11px] text-amber-800 dark:text-amber-300">
+                {childLineageType === 'BIOLOGICAL' && '• Kế thừa trực hệ của dòng họ.'}
+                {childLineageType === 'MATERNAL_STEPCHILD' && '• Ghi nhận trong gia phả dòng họ.'}
+                {childLineageType === 'ADOPTED' && '• Con nuôi được dòng họ công nhận theo truyền thống.'}
               </div>
             </div>
           )}
@@ -390,10 +401,7 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
 
             <div className="md:col-span-2">
               <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
-                <span>Thuộc Chi Phái & Thế Hệ (Tự Động Xác Định)</span>
-                <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                  ⚡ Thuật toán phả hệ tự động
-                </span>
+                <span>Chi Phái & Thế Hệ</span>
               </label>
               
               {targetMember ? (
@@ -407,7 +415,7 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
                         : `Tiền Bối: Đời Thứ ${Math.max(1, (generations.find(g => g.id === targetMember.generation_id)?.generation_number || 2) - 1)}`}
                     </div>
                     <div className="text-slate-600 text-[11px]">
-                      Chi Nhánh: <span className="font-semibold text-slate-800">{branches.find(b => b.id === selectedBranchId)?.name || 'Chi Trưởng'}</span> (Kế thừa trực hệ)
+                      Chi Nhánh: <span className="font-semibold text-slate-800">{branches.find(b => b.id === selectedBranchId)?.name || 'Chi Trưởng'}</span>
                     </div>
                   </div>
                   <span className="text-[11px] font-bold text-[#166534] bg-white px-2.5 py-1 rounded-lg border border-emerald-300 shadow-2xs">
@@ -430,14 +438,14 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
             </div>
           </div>
 
-          {/* CHẾ ĐỘ NHẬP NGÀY / NĂM SINH LINH HOẠT */}
+          {/* CHẾ ĐỘ NHẬP NGÀY / NĂM SINH */}
           <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200 space-y-3">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-bold text-slate-800">
                 Thông tin ngày sinh / năm sinh
               </label>
-              <span className="text-[10px] text-slate-500">Linh hoạt theo dữ liệu lưu truyền</span>
             </div>
+
 
             {/* Radio / Tabs chọn kiểu ngày sinh */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-white p-1 rounded-xl border border-slate-200 text-xs">
@@ -719,7 +727,7 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
               rows={2}
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              placeholder="VD: Có công lập ấp, cử nhân Nho học, đóng góp xây dựng từ đường..."
+              placeholder="Ghi chú chức sắc, học vị, công trạng, đóng góp cho dòng họ..."
               className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534] focus:bg-white"
             />
           </div>

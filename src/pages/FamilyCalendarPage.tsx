@@ -471,7 +471,7 @@ export const FamilyCalendarPage: React.FC = () => {
               <ul className="list-disc ml-4 space-y-0.5 mt-1">
                 <li><strong>{syncInfo.autoSynced}</strong> ngày giỗ đồng bộ tự động từ dữ liệu thành viên.</li>
                 <li><strong>{syncInfo.total - syncInfo.autoSynced}</strong> ngày giỗ tạo thủ công.</li>
-                <li>Ngày 30 tháng thiếu &amp; tháng Nhuận xử lý đúng theo thuật toán <strong>BR-MEMORIAL-003/004</strong>.</li>
+                <li>Ngày 30 tháng thiếu &amp; tháng Nhuận được tính toán chuẩn xác theo quy ước truyền thống Lịch vạn niên.</li>
               </ul>
             </div>
           </div>

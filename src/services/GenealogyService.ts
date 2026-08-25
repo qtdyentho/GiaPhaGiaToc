@@ -107,20 +107,21 @@ export class GenealogyService {
     relationTarget?: { targetMemberId: string; relationType: RelationshipType }
   ): Promise<{ success: boolean; member?: Member; error?: string }> {
     const isDeceased = member.life_status === 'DECEASED';
-    const memberPayload = {
+    const memberPayload: any = {
       family_id: member.family_id,
-      branch_id: member.branch_id,
-
-      generation_id: member.generation_id,
+      branch_id: member.branch_id || null,
+      generation_id: member.generation_id || null,
       full_name: member.full_name,
       gender: member.gender || 'MALE',
       status: member.life_status || 'ALIVE',
       is_deceased: isDeceased,
-      date_of_death_lunar_day: member.death_lunar_day,
-      date_of_death_lunar_month: member.death_lunar_month,
-      date_of_death_lunar_year: member.death_lunar_year,
-      burial_place: member.burial_place,
-      biography: member.bio,
+      date_of_birth: member.birth_solar_date || null,
+      date_of_death_solar: member.death_solar_date || null,
+      date_of_death_lunar_day: member.death_lunar_day || null,
+      date_of_death_lunar_month: member.death_lunar_month || null,
+      date_of_death_lunar_year: member.death_lunar_year || null,
+      burial_place: member.burial_place || null,
+      biography: member.bio || null,
     };
 
     if (isSupabaseConfigured()) {
@@ -155,6 +156,21 @@ export class GenealogyService {
           relationship: relationTarget.relationType,
           relationship_type: relationTarget.relationType,
         });
+
+        // Cập nhật quan hệ trực hệ father_id / mother_id / spouse_id
+        if (relationTarget.relationType === 'CHILD') {
+          const target = await this.getMemberById(relationTarget.targetMemberId);
+          if (target) {
+            const updateFields: any = target.gender === 'FEMALE' ? { mother_id: target.id } : { father_id: target.id };
+            await supabase.from('members').update(updateFields).eq('id', createdMember.id);
+          }
+        } else if (relationTarget.relationType === 'SPOUSE') {
+          await supabase.from('members').update({ spouse_id: relationTarget.targetMemberId }).eq('id', createdMember.id);
+          await supabase.from('members').update({ spouse_id: createdMember.id }).eq('id', relationTarget.targetMemberId);
+        } else if (relationTarget.relationType === 'PARENT') {
+          const updateFields: any = createdMember.gender === 'FEMALE' ? { mother_id: createdMember.id } : { father_id: createdMember.id };
+          await supabase.from('members').update(updateFields).eq('id', relationTarget.targetMemberId);
+        }
       }
 
       return { success: true, member: createdMember };

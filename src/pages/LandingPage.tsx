@@ -339,7 +339,7 @@ export const LandingPage: React.FC = () => {
     },
     {
       q: 'Hệ thống tính vai vế xưng hô « Bé bằng củ khoai, cứ vai mà gọi » hoạt động thế nào?',
-      a: 'Hệ thống sử dụng thuật toán cây LTree tìm Tổ tiên chung gần nhất (LCA) và đối chiếu thứ tự cành nhánh. Con của người anh (chi trưởng / con bác) tự động được xếp vào Vế Trên so với con của người em (chi thứ / con chú), bất kể tuổi đời thực tế ngoài đời, đảm bảo chuẩn mực thuần phong mỹ tục Việt Nam.'
+      a: 'Hệ thống phân tích cấu trúc cây phả hệ tìm Tổ tiên chung gần nhất và đối chiếu thứ tự cành nhánh. Con của người anh (chi trưởng / con bác) được xếp vào Vế Trên so với con của người em (chi thứ / con chú), bất kể tuổi đời thực tế ngoài đời, đảm bảo chuẩn mực thuần phong mỹ tục Việt Nam.'
     },
     {
       q: 'Lịch giỗ có tính chính xác tháng nhuận và năm thiếu 29 ngày không?',
@@ -1066,7 +1066,7 @@ export const LandingPage: React.FC = () => {
                 2. Tra Cứu Danh Xưng & Vai Vế
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                Thuật toán LCA tự động tính toán xưng hô theo tục lệ « Bé bằng củ khoai, cứ vai mà gọi », con Bác luôn là anh/chị vế trên so với con Chú.
+                Tự động tính toán xưng hô chuẩn mực theo tục lệ « Bé bằng củ khoai, cứ vai mà gọi », con Bác luôn là anh/chị vế trên so với con Chú.
               </p>
             </div>
 
@@ -1288,7 +1288,7 @@ export const LandingPage: React.FC = () => {
               Lịch Giỗ Vạn Niên (2021 — 2036)
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
-              Tra cứu nhanh ngày giỗ tiên tổ, nhận diện tự động tháng nhuận và tháng Chạp thiếu 29 ngày theo thuật toán Hồ Ngọc Đức UTC+7:
+              Tra cứu nhanh ngày giỗ tiên tổ, nhận diện chuẩn xác tháng nhuận và tháng Chạp thiếu 29 ngày theo Lịch Thiên văn Việt Nam UTC+7:
             </p>
           </div>
 

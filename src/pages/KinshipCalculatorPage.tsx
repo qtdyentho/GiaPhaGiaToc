@@ -70,7 +70,7 @@ export const KinshipCalculatorPage: React.FC = () => {
         <div>
           <div className="inline-flex items-center space-x-1.5 bg-amber-100 text-amber-900 text-xs font-bold px-3 py-1 rounded-full border border-amber-300 mb-1.5">
             <Sparkles className="w-3.5 h-3.5 text-amber-700" />
-            <span>Trí Tuệ Nhân Tạo & Thuật Toán Phân Vai Vế Gia Tộc</span>
+            <span>Quy Chuẩn Danh Xưng & Vai Vế Gia Tộc</span>
           </div>
           <h1 className="text-xl md:text-2xl font-black text-slate-900 font-serif tracking-tight text-amber-950">
             Tra Cứu Danh Xưng & Thứ Bậc Dòng Họ

@@ -58,19 +58,14 @@ export class ClanPassService {
       return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
     }
 
-    try {
-      const nodeCrypto = await import('crypto');
-      return nodeCrypto.createHash('sha256').update(raw).digest('hex');
-    } catch {
-      // Fallback
-      let hash = 0;
-      for (let i = 0; i < raw.length; i++) {
-        const char = raw.charCodeAt(i);
-        hash = (hash << 5) - hash + char;
-        hash |= 0;
-      }
-      return `hash_${Math.abs(hash).toString(16)}`.padEnd(32, '0');
+    // Pure JS Fallback
+    let hash = 0;
+    for (let i = 0; i < raw.length; i++) {
+      const char = raw.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash |= 0;
     }
+    return `hash_${Math.abs(hash).toString(16)}`.padEnd(32, '0');
   }
 
   /**
@@ -294,14 +289,20 @@ export class ClanPassService {
 
     const pinHash = await this.hashPin(newPin.trim(), salt, familyId);
 
+    // Sinh passToken nếu chưa có
+    const existing = await this.getClanPass(familyId);
+    const passToken = existing?.pass_token || `CP-FAM-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
     if (isSupabaseConfigured()) {
       const { error } = await supabase
         .from('clan_access_passes')
         .upsert(
           {
             family_id: familyId,
+            pass_token: passToken,
             pin_hash: pinHash,
             pin_salt: salt,
+            is_active: true,
             failed_attempts: 0,
             locked_until: null,
             updated_at: new Date().toISOString(),
@@ -310,6 +311,15 @@ export class ClanPassService {
         );
 
       if (error) return { success: false, error: error.message };
+
+      // Tự động đảm bảo có Short Link cho mã QR
+      try {
+        const { ShortLinkService } = await import('./ShortLinkService');
+        await ShortLinkService.createOrUpdateShortLink(familyId, passToken);
+      } catch (err: any) {
+        console.warn('ShortLink sync error:', err?.message);
+      }
+
       return { success: true };
     }
 
@@ -318,7 +328,7 @@ export class ClanPassService {
       pass = {
         id: `cp-${Date.now()}`,
         family_id: familyId,
-        pass_token: `CP-FAM-${Date.now().toString(16).toUpperCase()}`,
+        pass_token: passToken,
         pin_hash: pinHash,
         pin_salt: salt,
         is_active: true,
@@ -358,8 +368,18 @@ export class ClanPassService {
         .eq('family_id', familyId);
 
       if (error) return { success: false, error: error.message };
+
+      // Cập nhật lại Short Link với passToken mới
+      try {
+        const { ShortLinkService } = await import('./ShortLinkService');
+        await ShortLinkService.createOrUpdateShortLink(familyId, newToken);
+      } catch (err: any) {
+        console.warn('ShortLink sync on regenerate error:', err?.message);
+      }
+
       return { success: true, newToken };
     }
+
 
     const pass = mockPasses.find((p) => p.family_id === familyId);
     if (pass) {

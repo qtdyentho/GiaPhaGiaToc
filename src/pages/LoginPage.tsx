@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -14,9 +15,14 @@ export const LoginPage: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.trim() || !password.trim()) {
+      setError('Vui lòng nhập đầy đủ email và mật khẩu');
+      return;
+    }
+    setError(null);
     setLoading(true);
     try {
-      const result = await signIn(email, password);
+      const result = await signIn(email.trim(), password);
       const redirectUrl = searchParams.get('redirect');
 
       if (result.isSuperAdmin) {
@@ -26,8 +32,8 @@ export const LoginPage: React.FC = () => {
       } else {
         navigate('/onboarding/create-family');
       }
-    } catch (err) {
-      console.error('Lỗi khi đăng nhập:', err);
+    } catch (err: any) {
+      setError(err?.message || 'Email hoặc mật khẩu không chính xác');
     } finally {
       setLoading(false);
     }
@@ -57,7 +63,12 @@ export const LoginPage: React.FC = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-6 shadow-sm rounded-3xl sm:px-10 border border-slate-200">
-          <form className="space-y-4" onSubmit={handleLogin}>
+          <form className="space-y-4" onSubmit={handleLogin} noValidate>
+            {error && (
+              <div role="alert" className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+                {error}
+              </div>
+            )}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Email / Tài Khoản</label>
               <div className="mt-1 relative rounded-xl shadow-xs">
