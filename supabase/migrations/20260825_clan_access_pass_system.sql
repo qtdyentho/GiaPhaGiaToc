@@ -64,18 +64,16 @@ BEGIN
         SET failed_attempts = 0, locked_until = NULL, updated_at = NOW() 
         WHERE id = v_pass.id;
 
-        -- Lấy thông tin dòng họ
-        SELECT id, name, code, ancestral_home, ancestral_hall, banner_url, logo_url 
-        INTO v_family 
+        -- Lấy thông tin dòng họ an toàn
+        SELECT * INTO v_family 
         FROM families 
         WHERE id = v_pass.family_id;
 
         RETURN jsonb_build_object(
             'success', true,
             'family_id', v_family.id,
-            'family_name', v_family.name,
+            'family_name', COALESCE(v_family.name, 'Gia Tộc'),
             'family_code', v_family.code,
-            'ancestral_home', v_family.ancestral_home,
             'banner_url', v_family.banner_url,
             'role', 'MEMBER'
         );
