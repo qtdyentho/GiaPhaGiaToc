@@ -16,7 +16,7 @@ export default defineConfig({
   reporter: [['html', { open: 'never' }], ['list']],
 
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -30,11 +30,12 @@ export default defineConfig({
     },
   ],
 
-  /* Tự động khởi động dev server trước khi chạy tests */
+  /* Tự động kết nối hoặc khởi động dev server */
   webServer: {
     command: 'npm run dev',
-    url: 'http://localhost:5173',
+    url: 'http://localhost:3000',
     reuseExistingServer: true,
-    timeout: 60_000,
+    timeout: 30_000,
   },
 });
+
