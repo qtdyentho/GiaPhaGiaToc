@@ -96,7 +96,11 @@ export function getLineageHierarchyInfo(
 
 /**
  * Lọc thành viên theo cấu trúc Phân Cấp Dòng Họ (Thủy Tổ, Chi, Cành, Nhánh)
- * Luôn giữ lại Thủy Tổ (Đời 1) để làm gốc rễ hiển thị phả đồ liên tục.
+ * Quy tắc cốt lõi:
+ * 1. Khi chọn TOÀN DÒNG HỌ: Hiển thị toàn bộ từ Thủy Tổ (Đời 1) trở xuống, các Chi/Cành/Nhánh ngang hàng nhau.
+ * 2. Khi chọn CHI (Đời 2): Hiển thị Cụ Thủy Tổ Đời 1 (bố mẹ đẻ ra Chi) + toàn bộ con cháu hậu duệ thuộc Chi đó.
+ * 3. Khi chọn CÀNH (Đời 3): Hiển thị Vị Đứng Đầu Chi Đời 2 (Thủy Tổ của Cành) + Cành đó (Đời 3) + toàn bộ con cháu (Đời 4, 5+). Ẩn Đời 1 và các Cành khác.
+ * 4. Khi chọn NHÁNH (Đời 4+): Hiển thị Vị Đứng Đầu Cành Đời 3 (Thủy Tổ của Nhánh) + Nhánh đó (Đời 4) + toàn bộ con cháu (Đời 5+). Ẩn Đời 1, Đời 2 và các Nhánh khác.
  */
 export function filterLineageTree(
   members: Member[],
@@ -116,26 +120,55 @@ export function filterLineageTree(
   return members.filter((m) => {
     const info = getLineageHierarchyInfo(m, generations, branches, members);
     
-    // Luôn giữ lại Thủy Tổ (Đời 1) làm cội nguồn
-    if (info.generationNumber === 1) return true;
-
-    // Lọc theo Chi
-    if (filter.mode === 'CHI' && filter.selectedChiId) {
-      return m.branch_id === filter.selectedChiId;
+    // 1. Lọc theo CHI (Đời 2 trở đi):
+    if (filter.mode === 'CHI') {
+      // Phía trên 1 đời: Bố Mẹ đẻ ra Chi = Thủy Tổ Dòng Họ (Đời 1)
+      if (info.generationNumber === 1) return true;
+      // Dưới: Chỉ lấy các thành viên thuộc đúng Chi này
+      if (filter.selectedChiId) {
+        return m.branch_id === filter.selectedChiId;
+      }
+      return true;
     }
 
-    // Lọc theo Cành (Phái)
+    // 2. Lọc theo CÀNH (Đời 3 trở đi):
     if (filter.mode === 'CANH') {
       const matchChi = !filter.selectedChiId || m.branch_id === filter.selectedChiId;
-      const matchCanh = !filter.selectedCanh || info.canhName === filter.selectedCanh || info.generationNumber === 2;
-      return matchChi && matchCanh;
+      if (!matchChi) return false;
+
+      // Phía trên 1 đời: Bố Mẹ đẻ ra Cành = Vị Đứng Đầu Chi (Đời 2) -> Là Thủy Tổ của Cành này!
+      if (info.generationNumber === 2) return true;
+
+      // Dưới: Chỉ lấy Cành đã chọn (Đời 3) và tất cả hậu duệ các nhánh đời 4, 5+ thuộc Cành này
+      if (info.generationNumber >= 3) {
+        if (!filter.selectedCanh) return true;
+        return info.canhName === filter.selectedCanh;
+      }
+
+      // Ẩn Cụ Thủy Tổ Đời 1 vì đây là phả đồ riêng của Cành
+      return false;
     }
 
-    // Lọc theo Nhánh
+    // 3. Lọc theo NHÁNH (Đời 4 trở đi):
     if (filter.mode === 'NHANH') {
       const matchChi = !filter.selectedChiId || m.branch_id === filter.selectedChiId;
-      const matchNhanh = !filter.selectedNhanh || info.nhanhName === filter.selectedNhanh || info.generationNumber <= 3;
-      return matchChi && matchNhanh;
+      if (!matchChi) return false;
+
+      // Phía trên 1 đời: Bố Mẹ đẻ ra Nhánh = Vị Đứng Đầu Cành (Đời 3) -> Là Thủy Tổ của Nhánh này!
+      if (info.generationNumber === 3) {
+        if (!filter.selectedCanh) return true;
+        return info.canhName === filter.selectedCanh;
+      }
+
+      // Dưới: Chỉ lấy Nhánh đã chọn (Đời 4) và các con cháu đời 5+ của Nhánh này
+      if (info.generationNumber >= 4) {
+        const matchCanh = !filter.selectedCanh || info.canhName === filter.selectedCanh;
+        const matchNhanh = !filter.selectedNhanh || info.nhanhName === filter.selectedNhanh;
+        return matchCanh && matchNhanh;
+      }
+
+      // Ẩn Đời 1 và Đời 2 vì đây là phả đồ riêng của Nhánh
+      return false;
     }
 
     return true;

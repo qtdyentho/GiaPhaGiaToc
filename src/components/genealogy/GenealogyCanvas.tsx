@@ -255,15 +255,25 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
             // Track rendered spouse IDs to prevent duplicating them as separate nuclear units
             const renderedSpouseIds = new Set<string>();
 
+            // Phân định tiêu đề theo đúng vị thế Thủy Tổ của Chi/Cành/Nhánh
+            const isTopLevelInView = gIdx === 0 || !sortedGenerations.slice(0, gIdx).some(prevGen => (membersByGen[prevGen.id] || []).length > 0);
+            
+            let genHeaderTitle = `ĐỜI THỨ ${gen.generation_number}: ${gen.name.toUpperCase()}`;
+            if (isTopLevelInView && gen.generation_number === 1) {
+              genHeaderTitle = '👑 ĐỜI THỨ NHẤT: THỦY TỔ KHỞI NGHIỆP TOÀN DÒNG HỌ';
+            } else if (isTopLevelInView && gen.generation_number === 2) {
+              genHeaderTitle = '👑 BẬC THÂN SINH (THỦY TỔ CỦA CÀNH NÀY • ĐỜI THỨ 2)';
+            } else if (isTopLevelInView && gen.generation_number === 3) {
+              genHeaderTitle = '👑 BẬC THÂN SINH (THỦY TỔ CỦA NHÁNH NÀY • ĐỜI THỨ 3)';
+            }
+
             return (
               <div key={gen.id} className="relative space-y-5">
                 {/* Generation Header Horizontal Line */}
                 <div className="flex items-center gap-4">
                   <div className="px-4 py-1.5 rounded-2xl bg-gradient-to-r from-[#14532D] via-[#166534] to-[#0F3D21] text-white text-xs font-bold tracking-wider shadow-sm uppercase font-serif flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-                    <span>
-                      {gIdx === 0 ? 'ĐỜI THỨ NHẤT: THỦY TỔ KHỞI NGHIỆP' : `ĐỜI THỨ ${gen.generation_number}: ${gen.name.toUpperCase()}`}
-                    </span>
+                    <span>{genHeaderTitle}</span>
                     <span className="text-[11px] text-emerald-200 font-sans font-normal">
                       • {genMembers.length} Vị
                     </span>
