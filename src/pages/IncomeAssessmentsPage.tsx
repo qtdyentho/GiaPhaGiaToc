@@ -38,9 +38,18 @@ export const IncomeAssessmentsPage: React.FC = () => {
   const [recordTarget, setRecordTarget] = useState<IncomeAssessment | null>(null);
 
   const loadData = async () => {
+    if (!activeFamily?.id) {
+      setAssessments([]);
+      setFunds([]);
+      setCategories([]);
+      setBranches([]);
+      setGenerations([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const famId = activeFamily?.id || 'fam-0000-0001';
+      const famId = activeFamily.id;
       const [asmData, fundsData, catData, treeData] = await Promise.all([
         FundService.getAssessments(famId),
         FundService.getFunds(famId),

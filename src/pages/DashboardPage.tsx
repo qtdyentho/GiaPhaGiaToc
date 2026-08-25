@@ -15,19 +15,57 @@ import { ClanCovenantCard } from '../components/family/ClanCovenantCard';
 import { CreateBroadcastModal } from '../components/notifications/CreateBroadcastModal';
 
 export const DashboardPage: React.FC = () => {
-  const { activeFamily, isFamilyAdmin } = useAuth();
+  const { activeFamily, isFamilyAdmin, user } = useAuth();
   const todayInfo = LunarCalendarService.getTodayInfo();
   
-  const currentFamily = activeFamily || mockFamily;
+  const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
+  const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
+
+  // Nếu tài khoản chưa có dòng họ nào, hiển thị giao diện Onboarding khởi tạo dòng họ
+  if (!activeFamily) {
+    return (
+      <div className="space-y-6 font-sans animate-fade-in max-w-4xl mx-auto py-8">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-amber-200 dark:border-slate-800 shadow-xl text-center space-y-6">
+          <div className="w-20 h-20 bg-amber-100 dark:bg-amber-950/60 rounded-3xl flex items-center justify-center mx-auto text-4xl shadow-inner">
+            🏛️
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white font-serif">
+              Chào mừng {user?.full_name || 'Quý Khách'} đến với Gia Phả Gia Tộc
+            </h1>
+            <p className="text-slate-600 dark:text-slate-400 text-sm max-w-lg mx-auto">
+              Tài khoản của bạn hiện chưa khởi tạo hoặc tham gia vào dòng họ nào. Hãy bắt đầu phụng sự tiên tổ bằng cách lập cây phả hệ đầu tiên.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+            <Link
+              to="/create-family"
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-[#166534] hover:bg-[#14532d] text-white font-bold text-sm shadow-md hover:shadow-lg transition flex items-center justify-center gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Khởi Tạo Dòng Họ Đầu Tiên</span>
+            </Link>
+            <Link
+              to="/invite-register"
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-amber-50 dark:bg-slate-800 hover:bg-amber-100 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-slate-700 font-bold text-sm transition flex items-center justify-center gap-2"
+            >
+              <HeartHandshake className="w-4 h-4" />
+              <span>Nhập Mã Mời Gia Tộc</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const currentFamily = activeFamily;
   const familyFunds = mockFunds.filter((f) => f.family_id === currentFamily.id);
   const totalBalance = familyFunds.reduce((sum, f) => sum + Number(f.current_balance || 0), 0);
   const familyMembers = mockMembers.filter((m) => m.family_id === currentFamily.id);
   const familyMemorials = mockMemorialDates.filter((m) => m.family_id === currentFamily.id);
-  const nextMemorial = familyMemorials[0] || mockMemorialDates[0];
+  const nextMemorial = familyMemorials[0] || null;
   const familyTransactions = mockTransactions.filter((t) => t.family_id === currentFamily.id);
-
-  const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
-  const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
 
   const bannerImageUrl = currentFamily.banner_url || ANCESTRAL_PRESETS[0].url;
 

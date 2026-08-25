@@ -29,9 +29,16 @@ export const ExpensesPage: React.FC = () => {
   const [approvalTarget, setApprovalTarget] = useState<ExpenseRecord | null>(null);
 
   const loadData = async () => {
+    if (!activeFamily?.id) {
+      setExpenses([]);
+      setFunds([]);
+      setCategories([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const famId = activeFamily?.id || 'fam-0000-0001';
+      const famId = activeFamily.id;
       const [expData, fundsData, catData] = await Promise.all([
         FundService.getExpenses(famId),
         FundService.getFunds(famId),

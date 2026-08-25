@@ -20,8 +20,10 @@ import { mockMembers, mockBranches, mockGenerations } from '../services/mockData
 import { formatDate } from '../lib/utils';
 import { Link } from 'react-router-dom';
 import { CreateMemorialModal } from '../components/calendar/CreateMemorialModal';
+import { useAuth } from '../contexts/AuthContext';
 
 export const MemorialsPage: React.FC = () => {
+  const { activeFamily } = useAuth();
   const [memorials, setMemorials] = useState<MemorialDate[]>([]);
   const [filterMode, setFilterMode] = useState<'ALL' | 'BRANCH' | 'SUB_BRANCH'>('ALL');
   const [selectedBranchId, setSelectedBranchId] = useState<string>('');
@@ -31,20 +33,27 @@ export const MemorialsPage: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const currentFamId = activeFamily?.id || '';
+
   const loadData = async () => {
+    if (!currentFamId) {
+      setMemorials([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
-    const data = await MemorialService.getMemorials('fam-0000-0001');
+    const data = await MemorialService.getMemorials(currentFamId);
     setMemorials(data);
     setLoading(false);
   };
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [currentFamId]);
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa ngày giỗ này khỏi danh bạ gia tộc?')) {
-      await MemorialService.deleteMemorial(id, 'fam-0000-0001');
+      await MemorialService.deleteMemorial(id, currentFamId);
       loadData();
     }
   };

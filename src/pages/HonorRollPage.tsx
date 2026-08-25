@@ -26,9 +26,15 @@ export const HonorRollPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const loadData = async () => {
+    if (!activeFamily?.id) {
+      setHonorList([]);
+      setFunds([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const famId = activeFamily?.id || 'fam-0000-0001';
+      const famId = activeFamily.id;
       const [data, fundsData] = await Promise.all([
         FundService.getHonorRoll(famId),
         FundService.getFunds(famId),

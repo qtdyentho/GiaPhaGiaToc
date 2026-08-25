@@ -28,6 +28,7 @@ import { CreateMemorialModal } from '../components/calendar/CreateMemorialModal'
 import { CreateEventModal } from '../components/calendar/CreateEventModal';
 import { formatDate } from '../lib/utils';
 import { getCanChiYear } from '../lib/lunar';
+import { useAuth } from '../contexts/AuthContext';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 const LUNAR_MONTH_NAMES: Record<number, string> = {
@@ -250,6 +251,7 @@ const YearPicker: React.FC<{
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export const FamilyCalendarPage: React.FC = () => {
+  const { activeFamily } = useAuth();
   const todayInfo = LunarCalendarService.getTodayInfo();
 
   // ── State ──────────────────────────────────────────────────────────
@@ -274,13 +276,23 @@ export const FamilyCalendarPage: React.FC = () => {
   const [showCreateMemorialModal, setShowCreateMemorialModal] = useState(false);
   const [showCreateEventModal, setShowCreateEventModal] = useState(false);
 
+  const currentFamId = activeFamily?.id || '';
+
   // ── Load Data ──────────────────────────────────────────────────────
   const loadCalendarData = useCallback(async () => {
+    if (!currentFamId) {
+      setMemorials([]);
+      setEvents([]);
+      setUpcomingMemorials([]);
+      setSyncInfo({ total: 0, autoSynced: 0 });
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const [mems, evts, upcoming] = await Promise.all([
-      MemorialService.getMemorials('fam-0000-0001'),
-      EventService.getEvents('fam-0000-0001'),
-      MemorialService.getUpcomingMemorials('fam-0000-0001', 20),
+      MemorialService.getMemorials(currentFamId),
+      EventService.getEvents(currentFamId),
+      MemorialService.getUpcomingMemorials(currentFamId, 20),
     ]);
     setMemorials(mems);
     setEvents(evts);
@@ -290,7 +302,7 @@ export const FamilyCalendarPage: React.FC = () => {
       autoSynced: mems.filter((m) => m.id.startsWith('auto-mem-')).length,
     });
     setLoading(false);
-  }, []);
+  }, [currentFamId]);
 
   useEffect(() => { loadCalendarData(); }, [loadCalendarData]);
 

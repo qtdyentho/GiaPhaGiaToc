@@ -13,10 +13,10 @@ export const MembersListPage: React.FC = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const currentFamId = activeFamily?.id || mockFamily.id;
-  const familyMembers = mockMembers.filter((m) => m.family_id === currentFamId);
-  const familyGenerations = mockGenerations.filter((g) => g.family_id === currentFamId);
-  const familyBranches = mockBranches.filter((b) => b.family_id === currentFamId);
+  const currentFamId = activeFamily?.id || '';
+  const familyMembers = currentFamId ? mockMembers.filter((m) => m.family_id === currentFamId) : [];
+  const familyGenerations = currentFamId ? mockGenerations.filter((g) => g.family_id === currentFamId) : [];
+  const familyBranches = currentFamId ? mockBranches.filter((b) => b.family_id === currentFamId) : [];
 
   const filteredMembers = familyMembers.filter((m) => {
     const matchesSearch =

@@ -55,9 +55,23 @@ export const FinanceDashboardPage: React.FC = () => {
   const [targetExpenseFund, setTargetExpenseFund] = useState<Fund | null>(null);
 
   const loadData = async () => {
+    if (!activeFamily?.id) {
+      setSummary({
+        totalBalance: 0,
+        totalIncome: 0,
+        totalExpense: 0,
+        totalReceivable: 0,
+        pendingExpensesCount: 0,
+        funds: [],
+        recentTransactions: [],
+      });
+      setCategories([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const famId = activeFamily?.id || 'fam-0000-0001';
+      const famId = activeFamily.id;
       const [summaryData, catData] = await Promise.all([
         FundService.getSummary(famId),
         FundService.getExpenseCategories(famId),
@@ -65,7 +79,7 @@ export const FinanceDashboardPage: React.FC = () => {
       setSummary(summaryData);
       setCategories(catData);
     } catch (err) {
-      console.error('Lỗi khi tải tổng quan tài chính:', err);
+      console.error('Lỗi khi tải dữ liệu tài chính:', err);
     } finally {
       setLoading(false);
     }

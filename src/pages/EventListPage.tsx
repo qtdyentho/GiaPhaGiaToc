@@ -22,7 +22,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Megaphone } from 'lucide-react';
 
 export const EventListPage: React.FC = () => {
-  const { isFamilyAdmin } = useAuth();
+  const { isFamilyAdmin, activeFamily } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [eventTypeFilter, setEventTypeFilter] = useState<string>('ALL');
   const [search, setSearch] = useState('');
@@ -30,9 +30,16 @@ export const EventListPage: React.FC = () => {
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const currentFamId = activeFamily?.id || '';
+
   const loadData = async () => {
+    if (!currentFamId) {
+      setEvents([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
-    const data = await EventService.getEvents('fam-0000-0001', {
+    const data = await EventService.getEvents(currentFamId, {
       eventType: eventTypeFilter,
       search,
     });
@@ -42,7 +49,7 @@ export const EventListPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, [eventTypeFilter, search]);
+  }, [currentFamId, eventTypeFilter, search]);
 
   return (
     <div className="space-y-6 animate-fade-in">

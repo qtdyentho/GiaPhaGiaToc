@@ -11,17 +11,26 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { ReminderService, ClanNotification, EventReminderConfig } from '../services/calendar/ReminderService';
+import { useAuth } from '../contexts/AuthContext';
 
 export const ReminderSettingsPage: React.FC = () => {
+  const { activeFamily } = useAuth();
   const [configs, setConfigs] = useState<EventReminderConfig[]>([]);
   const [notifications, setNotifications] = useState<ClanNotification[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [scanMessage, setScanMessage] = useState<string | null>(null);
 
+  const currentFamId = activeFamily?.id || '';
+
   const loadData = async () => {
+    if (!currentFamId) {
+      setConfigs([]);
+      setNotifications([]);
+      return;
+    }
     const [cfgList, notifList] = await Promise.all([
-      ReminderService.getReminderConfigs('fam-0000-0001'),
-      ReminderService.getNotifications('fam-0000-0001'),
+      ReminderService.getReminderConfigs(currentFamId),
+      ReminderService.getNotifications(currentFamId),
     ]);
     setConfigs(cfgList);
     setNotifications(notifList);
@@ -29,7 +38,7 @@ export const ReminderSettingsPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [currentFamId]);
 
   const handleToggle = async (id: string, currentVal: boolean) => {
     await ReminderService.toggleReminderConfig(id, !currentVal);
@@ -37,16 +46,18 @@ export const ReminderSettingsPage: React.FC = () => {
   };
 
   const handleScanNow = async () => {
+    if (!currentFamId) return;
     setIsScanning(true);
     setScanMessage(null);
-    const count = await ReminderService.generateDailyReminders('fam-0000-0001');
+    const count = await ReminderService.generateDailyReminders(currentFamId);
     setIsScanning(false);
     setScanMessage(`Đã quét toàn bộ lịch gia tộc: Tạo mới ${count} thông báo nhắc lễ hôm nay.`);
     loadData();
   };
 
   const handleMarkAsRead = async (notifId: string) => {
-    await ReminderService.markAsRead(notifId, 'fam-0000-0001');
+    if (!currentFamId) return;
+    await ReminderService.markAsRead(notifId, currentFamId);
     loadData();
   };
 

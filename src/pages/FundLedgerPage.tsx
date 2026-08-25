@@ -35,9 +35,15 @@ export const FundLedgerPage: React.FC = () => {
   const [selectedFundDetail, setSelectedFundDetail] = useState<Fund | null>(null);
 
   const loadData = async () => {
+    if (!activeFamily?.id) {
+      setFunds([]);
+      setTransactions([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const famId = activeFamily?.id || 'fam-0000-0001';
+      const famId = activeFamily.id;
       const [fData, txData] = await Promise.all([
         FundService.getFunds(famId),
         FundService.getLedger(famId),

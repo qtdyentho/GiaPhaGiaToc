@@ -51,19 +51,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // ignore
       }
     }
-    return mockProfile;
+    return null; // Không tự động đăng nhập tài khoản mock nếu chưa đăng nhập
   });
 
   const [families, setFamilies] = useState<Family[]>(() => {
     const saved = localStorage.getItem('hl_families');
     if (saved) {
       try {
-        const parsed: Family[] = JSON.parse(saved);
-        // Enforce 1 family per user constraint (clean up any legacy mock duplicates)
-        const sanitized = parsed.filter(
-          (f) => f.id === 'fam-0000-0001' || f.created_by !== 'usr-0000-0001'
-        );
-        if (sanitized.length > 0) return sanitized;
+        return JSON.parse(saved);
       } catch (e) {
         // ignore
       }
@@ -87,19 +82,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return localStorage.getItem('hl_platform_role') === 'SUPER_ADMIN' ? 'SUPER_ADMIN' : 'USER';
   });
 
+  // Chỉ kích hoạt activeFamily khi thuộc về đúng tài khoản user đang đăng nhập
   const [activeFamily, setActiveFamily] = useState<Family | null>(() => {
+    const savedUserStr = localStorage.getItem('hl_auth_user');
+    const savedUser: Profile | null = savedUserStr ? JSON.parse(savedUserStr) : null;
+    if (!savedUser) return null;
+
+    const savedFamiliesStr = localStorage.getItem('hl_families');
+    const allFamilies: Family[] = savedFamiliesStr ? JSON.parse(savedFamiliesStr) : INITIAL_FAMILIES;
+
+    const savedMembershipsStr = localStorage.getItem('hl_memberships');
+    const allMemberships: FamilyMembership[] = savedMembershipsStr ? JSON.parse(savedMembershipsStr) : mockMemberships;
+
+    // Lọc các dòng họ mà user này thực sự có quyền truy cập
+    const userFamilies = allFamilies.filter(
+      (f) => f.created_by === savedUser.id || allMemberships.some((m) => m.user_id === savedUser.id && m.family_id === f.id)
+    );
+
     const savedFamilyId = sessionStorage.getItem('active_family_id') || localStorage.getItem('hl_active_family_id');
     if (savedFamilyId) {
-      const savedFamilies = localStorage.getItem('hl_families');
-      const allFamilies: Family[] = savedFamilies ? JSON.parse(savedFamilies) : INITIAL_FAMILIES;
-      const found = allFamilies.find((f) => f.id === savedFamilyId);
+      const found = userFamilies.find((f) => f.id === savedFamilyId);
       if (found) return found;
     }
-    return mockFamily;
+
+    return userFamilies[0] || null;
   });
 
   const [activeMembership, setActiveMembership] = useState<FamilyMembership | null>(() => {
-    return memberships[0] || null;
+    if (!user || !activeFamily) return null;
+    return memberships.find((m) => m.user_id === user.id && m.family_id === activeFamily.id) || null;
   });
 
   const [isLoading, setIsLoading] = useState<boolean>(false);

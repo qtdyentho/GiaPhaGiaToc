@@ -27,8 +27,10 @@ import { MemberDetailPopupModal } from '../components/genealogy/MemberDetailPopu
 import { Link } from 'react-router-dom';
 
 import { filterLineageTree } from '../utils/lineageHierarchy';
+import { useAuth } from '../contexts/AuthContext';
 
 export const GenealogyTreePage: React.FC = () => {
+  const { activeFamily } = useAuth();
   const [treeData, setTreeData] = useState<FamilyTreeData>({
     members: [],
     generations: [],
@@ -53,9 +55,14 @@ export const GenealogyTreePage: React.FC = () => {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
   const loadTree = async () => {
+    if (!activeFamily?.id) {
+      setTreeData({ members: [], generations: [], branches: [], relationships: [] });
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const data = await GenealogyService.getFamilyTree();
+      const data = await GenealogyService.getFamilyTree(activeFamily.id);
       setTreeData(data);
     } catch (err) {
       console.error('Lỗi khi tải cây phả hệ:', err);
@@ -66,7 +73,7 @@ export const GenealogyTreePage: React.FC = () => {
 
   useEffect(() => {
     loadTree();
-  }, []);
+  }, [activeFamily?.id]);
 
   const handleOpenAddRelation = (target: Member, relType: 'CHILD' | 'SPOUSE' | 'PARENT') => {
     setRelationTarget(target);

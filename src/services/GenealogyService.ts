@@ -11,20 +11,25 @@ export interface FamilyTreeData {
 
 export class GenealogyService {
   static async getFamilyTree(familyId?: string): Promise<FamilyTreeData> {
-    if (isSupabaseConfigured()) {
-      let query = supabase.from('members').select('*');
-      if (familyId) query = query.eq('family_id', familyId);
+    if (!familyId) {
+      return {
+        members: [],
+        generations: [],
+        branches: [],
+        relationships: [],
+      };
+    }
 
+    if (isSupabaseConfigured()) {
       const [membersRes, genRes, branchRes, relRes] = await Promise.all([
-        query,
-        supabase.from('generations').select('*').order('generation_number', { ascending: true }),
-        supabase.from('branches').select('*'),
-        supabase.from('member_relationships').select('*'),
+        supabase.from('members').select('*').eq('family_id', familyId),
+        supabase.from('generations').select('*').eq('family_id', familyId).order('generation_number', { ascending: true }),
+        supabase.from('branches').select('*').eq('family_id', familyId),
+        supabase.from('member_relationships').select('*').eq('family_id', familyId),
       ]);
 
-      if (!membersRes.error && membersRes.data && membersRes.data.length > 0) {
-        // Map database columns to Member interface
-        const mappedMembers: Member[] = membersRes.data.map((dbRow: any) => ({
+      if (!membersRes.error) {
+        const mappedMembers: Member[] = (membersRes.data || []).map((dbRow: any) => ({
           id: dbRow.id,
           family_id: dbRow.family_id,
           generation_id: dbRow.generation_id,
@@ -47,18 +52,19 @@ export class GenealogyService {
 
         return {
           members: mappedMembers,
-          generations: (genRes.data as Generation[]) || mockGenerations,
-          branches: (branchRes.data as Branch[]) || mockBranches,
-          relationships: (relRes.data as MemberRelationship[]) || mockRelationships,
+          generations: (genRes.data as Generation[]) || [],
+          branches: (branchRes.data as Branch[]) || [],
+          relationships: (relRes.data as MemberRelationship[]) || [],
         };
       }
     }
 
+    // Local / In-memory Store: Filter strictly by familyId
     return {
-      members: mockMembers,
-      generations: mockGenerations,
-      branches: mockBranches,
-      relationships: mockRelationships,
+      members: mockMembers.filter((m) => m.family_id === familyId),
+      generations: mockGenerations.filter((g) => g.family_id === familyId),
+      branches: mockBranches.filter((b) => b.family_id === familyId),
+      relationships: mockRelationships.filter((r) => r.family_id === familyId),
     };
   }
 

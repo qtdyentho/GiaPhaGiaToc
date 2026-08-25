@@ -12,19 +12,20 @@ import { Link } from 'react-router-dom';
 
 export const KinshipCalculatorPage: React.FC = () => {
   const { activeFamily } = useAuth();
-  const currentFamilyId = activeFamily?.id || 'fam-0000-0001';
+  const currentFamilyId = activeFamily?.id || '';
 
   // Filter members belonging to current family
   const familyMembers = useMemo(() => {
+    if (!currentFamilyId) return [];
     return mockMembers.filter((m) => m.family_id === currentFamilyId);
   }, [currentFamilyId]);
 
-  // Default selection: Tuấn (Đời 4 Chi Trưởng) & Đức (Đời 4 Chi Hai)
+  // Default selection
   const [memberAId, setMemberAId] = useState<string>(
-    familyMembers.find((m) => m.id === 'mb-004')?.id || familyMembers[0]?.id || ''
+    familyMembers[0]?.id || ''
   );
   const [memberBId, setMemberBId] = useState<string>(
-    familyMembers.find((m) => m.id === 'mb-011')?.id || familyMembers[1]?.id || ''
+    familyMembers[1]?.id || ''
   );
 
   const [kinshipResult, setKinshipResult] = useState<KinshipResult | null>(null);
