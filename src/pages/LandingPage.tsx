@@ -21,7 +21,7 @@ export const LandingPage: React.FC = () => {
   const [showQrModal, setShowQrModal] = useState(false);
   const [consultSuccess, setConsultSuccess] = useState(false);
 
-  // 4 Thematic Ancestral Carousel Slides Data
+  // 4 Thematic Ancestral Carousel Slides Data with REALISTIC PHOTOGRAPHIC SCENES
   const carouselSlides = [
     {
       id: 'slide-1',
@@ -31,7 +31,11 @@ export const LandingPage: React.FC = () => {
       titleLine2: 'Lưu Truyền Bách Đại — Hưng Thịnh Vĩnh Cửu',
       description: 'Lưu giữ cội nguồn huyết thống ngàn năm truyền thừa, trăm đời rạng danh. Số hóa cây phả hệ, gìn giữ gia quy và truyền lại cho muôn đời con cháu phụng dựng.',
       primaryCta: 'Khởi Tạo Dòng Họ (30 Ngày)',
-      secondaryCta: 'Xem Cây Phả Hệ Mẫu'
+      secondaryCta: 'Xem Cây Phả Hệ Mẫu',
+      imageSrc: 'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=80',
+      imageAlt: 'Từ đường và Nhà thờ họ cổ kính Việt Nam',
+      imageLocation: '📍 Từ Đường & Nhà Thờ Họ Cổ Truyền',
+      imageCaption: 'Từ Đường Cổ Kính — Nơi phụng thờ tiên tổ muôn đời hưng thịnh'
     },
     {
       id: 'slide-2',
@@ -41,7 +45,11 @@ export const LandingPage: React.FC = () => {
       titleLine2: 'Phân Vai Xưng Hô — Chuẩn Mực Gia Lễ',
       description: 'Công nghệ phân định cây LTree vô cực, tự động xác định danh xưng vai vế theo chuẩn mực gia phong « Bé bằng củ khoai, cứ vai mà gọi », con Bác luôn ở vế trên.',
       primaryCta: 'Thử Nghiệm Tra Cứu Vai Vế',
-      secondaryCta: 'Xem Bản Đồ Chi Phái'
+      secondaryCta: 'Xem Bản Đồ Chi Phái',
+      imageSrc: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80',
+      imageAlt: 'Bản thảo ngọc phả gia phả cổ giấy dó',
+      imageLocation: '📜 Ngọc Phả & Bản Thảo Giấy Dó Cổ',
+      imageCaption: 'Gia Phả Truyền Đời — Bút tích tiên tổ lưu dấu trăm năm'
     },
     {
       id: 'slide-3',
@@ -51,7 +59,11 @@ export const LandingPage: React.FC = () => {
       titleLine2: 'Chu Toàn Lễ Tiết — Báo Giỗ Đúng Ngày',
       description: 'Phụng định lịch giỗ âm dương chính xác theo thiên văn học trọn vẹn 16 năm (2021 — 2036), nhận diện năm nhuận, tháng Chạp thiếu và gửi thông báo nhắc lễ chu đáo.',
       primaryCta: 'Xem Lịch Giỗ Vạn Niên',
-      secondaryCta: 'Tra Cứu Ngày Âm Dương'
+      secondaryCta: 'Tra Cứu Ngày Âm Dương',
+      imageSrc: 'https://images.unsplash.com/photo-1606293926075-69a00dbfde81?auto=format&fit=crop&w=1200&q=80',
+      imageAlt: 'Khói hương trầm tế tự trong lễ giỗ họ tộc',
+      imageLocation: '🏮 Hương Trầm Tế Tự & Ngày Đại Lễ',
+      imageCaption: 'Lễ Giỗ Gia Tộc — Khói trầm quyện tỏa, con cháu sum vầy'
     },
     {
       id: 'slide-4',
@@ -61,7 +73,11 @@ export const LandingPage: React.FC = () => {
       titleLine2: 'Sổ Quỹ Kép 100% — Tri Ân Tấm Lòng',
       description: 'Sổ quỹ kép bất biến minh bạch tuyệt đối, tự động sinh mã VietQR công đức theo từng quỹ từ đường, khuyến học, tu bổ và khắc ghi tấm lòng phụng sự của con cháu.',
       primaryCta: 'Trải Nghiệm Sổ Quỹ Mẫu',
-      secondaryCta: 'Tạo Thử Mã VietQR'
+      secondaryCta: 'Tạo Thử Mã VietQR',
+      imageSrc: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80',
+      imageAlt: 'Hoành phi câu đối sơn son thếp vàng',
+      imageLocation: '🏆 Hoành Phi Câu Đối Thếp Vàng',
+      imageCaption: 'Bảng Vàng Tri Ân — Ghi danh công đức con cháu phụng dựng'
     }
   ];
 
@@ -556,116 +572,46 @@ export const LandingPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Right Column: High-Art Classical Visual Representation (5 Cols) */}
+              {/* Right Column: Realistic Photographic Scene with Lacquer Frame (5 Cols) */}
               <div className="lg:col-span-5 flex justify-center items-center">
-                <div className="w-full max-w-sm rounded-3xl p-6 bg-gradient-to-b from-amber-50/90 via-emerald-50/40 to-slate-50 dark:from-slate-800/90 dark:via-slate-800/60 dark:to-slate-800/40 border-2 border-amber-300/80 dark:border-slate-700 shadow-xl relative overflow-hidden group">
-                  {/* Glowing Aura Effect */}
-                  <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-400/20 rounded-full blur-2xl pointer-events-none" />
-                  <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-emerald-500/15 rounded-full blur-2xl pointer-events-none" />
+                <div className="w-full max-w-md rounded-3xl overflow-hidden border-2 border-amber-400/90 dark:border-amber-600/80 shadow-2xl relative group bg-slate-950">
+                  {/* Real Photo Image Container */}
+                  <div className="relative aspect-[4/3] w-full overflow-hidden">
+                    <img
+                      src={carouselSlides[currentSlide].imageSrc}
+                      alt={carouselSlides[currentSlide].imageAlt}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 brightness-95 contrast-105"
+                    />
 
-                  {/* Render Visual based on Current Slide */}
-                  {currentSlide === 0 && (
-                    /* Slide 1 Visual: Ancient Tree & Lineage Roots */
-                    <div className="space-y-4 text-center py-2 animate-fade-in">
-                      <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-emerald-700 via-[#166534] to-emerald-900 text-amber-300 flex items-center justify-center shadow-lg border-2 border-amber-300/80 transform group-hover:scale-105 transition-transform">
-                        <Trees className="w-10 h-10" />
+                    {/* Rich Dark Gradient Overlays for Elegance and Readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+                    <div className="absolute inset-0 ring-1 ring-inset ring-amber-400/30 rounded-3xl pointer-events-none" />
+
+                    {/* Top Location & Category Tag */}
+                    <div className="absolute top-3 left-3">
+                      <span className="px-3 py-1 bg-black/60 backdrop-blur-md text-amber-300 font-serif text-[11px] font-bold rounded-full border border-amber-400/40 shadow-md">
+                        {carouselSlides[currentSlide].imageLocation}
+                      </span>
+                    </div>
+
+                    {/* Top Right Imperial Seal Indicator */}
+                    <div className="absolute top-3 right-3">
+                      <span className="w-7 h-7 rounded-full bg-gradient-to-br from-red-700 to-red-900 text-amber-200 flex items-center justify-center font-serif text-[10px] font-black border border-amber-300 shadow-md">
+                        ẤN
+                      </span>
+                    </div>
+
+                    {/* Bottom Caption Overlay */}
+                    <div className="absolute bottom-3 left-3 right-3 p-3 rounded-2xl bg-black/70 backdrop-blur-md border border-white/10 text-white space-y-1">
+                      <div className="text-xs font-bold text-amber-200 font-serif line-clamp-1">
+                        {carouselSlides[currentSlide].imageCaption}
                       </div>
-                      <div className="space-y-1">
-                        <div className="font-bold text-slate-900 dark:text-white font-serif text-base">
-                          Cội Nguồn Bách Niên
-                        </div>
-                        <div className="text-xs text-[#166534] dark:text-emerald-400 font-serif italic">
-                          « Cây Đại Thụ Phụng Dựng Ngàn Thu »
-                        </div>
-                      </div>
-                      <div className="p-3 bg-white/90 dark:bg-slate-900/90 rounded-2xl border border-amber-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-1 text-left">
-                        <div className="flex justify-between text-[11px] font-bold">
-                          <span>Chi Trưởng (Chi Cả):</span>
-                          <span className="text-[#166534] dark:text-emerald-400">Đời 1 ➔ Đời 6</span>
-                        </div>
-                        <div className="flex justify-between text-[11px] font-bold">
-                          <span>Chi Thứ (Chi Hai):</span>
-                          <span className="text-amber-700 dark:text-amber-400">Đời 1 ➔ Đời 5</span>
-                        </div>
+                      <div className="flex items-center justify-between text-[10px] text-slate-300 font-sans">
+                        <span>Hình ảnh di sản thực tế</span>
+                        <span className="text-emerald-400 font-mono">Bản Quyền 2026</span>
                       </div>
                     </div>
-                  )}
-
-                  {currentSlide === 1 && (
-                    /* Slide 2 Visual: Ancient Genealogy Scroll & Red Seal */
-                    <div className="space-y-4 text-center py-2 animate-fade-in">
-                      <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-amber-700 via-amber-800 to-amber-950 text-amber-200 flex items-center justify-center shadow-lg border-2 border-amber-300/80 transform group-hover:scale-105 transition-transform">
-                        <ScrollText className="w-10 h-10" />
-                      </div>
-                      <div className="space-y-1">
-                        <div className="font-bold text-slate-900 dark:text-white font-serif text-base">
-                          Ngọc Phả Hoàng Triều
-                        </div>
-                        <div className="text-xs text-amber-800 dark:text-amber-300 font-serif italic">
-                          « Tộc Ước Phân Minh • Vai Vế Tự Động »
-                        </div>
-                      </div>
-                      <div className="p-3 bg-white/90 dark:bg-slate-900/90 rounded-2xl border border-amber-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-1 text-left font-serif">
-                        <div className="text-[11px] font-bold text-slate-900 dark:text-white">Thuật toán LTree LCA:</div>
-                        <div className="text-[10px] text-emerald-800 dark:text-emerald-300">✓ Con Bác ➔ Anh/Chị Vế Trên</div>
-                        <div className="text-[10px] text-amber-800 dark:text-amber-300">✓ Con Chú ➔ Em Vế Dưới</div>
-                      </div>
-                    </div>
-                  )}
-
-                  {currentSlide === 2 && (
-                    /* Slide 3 Visual: Celestial Lunar Calendar & Incense */
-                    <div className="space-y-4 text-center py-2 animate-fade-in">
-                      <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-teal-700 via-teal-800 to-emerald-950 text-amber-200 flex items-center justify-center shadow-lg border-2 border-amber-300/80 transform group-hover:scale-105 transition-transform">
-                        <Calendar className="w-10 h-10" />
-                      </div>
-                      <div className="space-y-1">
-                        <div className="font-bold text-slate-900 dark:text-white font-serif text-base">
-                          Lịch Vạn Niên 2021 — 2036
-                        </div>
-                        <div className="text-xs text-teal-800 dark:text-teal-300 font-serif italic">
-                          « Âm Dương Lễ Tiết • Nhắc Giỗ Tiên Tổ »
-                        </div>
-                      </div>
-                      <div className="p-3 bg-white/90 dark:bg-slate-900/90 rounded-2xl border border-teal-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-1 text-left">
-                        <div className="flex justify-between text-[11px] font-bold">
-                          <span>Giỗ Cụ Thủy Tổ:</span>
-                          <span className="text-[#166534] dark:text-emerald-400">Rằm Tháng Giêng</span>
-                        </div>
-                        <div className="flex justify-between text-[11px] font-bold">
-                          <span>Xử lý tháng nhuận:</span>
-                          <span className="text-emerald-700 dark:text-emerald-300 font-mono">100% UTC+7</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {currentSlide === 3 && (
-                    /* Slide 4 Visual: Golden Plaque & Merit Honor Roll */
-                    <div className="space-y-4 text-center py-2 animate-fade-in">
-                      <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-amber-600 via-yellow-600 to-amber-900 text-white flex items-center justify-center shadow-lg border-2 border-amber-300/80 transform group-hover:scale-105 transition-transform">
-                        <Award className="w-10 h-10 text-amber-200" />
-                      </div>
-                      <div className="space-y-1">
-                        <div className="font-bold text-slate-900 dark:text-white font-serif text-base">
-                          Bảng Vàng Công Đức
-                        </div>
-                        <div className="text-xs text-amber-800 dark:text-amber-300 font-serif italic">
-                          « Sổ Quỹ Bất Biến • Quét Mã VietQR »
-                        </div>
-                      </div>
-                      <div className="p-3 bg-white/90 dark:bg-slate-900/90 rounded-2xl border border-amber-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-1 text-left">
-                        <div className="flex justify-between text-[11px] font-bold">
-                          <span>3 Quỹ Phụng Tự:</span>
-                          <span className="text-blue-700 dark:text-blue-300">Từ Đường, Học, Hội</span>
-                        </div>
-                        <div className="flex justify-between text-[11px] font-bold">
-                          <span>Bút toán Reversal:</span>
-                          <span className="text-emerald-700 dark:text-emerald-400">Minh bạch 100%</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>
