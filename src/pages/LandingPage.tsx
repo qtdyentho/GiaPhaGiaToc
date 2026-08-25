@@ -24,6 +24,7 @@ export const LandingPage: React.FC = () => {
   // Hero Tree Interactive States
   const [treeZoom, setTreeZoom] = useState(1);
   const [treeFilter, setTreeFilter] = useState<'ALL' | 'TRUONG' | 'THU'>('ALL');
+  const [generationFilter, setGenerationFilter] = useState<number | 'ALL'>('ALL');
   const [selectedHeroMember, setSelectedHeroMember] = useState<{
     id: string;
     name: string;
@@ -35,6 +36,7 @@ export const LandingPage: React.FC = () => {
     birthDeath: string;
     relationText: string;
     burialSite?: string;
+    isAlive?: boolean;
   }>({
     id: 'hero-1',
     name: 'Cụ Thủy Tổ Nguyễn Quý Công (1885 - 1962)',
@@ -42,10 +44,11 @@ export const LandingPage: React.FC = () => {
     branch: 'Khai Sáng Dòng Họ',
     branchType: 'TRUONG',
     title: 'Thủy Tổ Khởi Nghiệp',
-    desc: 'Bậc tiền bối khai canh lập ấp tại vùng đất Định Công. Đức độ rạng ngời, để lại gia quy ngũ thường cho muôn đời con cháu phụng dựng.',
-    birthDeath: 'Ất Dậu 1885 — Nhâm Dần 1962',
+    desc: 'Bậc tiền bối khai canh lập ấp tại vùng đất Định Công. Đức độ rạng ngời, để lại gia quy ngũ thường và đất sinh phần cho muôn đời con cháu phụng dựng.',
+    birthDeath: 'Ất Dậu 1885 — Nhâm Dần 1962 (Thọ 78 tuổi)',
     relationText: 'Đời 1 • Khởi Tổ',
-    burialSite: 'Khu Lăng Mộ Cổ, Định Công Thượng'
+    burialSite: 'Khu Lăng Mộ Cổ, Đồi Thông Định Công Thượng',
+    isAlive: false
   });
 
   // Interactive Kinship Demo States
@@ -78,7 +81,9 @@ export const LandingPage: React.FC = () => {
   const [qrFund, setQrFund] = useState<'TU_BO' | 'KHUYEN_HOC' | 'HOAT_DONG'>('TU_BO');
   const [qrDonorName, setQrDonorName] = useState<string>('Nguyễn Văn Tuấn (Chi Trưởng)');
 
+  // Full 5-Generation Lineage Sample Dataset (Đời 1 -> Đời 5)
   const heroMembers = [
+    // ĐỜI 1: KHỞI TỔ
     {
       id: 'hero-1',
       name: 'Cụ Thủy Tổ Nguyễn Quý Công',
@@ -86,52 +91,165 @@ export const LandingPage: React.FC = () => {
       branch: 'Khai Sáng Dòng Họ',
       branchType: 'TRUONG' as const,
       title: 'Thủy Tổ Khởi Nghiệp',
-      desc: 'Bậc tiền bối khai canh lập ấp tại vùng đất Định Công. Đức độ rạng ngời, để lại gia quy ngũ thường cho muôn đời con cháu phụng dựng.',
-      birthDeath: 'Ất Dậu 1885 — Nhâm Dần 1962',
+      desc: 'Bậc tiền bối khai canh lập ấp tại vùng đất Định Công. Đức độ rạng ngời, để lại gia quy ngũ thường và đất sinh phần cho muôn đời con cháu phụng dựng.',
+      birthDeath: 'Ất Dậu 1885 — Nhâm Dần 1962 (Thọ 78 tuổi)',
       relationText: 'Đời 1 • Khởi Tổ',
-      burialSite: 'Khu Lăng Mộ Cổ, Định Công Thượng'
+      burialSite: 'Khu Lăng Mộ Cổ, Đồi Thông Định Công Thượng',
+      isAlive: false
     },
+    // ĐỜI 2: TIÊN TỔ PHÂN CHI (CHI TRƯỞNG & CHI THỨ)
     {
       id: 'hero-2',
-      name: 'Cụ Nguyễn Văn An (Trưởng Chi)',
+      name: 'Cụ Nguyễn Văn An',
       generation: 2,
-      branch: 'Chi Cả (Trưởng)',
+      branch: 'Chi Cả (Trưởng Chi)',
       branchType: 'TRUONG' as const,
       title: 'Trưởng Chi Đời 2',
-      desc: 'Kế thừa từ đường, giữ gìn ngọc phả và lãnh đạo việc hương khói tế tự trong dòng tộc qua nhiều biến thiên thời cuộc.',
-      birthDeath: 'Canh Tuất 1910 — Tân Mùi 1991',
+      desc: 'Kế thừa từ đường chi trưởng, giữ gìn cuốn ngọc phả cổ giấy dó và chủ trì tế tự dòng tộc qua các thời kỳ khó khăn.',
+      birthDeath: 'Canh Tuất 1910 — Tân Mùi 1991 (Thọ 82 tuổi)',
       relationText: 'Đời 2 • Trưởng Chi',
-      burialSite: 'Khu Nghĩa Trang Dòng Họ'
+      burialSite: 'Khu Nghĩa Trang Dòng Họ, Khu A Lô 01',
+      isAlive: false
     },
     {
       id: 'hero-3',
-      name: 'Cụ Nguyễn Văn Bình (Thứ Chi)',
+      name: 'Cụ Nguyễn Văn Bình',
       generation: 2,
-      branch: 'Chi Hai (Thứ)',
+      branch: 'Chi Hai (Thứ Chi)',
       branchType: 'THU' as const,
       title: 'Thứ Chi Đời 2',
-      desc: 'Đỗ đạt cử nhân, lập nghiệp tại phương Nam, kết nối mở rộng thanh danh dòng họ trên khắp các miền tổ quốc.',
-      birthDeath: 'Quý Sửu 1913 — Ất Hợi 1995',
+      desc: 'Đỗ đạt cử nhân Nho học, lập nghiệp phương xa mở rộng thanh danh gia tộc, đóng góp xây dựng cầu đá làng quê.',
+      birthDeath: 'Quý Sửu 1913 — Ất Hợi 1995 (Thọ 83 tuổi)',
       relationText: 'Đời 2 • Thứ Chi',
-      burialSite: 'Nghĩa Trang Thành Phố'
+      burialSite: 'Khu Nghĩa Trang Dòng Họ, Khu B Lô 05',
+      isAlive: false
     },
+    // ĐỜI 3: ĐƯƠNG NIÊN TỘC TRƯỞNG & CAO NIÊN
     {
       id: 'hero-4',
-      name: 'Ông Nguyễn Văn Tuấn (Trưởng Tộc)',
+      name: 'Ông Nguyễn Văn Tuấn',
       generation: 3,
       branch: 'Chi Cả (Đời 3)',
       branchType: 'TRUONG' as const,
+      title: 'Nguyên Trưởng Tộc',
+      desc: 'Chủ trì việc đại trùng tu nhà thờ họ năm 1998, lập quỹ khuyến học dòng họ và lập hội đồng gia tộc định kỳ.',
+      birthDeath: 'Mậu Tý 1948 — Canh Tý 2020 (Thọ 73 tuổi)',
+      relationText: 'Đời 3 • Chi Trưởng',
+      burialSite: 'Khu Lăng Mộ Chi Trưởng',
+      isAlive: false
+    },
+    {
+      id: 'hero-5',
+      name: 'Ông Nguyễn Văn Thành',
+      generation: 3,
+      branch: 'Chi Hai (Đời 3)',
+      branchType: 'THU' as const,
+      title: 'Trưởng Chi Thứ Đời 3',
+      desc: 'Doanh nhân thành đạt, tài trợ 50% kinh phí đúc chuông đồng và dựng bia đá ghi danh công đức tại từ đường.',
+      birthDeath: 'Nhâm Thìn 1952 (75 tuổi)',
+      relationText: 'Đời 3 • Chi Thứ',
+      burialSite: 'Đang sinh sống tại Cầu Giấy, Hà Nội',
+      isAlive: true
+    },
+    {
+      id: 'hero-6',
+      name: 'Bà Nguyễn Thị Mai',
+      generation: 3,
+      branch: 'Chi Cả (Đời 3)',
+      branchType: 'TRUONG' as const,
+      title: 'Cô Họ Cao Niên',
+      desc: 'Bậc cao niên am hiểu nghi lễ tế tự cổ truyền, hướng dẫn ban khánh tiết chuẩn bị các tuần tế trong đại lễ giỗ tổ.',
+      birthDeath: 'Bính Thân 1956 (71 tuổi)',
+      relationText: 'Đời 3 • Chi Trưởng',
+      burialSite: 'Đang sinh sống tại Định Công, Hà Nội',
+      isAlive: true
+    },
+    // ĐỜI 4: ĐƯƠNG NHIỆM & TRƯỞNG THÀNH
+    {
+      id: 'hero-7',
+      name: 'Anh Nguyễn Văn Minh',
+      generation: 4,
+      branch: 'Chi Cả (Đời 4)',
+      branchType: 'TRUONG' as const,
       title: 'Trưởng Tộc Đương Nhiệm',
-      desc: 'Đang quản lý từ đường và chủ trì việc số hóa cây gia phả gia tộc kết nối toàn thể bà con họ tộc toàn quốc.',
-      birthDeath: 'Kỷ Dậu 1969 (Còn sống)',
-      relationText: 'Đời 3 • Đương Nhiệm',
-      burialSite: 'Từ Đường Dòng Họ'
+      desc: 'Chủ trì việc số hóa ngọc phả trực tuyến năm 2026, kết nối dữ liệu bà con kiều bào và quản lý lịch giỗ vạn niên.',
+      birthDeath: 'Ất Mão 1975 (52 tuổi)',
+      relationText: 'Đời 4 • Trưởng Tộc',
+      burialSite: 'Đang sinh sống tại Từ Đường Định Công',
+      isAlive: true
+    },
+    {
+      id: 'hero-8',
+      name: 'Anh Nguyễn Văn Hùng',
+      generation: 4,
+      branch: 'Chi Hai (Đời 4)',
+      branchType: 'THU' as const,
+      title: 'Trưởng Ban Khuyến Học',
+      desc: 'Thạc sĩ Khoa học, điều hành hội đồng khen thưởng học sinh, sinh viên đỗ đạt xuất sắc hàng năm vào dịp rằm tháng Tám.',
+      birthDeath: 'Mậu Ngọ 1978 (49 tuổi)',
+      relationText: 'Đời 4 • Chi Thứ',
+      burialSite: 'Đang sinh sống tại Hoàng Mai, Hà Nội',
+      isAlive: true
+    },
+    {
+      id: 'hero-9',
+      name: 'Chị Nguyễn Thị Lan',
+      generation: 4,
+      branch: 'Chi Cả (Đời 4)',
+      branchType: 'TRUONG' as const,
+      title: 'Thủ Quỹ Từ Đường',
+      desc: 'Quản lý sổ quỹ kép bất biến, đối soát tài chính minh bạch 100% và tạo mã VietQR cho con cháu cúng tiến.',
+      birthDeath: 'Nhâm Tuất 1982 (45 tuổi)',
+      relationText: 'Đời 4 • Chi Trưởng',
+      burialSite: 'Đang sinh sống tại Thanh Xuân, Hà Nội',
+      isAlive: true
+    },
+    // ĐỜI 5: HẬU DUỆ TIẾP NỐI (THẾ HỆ TRẺ)
+    {
+      id: 'hero-10',
+      name: 'Cháu Nguyễn Văn Hoàng',
+      generation: 5,
+      branch: 'Chi Cả (Đời 5)',
+      branchType: 'TRUONG' as const,
+      title: 'Đích Tôn Đời 5',
+      desc: 'Kỹ sư Công nghệ phần mềm, phụ trách kỹ thuật nhập liệu gia phả số và hỗ trợ các chi nhánh họ tộc cập nhật thông tin.',
+      birthDeath: 'Nhâm Ngọ 2002 (25 tuổi)',
+      relationText: 'Đời 5 • Đích Tôn',
+      burialSite: 'Đang công tác tại Hà Nội',
+      isAlive: true
+    },
+    {
+      id: 'hero-11',
+      name: 'Cháu Nguyễn Minh Quân',
+      generation: 5,
+      branch: 'Chi Hai (Đời 5)',
+      branchType: 'THU' as const,
+      title: 'Bảng Vàng Khuyến Học',
+      desc: 'Đoạt Huy chương Vàng Olympic Toán học trẻ, được vinh danh trên Bảng Vàng Danh Dự tại Từ Đường dòng tộc.',
+      birthDeath: 'Mậu Tý 2008 (19 tuổi)',
+      relationText: 'Đời 5 • Chi Thứ',
+      burialSite: 'Sinh viên Đại học Bách Khoa',
+      isAlive: true
+    },
+    {
+      id: 'hero-12',
+      name: 'Cháu Nguyễn Ngọc Linh',
+      generation: 5,
+      branch: 'Chi Cả (Đời 5)',
+      branchType: 'TRUONG' as const,
+      title: 'Hậu Duệ Đời 5',
+      desc: 'Thành viên thế hệ trẻ mầm non của dòng họ, chăm ngoan học giỏi, tấm gương sáng trong các kỳ tuyên dương gia tộc.',
+      birthDeath: 'Ất Mùi 2015 (12 tuổi)',
+      relationText: 'Đời 5 • Hậu Duệ',
+      burialSite: 'Học sinh Trường THCS Định Công',
+      isAlive: true
     }
   ];
 
   const filteredMembers = heroMembers.filter(m => {
-    if (treeFilter === 'ALL') return true;
-    return m.branchType === treeFilter;
+    const matchBranch = treeFilter === 'ALL' || m.branchType === treeFilter;
+    const matchGen = generationFilter === 'ALL' || m.generation === generationFilter;
+    return matchBranch && matchGen;
   });
 
   // Calculate Kinship Result
@@ -690,34 +808,56 @@ export const LandingPage: React.FC = () => {
                     ĐN
                   </div>
                   <div>
-                    <div className="font-bold text-slate-900 dark:text-white text-sm sm:text-base font-serif">
-                      Đại Tộc Nguyễn Văn (Định Công, Hà Nội)
+                    <div className="font-bold text-slate-900 dark:text-white text-sm sm:text-base font-serif flex items-center gap-2">
+                      <span>Đại Tộc Nguyễn Văn (Định Công, Hà Nội)</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-[#166534] dark:text-emerald-300 font-sans font-bold">
+                        5 Thế Hệ Mẫu
+                      </span>
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">
-                      Mã Tộc: NGUYEN-VAN-HN • 86 Thành Viên • 5 Thế Hệ Phụng Dựng
+                      Mã Tộc: NGUYEN-VAN-HN • 12 Vị Tiên Tổ & Hậu Duệ Tiêu Biểu (Đời 1 ➔ Đời 5)
                     </div>
                   </div>
                 </div>
 
-                {/* Toolbar Controls */}
-                <div className="flex items-center gap-2">
+                {/* Toolbar Controls (Branch & Generation Filters + Zoom) */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Generation Filter Pills */}
+                  <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-[11px] font-bold">
+                    <button
+                      onClick={() => setGenerationFilter('ALL')}
+                      className={`px-2 py-1 rounded-lg transition cursor-pointer ${generationFilter === 'ALL' ? 'bg-[#166534] text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'}`}
+                    >
+                      5 Đời
+                    </button>
+                    {[1, 2, 3, 4, 5].map((gen) => (
+                      <button
+                        key={gen}
+                        onClick={() => setGenerationFilter(gen)}
+                        className={`px-2 py-1 rounded-lg transition cursor-pointer ${generationFilter === gen ? 'bg-[#166534] text-white shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'}`}
+                      >
+                        Đời {gen}
+                      </button>
+                    ))}
+                  </div>
+
                   {/* Branch Filter Pills */}
                   <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 text-[11px] font-bold">
                     <button
                       onClick={() => setTreeFilter('ALL')}
-                      className={`px-2.5 py-1 rounded-lg transition ${treeFilter === 'ALL' ? 'bg-[#166534] text-white shadow-xs' : 'text-slate-600 dark:text-slate-300'}`}
+                      className={`px-2 py-1 rounded-lg transition cursor-pointer ${treeFilter === 'ALL' ? 'bg-amber-700 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300'}`}
                     >
-                      Tất Cả
+                      Tất Cả Chi
                     </button>
                     <button
                       onClick={() => setTreeFilter('TRUONG')}
-                      className={`px-2.5 py-1 rounded-lg transition ${treeFilter === 'TRUONG' ? 'bg-[#166534] text-white shadow-xs' : 'text-slate-600 dark:text-slate-300'}`}
+                      className={`px-2 py-1 rounded-lg transition cursor-pointer ${treeFilter === 'TRUONG' ? 'bg-emerald-700 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300'}`}
                     >
                       Chi Trưởng
                     </button>
                     <button
                       onClick={() => setTreeFilter('THU')}
-                      className={`px-2.5 py-1 rounded-lg transition ${treeFilter === 'THU' ? 'bg-[#166534] text-white shadow-xs' : 'text-slate-600 dark:text-slate-300'}`}
+                      className={`px-2 py-1 rounded-lg transition cursor-pointer ${treeFilter === 'THU' ? 'bg-amber-700 text-white shadow-xs' : 'text-slate-600 dark:text-slate-300'}`}
                     >
                       Chi Thứ
                     </button>
@@ -728,7 +868,7 @@ export const LandingPage: React.FC = () => {
                     <button 
                       onClick={() => setTreeZoom(Math.max(0.8, treeZoom - 0.1))} 
                       title="Thu nhỏ"
-                      className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-300"
+                      className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-300 cursor-pointer"
                     >
                       <ZoomOut className="w-3.5 h-3.5" />
                     </button>
@@ -738,7 +878,7 @@ export const LandingPage: React.FC = () => {
                     <button 
                       onClick={() => setTreeZoom(Math.min(1.3, treeZoom + 0.1))} 
                       title="Phóng to"
-                      className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-300"
+                      className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-600 dark:text-slate-300 cursor-pointer"
                     >
                       <ZoomIn className="w-3.5 h-3.5" />
                     </button>
@@ -746,10 +886,10 @@ export const LandingPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Interactive Tree Nodes Matrix with Zoom Scale */}
+              {/* Interactive Tree Nodes Matrix with Zoom Scale (Full 5 Generations) */}
               <div className="space-y-3 overflow-x-auto pb-2">
                 <div 
-                  className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 transition-transform duration-200 origin-top-left"
+                  className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 transition-transform duration-200 origin-top-left"
                   style={{ transform: `scale(${treeZoom})` }}
                 >
                   {filteredMembers.map((member) => {
@@ -758,26 +898,46 @@ export const LandingPage: React.FC = () => {
                       <button
                         key={member.id}
                         onClick={() => setSelectedHeroMember(member)}
-                        className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                        className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer relative group ${
                           isSelected
-                            ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 shadow-md ring-2 ring-emerald-400/30'
-                            : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-emerald-300'
+                            ? 'bg-gradient-to-br from-emerald-50 via-amber-50/40 to-white dark:from-emerald-950/70 dark:via-slate-800 dark:to-slate-800 border-emerald-500 shadow-lg ring-2 ring-emerald-400/40 scale-102'
+                            : 'bg-white dark:bg-slate-800/80 border-slate-200/90 dark:border-slate-700 hover:border-amber-400 dark:hover:border-emerald-500 hover:shadow-md'
                         }`}
                       >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className={`text-[10px] font-bold uppercase px-1.5 py-0.2 rounded ${
+                        {/* Generation Badge & Status Icon */}
+                        <div className="flex items-center justify-between mb-2">
+                          <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md font-serif ${
                             isSelected
                               ? 'bg-[#166534] text-white'
-                              : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                              : member.generation === 1
+                                ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700'
+                                : member.branchType === 'TRUONG'
+                                  ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-300'
+                                  : 'bg-amber-50 text-amber-800 dark:bg-slate-700 dark:text-amber-300'
                           }`}>
                             {member.relationText}
                           </span>
+
+                          <span title={member.isAlive ? 'Còn sống' : 'Đã khuất (Hương khói phụng thờ)'} className="text-xs">
+                            {member.isAlive ? '🟢' : '🕯️'}
+                          </span>
                         </div>
-                        <div className="font-bold text-xs text-slate-900 dark:text-white truncate font-serif">
-                          {member.name.split(' (')[0]}
+
+                        {/* Member Full Name */}
+                        <div className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate font-serif group-hover:text-[#166534] dark:group-hover:text-emerald-400 transition-colors">
+                          {member.name}
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                          {member.title}
+
+                        {/* Title & Branch Subtitle */}
+                        <div className="flex items-center justify-between mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                          <span className="truncate">{member.title}</span>
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-sans font-bold ${
+                            member.branchType === 'TRUONG' 
+                              ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60'
+                              : 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60'
+                          }`}>
+                            {member.branchType === 'TRUONG' ? 'Trưởng' : 'Thứ'}
+                          </span>
                         </div>
                       </button>
                     );
@@ -785,32 +945,42 @@ export const LandingPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Selected Member Detail Box (Live Popup / Inspection) */}
-              <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-50/80 via-emerald-50/50 to-white dark:from-slate-800 dark:via-slate-800/80 dark:to-slate-800 border border-amber-200/80 dark:border-slate-700 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200/50 dark:border-slate-700 pb-2.5">
-                  <div>
-                    <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base font-serif flex items-center gap-2">
-                      <span>{selectedHeroMember.name}</span>
-                      <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-[#166534] dark:text-emerald-300 font-sans font-bold">
+              {/* Selected Member Detail Box (Live 360° Profile Popup) */}
+              <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-50/90 via-emerald-50/40 to-white dark:from-slate-800 dark:via-slate-800/90 dark:to-slate-800 border-2 border-amber-300/80 dark:border-slate-700 shadow-md space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200/60 dark:border-slate-700 pb-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base font-serif">
+                        {selectedHeroMember.name}
+                      </h3>
+                      <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#166534] text-white font-sans font-bold">
+                        Đời Thứ {selectedHeroMember.generation}
+                      </span>
+                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-sans font-bold ${
+                        selectedHeroMember.branchType === 'TRUONG'
+                          ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/60 dark:text-emerald-200'
+                          : 'bg-amber-100 text-amber-900 dark:bg-amber-900/60 dark:text-amber-200'
+                      }`}>
                         {selectedHeroMember.branch}
                       </span>
-                    </h3>
-                    <div className="text-xs text-amber-800 dark:text-amber-300 font-medium mt-0.5">
-                      Âm/Dương Lịch: {selectedHeroMember.birthDeath} • An Táng: {selectedHeroMember.burialSite}
+                    </div>
+
+                    <div className="text-xs text-amber-900 dark:text-amber-300 font-medium">
+                      📅 Năm Sinh/Tử: <span className="font-semibold">{selectedHeroMember.birthDeath}</span> • 📍 Vị Trí / Mộ Phần: <span className="font-semibold">{selectedHeroMember.burialSite}</span>
                     </div>
                   </div>
 
                   <button
                     onClick={() => setShowSampleTreeModal(true)}
-                    className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-700 text-xs font-bold text-[#166534] dark:text-emerald-400 border border-emerald-200 dark:border-slate-600 hover:bg-emerald-50 shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-[#166534] hover:bg-[#14532D] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-bold shadow-xs hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
                   >
-                    <span>Xem Phả Đồ Toàn Chi</span>
+                    <span>Xem Toàn Bộ Sơ Đồ Phả Hệ</span>
                     <ArrowUpRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
-                <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-                  {selectedHeroMember.desc}
+                <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-serif">
+                  « {selectedHeroMember.desc} »
                 </p>
               </div>
             </div>
