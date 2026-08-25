@@ -389,9 +389,10 @@ export class FundService {
     return mockExpenses;
   }
 
-  static async createExpense(params: CreateExpenseParams): Promise<{
+  static async createDirectExpense(params: CreateExpenseParams): Promise<{
     success: boolean;
     expense?: ExpenseRecord;
+    transactionId?: string;
     error?: string;
   }> {
     // Check fund balance
@@ -399,12 +400,45 @@ export class FundService {
     if (fund && fund.current_balance < params.amount) {
       return {
         success: false,
-        error: `Số dư quỹ không đủ (Số dư hiện tại: ${fund.current_balance.toLocaleString()} ₫, Số tiền chi: ${params.amount.toLocaleString()} ₫)`,
+        error: `Số dư quỹ không đủ (Hiện có: ${fund.current_balance.toLocaleString()} ₫, Cần chi: ${params.amount.toLocaleString()} ₫)`,
       };
     }
 
-    const payload = {
-      family_id: params.familyId || 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase.rpc('fn_record_direct_expense', {
+          p_family_id: params.familyId,
+          p_fund_id: params.fundId,
+          p_category_id: params.categoryId || null,
+          p_title: params.title,
+          p_amount: params.amount,
+          p_recipient_name: params.recipientName,
+          p_expense_date: params.expenseDate,
+          p_payment_method: params.paymentMethod,
+          p_description: params.description,
+          p_receipt_url: params.receiptUrl || null,
+          p_user_id: params.userId || null,
+        });
+
+        if (!error && data?.success) {
+          return {
+            success: true,
+            transactionId: data.transaction_id,
+          };
+        }
+        if (error) {
+          console.warn('RPC fn_record_direct_expense error, falling back to local/REST:', error.message);
+        }
+      } catch (rpcErr) {
+        console.warn('RPC call failed:', rpcErr);
+      }
+    }
+
+    // Direct local / fallback execution
+    const expenseId = `exp-${Date.now()}`;
+    const newExp: ExpenseRecord = {
+      id: expenseId,
+      family_id: params.familyId,
       fund_id: params.fundId,
       category_id: params.categoryId,
       title: params.title,
@@ -414,23 +448,60 @@ export class FundService {
       payment_method: params.paymentMethod,
       description: params.description,
       receipt_url: params.receiptUrl,
-      status: 'PENDING_APPROVAL' as ExpenseStatus,
-    };
-
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('expense_records').insert([payload]).select().single();
-      if (error) return { success: false, error: error.message };
-      return { success: true, expense: data as ExpenseRecord };
-    }
-
-    const newExp: ExpenseRecord = {
-      id: `exp-${Date.now()}`,
-      ...payload,
+      status: 'APPROVED',
+      approved_by: params.userId || 'usr-treasurer',
+      approved_at: new Date().toISOString(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
+
+    // Deduct Fund Balance
+    if (fund) {
+      fund.current_balance -= params.amount;
+      fund.updated_at = new Date().toISOString();
+    }
+
+    // Record into Ledger
+    const txId = `tx-exp-${Date.now()}`;
+    const newTx: FinancialTransaction = {
+      id: txId,
+      family_id: params.familyId,
+      fund_id: params.fundId,
+      expense_id: expenseId,
+      transaction_code: `TX-EXP-${Date.now().toString().slice(-6)}`,
+      transaction_type: 'EXPENSE',
+      amount: params.amount,
+      payment_method: params.paymentMethod,
+      transaction_date: params.expenseDate,
+      description: `Chi: ${params.title} (${params.recipientName})`,
+      receipt_url: params.receiptUrl,
+      status: 'POSTED',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
     mockExpenses.unshift(newExp);
-    return { success: true, expense: newExp };
+    mockTransactions.unshift(newTx);
+
+    return {
+      success: true,
+      expense: newExp,
+      transactionId: txId,
+    };
+  }
+
+  static async createExpense(params: CreateExpenseParams): Promise<{
+    success: boolean;
+    expense?: ExpenseRecord;
+    error?: string;
+  }> {
+    // Mặc định xuất chi trực tiếp để tinh gọn quy trình
+    const res = await this.createDirectExpense(params);
+    return {
+      success: res.success,
+      expense: res.expense,
+      error: res.error,
+    };
   }
 
   static async approveExpense(expenseId: string, familyId: string, approverId: string): Promise<{

@@ -5,28 +5,30 @@ import {
   CheckCircle2,
   XCircle,
   Search,
-  UserCheck,
+  FileText,
+  ExternalLink,
+  ShieldCheck,
+  Eye,
 } from 'lucide-react';
 import { FundService } from '../services/FundService';
 import { ExpenseRecord, Fund, ExpenseCategory } from '../types/database';
 import { CreateExpenseModal } from '../components/finance/CreateExpenseModal';
-import { ExpenseApprovalModal } from '../components/finance/ExpenseApprovalModal';
 import { useAuth } from '../contexts/AuthContext';
 
 export const ExpensesPage: React.FC = () => {
-  const { activeFamily } = useAuth();
+  const { activeFamily, isFamilyAdmin } = useAuth();
   const [expenses, setExpenses] = useState<ExpenseRecord[]>([]);
   const [funds, setFunds] = useState<Fund[]>([]);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Filters
-  const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
+  const [selectedFundId, setSelectedFundId] = useState<string>('ALL');
   const [search, setSearch] = useState('');
 
   // Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [approvalTarget, setApprovalTarget] = useState<ExpenseRecord | null>(null);
+  const [viewingReceiptUrl, setViewingReceiptUrl] = useState<string | null>(null);
 
   const loadData = async () => {
     if (!activeFamily?.id) {
@@ -58,21 +60,18 @@ export const ExpensesPage: React.FC = () => {
     loadData();
   }, [activeFamily?.id]);
 
-  const totalExpenseApproved = expenses
-    .filter((e) => e.status === 'APPROVED')
-    .reduce((sum, e) => sum + Number(e.amount || 0), 0);
-
-  const totalExpensePending = expenses
-    .filter((e) => e.status === 'PENDING_APPROVAL')
+  const totalExpenseDisbursed = expenses
+    .filter((e) => e.status === 'APPROVED' || e.status === 'POSTED')
     .reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
   const filteredExpenses = expenses.filter((exp) => {
-    const matchStatus = selectedStatus === 'ALL' || exp.status === selectedStatus;
+    const matchFund = selectedFundId === 'ALL' || exp.fund_id === selectedFundId;
     const matchSearch =
       !search.trim() ||
       exp.title.toLowerCase().includes(search.toLowerCase()) ||
-      (exp.recipient_name && exp.recipient_name.toLowerCase().includes(search.toLowerCase()));
-    return matchStatus && matchSearch;
+      (exp.recipient_name && exp.recipient_name.toLowerCase().includes(search.toLowerCase())) ||
+      (exp.description && exp.description.toLowerCase().includes(search.toLowerCase()));
+    return matchFund && matchSearch;
   });
 
   return (
@@ -85,46 +84,54 @@ export const ExpensesPage: React.FC = () => {
             <Receipt className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
-              Quản Lý Khoản Chi & Duyệt Chi
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+              <span>Quản Lý Chi Phí & Xuất Quỹ Gia Tộc</span>
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                Minh Bạch Toàn Tộc
+              </span>
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Phê duyệt và giải ngân các khoản chi tiêu phục vụ công việc dòng họ
+              Thủ quỹ & Kế toán ghi sổ xuất quỹ trực tiếp • Mọi thành viên cùng giám sát và đánh giá tính hợp lệ
             </p>
           </div>
         </div>
 
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="px-4 py-2.5 rounded-xl bg-rose-700 hover:bg-rose-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Tạo Đề Xuất Chi Mới</span>
-        </button>
+        {isFamilyAdmin && (
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="px-4 py-2.5 rounded-xl bg-rose-700 hover:bg-rose-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Lập Phiếu Chi & Xuất Quỹ</span>
+          </button>
+        )}
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Đã Phê Duyệt & Xuất Quỹ</div>
-          <div className="text-2xl font-black text-rose-700 mt-1">{totalExpenseApproved.toLocaleString()} ₫</div>
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tổng Tiền Đã Xuất Quỹ</div>
+          <div className="text-2xl font-black text-rose-700 mt-1">{totalExpenseDisbursed.toLocaleString()} ₫</div>
           <div className="text-xs text-slate-400 mt-0.5">
-            {expenses.filter((e) => e.status === 'APPROVED').length} khoản chi đã giải ngân
+            {expenses.length} khoản chi đã ghi sổ cái bất biến
           </div>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5">
-          <div className="text-xs font-bold text-amber-700 uppercase tracking-wider">Đang Chờ Duyệt Chi</div>
-          <div className="text-2xl font-black text-amber-700 mt-1">{totalExpensePending.toLocaleString()} ₫</div>
+          <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Giám Sát Cộng Đồng</span>
+          </div>
+          <div className="text-2xl font-black text-slate-900 mt-1">100% Công Khai</div>
           <div className="text-xs text-slate-400 mt-0.5">
-            {expenses.filter((e) => e.status === 'PENDING_APPROVAL').length} đề xuất cần thẩm định
+            Mọi thành viên đều được tra cứu chứng từ
           </div>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tổng Số Đề Xuất Chi</div>
-          <div className="text-2xl font-bold text-slate-900 mt-1">{expenses.length} hồ sơ</div>
-          <div className="text-xs text-slate-400 mt-0.5">Toàn bộ chi phái & ban ngành</div>
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Số Quỹ Hoạt Động</div>
+          <div className="text-2xl font-bold text-slate-900 mt-1">{funds.length} Quỹ Họ</div>
+          <div className="text-xs text-slate-400 mt-0.5">Quản lý tài chính độc lập từng mục đích</div>
         </div>
       </div>
 
@@ -134,33 +141,27 @@ export const ExpensesPage: React.FC = () => {
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Tìm theo nội dung chi hoặc người nhận..."
+            placeholder="Tìm theo nội dung chi, người nhận hoặc ghi chú chứng từ..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-1 focus:ring-rose-600 focus:bg-white transition"
           />
         </div>
 
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
-          {['ALL', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED'].map((status) => (
-            <button
-              key={status}
-              onClick={() => setSelectedStatus(status)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                selectedStatus === status
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              {status === 'ALL'
-                ? 'Tất cả'
-                : status === 'PENDING_APPROVAL'
-                ? 'Chờ duyệt'
-                : status === 'APPROVED'
-                ? 'Đã duyệt'
-                : 'Đã từ chối'}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-slate-500">Lọc theo Quỹ:</span>
+          <select
+            value={selectedFundId}
+            onChange={(e) => setSelectedFundId(e.target.value)}
+            className="text-xs font-bold px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:ring-1 focus:ring-rose-600"
+          >
+            <option value="ALL">Tất Cả Các Quỹ</option>
+            {funds.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -170,13 +171,13 @@ export const ExpensesPage: React.FC = () => {
           <table className="w-full text-left text-xs text-slate-700">
             <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
               <tr>
-                <th className="py-3.5 px-4">Khoản Chi / Mục Đích</th>
+                <th className="py-3.5 px-4">Khoản Chi / Nội Dung</th>
                 <th className="py-3.5 px-4">Quỹ Chi Trả</th>
                 <th className="py-3.5 px-4 text-right">Số Tiền (VNĐ)</th>
                 <th className="py-3.5 px-4">Ngày Chi</th>
-                <th className="py-3.5 px-4">Đơn Vị Thụ Hưởng</th>
-                <th className="py-3.5 px-4 text-center">Trạng Thái Duyệt</th>
-                <th className="py-3.5 px-4 text-right">Thao Tác</th>
+                <th className="py-3.5 px-4">Bên Nhận / Thụ Hưởng</th>
+                <th className="py-3.5 px-4 text-center">Hóa Đơn / Chứng Từ</th>
+                <th className="py-3.5 px-4 text-right">Trạng Thái Sổ Quỹ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -184,20 +185,18 @@ export const ExpensesPage: React.FC = () => {
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-slate-400">
                     <div className="w-8 h-8 border-2 border-rose-500/20 border-t-rose-600 rounded-full animate-spin mx-auto mb-2" />
-                    Đang tải danh sách khoản chi...
+                    Đang tải danh sách chi tiêu...
                   </td>
                 </tr>
               ) : filteredExpenses.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-slate-400">
-                    Không có đề xuất chi nào trong danh sách
+                    Chưa có khoản chi nào được ghi nhận
                   </td>
                 </tr>
               ) : (
                 filteredExpenses.map((exp) => {
                   const fund = funds.find((f) => f.id === exp.fund_id);
-                  const isApproved = exp.status === 'APPROVED';
-                  const isRejected = exp.status === 'REJECTED';
 
                   return (
                     <tr key={exp.id} className="hover:bg-slate-50/80 transition">
@@ -209,7 +208,7 @@ export const ExpensesPage: React.FC = () => {
                       </td>
                       <td className="py-3.5 px-4">
                         <span className="font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                          {fund?.name || 'Quỹ Chung'}
+                          {fund?.name || 'Quỹ Họ'}
                         </span>
                       </td>
                       <td className="py-3.5 px-4 text-right font-bold text-rose-700 text-sm">
@@ -218,38 +217,23 @@ export const ExpensesPage: React.FC = () => {
                       <td className="py-3.5 px-4 text-slate-600">{exp.expense_date}</td>
                       <td className="py-3.5 px-4 font-semibold text-slate-800">{exp.recipient_name || 'Nhà cung cấp'}</td>
                       <td className="py-3.5 px-4 text-center">
-                        <span
-                          className={`font-bold px-2.5 py-0.5 rounded-full text-[10px] ${
-                            isApproved
-                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                              : isRejected
-                              ? 'bg-rose-50 text-rose-800 border border-rose-200'
-                              : 'bg-amber-50 text-amber-900 border border-amber-300 font-bold'
-                          }`}
-                        >
-                          {isApproved ? 'ĐÃ DUYỆT CHI' : isRejected ? 'ĐÃ TỪ CHỐI' : 'CHỜ DUYỆT'}
-                        </span>
+                        {exp.receipt_url ? (
+                          <button
+                            onClick={() => setViewingReceiptUrl(exp.receipt_url || null)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold hover:bg-blue-100 transition"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Xem Ảnh/HĐ</span>
+                          </button>
+                        ) : (
+                          <span className="text-[11px] text-slate-400 italic">Phiếu chi nội bộ</span>
+                        )}
                       </td>
                       <td className="py-3.5 px-4 text-right">
-                        {isApproved ? (
-                          <span className="text-emerald-700 font-semibold text-xs flex items-center justify-end gap-1">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                            <span>Đã trừ quỹ</span>
-                          </span>
-                        ) : isRejected ? (
-                          <span className="text-rose-700 font-semibold text-xs flex items-center justify-end gap-1">
-                            <XCircle className="w-4 h-4" />
-                            <span>Đã hủy</span>
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => setApprovalTarget(exp)}
-                            className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs transition shadow-xs inline-flex items-center gap-1"
-                          >
-                            <UserCheck className="w-3.5 h-3.5" />
-                            <span>Thẩm Định / Duyệt</span>
-                          </button>
-                        )}
+                        <span className="text-emerald-700 font-semibold text-xs inline-flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>ĐÃ XUẤT QUỸ</span>
+                        </span>
                       </td>
                     </tr>
                   );
@@ -260,6 +244,47 @@ export const ExpensesPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Receipt Image Modal */}
+      {viewingReceiptUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-2xl w-full shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-heritage-green" />
+                <span>Hóa Đơn / Chứng Từ Chi Tiêu Minh Bạch</span>
+              </h3>
+              <button
+                onClick={() => setViewingReceiptUrl(null)}
+                className="text-slate-400 hover:text-slate-700 text-sm font-bold"
+              >
+                Đóng
+              </button>
+            </div>
+            <div className="max-h-[65vh] overflow-auto rounded-xl bg-slate-100 flex items-center justify-center p-2">
+              <img
+                src={viewingReceiptUrl}
+                alt="Chứng từ chi tiêu"
+                className="max-h-[60vh] max-w-full rounded-lg object-contain"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=Chung+Tu+Hop+Le';
+                }}
+              />
+            </div>
+            <div className="text-right">
+              <a
+                href={viewingReceiptUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-blue-600 font-bold hover:underline inline-flex items-center gap-1"
+              >
+                <span>Mở trong tab mới</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modals */}
       <CreateExpenseModal
         isOpen={isCreateModalOpen}
@@ -267,15 +292,6 @@ export const ExpensesPage: React.FC = () => {
         onSuccess={loadData}
         funds={funds}
         categories={categories}
-        familyId={activeFamily?.id}
-      />
-
-      <ExpenseApprovalModal
-        isOpen={Boolean(approvalTarget)}
-        onClose={() => setApprovalTarget(null)}
-        onSuccess={loadData}
-        expense={approvalTarget}
-        funds={funds}
         familyId={activeFamily?.id}
       />
     </div>

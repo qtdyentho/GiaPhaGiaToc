@@ -28,13 +28,13 @@ export const ROLE_LABELS: Record<string, { label: string; description: string; c
     color: 'bg-emerald-100 text-emerald-800 border-emerald-300',
   },
   TREASURER: {
-    label: 'Thủ Quỹ',
-    description: 'Quản lý thu quỹ, ghi nhận đóng góp, lập phiếu chi và theo dõi sổ quỹ.',
+    label: 'Thủ Quỹ / Kế Toán',
+    description: 'Toàn quyền quản lý thu - chi quỹ họ, lập định mức thu, xuất phiếu chi trực tiếp và ghi nhận sổ cái.',
     color: 'bg-teal-100 text-teal-800 border-teal-300',
   },
   APPROVER: {
     label: 'Ban Kiểm Soát',
-    description: 'Phê duyệt các phiếu chi và kiểm toán dòng tiền.',
+    description: 'Tư vấn kiểm toán, thẩm định và đối soát dòng tiền định kỳ.',
     color: 'bg-purple-100 text-purple-800 border-purple-300',
   },
   EVENT_MANAGER: {
@@ -44,12 +44,12 @@ export const ROLE_LABELS: Record<string, { label: string; description: string; c
   },
   MEMBER: {
     label: 'Thành Viên',
-    description: 'Thành viên chính thức, xem gia phả, nhận thông báo và đóng quỹ.',
+    description: 'Thành viên chính thức, xem gia phả, đóng quỹ và cùng giám sát minh bạch toàn bộ thu chi dòng họ.',
     color: 'bg-slate-100 text-slate-700 border-slate-300',
   },
   VIEWER: {
     label: 'Khách Xem',
-    description: 'Chỉ có quyền xem thông tin cơ bản không bảo mật.',
+    description: 'Xem gia phả và theo dõi hoạt động công khai của dòng họ.',
     color: 'bg-gray-100 text-gray-600 border-gray-200',
   },
 };

@@ -13,10 +13,10 @@ export const PermissionsPage: React.FC = () => {
     { module: 'Quản lý thông tin & Cài đặt Gia tộc', owner: true, admin: true, genealogy: false, treasurer: false, approver: false, event: false, member: false, viewer: false },
     { module: 'Thêm, sửa, xóa thành viên & Cây gia phả', owner: true, admin: true, genealogy: true, treasurer: false, approver: false, event: false, member: false, viewer: false },
     { module: 'Lập đợt thu quỹ & Ghi nhận thu tiền', owner: true, admin: true, genealogy: false, treasurer: true, approver: false, event: false, member: false, viewer: false },
-    { module: 'Đề xuất khoản chi từ quỹ', owner: true, admin: true, genealogy: false, treasurer: true, approver: false, event: true, member: false, viewer: false },
-    { module: 'Phê duyệt khoản chi (Ban Kiểm Soát)', owner: true, admin: false, genealogy: false, treasurer: false, approver: true, event: false, member: false, viewer: false },
-    { module: 'Tạo và điều hành sự kiện họ tộc', owner: true, admin: true, genealogy: false, treasurer: false, approver: false, event: true, member: false, viewer: false },
+    { module: 'Lập phiếu chi & Xuất quỹ trực tiếp', owner: true, admin: true, genealogy: false, treasurer: true, approver: false, event: false, member: false, viewer: false },
     { module: 'Xem cây gia phả & Lịch âm ngày giỗ', owner: true, admin: true, genealogy: true, treasurer: true, approver: true, event: true, member: true, viewer: true },
+    { module: 'Giám sát minh bạch Sổ quỹ & Hóa đơn chứng từ (Open Ledger)', owner: true, admin: true, genealogy: true, treasurer: true, approver: true, event: true, member: true, viewer: true },
+    { module: 'Tạo và điều hành sự kiện họ tộc', owner: true, admin: true, genealogy: false, treasurer: false, approver: false, event: true, member: false, viewer: false },
     { module: 'Quản lý gói dịch vụ thuê bao (Billing)', owner: true, admin: true, genealogy: false, treasurer: false, approver: false, event: false, member: false, viewer: false },
   ];
 
@@ -31,7 +31,7 @@ export const PermissionsPage: React.FC = () => {
               8 Cấp Độ Vai Trò
             </span>
           </h1>
-          <p className="text-xs text-slate-500">Phân định rành mạch quyền hạn giữa Trưởng họ, Ban Gia phả, Thủ quỹ và Ban Kiểm soát</p>
+          <p className="text-xs text-slate-500">Phân định rõ ràng quyền hạn: Thủ quỹ & Kế toán trực tiếp thu chi, Toàn bộ thành viên cùng giám sát minh bạch.</p>
         </div>
       </div>
 

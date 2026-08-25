@@ -18,7 +18,7 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
   onSuccess,
   funds,
   categories,
-  familyId = 'fam-0000-0001',
+  familyId = '',
 }) => {
   const [title, setTitle] = useState('');
   const [fundId, setFundId] = useState(funds[0]?.id || '');
@@ -27,6 +27,7 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
   const [recipientName, setRecipientName] = useState('');
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().slice(0, 10));
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('BANK_TRANSFER');
+  const [receiptUrl, setReceiptUrl] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +46,7 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
     }
 
     if (isInsufficient) {
-      setError('Số dư quỹ hiện tại không đủ để đề xuất khoản chi này');
+      setError('Số dư quỹ hiện tại không đủ để xuất khoản chi này');
       return;
     }
 
@@ -53,15 +54,16 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
     setError(null);
 
     try {
-      const res = await FundService.createExpense({
+      const res = await FundService.createDirectExpense({
         familyId,
         fundId,
         categoryId,
         title: title.trim(),
         amount: numAmount,
-        recipientName: recipientName.trim() || 'Nhà cung cấp',
+        recipientName: recipientName.trim() || 'Nhà cung cấp / Bên nhận',
         expenseDate,
         paymentMethod,
+        receiptUrl: receiptUrl.trim() || undefined,
         description: description.trim() || title.trim(),
       });
 
@@ -69,7 +71,7 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
         onSuccess();
         onClose();
       } else {
-        setError(res.error || 'Lỗi khi đề xuất chi');
+        setError(res.error || 'Lỗi khi xuất phiếu chi');
       }
     } catch (err: any) {
       setError(err.message || 'Đã có lỗi xảy ra');
@@ -88,8 +90,8 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
               <Receipt className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">Lập Phiếu Đề Xuất Chi Tiền</h3>
-              <p className="text-xs text-slate-500">Quy trình kiểm soát & phê duyệt minh bạch</p>
+              <h3 className="text-base font-bold text-slate-900">Lập Phiếu Chi & Xuất Quỹ Trực Tiếp</h3>
+              <p className="text-xs text-slate-500">Thủ quỹ & Kế toán ghi sổ • Mọi thành viên cùng giám sát</p>
             </div>
           </div>
           <button
@@ -214,12 +216,23 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
           </div>
 
           <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">Ảnh chụp / Link hóa đơn, chứng từ (Minh bạch)</label>
+            <input
+              type="url"
+              value={receiptUrl}
+              onChange={(e) => setReceiptUrl(e.target.value)}
+              placeholder="https://... hoặc link ảnh hóa đơn / phiếu thu chi"
+              className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-rose-600 focus:bg-white"
+            />
+          </div>
+
+          <div>
             <label className="block text-xs font-bold text-slate-700 mb-1.5">Diễn giải chi tiết</label>
             <textarea
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Ghi chú thêm về chứng từ, hóa đơn kèm theo..."
+              placeholder="Ghi chú thêm về nội dung chi, bên thụ hưởng hoặc số lượng hàng hóa..."
               className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-rose-600 focus:bg-white"
             />
           </div>
@@ -239,11 +252,11 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
               className="px-5 py-2.5 rounded-xl bg-rose-700 hover:bg-rose-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all disabled:opacity-50"
             >
               {loading ? (
-                <span>Đang gửi...</span>
+                <span>Đang xử lý...</span>
               ) : (
                 <>
                   <Check className="w-4 h-4" />
-                  <span>Gửi Đề Xuất Duyệt Chi</span>
+                  <span>Xác Nhận Xuất Quỹ & Ghi Sổ</span>
                 </>
               )}
             </button>

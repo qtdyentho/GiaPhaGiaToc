@@ -463,6 +463,7 @@ CREATE TABLE IF NOT EXISTS financial_transactions (
     event_id UUID REFERENCES events(id) ON DELETE SET NULL,
     member_id UUID REFERENCES members(id) ON DELETE SET NULL,
     assessment_id UUID REFERENCES income_assessments(id) ON DELETE SET NULL,
+    expense_id UUID REFERENCES expense_records(id) ON DELETE SET NULL,
     amount NUMERIC(15, 2) NOT NULL CHECK (amount > 0),
     payment_method payment_method DEFAULT 'CASH' NOT NULL,
     transaction_date DATE NOT NULL,
