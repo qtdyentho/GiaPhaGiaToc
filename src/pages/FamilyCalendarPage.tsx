@@ -52,9 +52,12 @@ const MONTH_COLORS: Record<number, { bg: string; border: string; header: string 
   12: { bg: 'bg-purple-50', border: 'border-purple-200', header: 'from-purple-600 to-purple-700' },
 };
 
-// Build year range: 5 years back → 10 years forward
+// ─── Year Range Configuration (Chuẩn Thiên Văn Học 1900 - 2050) ────────────────
+const MIN_YEAR = 1900;
+const MAX_YEAR = 2050;
 const THIS_YEAR = new Date().getFullYear();
-const YEAR_OPTIONS = Array.from({ length: 16 }, (_, i) => THIS_YEAR - 5 + i);
+const YEAR_OPTIONS = Array.from({ length: MAX_YEAR - MIN_YEAR + 1 }, (_, i) => MIN_YEAR + i);
+
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -606,28 +609,67 @@ export const FamilyCalendarPage: React.FC = () => {
 
         {/* Right: Nav + View toggle */}
         <div className="flex items-center gap-3 flex-wrap">
-          {/* Month nav (chỉ hiện khi MONTH hoặc LIST) */}
+          {/* Month & Year Navigation (Chế độ MONTH hoặc LIST — Hỗ trợ 1900 - 2050) */}
           {viewMode !== 'ANNUAL' && (
-            <div className="flex items-center space-x-2">
-              <button onClick={handlePrevMonth} className="p-2 hover:bg-slate-100 rounded-xl text-slate-600 border border-slate-200 transition">
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <button
+                onClick={handlePrevMonth}
+                aria-label="Tháng trước"
+                className="p-2 hover:bg-slate-100 rounded-xl text-slate-600 border border-slate-200 transition cursor-pointer"
+              >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <div className="px-4 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-center min-w-[120px]">
-                <span className="text-sm font-bold text-slate-900 block leading-tight">
-                  Tháng {currentMonth}/{currentYear}
-                </span>
-                <span className="text-[10px] text-amber-700 font-semibold">
-                  {LUNAR_MONTH_NAMES[todayInfo.lunarMonth]}
-                </span>
+
+              <div className="flex items-center gap-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-center shadow-2xs">
+                {/* Chọn Tháng trực tiếp (1 - 12) */}
+                <select
+                  value={currentMonth}
+                  onChange={(e) => setCurrentMonth(Number(e.target.value))}
+                  aria-label="Chọn tháng"
+                  className="text-xs font-bold text-slate-900 bg-transparent border-none focus:outline-none cursor-pointer py-0.5"
+                >
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                    <option key={m} value={m}>
+                      Tháng {m}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-slate-300 font-bold">/</span>
+                {/* Chọn Năm trực tiếp (1900 - 2050) */}
+                <select
+                  value={currentYear}
+                  onChange={(e) => setCurrentYear(Number(e.target.value))}
+                  aria-label="Chọn năm"
+                  className="text-xs font-black text-slate-900 bg-transparent border-none focus:outline-none cursor-pointer py-0.5"
+                >
+                  {YEAR_OPTIONS.map((y) => (
+                    <option key={y} value={y}>
+                      {y} ({getCanChiYear(y)})
+                    </option>
+                  ))}
+                </select>
               </div>
-              <button onClick={handleNextMonth} className="p-2 hover:bg-slate-100 rounded-xl text-slate-600 border border-slate-200 transition">
+
+              <button
+                onClick={handleNextMonth}
+                aria-label="Tháng sau"
+                className="p-2 hover:bg-slate-100 rounded-xl text-slate-600 border border-slate-200 transition cursor-pointer"
+              >
                 <ChevronRight className="w-4 h-4" />
               </button>
-              <button onClick={handleToday} className="px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 bg-slate-50 border border-slate-200 rounded-xl transition">
-                Hôm nay
-              </button>
+
+              {(currentYear !== todayInfo.solarYear || currentMonth !== todayInfo.solarMonth) && (
+                <button
+                  onClick={handleToday}
+                  className="px-2.5 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 bg-emerald-50 border border-emerald-200 rounded-xl transition cursor-pointer"
+                  title="Về tháng hiện tại"
+                >
+                  Hôm nay
+                </button>
+              )}
             </div>
           )}
+
 
           {/* Year picker (chỉ hiện khi ANNUAL) */}
           {viewMode === 'ANNUAL' && (

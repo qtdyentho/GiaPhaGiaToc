@@ -36,10 +36,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const todayInfo = LunarCalendarService.getTodayInfo();
   const navigate = useNavigate();
 
-  const [isFamilyMenuOpen, setIsFamilyMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
+
 
   // Search State
   const [searchQuery, setSearchQuery] = useState('');
@@ -194,105 +194,44 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </span>
         </button>
 
-        {/* Dynamic Family Switcher */}
-        <div className="relative">
-          <div
-            onClick={() => setIsFamilyMenuOpen(!isFamilyMenuOpen)}
-            role="button"
-            aria-haspopup="true"
-            aria-expanded={isFamilyMenuOpen}
-            aria-label="Chọn dòng họ quản lý"
-            className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/60 cursor-pointer transition select-none shadow-2xs"
-          >
-            <Shield className="w-4 h-4 text-[#166534] dark:text-emerald-400 shrink-0" />
-            <div className="text-left">
-              <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate max-w-[140px] sm:max-w-[200px] block leading-tight">
-                {activeFamily?.name || 'Chưa chọn dòng họ'}
-              </span>
-              <span className="text-[10px] text-slate-400 dark:text-slate-400 font-medium block leading-none mt-0.5">
-                {activeFamily?.code || 'Gia Tộc'}
-              </span>
-            </div>
-            <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${isFamilyMenuOpen ? 'rotate-180' : ''}`} />
+        {/* Brand / Active Family Badge (Tinh gọn, loại bỏ dropdown Đại Tộc rườm rà) */}
+        <Link
+          to="/app/family/settings"
+          title="Cài đặt thông tin Dòng Họ"
+          aria-label={`Dòng họ đang quản lý: ${activeFamily?.name || 'Gia Tộc'}`}
+          className="flex items-center space-x-2.5 bg-slate-50/90 dark:bg-slate-800/80 hover:bg-emerald-50/60 dark:hover:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200/90 dark:border-slate-700/90 hover:border-emerald-300/80 dark:hover:border-emerald-700/80 text-slate-700 dark:text-slate-200 transition-all cursor-pointer select-none shadow-2xs group shrink-0"
+        >
+          <div className="w-7 h-7 rounded-lg bg-emerald-100/80 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800/80 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+            <Shield className="w-4 h-4 text-[#166534] dark:text-emerald-400" />
           </div>
+          <div className="text-left">
+            <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate max-w-[130px] sm:max-w-[200px] block leading-tight group-hover:text-[#166534] dark:group-hover:text-emerald-400 transition-colors">
+              {activeFamily?.name || 'Gia Tộc Việt Nam'}
+            </span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium block leading-none mt-0.5">
+              {activeFamily?.origin_province ? `${activeFamily.origin_province}` : 'Quản trị dòng họ'}
+            </span>
+          </div>
+        </Link>
 
-          {/* Family Dropdown Menu */}
-          {isFamilyMenuOpen && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setIsFamilyMenuOpen(false)} />
-              <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl py-2 z-50 animate-fade-in divide-y divide-slate-100 dark:divide-slate-800 font-sans">
-                <div className="px-3.5 py-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                  <span>Dòng họ quản lý (1)</span>
-                  <span className="text-[10px] text-[#166534] dark:text-emerald-400 font-bold">Chính thức</span>
-                </div>
-                <div className="py-1">
-                  {families.map((fam) => (
-                    <div
-                      key={fam.id}
-                      className="px-3.5 py-2.5 bg-emerald-50/50 dark:bg-emerald-950/30 flex items-center justify-between"
-                    >
-                      <div className="pr-2 truncate">
-                        <div className="font-bold text-[#166534] dark:text-emerald-400 text-xs truncate">
-                          {fam.name}
-                        </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                          {fam.code} • {fam.origin_commune ? `${fam.origin_commune}, ` : ''}{fam.origin_province}
-                        </div>
-                      </div>
-                      <span className="px-2 py-0.5 bg-[#166534] dark:bg-emerald-700 text-white text-[10px] font-bold rounded-full shrink-0 shadow-2xs">
-                        Đang quản lý
-                      </span>
-                    </div>
-                  ))}
-                  {families.length === 0 && (
-                    <div className="p-3 text-center text-xs text-slate-500">
-                      Chưa có dòng họ nào được liên kết
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-2 space-y-1">
-                  {families.length > 0 ? (
-                    <div className="p-2 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 text-center space-y-1.5">
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
-                        Mỗi tài khoản người dùng chỉ được khởi tạo và quản lý duy nhất <strong>1 dòng họ</strong>.
-                      </p>
-                      <Link
-                        to="/app/family/settings"
-                        onClick={() => setIsFamilyMenuOpen(false)}
-                        className="w-full text-center px-3 py-1.5 bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 text-slate-800 dark:text-white text-xs font-bold rounded-lg block transition border border-slate-200 dark:border-slate-600"
-                      >
-                        Cài Đặt Dòng Họ
-                      </Link>
-                    </div>
-                  ) : (
-                    <Link
-                      to="/onboarding/create-family"
-                      onClick={() => setIsFamilyMenuOpen(false)}
-                      className="w-full text-center px-3 py-2 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 text-[#166534] dark:text-emerald-300 text-xs font-bold rounded-xl block transition border border-emerald-200 dark:border-emerald-800"
-                    >
-                      + Khởi Tạo Dòng Họ Mới
-                    </Link>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Interactive Lunar Date Pill (High contrast WCAG AA compliant) */}
+        {/* Thiết kế lại Widget Lịch Âm Dương (Thanh lịch, chuẩn mực, không gãy dòng) */}
         <Link
           to="/app/calendar"
-          aria-label={`Hôm nay ngày ${todayInfo.solarDay} tháng ${todayInfo.solarMonth} năm ${todayInfo.solarYear}, âm lịch ngày ${todayInfo.lunarDay} tháng ${todayInfo.lunarMonth}`}
-          title="Bấm để xem chi tiết Lịch Gia Tộc & Ngày Giỗ"
-          className="hidden md:flex items-center space-x-2 bg-amber-50/90 dark:bg-amber-950/40 hover:bg-amber-100/90 dark:hover:bg-amber-900/50 px-3 py-1.5 rounded-full border border-amber-300/80 dark:border-amber-800/80 text-xs font-medium text-amber-950 dark:text-amber-200 shadow-2xs transition group"
+          aria-label={`Hôm nay ngày ${todayInfo.solarDay}/${todayInfo.solarMonth}/${todayInfo.solarYear}, âm lịch ngày ${todayInfo.lunarDay}/${todayInfo.lunarMonth} năm ${todayInfo.canChiYear}`}
+          title="Bấm để xem Lịch Gia Tộc & Ngày Giỗ Vạn Niên"
+          className="hidden md:flex items-center space-x-2 bg-slate-50/90 dark:bg-slate-800/80 hover:bg-amber-50/60 dark:hover:bg-amber-950/30 px-3 py-1.5 rounded-xl border border-slate-200/90 dark:border-slate-700/90 hover:border-amber-300/80 dark:hover:border-amber-800/80 text-xs text-slate-700 dark:text-slate-200 shadow-2xs transition-all group shrink-0 whitespace-nowrap"
         >
-          <Calendar className="w-3.5 h-3.5 text-amber-800 dark:text-amber-400 group-hover:scale-110 transition" />
-          <span>Hôm nay: {todayInfo.solarDay}/{todayInfo.solarMonth}/{todayInfo.solarYear}</span>
-          <span className="text-amber-500">•</span>
-          <span className="font-bold text-[#166534] dark:text-emerald-400">Âm lịch: {todayInfo.lunarDay}/{todayInfo.lunarMonth} ({todayInfo.canChiYear})</span>
+          <Calendar className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400 group-hover:scale-110 transition-transform shrink-0" />
+          <span className="font-medium text-slate-600 dark:text-slate-300">
+            Hôm nay: <strong className="text-slate-900 dark:text-slate-100 font-semibold">{todayInfo.solarDay}/{todayInfo.solarMonth}/{todayInfo.solarYear}</strong>
+          </span>
+          <span className="h-3.5 w-px bg-slate-200 dark:bg-slate-700 shrink-0" />
+          <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800/80 text-[#166534] dark:text-emerald-300 text-[11px] font-bold px-2 py-0.5 rounded-md">
+            Âm lịch: {todayInfo.lunarDay}/{todayInfo.lunarMonth} ({todayInfo.canChiYear})
+          </span>
         </Link>
       </div>
+
 
       {/* Right: Search, Dark Mode, Notifications, Profile */}
       <div className="flex items-center space-x-2 sm:space-x-3">
