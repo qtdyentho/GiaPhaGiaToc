@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, UserPlus, Heart, Users, Sparkles, Calendar, Moon, Sun, Clock, MapPin } from 'lucide-react';
-import { Member, Generation, Branch, RelationshipType, GenderType, MemberLifeStatus } from '../../types/database';
+import { Member, Generation, Branch, RelationshipType, GenderType, MemberLifeStatus, ChildLineageType } from '../../types/database';
 import { GenealogyService } from '../../services/GenealogyService';
 
 interface AddMemberRelationModalProps {
@@ -26,6 +26,7 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
   branches,
 }) => {
   const [relationType, setRelationType] = useState<RelationshipType>(initialRelationType);
+  const [childLineageType, setChildLineageType] = useState<ChildLineageType>('BIOLOGICAL');
   const [fullName, setFullName] = useState('');
   const [gender, setGender] = useState<GenderType>(initialRelationType === 'SPOUSE' && targetMember?.gender === 'MALE' ? 'FEMALE' : 'MALE');
   const [lifeStatus, setLifeStatus] = useState<MemberLifeStatus>('ALIVE');
@@ -262,6 +263,55 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
                   <Sparkles className="w-5 h-5" />
                   <span className="text-xs">Là Cha / Mẹ</span>
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* Phân Loại Nguồn Gốc Con Cái (Con Đẻ / Con Riêng Của Mẹ / Con Nuôi) */}
+          {relationType === 'CHILD' && (
+            <div className="p-3.5 bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl space-y-2">
+              <label className="block text-xs font-bold text-amber-900 dark:text-amber-200">
+                Phân loại nguồn gốc con cái (Huyết thống / Con riêng của mẹ)
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setChildLineageType('BIOLOGICAL')}
+                  className={`py-2 px-2.5 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer ${
+                    childLineageType === 'BIOLOGICAL'
+                      ? 'bg-white dark:bg-slate-800 border-[#166534] text-[#166534] dark:text-emerald-400 shadow-xs'
+                      : 'bg-amber-100/50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 hover:bg-white'
+                  }`}
+                >
+                  👑 Con Đẻ Trực Hệ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChildLineageType('MATERNAL_STEPCHILD')}
+                  className={`py-2 px-2.5 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer ${
+                    childLineageType === 'MATERNAL_STEPCHILD'
+                      ? 'bg-white dark:bg-slate-800 border-purple-600 text-purple-900 dark:text-purple-300 shadow-xs'
+                      : 'bg-amber-100/50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 hover:bg-white'
+                  }`}
+                >
+                  🤱 Con Riêng Của Mẹ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChildLineageType('ADOPTED')}
+                  className={`py-2 px-2.5 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer ${
+                    childLineageType === 'ADOPTED'
+                      ? 'bg-white dark:bg-slate-800 border-blue-600 text-blue-900 dark:text-blue-300 shadow-xs'
+                      : 'bg-amber-100/50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 hover:bg-white'
+                  }`}
+                >
+                  🤝 Con Nuôi Nhập Tịch
+                </button>
+              </div>
+              <div className="text-[11px] text-amber-800 dark:text-amber-300 italic">
+                {childLineageType === 'BIOLOGICAL' && '• Mang huyết thống trực hệ của gia tộc, thừa kế chi phái chuẩn mực.'}
+                {childLineageType === 'MATERNAL_STEPCHILD' && '• Là con riêng của mẹ mang theo khi kết hôn vào dòng họ. Được lưu danh trân trọng trên phả đồ.'}
+                {childLineageType === 'ADOPTED' && '• Con nuôi được dòng họ làm lễ bái tổ nhận tự và gia nhập gia phả.'}
               </div>
             </div>
           )}

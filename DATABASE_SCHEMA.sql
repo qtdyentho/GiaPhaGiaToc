@@ -48,14 +48,22 @@ EXCEPTION
 END $$;
 
 DO $$ BEGIN
-    CREATE TYPE relationship_type AS ENUM (
-        'PARENT',           -- Cha/Mẹ
-        'CHILD',            -- Con ruột
-        'SPOUSE',           -- Vợ / Chồng
-        'SIBLING',          -- Anh / Chị / Em
-        'ADOPTIVE_PARENT',  -- Cha/Mẹ nuôi
-        'ADOPTED_CHILD',    -- Con nuôi
-        'OTHER'             -- Khác
+    CREATE TYPE spouse_rank_type AS ENUM (
+        'CHINH_THAT',   -- Bà Cả / Nguyên Phối
+        'KE_THAT',      -- Bà Hai / Kế Thất
+        'THAC_THAT',    -- Bà Ba, Bà Tư / Thứ Thiếp
+        'KHONG_RO'      -- Chưa rõ thứ tự
+    );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    CREATE TYPE child_lineage_type AS ENUM (
+        'BIOLOGICAL',           -- Con ruột
+        'MATERNAL_STEPCHILD',   -- Con riêng của vợ
+        'PATERNAL_STEPCHILD',   -- Con riêng của chồng
+        'ADOPTED'               -- Con nuôi
     );
 EXCEPTION
     WHEN duplicate_object THEN null;

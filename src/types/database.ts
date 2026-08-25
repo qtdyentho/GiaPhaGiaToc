@@ -20,6 +20,8 @@ export type MembershipStatus = 'ACTIVE' | 'INVITED' | 'SUSPENDED' | 'LEFT';
 export type GenderType = 'MALE' | 'FEMALE' | 'OTHER';
 export type MemberLifeStatus = 'ALIVE' | 'DECEASED';
 export type RelationshipType = 'PARENT' | 'CHILD' | 'SPOUSE' | 'SIBLING' | 'ADOPTIVE_PARENT' | 'ADOPTED_CHILD' | 'OTHER';
+export type SpouseRankType = 'CHINH_THAT' | 'KE_THAT' | 'THAC_THAT' | 'KHONG_RO';
+export type ChildLineageType = 'BIOLOGICAL' | 'MATERNAL_STEPCHILD' | 'PATERNAL_STEPCHILD' | 'ADOPTED';
 export type RecurrenceType = 'YEARLY_LUNAR' | 'YEARLY_SOLAR' | 'NONE';
 
 export type EventType =
@@ -154,6 +156,19 @@ export interface Branch {
   created_at: string;
 }
 
+export interface FamilyUnion {
+  id: string;
+  family_id: string;
+  husband_id: string;
+  wife_id: string;
+  marriage_order: number;
+  spouse_rank: SpouseRankType;
+  custom_rank_title?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Member {
   id: string;
   family_id: string;
@@ -162,11 +177,18 @@ export interface Member {
   father_id?: string;
   mother_id?: string;
   spouse_id?: string;
+  union_id?: string;
   birth_order?: number;
   generation_index?: number;
   branch_code?: string;
   branch_path?: string;
   is_direct_lineage?: boolean;
+  child_lineage_type?: ChildLineageType;
+  is_stepchild?: boolean;
+  biological_mother_id?: string;
+  biological_father_id?: string;
+  spouse_rank?: SpouseRankType;
+  marriage_order?: number;
   first_name: string;
   last_name: string;
   full_name: string;
