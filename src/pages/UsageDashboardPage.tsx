@@ -14,20 +14,24 @@ import {
 } from 'lucide-react';
 import { UsageService, FeatureUsageSummary } from '../services/billing/UsageService';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 export const UsageDashboardPage: React.FC = () => {
+  const { activeFamily } = useAuth();
   const [metrics, setMetrics] = useState<FeatureUsageSummary[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const familyId = activeFamily?.id || 'fam-0000-0001';
 
   useEffect(() => {
     async function loadData() {
       setLoading(true);
-      const data = await UsageService.getUsageSummary('fam-0000-0001');
+      const data = await UsageService.getUsageSummary(familyId);
       setMetrics(data);
       setLoading(false);
     }
     loadData();
-  }, []);
+  }, [familyId]);
 
   return (
     <div className="space-y-6 animate-fade-in max-w-5xl mx-auto">

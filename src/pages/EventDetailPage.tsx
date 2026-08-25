@@ -15,27 +15,31 @@ import {
 import { EventService, EventBudgetSummary } from '../services/calendar/EventService';
 import { Event } from '../types/database';
 import { formatDate, formatCurrency } from '../lib/utils';
+import { useAuth } from '../contexts/AuthContext';
 
 export const EventDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { activeFamily } = useAuth();
   const [event, setEvent] = useState<Event | null>(null);
   const [budgetSummary, setBudgetSummary] = useState<EventBudgetSummary | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const familyId = activeFamily?.id || 'fam-0000-0001';
 
   useEffect(() => {
     async function loadData() {
       if (!id) return;
       setLoading(true);
       const [evt, budget] = await Promise.all([
-        EventService.getEventById(id, 'fam-0000-0001'),
-        EventService.getEventBudgetSummary(id, 'fam-0000-0001'),
+        EventService.getEventById(id, familyId),
+        EventService.getEventBudgetSummary(id, familyId),
       ]);
       setEvent(evt);
       setBudgetSummary(budget);
       setLoading(false);
     }
     loadData();
-  }, [id]);
+  }, [id, familyId]);
 
   if (loading) {
     return (

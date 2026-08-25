@@ -8,28 +8,35 @@ import {
   Clock,
   ArrowUpRight,
   ShieldCheck,
+  Eye,
 } from 'lucide-react';
 import { InvoiceService } from '../services/billing/InvoiceService';
 import { Invoice } from '../types/database';
 import { formatDate, formatCurrency } from '../lib/utils';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { PrintableInvoiceModal } from '../components/billing/PrintableInvoiceModal';
 
 export const InvoicesPage: React.FC = () => {
+  const { activeFamily } = useAuth();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+
+  const familyId = activeFamily?.id || 'fam-0000-0001';
 
   useEffect(() => {
     async function loadData() {
       setLoading(true);
-      const data = await InvoiceService.getInvoices('fam-0000-0001');
+      const data = await InvoiceService.getInvoices(familyId);
       setInvoices(data);
       setLoading(false);
     }
     loadData();
-  }, []);
+  }, [familyId]);
 
   return (
-    <div className="space-y-6 animate-fade-in max-w-5xl mx-auto">
+    <div className="space-y-6 animate-fade-in max-w-5xl mx-auto font-sans">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -46,7 +53,7 @@ export const InvoicesPage: React.FC = () => {
 
         <Link
           to="/app/billing"
-          className="text-xs font-semibold text-heritage-green hover:underline flex items-center space-x-1"
+          className="text-xs font-semibold text-[#166534] hover:underline flex items-center space-x-1"
         >
           <span>Quản lý gói dịch vụ</span>
           <ArrowUpRight className="w-3.5 h-3.5" />
@@ -79,7 +86,7 @@ export const InvoicesPage: React.FC = () => {
                   <td className="py-4 px-4 font-semibold text-slate-800">
                     {inv.billing_reason || 'Gói Dịch Vụ Gia Tộc (1 Năm)'}
                   </td>
-                  <td className="py-4 px-4 font-black text-heritage-navy">
+                  <td className="py-4 px-4 font-black text-[#1E3A5F]">
                     {formatCurrency(inv.total)}
                   </td>
                   <td className="py-4 px-4">
@@ -95,11 +102,11 @@ export const InvoicesPage: React.FC = () => {
                   </td>
                   <td className="py-4 px-4 text-right">
                     <button
-                      onClick={() => alert(`Tải xuống hóa đơn điện tử ${inv.invoice_number}`)}
-                      className="text-heritage-green hover:underline font-semibold inline-flex items-center space-x-1"
+                      onClick={() => setSelectedInvoice(inv)}
+                      className="text-[#166534] hover:underline font-semibold inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-xs"
                     >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>Tải PDF</span>
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Xem & In HĐ</span>
                     </button>
                   </td>
                 </tr>
@@ -108,6 +115,17 @@ export const InvoicesPage: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Printable Invoice Modal */}
+      <PrintableInvoiceModal
+        isOpen={Boolean(selectedInvoice)}
+        onClose={() => setSelectedInvoice(null)}
+        invoice={selectedInvoice}
+        family={activeFamily}
+      />
     </div>
   );
 };
+
+export default InvoicesPage;
+

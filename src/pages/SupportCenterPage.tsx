@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { LifeBuoy, Send, MessageSquare, CheckCircle, AlertCircle, Clock, ShieldCheck, ThumbsUp } from 'lucide-react';
 import { BetaOperationsService, SupportTicket } from '../services/BetaOperationsService';
 import { Logger } from '../lib/logger';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function SupportCenterPage() {
-  const currentFamilyId = 'fam-0000-0001';
-  const currentUserId = 'usr-001';
+  const { activeFamily, user } = useAuth();
+  const currentFamilyId = activeFamily?.id || 'fam-0000-0001';
+  const currentUserId = user?.id || 'usr-001';
 
-  const [tickets, setTickets] = useState<SupportTicket[]>(BetaOperationsService.getTicketsByFamily(currentFamilyId));
+  const [tickets, setTickets] = useState<SupportTicket[]>(() => BetaOperationsService.getTicketsByFamily(currentFamilyId));
   const [subject, setSubject] = useState('');
   const [category, setCategory] = useState<SupportTicket['category']>('GENEALOGY');
   const [severity, setSeverity] = useState<SupportTicket['severity']>('LOW');
