@@ -7,7 +7,12 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "npx tsx tests/alpha_full_execution.test.ts && npx tsx tests/phase2_financial_core.test.ts && npx tsx tests/lunar_golden_dataset.test.ts && npx tsx tests/phase3_calendar_engine.test.ts && npx tsx tests/phase4_commercial_saas.test.ts && npx tsx tests/phase5_operations_security.test.ts && npx tsx tests/phase6_closed_beta_operations.test.ts && npx tsx tests/billing_manual_confirmation.test.ts && npx tsx tests/clan_pass_security.test.ts && npx tsx tests/security_audit_remediation.test.ts && npx tsx tests/clan_short_link.test.ts && npx tsx tests/strict_tenant_isolation.test.ts"
+    "test": "npx tsx tests/alpha_full_execution.test.ts && npx tsx tests/phase2_financial_core.test.ts && npx tsx tests/lunar_golden_dataset.test.ts && npx tsx tests/phase3_calendar_engine.test.ts && npx tsx tests/phase4_commercial_saas.test.ts && npx tsx tests/phase5_operations_security.test.ts && npx tsx tests/phase6_closed_beta_operations.test.ts && npx tsx tests/billing_manual_confirmation.test.ts && npx tsx tests/clan_pass_security.test.ts && npx tsx tests/security_audit_remediation.test.ts && npx tsx tests/clan_short_link.test.ts && npx tsx tests/strict_tenant_isolation.test.ts && npx tsx tests/cross_tenant_isolation.test.ts",
+
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -24,6 +29,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^22.5.4",
     "@types/react": "^18.3.5",

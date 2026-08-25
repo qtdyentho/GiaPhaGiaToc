@@ -234,17 +234,49 @@ export class FundService {
     assessments?: IncomeAssessment[];
     error?: string;
   }> {
-    // 1. Identify target members
-    let targetMembers = [...mockMembers];
-    if (params.targetScope === 'BRANCH' && params.branchId) {
-      targetMembers = targetMembers.filter((m) => m.branch_id === params.branchId);
-    } else if (params.targetScope === 'GENERATION' && params.generationId) {
-      targetMembers = targetMembers.filter((m) => m.generation_id === params.generationId);
-    } else if (params.targetScope === 'CUSTOM' && params.memberIds) {
-      targetMembers = targetMembers.filter((m) => params.memberIds!.includes(m.id));
+    // 1. Fetch target members — use Supabase when configured (Bug Fix: không dùng global mockMembers)
+    let allMembers = [...mockMembers];
+    if (isSupabaseConfigured()) {
+      let query = supabase
+        .from('members')
+        .select('id, family_id, branch_id, generation_id, full_name, status')
+        .eq('family_id', params.familyId)
+        .eq('status', 'ALIVE');
+
+      if (params.targetScope === 'BRANCH' && params.branchId) {
+        query = query.eq('branch_id', params.branchId);
+      } else if (params.targetScope === 'GENERATION' && params.generationId) {
+        query = query.eq('generation_id', params.generationId);
+      } else if (params.targetScope === 'CUSTOM' && params.memberIds && params.memberIds.length > 0) {
+        query = query.in('id', params.memberIds);
+      }
+
+      const { data, error } = await query;
+      if (error) return { success: false, count: 0, error: `Lỗi truy vấn thành viên: ${error.message}` };
+      // Map DB rows → Member shape (chỉ cần id + life_status cho logic bên dưới)
+      allMembers = (data || []).map((row: any) => ({
+        ...row,
+        life_status: row.status || 'ALIVE',
+        first_name: '',
+        last_name: '',
+        gender: 'MALE',
+        created_at: '',
+        updated_at: '',
+      }));
+    } else {
+      // Mock fallback: filter by familyId + scope
+      allMembers = allMembers.filter((m) => m.family_id === params.familyId);
+      if (params.targetScope === 'BRANCH' && params.branchId) {
+        allMembers = allMembers.filter((m) => m.branch_id === params.branchId);
+      } else if (params.targetScope === 'GENERATION' && params.generationId) {
+        allMembers = allMembers.filter((m) => m.generation_id === params.generationId);
+      } else if (params.targetScope === 'CUSTOM' && params.memberIds) {
+        allMembers = allMembers.filter((m) => params.memberIds!.includes(m.id));
+      }
+      allMembers = allMembers.filter((m) => m.life_status === 'ALIVE');
     }
-    // Only assess living members by default
-    targetMembers = targetMembers.filter((m) => m.life_status === 'ALIVE');
+
+    const targetMembers = allMembers;
 
     if (targetMembers.length === 0) {
       return { success: false, count: 0, error: 'Không tìm thấy thành viên phù hợp với tiêu chí lọc.' };
@@ -256,7 +288,7 @@ export class FundService {
         : params.amountDue;
 
       return {
-        family_id: params.familyId || 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+        family_id: params.familyId,
         fund_id: params.fundId,
         category_id: params.categoryId,
         member_id: m.id,

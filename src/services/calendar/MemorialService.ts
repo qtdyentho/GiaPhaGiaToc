@@ -12,35 +12,49 @@ export class MemorialService {
     if (!familyId) return [];
 
     if (isSupabaseConfigured()) {
+      // JOIN memorial_dates → members → generations + branches để lấy đầy đủ thông tin
       const { data, error } = await supabase
         .from('memorial_dates')
-        .select('*')
+        .select(`
+          *,
+          members (
+            id,
+            full_name,
+            burial_place,
+            generation_id,
+            branch_id,
+            generations ( name, generation_number ),
+            branches ( name )
+          )
+        `)
         .eq('family_id', familyId)
         .order('lunar_month', { ascending: true })
         .order('lunar_day', { ascending: true });
 
       if (!error && data && data.length > 0) {
-        return (data as MemorialDate[]).map((mem) => {
+        return data.map((row: any) => {
           const next = LunarCalendarService.getNextSolarDateForMemorial(
-            mem.lunar_day,
-            mem.lunar_month,
-            mem.is_leap_month
+            row.lunar_day,
+            row.lunar_month,
+            row.is_leap_month
           );
-          const member = mockMembers.find((m) => m.id === mem.member_id);
-          const generation = mockGenerations.find((g) => g.id === member?.generation_id);
-          const branch = mockBranches.find((b) => b.id === member?.branch_id);
+          const member = row.members;
+          const gen = member?.generations;
+          const branch = member?.branches;
 
           return {
-            ...mem,
+            ...row,
+            members: undefined, // loại bỏ nested object khỏi response
             next_solar_date: next.solarDate,
-            generation_name: generation?.name || (member ? 'Đời thứ ' + (member.generation_id || 1) : undefined),
-            generation_number: generation?.generation_number || 1,
+            generation_name: gen?.name || (member ? `Đời thứ ${gen?.generation_number || '?'}` : undefined),
+            generation_number: gen?.generation_number || 1,
             branch_name: branch?.name || 'Chi Trưởng',
             burial_place: member?.burial_place,
-          };
+          } as MemorialDate;
         });
       }
     }
+
 
     // Fallback Mock Store with dynamic next solar date calculation + Auto-sync from deceased genealogy members
     const deceasedMembers = mockMembers.filter(
