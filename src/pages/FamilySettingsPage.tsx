@@ -10,6 +10,7 @@ import { AncestralBannerModal, ANCESTRAL_PRESETS } from '../components/family/An
 import { ClanCovenantModal } from '../components/family/ClanCovenantModal';
 import { PrintableClanQRCodeModal } from '../components/family/PrintableClanQRCodeModal';
 import { ClanPassService } from '../services/security/ClanPassService';
+import { ShortLinkService, ClanShortLink } from '../services/security/ShortLinkService';
 
 export const FamilySettingsPage: React.FC = () => {
   const { activeFamily, updateFamily } = useAuth();
@@ -30,6 +31,15 @@ export const FamilySettingsPage: React.FC = () => {
   const [pinError, setPinError] = useState<string | null>(null);
   const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
 
+  // Unique Short Link states
+  const [shortCode, setShortCode] = useState<string>('nv86');
+  const [customSlug, setCustomSlug] = useState<string>('');
+  const [isEditingSlug, setIsEditingSlug] = useState<boolean>(false);
+  const [isSavingSlug, setIsSavingSlug] = useState<boolean>(false);
+  const [slugSuccess, setSlugSuccess] = useState<boolean>(false);
+  const [slugError, setSlugError] = useState<string | null>(null);
+  const [copiedShortUrl, setCopiedShortUrl] = useState<boolean>(false);
+
   // Form states
   const [familyName, setFamilyName] = useState(currentFamily.name);
   const [ancestralHallAddress, setAncestralHallAddress] = useState(currentFamily.ancestral_hall_address || '');
@@ -40,19 +50,63 @@ export const FamilySettingsPage: React.FC = () => {
   const bannerImageUrl = currentFamily.banner_url || ANCESTRAL_PRESETS[0].url;
 
   useEffect(() => {
-    async function loadPass() {
+    async function loadPassAndShortLink() {
       if (currentFamily?.id) {
         const config = await ClanPassService.getFamilyPassConfig(currentFamily.id);
         setPassToken(config.pass_token);
+
+        let link = await ShortLinkService.getShortLinkByFamily(currentFamily.id);
+        if (!link) {
+          const res = await ShortLinkService.createOrUpdateShortLink(currentFamily.id, config.pass_token);
+          link = res.shortLink || null;
+        }
+        if (link) {
+          setShortCode(link.short_code);
+          setCustomSlug(link.short_code);
+        }
       }
     }
-    loadPass();
+    loadPassAndShortLink();
   }, [currentFamily?.id]);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(`https://giapha.vn/join?token=${generatedToken}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopyShortLink = () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://giaphagiatoc.vn';
+    navigator.clipboard.writeText(`${origin}/c/${shortCode}`);
+    setCopiedShortUrl(true);
+    setTimeout(() => setCopiedShortUrl(false), 2000);
+  };
+
+  const handleSaveCustomSlug = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customSlug.trim()) return;
+
+    setIsSavingSlug(true);
+    setSlugError(null);
+    try {
+      const res = await ShortLinkService.createOrUpdateShortLink(
+        currentFamily.id,
+        passToken,
+        customSlug.trim()
+      );
+      if (res.success && res.shortLink) {
+        setShortCode(res.shortLink.short_code);
+        setSlugSuccess(true);
+        setIsEditingSlug(false);
+        setTimeout(() => setSlugSuccess(false), 3000);
+      } else {
+        setSlugError(res.error || 'Không thể cập nhật mã rút gọn.');
+      }
+    } catch (err: any) {
+      setSlugError(err.message || 'Lỗi khi lưu mã rút gọn.');
+    } finally {
+      setIsSavingSlug(false);
+    }
   };
 
   const handleSavePin = async (e: React.FormEvent) => {
@@ -266,48 +320,103 @@ export const FamilySettingsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Right 1 Col: Mã QR & Hương ước */}
+        {/* Right 1 Col: Mã QR, Link Rút Gọn & Hương ước */}
         <div className="space-y-6">
-          {/* Box A: Mã QR & Mã PIN Tra Cứu Gia Tộc (Định danh không cần tài khoản) */}
+          {/* Box A: Mã QR & Link Rút Gọn Duy Nhất & Mã PIN */}
           <div className="bg-gradient-to-br from-amber-50/90 via-white to-amber-50/40 p-6 rounded-2xl border border-amber-300 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-amber-200/80 pb-2">
               <h2 className="text-sm font-bold text-amber-950 flex items-center space-x-2">
                 <QrCode className="w-4 h-4 text-amber-800" />
-                <span>Mã QR & PIN Tra Cứu Từ Đường</span>
+                <span>Mã QR & Link Rút Gọn Tra Cứu</span>
               </h2>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
-                Bảo Mật SHA-256
+                Duy Nhất & Bảo Mật
               </span>
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed">
-              Con cháu quét mã QR và nhập <strong>Mã PIN bí mật</strong> để xem trọn vẹn Cây Phả Hệ, Ngày Giỗ & <strong>Số Dư Sổ Quỹ</strong> mà không cần đăng ký tài khoản.
+              Con cháu quét mã QR hoặc truy cập <strong>Link Rút Gọn Độc Bản</strong> và nhập <strong>Mã PIN bí mật</strong> để xem Cây Phả Hệ & <strong>Số Dư Sổ Quỹ</strong>.
             </p>
 
-            <div className="p-3 bg-white border border-amber-200 rounded-xl space-y-2 text-center shadow-xs">
-              <div className="text-[11px] font-semibold text-slate-500">Mã Token Định Danh Dòng Họ:</div>
-              <div className="text-xs font-mono font-bold text-[#166534] break-all bg-amber-50/50 p-2 rounded-lg border border-amber-200">
-                {passToken}
+            {/* Unique Short Link Card */}
+            <div className="p-3.5 bg-white border border-amber-300/80 rounded-xl space-y-2.5 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-700 uppercase">Liên Kết Rút Gọn Duy Nhất:</span>
+                <span className="text-[10px] font-bold text-[#166534] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  Đã Che Giấu Token
+                </span>
               </div>
 
-              <div className="pt-1 flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <div className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-[#166534] truncate">
+                  {typeof window !== 'undefined' ? window.location.origin : 'https://giaphagiatoc.vn'}/c/{shortCode}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyShortLink}
+                  className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#166534] text-xs font-bold rounded-xl border border-emerald-200 transition flex items-center gap-1 shrink-0"
+                >
+                  {copiedShortUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedShortUrl ? 'Đã chép' : 'Sao chép'}</span>
+                </button>
+              </div>
+
+              {/* Form Tùy Chỉnh Mã Rút Gọn / Custom Slug */}
+              {!isEditingSlug ? (
+                <button
+                  type="button"
+                  onClick={() => setIsEditingSlug(true)}
+                  className="text-[11px] text-amber-800 hover:text-amber-900 font-semibold underline block text-left"
+                >
+                  + Tùy chỉnh mã link riêng (Ví dụ: ho-nguyen-dong-ky)
+                </button>
+              ) : (
+                <form onSubmit={handleSaveCustomSlug} className="space-y-2 pt-2 border-t border-slate-100">
+                  <label className="block text-[11px] font-bold text-slate-600">Đổi Tên Định Danh Rút Gọn (Chữ thường, số, dấu -):</label>
+                  <div className="flex gap-2">
+                    <div className="flex items-center flex-1 bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 focus-within:border-[#166534]">
+                      <span className="text-[11px] text-slate-400 font-mono">/c/</span>
+                      <input
+                        type="text"
+                        value={customSlug}
+                        onChange={(e) => setCustomSlug(e.target.value)}
+                        placeholder="ten-dong-ho"
+                        className="w-full text-xs font-mono font-bold text-slate-900 focus:outline-none pl-1"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={isSavingSlug || !customSlug.trim()}
+                      className="px-3 py-1.5 bg-[#166534] hover:bg-[#14532D] text-white text-xs font-bold rounded-xl disabled:opacity-50"
+                    >
+                      {isSavingSlug ? '...' : 'Lưu Mã'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingSlug(false)}
+                      className="px-2 py-1.5 text-slate-500 hover:text-slate-700 text-xs"
+                    >
+                      Hủy
+                    </button>
+                  </div>
+                  {slugError && <p className="text-[10px] text-rose-600 font-semibold">{slugError}</p>}
+                </form>
+              )}
+
+              {slugSuccess && (
+                <p className="text-[11px] text-emerald-700 font-bold flex items-center gap-1">
+                  <Check className="w-3.5 h-3.5" /> Đã cập nhật mã link rút gọn độc quyền thành công!
+                </p>
+              )}
+
+              <div className="pt-2 flex flex-col gap-2">
                 <button
                   type="button"
                   onClick={() => setIsQRModalOpen(true)}
                   className="w-full py-2.5 bg-[#166534] hover:bg-[#14532D] text-white text-xs font-bold rounded-xl flex items-center justify-center space-x-1.5 transition shadow-xs"
                 >
                   <QrCode className="w-4 h-4" />
-                  <span>Xem & In Mã QR Dán Từ Đường</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleRegenerateToken}
-                  disabled={isRegenerating}
-                  className="w-full py-1.5 text-slate-500 hover:text-rose-700 text-[11px] font-semibold flex items-center justify-center gap-1 transition"
-                >
-                  <RefreshCw className={`w-3 h-3 ${isRegenerating ? 'animate-spin' : ''}`} />
-                  <span>Thu hồi & Cấp mã QR mới</span>
+                  <span>Xem & In Bản Mã QR Từ Đường</span>
                 </button>
               </div>
             </div>
@@ -406,8 +515,18 @@ export const FamilySettingsPage: React.FC = () => {
         onClose={() => setIsCovenantModalOpen(false)}
         family={currentFamily}
       />
+
+      {/* Modal In Mã QR Dán Từ Đường */}
+      <PrintableClanQRCodeModal
+        isOpen={isQRModalOpen}
+        onClose={() => setIsQRModalOpen(false)}
+        family={currentFamily}
+        passToken={passToken}
+        shortCode={shortCode}
+      />
     </div>
   );
 };
 
 export default FamilySettingsPage;
+

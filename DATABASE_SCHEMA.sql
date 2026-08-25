@@ -1257,6 +1257,30 @@ LEFT JOIN generations g ON mem.generation_id = g.id
 LEFT JOIN branches b ON mem.branch_id = b.id;
 
 -- ------------------------------------------------------------
+-- 8.5. UNIQUE CLAN SHORT LINKS
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.clan_short_links (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    family_id UUID NOT NULL REFERENCES public.families(id) ON DELETE CASCADE,
+    pass_token TEXT NOT NULL,
+    short_code VARCHAR(50) NOT NULL,
+    is_custom BOOLEAN DEFAULT false,
+    clicks_count INTEGER DEFAULT 0,
+    last_accessed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
+    CONSTRAINT uq_clan_short_links_code UNIQUE (short_code)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_clan_short_links_lower_code 
+ON public.clan_short_links (LOWER(short_code));
+
+ALTER TABLE public.clan_short_links ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY clan_short_links_public_read ON public.clan_short_links
+    FOR SELECT USING (true);
+
+-- ------------------------------------------------------------
 -- 9. SEED DATA DEVELOPMENT & TESTING
 -- ------------------------------------------------------------
 

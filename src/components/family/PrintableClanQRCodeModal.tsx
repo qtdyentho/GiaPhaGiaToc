@@ -7,6 +7,7 @@ interface PrintableClanQRCodeModalProps {
   onClose: () => void;
   family: Family;
   passToken: string;
+  shortCode?: string;
 }
 
 export const PrintableClanQRCodeModal: React.FC<PrintableClanQRCodeModalProps> = ({
@@ -14,13 +15,14 @@ export const PrintableClanQRCodeModal: React.FC<PrintableClanQRCodeModalProps> =
   onClose,
   family,
   passToken,
+  shortCode,
 }) => {
   const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
 
   const currentHost = typeof window !== 'undefined' ? window.location.origin : 'https://giaphagiatoc.vn';
-  const passUrl = `${currentHost}/clan-pass/${passToken}`;
+  const passUrl = shortCode ? `${currentHost}/c/${shortCode}` : `${currentHost}/clan-pass/${passToken}`;
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(passUrl)}&margin=10`;
 
   const handleCopyLink = () => {

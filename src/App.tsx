@@ -15,8 +15,9 @@ const HelpPage = lazy(() => import('./pages/HelpPage').then(m => ({ default: m.H
 const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
 const RegisterPage = lazy(() => import('./pages/RegisterPage').then(m => ({ default: m.RegisterPage })));
 const InviteRegisterPage = lazy(() => import('./pages/InviteRegisterPage').then(m => ({ default: m.InviteRegisterPage })));
-const DevTestLoginPage = lazy(() => import('./pages/DevTestLoginPage').then(m => ({ default: m.DevTestLoginPage })));
 const ClanPassUnlockPage = lazy(() => import('./pages/ClanPassUnlockPage').then(m => ({ default: m.ClanPassUnlockPage })));
+const ShortLinkRedirectPage = lazy(() => import('./pages/ShortLinkRedirectPage').then(m => ({ default: m.ShortLinkRedirectPage })));
+const DevTestLoginPage = lazy(() => import('./pages/DevTestLoginPage').then(m => ({ default: m.DevTestLoginPage })));
 
 // ─── Onboarding & Core Family Pages (Lazy Loaded) ─────────────────────────────
 const CreateFamilyPage = lazy(() => import('./pages/CreateFamilyPage').then(m => ({ default: m.CreateFamilyPage })));
@@ -87,6 +88,7 @@ export const App: React.FC = () => {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/invite/:code" element={<InviteRegisterPage />} />
+              <Route path="/c/:code" element={<ShortLinkRedirectPage />} />
               <Route path="/clan-pass/:token" element={<ClanPassUnlockPage />} />
               <Route path="/qr/:token" element={<ClanPassUnlockPage />} />
 
