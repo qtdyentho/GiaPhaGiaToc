@@ -47,3 +47,6 @@ serviceAccountKey.json
 *.sln
 *.sw?
 supabase/.temp/
+
+# Scratch test files (may contain local secrets)
+scratch/

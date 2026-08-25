@@ -281,10 +281,23 @@ END;
 $$;
 
 -- ==============================================================================
--- PHẦN 5: BẢO MẬT & CÁCH LY DỮ LIỆU ĐA GIA TỘC (SECURITY REMEDIATION)
+-- PHẦN 5: BẢO MẬT & CÁCH LY DỮ LIỆU ĐA GIA TỘC (STRICT TENANT ISOLATION)
 -- ==============================================================================
 
--- 1. Helper function lấy danh sách family_id active của user
+-- 1. Helper function kiểm tra Super Admin
+CREATE OR REPLACE FUNCTION public.is_superadmin()
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+AS $$
+    SELECT COALESCE(
+        (SELECT is_superadmin FROM public.profiles WHERE id = auth.uid()),
+        false
+    );
+$$;
+
+-- 2. Helper function lấy danh sách family_id active của user
 CREATE OR REPLACE FUNCTION public.current_user_family_ids()
 RETURNS UUID[]
 LANGUAGE sql
@@ -300,7 +313,7 @@ AS $$
       AND status = 'ACTIVE';
 $$;
 
--- 2. Tenant-isolated RLS cho Profiles
+-- 3. Tenant-isolated RLS cho Profiles (Chỉ xem bản thân hoặc thành viên cùng gia tộc)
 DROP POLICY IF EXISTS profiles_read_all ON public.profiles;
 DROP POLICY IF EXISTS profiles_read_tenant ON public.profiles;
 
@@ -308,6 +321,7 @@ CREATE POLICY profiles_read_tenant ON public.profiles
     FOR SELECT TO authenticated
     USING (
         id = auth.uid()
+        OR public.is_superadmin()
         OR id IN (
             SELECT user_id FROM public.family_memberships
             WHERE family_id IN (SELECT unnest(public.current_user_family_ids()))
@@ -315,21 +329,53 @@ CREATE POLICY profiles_read_tenant ON public.profiles
         )
     );
 
--- 3. Write RLS Policies có điều kiện RBAC
-DROP POLICY IF EXISTS contributions_insert_member ON public.contributions;
-CREATE POLICY contributions_insert_member ON public.contributions
-    FOR INSERT TO authenticated
-    WITH CHECK (
-        family_id IN (SELECT unnest(public.current_user_family_ids()))
+-- 4. Tenant-isolated RLS cho Families
+DROP POLICY IF EXISTS families_select_member ON public.families;
+CREATE POLICY families_select_member ON public.families
+    FOR SELECT TO authenticated, anon
+    USING (
+        id IN (SELECT unnest(public.current_user_family_ids()))
+        OR created_by = auth.uid()
+        OR public.is_superadmin()
+        OR id IN (SELECT family_id FROM public.clan_access_passes WHERE is_active = true)
     );
 
-DROP POLICY IF EXISTS sponsorships_insert_member ON public.sponsorships;
-CREATE POLICY sponsorships_insert_member ON public.sponsorships
-    FOR INSERT TO authenticated
-    WITH CHECK (
-        family_id IN (SELECT unnest(public.current_user_family_ids()))
-    );
+-- 5. Kích hoạt & áp dụng chính sách Tenant Isolation cho TOÀN BỘ các bảng phụ thuộc family_id
+DO $$
+DECLARE
+    tbl text;
+BEGIN
+    FOR tbl IN SELECT unnest(ARRAY[
+        'generations', 'branches', 'members', 'member_relationships', 'memorial_dates',
+        'events', 'event_reminders', 'funds', 'income_categories', 'expense_categories',
+        'income_assessments', 'financial_transactions', 'expense_records', 'contributions',
+        'sponsorships', 'subscriptions', 'subscription_events', 'trial_periods',
+        'usage_counters', 'usage_events', 'invoices', 'payments', 'refunds',
+        'billing_audit_logs', 'audit_logs', 'clan_access_passes', 'clan_short_links'
+    ]) LOOP
+        -- Kích hoạt RLS
+        EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY;', tbl);
 
+        -- SELECT Policy: Chỉ xem dữ liệu thuộc family_id của mình hoặc Super Admin
+        EXECUTE format('DROP POLICY IF EXISTS %I_tenant_select ON public.%I;', tbl, tbl);
+        EXECUTE format('CREATE POLICY %I_tenant_select ON public.%I FOR SELECT TO authenticated USING (
+            family_id IN (SELECT unnest(public.current_user_family_ids()))
+            OR public.is_superadmin()
+        );', tbl, tbl);
+
+        -- INSERT/UPDATE/DELETE Policy: Chỉ thao tác trên family_id của mình hoặc Super Admin
+        EXECUTE format('DROP POLICY IF EXISTS %I_tenant_write ON public.%I;', tbl, tbl);
+        EXECUTE format('CREATE POLICY %I_tenant_write ON public.%I FOR ALL TO authenticated USING (
+            family_id IN (SELECT unnest(public.current_user_family_ids()))
+            OR public.is_superadmin()
+        ) WITH CHECK (
+            family_id IN (SELECT unnest(public.current_user_family_ids()))
+            OR public.is_superadmin()
+        );', tbl, tbl);
+    END LOOP;
+END $$;
+
+-- 6. Write RLS Policies có điều kiện RBAC cho Invitation Tokens
 DROP POLICY IF EXISTS invitation_tokens_insert_admin ON public.invitation_tokens;
 CREATE POLICY invitation_tokens_insert_admin ON public.invitation_tokens
     FOR INSERT TO authenticated
@@ -341,8 +387,9 @@ CREATE POLICY invitation_tokens_insert_admin ON public.invitation_tokens
               AND family_memberships.role IN ('OWNER', 'ADMIN')
               AND family_memberships.status = 'ACTIVE'
         )
+        OR public.is_superadmin()
     );
 
 -- ==============================================================================
--- KẾT THÚC MIGRATION CONSOLIDATED (TẤT CẢ TEST SẴN SÀNG)
+-- KẾT THÚC MIGRATION CONSOLIDATED (BẢO VỆ DỮ LIỆU ĐA GIA TỘC TRIỆT ĐỂ)
 -- ==============================================================================

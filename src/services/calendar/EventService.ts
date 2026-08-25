@@ -18,7 +18,7 @@ export class EventService {
    * Lấy danh sách sự kiện họ tộc có hỗ trợ bộ lọc
    */
   static async getEvents(
-    familyId: string = 'fam-0000-0001',
+    familyId?: string,
     filters?: {
       branchId?: string;
       eventType?: string;
@@ -27,6 +27,8 @@ export class EventService {
       search?: string;
     }
   ): Promise<Event[]> {
+    if (!familyId) return [];
+
     if (isSupabaseConfigured()) {
       let query = supabase
         .from('events')
@@ -249,7 +251,8 @@ export class EventService {
   /**
    * Lấy danh sách sự kiện sắp diễn ra
    */
-  static async getUpcomingEvents(familyId: string = 'fam-0000-0001', limit: number = 5): Promise<Event[]> {
+  static async getUpcomingEvents(familyId?: string, limit: number = 5): Promise<Event[]> {
+    if (!familyId) return [];
     const list = await this.getEvents(familyId);
     const today = new Date().toISOString().split('T')[0];
     return list
@@ -262,7 +265,17 @@ export class EventService {
    * Tính toán ngân sách sự kiện từ Sổ Cái Bất Biến (BR-EVENT-004)
    * Đọc các khoản EXPENSE trạng thái POSTED liên kết với eventId
    */
-  static async getEventBudgetSummary(eventId: string, familyId: string = 'fam-0000-0001'): Promise<EventBudgetSummary> {
+  static async getEventBudgetSummary(eventId: string, familyId?: string): Promise<EventBudgetSummary> {
+    if (!familyId) {
+      return {
+        eventId,
+        title: 'Sự kiện',
+        estimatedBudget: 0,
+        spentAmount: 0,
+        remainingBudget: 0,
+        transactions: [],
+      };
+    }
     const event = await this.getEventById(eventId, familyId);
     const estimatedBudget = event?.estimated_budget || 0;
 

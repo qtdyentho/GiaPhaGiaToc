@@ -23,8 +23,8 @@ export const NotificationsPage: React.FC = () => {
 
   const filteredNotifications = notifications.filter((notif) => {
     if (filter === 'UNREAD') return !notif.is_read;
-    if (filter === 'CALENDAR') return notif.type === 'MEMORIAL' || notif.type === 'EVENT';
-    if (filter === 'FINANCE') return notif.type === 'FINANCE' || notif.type === 'CONTRIBUTION';
+    if (filter === 'CALENDAR') return notif.type === 'MEMORIAL_REMINDER' || notif.type === 'EVENT_REMINDER';
+    if (filter === 'FINANCE') return notif.type === 'PAYMENT_DUE' || notif.type === 'EXPENSE_APPROVAL_REQUEST' || notif.type === 'TRANSACTION_POSTED';
     return true;
   });
 
@@ -32,9 +32,14 @@ export const NotificationsPage: React.FC = () => {
 
   const getIcon = (type?: string) => {
     switch (type) {
+      case 'PAYMENT_DUE':
+      case 'EXPENSE_APPROVAL_REQUEST':
+      case 'TRANSACTION_POSTED':
       case 'FINANCE':
       case 'CONTRIBUTION':
         return <Wallet className="w-4 h-4 text-emerald-600" />;
+      case 'MEMORIAL_REMINDER':
+      case 'EVENT_REMINDER':
       case 'MEMORIAL':
       case 'EVENT':
         return <Calendar className="w-4 h-4 text-amber-600" />;
@@ -129,9 +134,9 @@ export const NotificationsPage: React.FC = () => {
               <div className="flex items-start gap-3 flex-1">
                 <div
                   className={`p-2.5 rounded-xl shrink-0 mt-0.5 border ${
-                    notif.type === 'FINANCE'
+                    notif.type === 'PAYMENT_DUE' || notif.type === 'EXPENSE_APPROVAL_REQUEST' || notif.type === 'TRANSACTION_POSTED'
                       ? 'bg-emerald-50 border-emerald-200'
-                      : notif.type === 'MEMORIAL'
+                      : notif.type === 'MEMORIAL_REMINDER' || notif.type === 'EVENT_REMINDER'
                       ? 'bg-amber-50 border-amber-200'
                       : 'bg-sky-50 border-sky-200'
                   }`}

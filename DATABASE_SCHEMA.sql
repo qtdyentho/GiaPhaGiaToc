@@ -843,7 +843,7 @@ BEGIN
     NEW.updated_at = TIMEZONE('utc'::text, NOW());
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SET search_path = public, pg_temp;
 
 DO $$ 
 DECLARE
@@ -947,7 +947,7 @@ BEGIN
 
     RETURN v_tx_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- HÀM 2: Duyệt khoản chi & trừ tiền quỹ nguyên tử
 CREATE OR REPLACE FUNCTION approve_expense_record(
@@ -1021,7 +1021,7 @@ BEGIN
 
     RETURN v_tx_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- HÀM 3: Bút toán đảo ngược (Reversal Transaction) - Tuyệt đối không xóa vật lý
 CREATE OR REPLACE FUNCTION reverse_financial_transaction(
@@ -1090,7 +1090,7 @@ BEGIN
 
     RETURN v_rev_tx_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- ------------------------------------------------------------
 -- 7. ROW LEVEL SECURITY (RLS) POLICIES
@@ -1177,7 +1177,7 @@ CREATE POLICY plans_select_public ON plans FOR SELECT TO authenticated, anon USI
 CREATE POLICY plan_versions_select_current ON plan_versions FOR SELECT TO authenticated, anon USING (is_current = true);
 CREATE POLICY plan_features_select_enabled ON plan_features FOR SELECT TO authenticated, anon USING (is_enabled = true);
 
--- RLS Policy mẫu cho các bảng Tenant phụ thuộc family_id
+-- RLS Policy cho các bảng Tenant phụ thuộc family_id (SELECT + WRITE)
 DO $$
 DECLARE
     tbl text;
@@ -1188,27 +1188,37 @@ BEGIN
         'income_assessments', 'financial_transactions', 'expense_records', 'contributions',
         'sponsorships', 'subscriptions', 'subscription_events', 'trial_periods',
         'usage_counters', 'usage_events', 'invoices', 'payments', 'refunds',
-        'billing_audit_logs', 'audit_logs'
+        'billing_audit_logs', 'audit_logs', 'clan_access_passes', 'clan_short_links'
     ]) LOOP
-        EXECUTE format('DROP POLICY IF EXISTS %I_tenant_select ON %I', tbl, tbl);
+        EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY;', tbl);
+
+        EXECUTE format('DROP POLICY IF EXISTS %I_tenant_select ON %I;', tbl, tbl);
         EXECUTE format('CREATE POLICY %I_tenant_select ON %I FOR SELECT TO authenticated USING (
-            family_id IN (SELECT family_id FROM family_memberships WHERE user_id = auth.uid() AND status = ''ACTIVE'')
-        )', tbl, tbl);
+            family_id IN (SELECT unnest(public.current_user_family_ids()))
+            OR public.is_superadmin()
+        );', tbl, tbl);
+
+        EXECUTE format('DROP POLICY IF EXISTS %I_tenant_write ON %I;', tbl, tbl);
+        EXECUTE format('CREATE POLICY %I_tenant_write ON %I FOR ALL TO authenticated USING (
+            family_id IN (SELECT unnest(public.current_user_family_ids()))
+            OR public.is_superadmin()
+        ) WITH CHECK (
+            family_id IN (SELECT unnest(public.current_user_family_ids()))
+            OR public.is_superadmin()
+        );', tbl, tbl);
     END LOOP;
 END $$;
 
 -- Policy cho Invoice Items
 CREATE POLICY invoice_items_select ON invoice_items FOR SELECT TO authenticated USING (
-    invoice_id IN (SELECT id FROM invoices WHERE family_id IN (
-        SELECT family_id FROM family_memberships WHERE user_id = auth.uid() AND status = 'ACTIVE'
-    ))
+    invoice_id IN (SELECT id FROM invoices WHERE family_id IN (SELECT unnest(public.current_user_family_ids())))
+    OR public.is_superadmin()
 );
 
 -- Policy cho Payment Events
 CREATE POLICY payment_events_select ON payment_events FOR SELECT TO authenticated USING (
-    payment_id IN (SELECT id FROM payments WHERE family_id IN (
-        SELECT family_id FROM family_memberships WHERE user_id = auth.uid() AND status = 'ACTIVE'
-    ))
+    payment_id IN (SELECT id FROM payments WHERE family_id IN (SELECT unnest(public.current_user_family_ids())))
+    OR public.is_superadmin()
 );
 
 -- Policy ghi nhận cho MEMBERSHIP

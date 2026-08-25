@@ -159,16 +159,12 @@ export class FundService {
   // 1. QUẢN LÝ QUỸ (FUNDS)
   // ==========================================
   static async getFunds(familyId?: string): Promise<Fund[]> {
+    if (!familyId) return [];
     if (isSupabaseConfigured()) {
-      let query = supabase.from('funds').select('*').order('created_at', { ascending: true });
-      if (familyId) query = query.eq('family_id', familyId);
-      const { data, error } = await query;
+      const { data, error } = await supabase.from('funds').select('*').eq('family_id', familyId).order('created_at', { ascending: true });
       if (!error && data && data.length > 0) return data as Fund[];
     }
-    if (familyId) {
-      return mockFunds.filter((f) => f.family_id === familyId);
-    }
-    return mockFunds;
+    return mockFunds.filter((f) => f.family_id === familyId);
   }
 
   static async createFund(fund: Partial<Fund>): Promise<{ success: boolean; fund?: Fund; error?: string }> {
@@ -224,16 +220,12 @@ export class FundService {
   // 3. ĐỊNH MỨC NGHĨA VỤ THU (ASSESSMENTS)
   // ==========================================
   static async getAssessments(familyId?: string): Promise<IncomeAssessment[]> {
+    if (!familyId) return [];
     if (isSupabaseConfigured()) {
-      let query = supabase.from('income_assessments').select('*').order('created_at', { ascending: false });
-      if (familyId) query = query.eq('family_id', familyId);
-      const { data, error } = await query;
+      const { data, error } = await supabase.from('income_assessments').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
       if (!error && data && data.length > 0) return data as IncomeAssessment[];
     }
-    if (familyId) {
-      return mockAssessments.filter((a) => a.family_id === familyId);
-    }
-    return mockAssessments;
+    return mockAssessments.filter((a) => a.family_id === familyId);
   }
 
   static async createBulkAssessment(params: BulkAssessmentParams): Promise<{
@@ -377,16 +369,12 @@ export class FundService {
   // 5. CHI PHÍ & QUY TRÌNH DUYỆT CHI (EXPENSES)
   // ==========================================
   static async getExpenses(familyId?: string): Promise<ExpenseRecord[]> {
+    if (!familyId) return [];
     if (isSupabaseConfigured()) {
-      let query = supabase.from('expense_records').select('*').order('created_at', { ascending: false });
-      if (familyId) query = query.eq('family_id', familyId);
-      const { data, error } = await query;
+      const { data, error } = await supabase.from('expense_records').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
       if (!error && data && data.length > 0) return data as ExpenseRecord[];
     }
-    if (familyId) {
-      return mockExpenses.filter((e) => e.family_id === familyId);
-    }
-    return mockExpenses;
+    return mockExpenses.filter((e) => e.family_id === familyId);
   }
 
   static async createDirectExpense(params: CreateExpenseParams): Promise<{
@@ -568,17 +556,16 @@ export class FundService {
   // 6. IMMUTABLE LEDGER & REVERSALS (BR-REV-001)
   // ==========================================
   static async getLedger(familyId?: string, filters?: { fundId?: string; type?: TransactionType }): Promise<FinancialTransaction[]> {
+    if (!familyId) return [];
     if (isSupabaseConfigured()) {
-      let query = supabase.from('financial_transactions').select('*').order('created_at', { ascending: false });
-      if (familyId) query = query.eq('family_id', familyId);
+      let query = supabase.from('financial_transactions').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
       if (filters?.fundId) query = query.eq('fund_id', filters.fundId);
       if (filters?.type) query = query.eq('transaction_type', filters.type);
       const { data, error } = await query;
       if (!error && data && data.length > 0) return data as FinancialTransaction[];
     }
 
-    let result = [...mockTransactions];
-    if (familyId) result = result.filter((t) => t.family_id === familyId);
+    let result = mockTransactions.filter((t) => t.family_id === familyId);
     if (filters?.fundId) result = result.filter((t) => t.fund_id === filters.fundId);
     if (filters?.type) result = result.filter((t) => t.transaction_type === filters.type);
     return result;
@@ -660,16 +647,12 @@ export class FundService {
   // 7. ĐÓNG GÓP & TÀI TRỢ (CONTRIBUTIONS & SPONSORSHIPS)
   // ==========================================
   static async getContributions(familyId?: string): Promise<Contribution[]> {
+    if (!familyId) return [];
     if (isSupabaseConfigured()) {
-      let query = supabase.from('contributions').select('*').order('created_at', { ascending: false });
-      if (familyId) query = query.eq('family_id', familyId);
-      const { data, error } = await query;
+      const { data, error } = await supabase.from('contributions').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
       if (!error && data && data.length > 0) return data as Contribution[];
     }
-    if (familyId) {
-      return mockContributions.filter((c) => c.family_id === familyId);
-    }
-    return mockContributions;
+    return mockContributions.filter((c) => c.family_id === familyId);
   }
 
   static async createContribution(contribution: Partial<Contribution>): Promise<{

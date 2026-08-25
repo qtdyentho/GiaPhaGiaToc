@@ -74,6 +74,23 @@ export class ClanPassService {
   }
 
   /**
+   * Lấy thông tin Clan Access Pass theo Family ID (hỗ trợ kiểm tra và phân quyền)
+   */
+  static async getClanPass(familyId?: string): Promise<ClanAccessPass | null> {
+    if (!familyId) return null;
+    if (isSupabaseConfigured()) {
+      const { data, error } = await supabase
+        .from('clan_access_passes')
+        .select('*')
+        .eq('family_id', familyId)
+        .single();
+      if (!error && data) return data as ClanAccessPass;
+    }
+    const found = mockPasses.find((p) => p.family_id === familyId);
+    return found || null;
+  }
+
+  /**
    * Lấy thông tin Pass theo Token (Công khai salt để client tính hash)
    */
   static async getPassByToken(passToken: string): Promise<{
@@ -118,14 +135,9 @@ export class ClanPassService {
     // Local / In-memory fallback
     const found = mockPasses.find((p) => p.pass_token === passToken && p.is_active);
     if (!found) {
-      // If token is general format, associate with default mock family
       return {
-        success: true,
-        family_id: mockFamily.id,
-        family_name: mockFamily.name,
-        pin_salt: MOCK_SALT,
-        banner_url: mockFamily.banner_url,
-        is_locked: false,
+        success: false,
+        error: 'Mã QR không hợp lệ hoặc đã bị thu hồi.',
       };
     }
 
@@ -385,6 +397,21 @@ export class ClanPassService {
     return {
       pass_token: pass?.pass_token || `CP-FAM-DEMO-${familyId.slice(0, 8)}`,
       has_pin: true,
+    };
+  }
+
+  /**
+   * Xác thực mã PIN và trả về kết quả kèm familyId
+   */
+  static async verifyClanPIN(
+    passToken: string,
+    inputPin: string
+  ): Promise<{ success: boolean; familyId?: string; error?: string }> {
+    const res = await this.verifyClanPass(passToken, inputPin);
+    return {
+      success: res.success,
+      familyId: res.session?.family_id,
+      error: res.error,
     };
   }
 }

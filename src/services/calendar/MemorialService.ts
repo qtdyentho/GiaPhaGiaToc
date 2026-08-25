@@ -8,7 +8,9 @@ export class MemorialService {
   /**
    * Lấy danh sách ngày giỗ theo gia tộc kèm thông tin chi cành và thế hệ
    */
-  static async getMemorials(familyId: string = 'fam-0000-0001'): Promise<MemorialDate[]> {
+  static async getMemorials(familyId?: string): Promise<MemorialDate[]> {
+    if (!familyId) return [];
+
     if (isSupabaseConfigured()) {
       const { data, error } = await supabase
         .from('memorial_dates')
@@ -88,7 +90,7 @@ export class MemorialService {
    * Lấy danh sách các ngày giỗ sắp tới (sắp xếp theo số ngày còn lại)
    */
   static async getUpcomingMemorials(
-    familyId: string = 'fam-0000-0001',
+    familyId?: string,
     limit: number = 5
   ): Promise<
     Array<
@@ -100,6 +102,7 @@ export class MemorialService {
       }
     >
   > {
+    if (!familyId) return [];
     const memorials = await this.getMemorials(familyId);
     const calculated = memorials.map((mem) => {
       const next = LunarCalendarService.getNextSolarDateForMemorial(
