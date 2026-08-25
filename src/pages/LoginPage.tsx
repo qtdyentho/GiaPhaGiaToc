@@ -15,14 +15,20 @@ export const LoginPage: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password.trim()) {
+    const cleanEmail = email.trim();
+    if (!cleanEmail || !password.trim()) {
       setError('Vui lòng nhập đầy đủ email và mật khẩu');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      setError('Định dạng email không hợp lệ (VD: user@example.com)');
       return;
     }
     setError(null);
     setLoading(true);
     try {
-      const result = await signIn(email.trim(), password);
+      const result = await signIn(cleanEmail, password);
       const redirectUrl = searchParams.get('redirect');
 
       if (result.isSuperAdmin) {

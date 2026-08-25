@@ -6,14 +6,14 @@ import { test, expect, Page } from '@playwright/test';
  */
 
 async function gotoFinance(page: Page) {
-  await page.goto('/');
-  const financeLink = page.locator('a, button').filter({ hasText: /tài chính|quỹ|finance|funds/i }).first();
-  if (await financeLink.count() > 0) {
-    await financeLink.click();
+  await page.goto('/login');
+  const demoBtn = page.locator('button').filter({ hasText: /Nguyễn Văn|Đại Tộc/i }).first();
+  if (await demoBtn.count() > 0) {
+    await demoBtn.click();
     await page.waitForLoadState('networkidle');
-  } else {
-    await page.goto('/finance');
   }
+  await page.goto('/app/funds/ledger');
+  await page.waitForLoadState('networkidle');
 }
 
 test.describe('Finance Module', () => {

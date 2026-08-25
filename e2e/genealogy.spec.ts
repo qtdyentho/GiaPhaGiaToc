@@ -9,16 +9,14 @@ import { test, expect, Page } from '@playwright/test';
  */
 
 async function gotoGenealogy(page: Page) {
-  await page.goto('/');
-  // Cố gắng navigate đến trang gia phả qua nav hoặc URL trực tiếp
-  const genealogyLink = page.locator('a, button').filter({ hasText: /gia phả|phả hệ|genealogy|members/i }).first();
-  if (await genealogyLink.count() > 0) {
-    await genealogyLink.click();
+  await page.goto('/login');
+  const demoBtn = page.locator('button').filter({ hasText: /Nguyễn Văn|Đại Tộc/i }).first();
+  if (await demoBtn.count() > 0) {
+    await demoBtn.click();
     await page.waitForLoadState('networkidle');
-  } else {
-    // Thử URL trực tiếp
-    await page.goto('/genealogy');
   }
+  await page.goto('/app/genealogy');
+  await page.waitForLoadState('networkidle');
 }
 
 test.describe('Genealogy Module', () => {
