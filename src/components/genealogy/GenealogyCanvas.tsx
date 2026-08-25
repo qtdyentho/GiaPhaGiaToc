@@ -370,10 +370,25 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
                             </div>
                           )}
 
-                          {/* Spouses Cards (Vợ Cả, Vợ Thứ - Ngang Hàng Cùng Trục Y) */}
-                          {spouses.map((s) => {
+                          {/* Spouses Cards (Vợ Cả, Vợ Thứ - Xếp Ngang Hàng Cùng Trục Y) */}
+                          {spouses.map((s, sIdx) => {
                             const isSpouseSelected = selectedMemberId === s.id;
                             const isSpouseDeceased = s.life_status === 'DECEASED';
+                            
+                            // Danh hiệu thứ bậc vợ cổ truyền
+                            const wifeTitle = sIdx === 0
+                              ? '👑 Bà Cả (Chính Thất)'
+                              : sIdx === 1
+                              ? '🌿 Bà Hai (Kế Thất)'
+                              : sIdx === 2
+                              ? '🍃 Bà Ba (Trắc Thất)'
+                              : `🌸 Bà Thứ ${sIdx + 1}`;
+
+                            const wifeBadgeColor = sIdx === 0
+                              ? 'border-amber-300 text-amber-900 bg-amber-50 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-700'
+                              : sIdx === 1
+                              ? 'border-teal-300 text-teal-900 bg-teal-50 dark:bg-teal-950 dark:text-teal-200 dark:border-teal-700'
+                              : 'border-rose-200 text-rose-900 bg-rose-50 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800';
 
                             return (
                               <div
@@ -386,8 +401,8 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
                                 }`}
                               >
                                 <div className="flex items-center justify-between gap-1 pb-2 mb-2 border-b border-slate-100 dark:border-slate-700">
-                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-300 bg-rose-50 dark:bg-rose-950 font-serif">
-                                    Chính Thất / Phối Ngẫu
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border font-serif ${wifeBadgeColor}`}>
+                                    {wifeTitle}
                                   </span>
                                   <span className={`text-[10px] font-bold ${isSpouseDeceased ? 'text-slate-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
                                     {isSpouseDeceased ? '🕯️ Đã Mất' : '🌿 Còn Sống'}
@@ -395,7 +410,9 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
                                 </div>
 
                                 <div className="flex items-start gap-3">
-                                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 shadow-2xs shrink-0">
+                                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold shadow-2xs shrink-0 ${
+                                    sIdx === 0 ? 'bg-amber-100 dark:bg-amber-950 text-amber-900' : 'bg-rose-100 dark:bg-rose-950 text-rose-800'
+                                  }`}>
                                     👩
                                   </div>
                                   <div className="flex-1 min-w-0 space-y-0.5">
@@ -405,7 +422,7 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
                                     <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                                       {isSpouseDeceased && s.death_lunar_day && s.death_lunar_month
                                         ? `Giỗ: ${s.death_lunar_day}/${s.death_lunar_month} ÂL`
-                                        : 'Hiền thê dòng họ'}
+                                        : 'Hiền thê phụng thờ'}
                                     </div>
                                   </div>
                                 </div>
@@ -414,6 +431,9 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
                                   <span className="text-[10px] text-rose-700 dark:text-rose-400 font-bold flex items-center gap-0.5">
                                     <Eye className="w-3 h-3" />
                                     <span>Xem 360°</span>
+                                  </span>
+                                  <span className="text-[9px] text-slate-400 font-serif">
+                                    Hôn Phối Đời {gen.generation_number}
                                   </span>
                                 </div>
                               </div>
@@ -435,20 +455,18 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
                               <span className="hidden group-hover:inline">Thêm Con</span>
                             </button>
 
-                            {spouses.length === 0 && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onAddRelation(m, 'SPOUSE');
-                                }}
-                                title="Thêm Phối Ngẫu (Vợ/Chồng)"
-                                className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950 hover:bg-rose-100 text-rose-800 dark:text-rose-300 text-[10px] font-bold transition flex items-center gap-1 cursor-pointer border border-rose-200 dark:border-rose-800"
-                              >
-                                <Heart className="w-3 h-3" />
-                                <span className="hidden group-hover:inline">Thêm Vợ</span>
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onAddRelation(m, 'SPOUSE');
+                              }}
+                              title={spouses.length === 0 ? "Thêm Vợ (Chính Thất)" : "Thêm Kế Thất / Thứ Thiếp"}
+                              className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950 hover:bg-rose-100 text-rose-800 dark:text-rose-300 text-[10px] font-bold transition flex items-center gap-1 cursor-pointer border border-rose-200 dark:border-rose-800"
+                            >
+                              <Heart className="w-3 h-3" />
+                              <span className="hidden group-hover:inline">{spouses.length === 0 ? 'Thêm Vợ' : '+ Thêm Thứ Thất'}</span>
+                            </button>
                           </div>
                         </div>
 
@@ -456,8 +474,16 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
                         {children.length > 0 && (
                           <div className="flex flex-col items-center mt-2">
                             <div className="w-[2px] h-8 bg-gradient-to-b from-amber-400 to-[#166534]" />
-                            <div className="px-3 py-0.5 rounded-full bg-[#166534] text-white text-[10px] font-bold shadow-xs font-serif">
-                              {children.length} Hậu Duệ (Đời {gen.generation_number + 1})
+                            <div className="flex items-center gap-1.5">
+                              {spouses.length <= 1 ? (
+                                <div className="px-3 py-0.5 rounded-full bg-[#166534] text-white text-[10px] font-bold shadow-xs font-serif">
+                                  {children.length} Hậu Duệ (Đời {gen.generation_number + 1})
+                                </div>
+                              ) : (
+                                <div className="px-3 py-0.5 rounded-full bg-gradient-to-r from-amber-800 via-[#166534] to-teal-800 text-white text-[10px] font-bold shadow-xs font-serif flex items-center gap-1">
+                                  <span>{children.length} Hậu Duệ ({spouses.length} Dòng Mẹ • Đời {gen.generation_number + 1})</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
