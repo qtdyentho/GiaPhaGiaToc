@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { AppSidebar } from './AppSidebar';
 import { AppHeader } from './AppHeader';
 import { EventBroadcastToast } from '../notifications/EventBroadcastToast';
+import { ErrorBoundary } from '../ui/ErrorBoundary';
+import { PageSkeleton } from '../ui/PageSkeleton';
 
 export const AppLayout: React.FC = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -34,7 +36,11 @@ export const AppLayout: React.FC = () => {
           tabIndex={-1}
           className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto max-w-7xl w-full mx-auto animate-fade-in outline-none focus:ring-0"
         >
-          <Outlet />
+          <ErrorBoundary>
+            <Suspense fallback={<PageSkeleton />}>
+              <Outlet />
+            </Suspense>
+          </ErrorBoundary>
         </main>
       </div>
 

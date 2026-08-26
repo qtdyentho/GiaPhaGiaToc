@@ -47,35 +47,50 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  // Notifications Data
-  const sampleNotifications = [
-    {
-      id: 'notif-1',
-      title: 'Lễ Giỗ Sắp Diễn Ra',
-      message: 'Lễ giỗ Cụ Thủy Tổ Nguyễn Văn Phúc diễn ra vào ngày 15/7 Âm lịch (còn 3 ngày).',
-      time: '10 phút trước',
-      type: 'MEMORIAL',
-      unread: true,
-      link: '/app/calendar',
-    },
-    {
-      id: 'notif-2',
-      title: 'Đóng Góp Công Đức Mới',
-      message: 'Nguyễn Văn Hoàng vừa đóng góp 10.000.000 ₫ vào Quỹ Tu Bổ Từ Đường.',
-      time: '2 giờ trước',
-      type: 'FINANCE',
-      unread: true,
-      link: '/app/finance/honor-roll',
-    },
-    {
-      id: 'notif-3',
-      title: 'Phiếu Chi Chờ Phê Duyệt',
-      message: 'Phiếu chi 5.000.000 ₫ mua hương hoa lễ vật đang chờ Hội đồng duyệt.',
-      time: '1 ngày trước',
-      type: 'EXPENSE',
-      unread: false,
-      link: '/app/finance/expenses',
-    },
+  // Dynamic Notifications Data strictly scoped to activeFamily
+  const currentFamId = activeFamily?.id || '';
+  const currentFamName = activeFamily?.name || 'Gia Tộc';
+
+  const familyMemorials = mockMemorialDates.filter((m) => m.family_id === currentFamId);
+  const familyFunds = mockFunds.filter((f) => f.family_id === currentFamId);
+
+  const notifications = [
+    ...(familyMemorials.length > 0
+      ? [
+          {
+            id: `notif-mem-${familyMemorials[0].id}`,
+            title: 'Lễ Giỗ Thân Nhân Sắp Tới',
+            message: `Lễ giỗ ${familyMemorials[0].title} (${familyMemorials[0].lunar_day}/${familyMemorials[0].lunar_month} Âm lịch).`,
+            time: 'Nhắc lịch',
+            type: 'MEMORIAL',
+            unread: true,
+            link: '/app/calendar',
+          },
+        ]
+      : [
+          {
+            id: 'notif-welcome',
+            title: 'Không Gian Gia Tộc',
+            message: `Chào mừng bạn đến với không gian số ${currentFamName}.`,
+            time: 'Hôm nay',
+            type: 'MEMORIAL',
+            unread: false,
+            link: '/app/dashboard',
+          },
+        ]),
+    ...(familyFunds.length > 0
+      ? [
+          {
+            id: `notif-fund-${familyFunds[0].id}`,
+            title: 'Biến Động Số Dư Quỹ',
+            message: `${familyFunds[0].name} hiện có số dư: ${formatCurrency(familyFunds[0].current_balance)}.`,
+            time: 'Mới cập nhật',
+            type: 'FINANCE',
+            unread: true,
+            link: '/app/finance',
+          },
+        ]
+      : []),
   ];
 
   // Perform debounced search (300ms) across active family scope
@@ -354,7 +369,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 </div>
 
                 <div className="divide-y divide-slate-50 max-h-72 overflow-y-auto">
-                  {sampleNotifications.map((notif) => (
+                  {notifications.map((notif) => (
                     <Link
                       key={notif.id}
                       to={notif.link}

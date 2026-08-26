@@ -17,6 +17,9 @@ interface AddMemberRelationModalProps {
 type BirthDateMode = 'SOLAR_FULL' | 'LUNAR_FULL' | 'YEAR_ONLY' | 'UNKNOWN';
 type DeathDateMode = 'LUNAR_MEMORIAL' | 'SOLAR_FULL' | 'YEAR_ONLY' | 'UNKNOWN';
 
+const isUUID = (str?: string | null): boolean =>
+  Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+
 export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
   isOpen,
   onClose,
@@ -138,11 +141,19 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
         }
       }
 
+      const safeBranch = isUUID(selectedBranchId)
+        ? selectedBranchId
+        : isUUID(branches[0]?.id)
+        ? branches[0].id
+        : undefined;
+
+      const safeGen = isUUID(calculatedGenId) ? calculatedGenId : undefined;
+
       const res = await GenealogyService.addMember(
         {
           family_id: resolvedFamilyId,
-          generation_id: calculatedGenId,
-          branch_id: selectedBranchId || branches[0]?.id,
+          generation_id: safeGen,
+          branch_id: safeBranch,
           first_name: firstName,
           last_name: lastName,
           full_name: fullName.trim(),
@@ -158,7 +169,6 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
           death_lunar_month: computed_death_lunar_month,
           death_lunar_year: computed_death_lunar_year,
           death_year: computed_death_year,
-
           burial_place: burialPlace.trim() || undefined,
           bio: bio.trim() || undefined,
         },
@@ -319,11 +329,6 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
                   Con Nuôi (Thừa Tự)
                 </button>
               </div>
-              <div className="text-[11px] text-amber-800 dark:text-amber-300">
-                {childLineageType === 'BIOLOGICAL' && '• Kế thừa trực hệ của dòng họ.'}
-                {childLineageType === 'MATERNAL_STEPCHILD' && '• Ghi nhận trong gia phả dòng họ.'}
-                {childLineageType === 'ADOPTED' && '• Con nuôi được dòng họ công nhận theo truyền thống.'}
-              </div>
             </div>
           )}
 
@@ -337,7 +342,7 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="VD: Cụ Nguyễn Văn An / Nguyễn Văn Bình..."
+                placeholder="VD: Nguyễn Văn An, Trần Thị Mai..."
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#166534] focus:bg-white text-sm"
                 required
               />
@@ -349,24 +354,24 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setGender('MALE')}
-                  className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     gender === 'MALE'
-                      ? 'bg-blue-50 border-blue-500 text-blue-900 shadow-xs'
-                      : 'bg-slate-50 border-slate-200 text-slate-600'
+                      ? 'bg-emerald-50 border-emerald-600 text-emerald-800 shadow-xs'
+                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  👨 Nam (Đinh)
+                  <span>👨 Nam (Đinh)</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setGender('FEMALE')}
-                  className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     gender === 'FEMALE'
-                      ? 'bg-pink-50 border-pink-500 text-pink-900 shadow-xs'
-                      : 'bg-slate-50 border-slate-200 text-slate-600'
+                      ? 'bg-rose-50 border-rose-500 text-rose-800 shadow-xs'
+                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  👩 Nữ
+                  <span>👩 Nữ</span>
                 </button>
               </div>
             </div>
@@ -377,381 +382,293 @@ export const AddMemberRelationModal: React.FC<AddMemberRelationModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setLifeStatus('ALIVE')}
-                  className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     lifeStatus === 'ALIVE'
-                      ? 'bg-emerald-50 border-emerald-500 text-emerald-900 shadow-xs'
-                      : 'bg-slate-50 border-slate-200 text-slate-600'
+                      ? 'bg-emerald-50 border-emerald-600 text-emerald-800 shadow-xs'
+                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  🌿 Còn sống
+                  <span>🌿 Còn sống</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setLifeStatus('DECEASED')}
-                  className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     lifeStatus === 'DECEASED'
-                      ? 'bg-amber-50 border-amber-400 text-amber-900 shadow-xs'
-                      : 'bg-slate-50 border-slate-200 text-slate-600'
+                      ? 'bg-slate-100 border-slate-400 text-slate-800 shadow-xs'
+                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  🕯️ Đã tạ thế
+                  <span>🕯️ Đã tạ thế</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Chi Phái & Thứ Bậc */}
+          <div className="p-3.5 bg-emerald-50/50 border border-emerald-200 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs font-bold text-emerald-950">
+                  {relationType === 'CHILD' && 'Đời Hậu Duệ Kế Tiếp'}
+                  {relationType === 'SPOUSE' && 'Đồng Bậc Hôn Phối'}
+                  {relationType === 'PARENT' && 'Đời Bậc Thân Sinh (Đời Trước)'}
+                </div>
+                <div className="text-[11px] text-emerald-800">
+                  Chi Nhánh: {branches.find((b) => b.id === selectedBranchId)?.name || 'Chi Trưởng'}
+                </div>
+              </div>
+              <span className="px-2.5 py-1 rounded-lg bg-white border border-emerald-300 text-[11px] font-bold text-emerald-800">
+                {relationType === 'CHILD' ? 'Hậu Duệ' : relationType === 'SPOUSE' ? 'Hôn Phối' : 'Thân Sinh'}
+              </span>
+            </div>
+          </div>
+
+          {/* Thông Tin Ngày Sinh */}
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                <span>Thông tin ngày sinh / năm sinh</span>
+              </label>
+              <div className="flex items-center gap-1 text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => setBirthMode('YEAR_ONLY')}
+                  className={`px-2 py-1 rounded-lg border font-medium transition cursor-pointer ${
+                    birthMode === 'YEAR_ONLY' ? 'bg-[#166534] text-white border-[#166534]' : 'bg-white text-slate-600'
+                  }`}
+                >
+                  Chỉ Năm
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBirthMode('SOLAR_FULL')}
+                  className={`px-2 py-1 rounded-lg border font-medium transition cursor-pointer ${
+                    birthMode === 'SOLAR_FULL' ? 'bg-[#166534] text-white border-[#166534]' : 'bg-white text-slate-600'
+                  }`}
+                >
+                  Dương Lịch
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBirthMode('LUNAR_FULL')}
+                  className={`px-2 py-1 rounded-lg border font-medium transition cursor-pointer ${
+                    birthMode === 'LUNAR_FULL' ? 'bg-[#166534] text-white border-[#166534]' : 'bg-white text-slate-600'
+                  }`}
+                >
+                  Âm Lịch
                 </button>
               </div>
             </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
-                <span>Chi Phái & Thế Hệ</span>
-              </label>
-              
-              {targetMember ? (
-                <div className="p-3 bg-emerald-50/60 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
-                  <div className="space-y-0.5">
-                    <div className="font-bold text-[#166534]">
-                      {relationType === 'CHILD'
-                        ? `Kế Thừa: Đời Thứ ${(generations.find(g => g.id === targetMember.generation_id)?.generation_number || 1) + 1}`
-                        : relationType === 'SPOUSE'
-                        ? `Đồng Bậc: Đời Thứ ${generations.find(g => g.id === targetMember.generation_id)?.generation_number || 1}`
-                        : `Tiền Bối: Đời Thứ ${Math.max(1, (generations.find(g => g.id === targetMember.generation_id)?.generation_number || 2) - 1)}`}
-                    </div>
-                    <div className="text-slate-600 text-[11px]">
-                      Chi Nhánh: <span className="font-semibold text-slate-800">{branches.find(b => b.id === selectedBranchId)?.name || 'Chi Trưởng'}</span>
-                    </div>
-                  </div>
-                  <span className="text-[11px] font-bold text-[#166534] bg-white px-2.5 py-1 rounded-lg border border-emerald-300 shadow-2xs">
-                    {relationType === 'CHILD' ? 'Con Trực Hệ' : relationType === 'SPOUSE' ? 'Phối Ngẫu' : 'Thân Sinh'}
-                  </span>
-                </div>
-              ) : (
-                <select
-                  value={selectedBranchId}
-                  onChange={(e) => setSelectedBranchId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-[#166534]"
-                >
-                  {branches.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.name}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-          </div>
-
-          {/* CHẾ ĐỘ NHẬP NGÀY / NĂM SINH */}
-          <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200 space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="block text-xs font-bold text-slate-800">
-                Thông tin ngày sinh / năm sinh
-              </label>
-            </div>
-
-
-            {/* Radio / Tabs chọn kiểu ngày sinh */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-white p-1 rounded-xl border border-slate-200 text-xs">
-              <button
-                type="button"
-                onClick={() => setBirthMode('YEAR_ONLY')}
-                className={`py-1.5 px-2 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
-                  birthMode === 'YEAR_ONLY'
-                    ? 'bg-emerald-100 text-[#166534] shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                📜 Chỉ Biết Năm
-              </button>
-              <button
-                type="button"
-                onClick={() => setBirthMode('SOLAR_FULL')}
-                className={`py-1.5 px-2 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
-                  birthMode === 'SOLAR_FULL'
-                    ? 'bg-emerald-100 text-[#166534] shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                ☀️ Dương Lịch Đầy Đủ
-              </button>
-              <button
-                type="button"
-                onClick={() => setBirthMode('LUNAR_FULL')}
-                className={`py-1.5 px-2 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
-                  birthMode === 'LUNAR_FULL'
-                    ? 'bg-emerald-100 text-[#166534] shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                🌙 Âm Lịch Đầy Đủ
-              </button>
-              <button
-                type="button"
-                onClick={() => setBirthMode('UNKNOWN')}
-                className={`py-1.5 px-2 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
-                  birthMode === 'UNKNOWN'
-                    ? 'bg-slate-200 text-slate-800 shadow-xs'
-                    : 'text-slate-400 hover:bg-slate-50'
-                }`}
-              >
-                ❓ Chưa Rõ
-              </button>
-            </div>
-
-            {/* Inputs tương ứng với birthMode */}
             {birthMode === 'YEAR_ONLY' && (
               <div>
-                <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                  Năm sinh (Phù hợp ghi nhận các Cụ / Tiền nhân)
-                </label>
                 <input
                   type="number"
+                  placeholder="Năm sinh (VD: 1986)"
                   value={birthYearOnly}
                   onChange={(e) => setBirthYearOnly(e.target.value)}
-                  placeholder="VD: 1895, 1912..."
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm"
                 />
               </div>
             )}
 
             {birthMode === 'SOLAR_FULL' && (
               <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Ngày sinh (Dương)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="31"
-                    value={birthSolarDay}
-                    onChange={(e) => setBirthSolarDay(e.target.value)}
-                    placeholder="Ngày (1-31)"
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Tháng sinh (Dương)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="12"
-                    value={birthSolarMonth}
-                    onChange={(e) => setBirthSolarMonth(e.target.value)}
-                    placeholder="Tháng (1-12)"
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Năm sinh</label>
-                  <input
-                    type="number"
-                    value={birthSolarYear}
-                    onChange={(e) => setBirthSolarYear(e.target.value)}
-                    placeholder="VD: 1988"
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
-                  />
-                </div>
+                <input
+                  type="number"
+                  placeholder="Ngày"
+                  min="1"
+                  max="31"
+                  value={birthSolarDay}
+                  onChange={(e) => setBirthSolarDay(e.target.value)}
+                  className="px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm text-center"
+                />
+                <input
+                  type="number"
+                  placeholder="Tháng"
+                  min="1"
+                  max="12"
+                  value={birthSolarMonth}
+                  onChange={(e) => setBirthSolarMonth(e.target.value)}
+                  className="px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm text-center"
+                />
+                <input
+                  type="number"
+                  placeholder="Năm"
+                  value={birthSolarYear}
+                  onChange={(e) => setBirthSolarYear(e.target.value)}
+                  className="px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm text-center"
+                />
               </div>
             )}
 
             {birthMode === 'LUNAR_FULL' && (
               <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Ngày sinh (Âm lịch)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="30"
-                    value={birthLunarDay}
-                    onChange={(e) => setBirthLunarDay(e.target.value)}
-                    placeholder="Ngày (1-30)"
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Tháng sinh (Âm lịch)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="12"
-                    value={birthLunarMonth}
-                    onChange={(e) => setBirthLunarMonth(e.target.value)}
-                    placeholder="Tháng (1-12)"
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Năm sinh (Âm lịch)</label>
-                  <input
-                    type="number"
-                    value={birthLunarYear}
-                    onChange={(e) => setBirthLunarYear(e.target.value)}
-                    placeholder="VD: 1952"
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
-                  />
-                </div>
-              </div>
-            )}
-
-            {birthMode === 'UNKNOWN' && (
-              <div className="text-center py-2 text-[11px] text-slate-400 italic">
-                Chưa rõ thông tin ngày/năm sinh. Có thể bổ sung và cập nhật sau.
+                <input
+                  type="number"
+                  placeholder="Ngày ÂL"
+                  min="1"
+                  max="30"
+                  value={birthLunarDay}
+                  onChange={(e) => setBirthLunarDay(e.target.value)}
+                  className="px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm text-center"
+                />
+                <input
+                  type="number"
+                  placeholder="Tháng ÂL"
+                  min="1"
+                  max="12"
+                  value={birthLunarMonth}
+                  onChange={(e) => setBirthLunarMonth(e.target.value)}
+                  className="px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm text-center"
+                />
+                <input
+                  type="number"
+                  placeholder="Năm ÂL"
+                  value={birthLunarYear}
+                  onChange={(e) => setBirthLunarYear(e.target.value)}
+                  className="px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm text-center"
+                />
               </div>
             )}
           </div>
 
-          {/* PHẦN DÀNH RIÊNG CHO NGƯỜI ĐÃ TẠ THẾ (NGÀY GIỖ & AN TÁNG) */}
+          {/* Thông Tin Ngày Mất / Lễ Giỗ (Nếu Đã Mất) */}
           {lifeStatus === 'DECEASED' && (
-            <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-3">
+            <div className="p-4 bg-amber-50/50 border border-amber-200 rounded-2xl space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-amber-900 font-bold text-xs">
-                  <Moon className="w-4 h-4 text-amber-700" />
-                  <span>Thông tin ngày giỗ, năm mất & an táng</span>
+                <label className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                  <Moon className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Ngày Giỗ & Ngày Tạ Thế</span>
+                </label>
+                <div className="flex items-center gap-1 text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => setDeathMode('LUNAR_MEMORIAL')}
+                    className={`px-2 py-1 rounded-lg border font-medium transition cursor-pointer ${
+                      deathMode === 'LUNAR_MEMORIAL' ? 'bg-amber-800 text-white border-amber-800' : 'bg-white text-slate-600'
+                    }`}
+                  >
+                    Ngày Giỗ Âm Lịch
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeathMode('SOLAR_FULL')}
+                    className={`px-2 py-1 rounded-lg border font-medium transition cursor-pointer ${
+                      deathMode === 'SOLAR_FULL' ? 'bg-amber-800 text-white border-amber-800' : 'bg-white text-slate-600'
+                    }`}
+                  >
+                    Dương Lịch
+                  </button>
                 </div>
-                <span className="text-[10px] text-amber-700 font-semibold">Tự động đồng bộ lên Lịch Gia Tộc</span>
-              </div>
-
-              {/* Radio / Tabs chọn kiểu ngày mất */}
-              <div className="grid grid-cols-3 gap-1.5 bg-white/90 p-1 rounded-xl border border-amber-200 text-xs">
-                <button
-                  type="button"
-                  onClick={() => setDeathMode('LUNAR_MEMORIAL')}
-                  className={`py-1.5 px-2 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
-                    deathMode === 'LUNAR_MEMORIAL'
-                      ? 'bg-amber-100 text-amber-900 shadow-xs'
-                      : 'text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  🌙 Giỗ Âm Lịch (Chuẩn)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDeathMode('YEAR_ONLY')}
-                  className={`py-1.5 px-2 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
-                    deathMode === 'YEAR_ONLY'
-                      ? 'bg-amber-100 text-amber-900 shadow-xs'
-                      : 'text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  📜 Chỉ Biết Năm Mất
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDeathMode('UNKNOWN')}
-                  className={`py-1.5 px-2 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
-                    deathMode === 'UNKNOWN'
-                      ? 'bg-slate-200 text-slate-800 shadow-xs'
-                      : 'text-slate-400 hover:bg-slate-50'
-                  }`}
-                >
-                  ❓ Chưa Rõ
-                </button>
               </div>
 
               {deathMode === 'LUNAR_MEMORIAL' && (
                 <div className="grid grid-cols-3 gap-2">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Ngày Giỗ (Âm lịch)</label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="30"
-                      value={deathLunarDay}
-                      onChange={(e) => setDeathLunarDay(e.target.value)}
-                      placeholder="Ngày (1-30)"
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Tháng Giỗ (Âm lịch)</label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="12"
-                      value={deathLunarMonth}
-                      onChange={(e) => setDeathLunarMonth(e.target.value)}
-                      placeholder="Tháng (1-12)"
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">Năm tạ thế</label>
-                    <input
-                      type="number"
-                      value={deathLunarYear}
-                      onChange={(e) => setDeathLunarYear(e.target.value)}
-                      placeholder="VD: 1980"
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {deathMode === 'YEAR_ONLY' && (
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">Năm tạ thế (Chỉ biết năm)</label>
                   <input
                     type="number"
-                    value={deathYearOnly}
-                    onChange={(e) => setDeathYearOnly(e.target.value)}
-                    placeholder="VD: 1968, 1975..."
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
+                    placeholder="Ngày Giỗ (ÂL) *"
+                    min="1"
+                    max="30"
+                    value={deathLunarDay}
+                    onChange={(e) => setDeathLunarDay(e.target.value)}
+                    className="px-3 py-2 bg-white border border-amber-300 rounded-xl text-sm text-center"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Tháng Giỗ (ÂL) *"
+                    min="1"
+                    max="12"
+                    value={deathLunarMonth}
+                    onChange={(e) => setDeathLunarMonth(e.target.value)}
+                    className="px-3 py-2 bg-white border border-amber-300 rounded-xl text-sm text-center"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Năm Mất (ÂL)"
+                    value={deathLunarYear}
+                    onChange={(e) => setDeathLunarYear(e.target.value)}
+                    className="px-3 py-2 bg-white border border-amber-300 rounded-xl text-sm text-center"
                   />
                 </div>
               )}
 
-              {deathMode === 'UNKNOWN' && (
-                <div className="text-center py-2 text-[11px] text-amber-800/80 italic">
-                  Chưa rõ ngày mất / ngày giỗ. Sẽ cập nhật sau khi tìm được gia phả cũ.
+              {deathMode === 'SOLAR_FULL' && (
+                <div className="grid grid-cols-3 gap-2">
+                  <input
+                    type="number"
+                    placeholder="Ngày"
+                    min="1"
+                    max="31"
+                    value={deathSolarDay}
+                    onChange={(e) => setDeathSolarDay(e.target.value)}
+                    className="px-3 py-2 bg-white border border-amber-300 rounded-xl text-sm text-center"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Tháng"
+                    min="1"
+                    max="12"
+                    value={deathSolarMonth}
+                    onChange={(e) => setDeathSolarMonth(e.target.value)}
+                    className="px-3 py-2 bg-white border border-amber-300 rounded-xl text-sm text-center"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Năm"
+                    value={deathSolarYear}
+                    onChange={(e) => setDeathSolarYear(e.target.value)}
+                    className="px-3 py-2 bg-white border border-amber-300 rounded-xl text-sm text-center"
+                  />
                 </div>
               )}
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-rose-500" />
-                  <span>Nơi an táng / Mộ phần tiền nhân</span>
-                </label>
                 <input
                   type="text"
+                  placeholder="Nơi an táng / Mộ phần (VD: Nghĩa trang quê nhà, đồi Thông...)"
                   value={burialPlace}
                   onChange={(e) => setBurialPlace(e.target.value)}
-                  placeholder="VD: Khu Lăng Mộ Tổ họ Nguyễn, Nghĩa trang Đồi Thông..."
-                  className="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534]"
+                  className="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-sm"
                 />
               </div>
             </div>
           )}
 
-          {/* Tiểu sử tóm tắt */}
+          {/* Ghi chú & Tiểu sử */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              Tiểu sử, công trạng & ghi chú
-            </label>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">Ghi chép ngọc phả / Công đức</label>
             <textarea
               rows={2}
+              placeholder="Ghi chú về chức tước, học vị, công đức hoặc sự nghiệp phụng sự gia tộc..."
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              placeholder="Ghi chú chức sắc, học vị, công trạng, đóng góp cho dòng họ..."
-              className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 text-xs focus:outline-none focus:ring-1 focus:ring-[#166534] focus:bg-white"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#166534]"
             />
           </div>
 
-          {/* Footer Actions */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
+          {/* Nút Submit */}
+          <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
+              className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs transition cursor-pointer"
             >
-              Hủy
+              Hủy Bỏ
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2.5 rounded-xl bg-[#166534] hover:bg-[#14532d] text-white text-xs font-bold shadow-xs flex items-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+              className="px-6 py-2.5 rounded-xl bg-[#166534] hover:bg-[#14532D] text-white font-bold text-xs shadow-md shadow-emerald-950/20 transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {loading ? (
-                <span>Đang lưu...</span>
+                <span>Đang lưu dữ liệu...</span>
               ) : (
                 <>
                   <UserPlus className="w-4 h-4" />
-                  <span>Xác Nhận Thêm Thành Viên</span>
+                  <span>Lưu Vào Phả Hệ</span>
                 </>
               )}
             </button>

@@ -23,14 +23,14 @@ export default function BetaExitAuditPage() {
       <div className="flex items-center justify-between bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div>
           <Link to="/admin/beta" className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 mb-2">
-            <ArrowLeft className="w-3.5 h-3.5" /> Quay lại Beta Command Center
+            <ArrowLeft className="w-3.5 h-3.5" /> Quay lại Trung Tâm Điều Hành
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <Award className="w-7 h-7 text-emerald-600" />
-            Hội Đồng Thẩm Định Đóng Closed Beta (Beta Exit Audit Gate)
+            Hội Đồng Nghiệm Thu & Vận Hành Chính Thức (Official Go-Live Audit Gate)
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Đánh giá 10 Cổng chất lượng bắt buộc trước khi đưa ra quyết định thương mại hóa toàn diện (Commercial Go-Live).
+            Đánh giá 10 Cổng chất lượng và an toàn bắt buộc cho hệ thống vận hành chính thức toàn diện (Commercial Go-Live).
           </p>
         </div>
 

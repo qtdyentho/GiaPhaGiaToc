@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
-import { Lock, Mail, ArrowRight } from 'lucide-react';
+import { Lock, Mail, ArrowRight, Sparkles } from 'lucide-react';
 import { BRAND } from '../lib/constants';
 import { useAuth } from '../contexts/AuthContext';
+import { ForgotPasswordModal } from '../components/auth/ForgotPasswordModal';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { signIn } = useAuth();
@@ -48,7 +50,7 @@ export const LoginPage: React.FC = () => {
   const handleQuickDemoLogin = async (demoEmail: string) => {
     setLoading(true);
     setEmail(demoEmail);
-    const result = await signIn(demoEmail, '123456');
+    const result = await signIn(demoEmail, 'giapha2026');
     if (result.isSuperAdmin) {
       navigate('/admin/beta');
     } else {
@@ -123,9 +125,13 @@ export const LoginPage: React.FC = () => {
                 </label>
               </div>
 
-              <div className="text-xs font-semibold text-[#166534] hover:underline cursor-pointer">
+              <button
+                type="button"
+                onClick={() => setIsForgotModalOpen(true)}
+                className="text-xs font-semibold text-[#166534] hover:underline cursor-pointer bg-transparent border-none p-0"
+              >
                 Quên mật khẩu?
-              </div>
+              </button>
             </div>
 
             <div>
@@ -149,14 +155,14 @@ export const LoginPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleQuickDemoLogin('truongtoc.nguyen@giapha.vn')}
-                className="px-3 py-1.5 bg-slate-50 hover:bg-emerald-50 border border-slate-200 text-slate-700 hover:text-[#166534] rounded-xl text-[11px] font-bold transition text-center"
+                className="px-3 py-1.5 bg-slate-50 hover:bg-emerald-50 border border-slate-200 text-slate-700 hover:text-[#166534] rounded-xl text-[11px] font-bold transition text-center cursor-pointer"
               >
                 Đại Tộc Nguyễn Văn
               </button>
               <button
                 type="button"
-                onClick={() => handleQuickDemoLogin('superadmin@giapha.vn')}
-                className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-800 rounded-xl text-[11px] font-bold transition text-center"
+                onClick={() => handleQuickDemoLogin('admin@giapha.vn')}
+                className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-800 rounded-xl text-[11px] font-bold transition text-center cursor-pointer"
               >
                 Quản Trị Hệ Thống
               </button>
@@ -171,6 +177,13 @@ export const LoginPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal Quên Mật Khẩu */}
+      <ForgotPasswordModal
+        isOpen={isForgotModalOpen}
+        onClose={() => setIsForgotModalOpen(false)}
+        defaultEmail={email}
+      />
     </div>
   );
 };

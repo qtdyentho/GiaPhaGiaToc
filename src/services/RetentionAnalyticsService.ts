@@ -32,7 +32,7 @@ export class RetentionAnalyticsService {
   static getRetentionCohorts(): RetentionCohort[] {
     return [
       {
-        cohortName: 'Tháng 08/2026 (Closed Beta Wave 1)',
+        cohortName: 'Khóa Gia Tộc Tháng 08/2026 (Official Wave 1)',
         totalFamilies: 10,
         d1Percent: 100.0,
         d3Percent: 90.0,

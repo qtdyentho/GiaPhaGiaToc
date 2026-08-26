@@ -3,7 +3,7 @@ import {
   Shield, MapPin, Building, Copy, Plus, UserCheck, Key, CheckCircle2,
   Image, Camera, Sparkles, Landmark, Check, Scroll, QrCode, RefreshCw, Lock, Eye, EyeOff
 } from 'lucide-react';
-import { mockFamily, mockMemberships } from '../services/mockData';
+import { mockFamily } from '../services/mockData';
 import { ROLE_LABELS } from '../lib/constants';
 import { useAuth } from '../contexts/AuthContext';
 import { AncestralBannerModal, ANCESTRAL_PRESETS } from '../components/family/AncestralBannerModal';
@@ -13,26 +13,23 @@ import { ClanPassService } from '../services/security/ClanPassService';
 import { ShortLinkService, ClanShortLink } from '../services/security/ShortLinkService';
 
 export const FamilySettingsPage: React.FC = () => {
-  const { activeFamily, updateFamily } = useAuth();
+  const { user, activeFamily, activeMembership, memberships, updateFamily } = useAuth();
   const currentFamily = activeFamily || mockFamily;
   const [copied, setCopied] = useState(false);
-  const [inviteRole, setInviteRole] = useState('MEMBER');
-  const [generatedToken, setGeneratedToken] = useState('GP-INVITE-2026-HN01');
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [isCovenantModalOpen, setIsCovenantModalOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
 
   // Clan Access Pass & PIN states
-  const [passToken, setPassToken] = useState<string>('CP-FAM-NGUYEN-VAN-2026-X89');
+  const [passToken, setPassToken] = useState<string>(() => `CP-FAM-${currentFamily.id.slice(0, 8).toUpperCase()}`);
   const [clanPin, setClanPin] = useState<string>('');
   const [showPin, setShowPin] = useState<boolean>(false);
   const [isSavingPin, setIsSavingPin] = useState<boolean>(false);
   const [pinSuccess, setPinSuccess] = useState<boolean>(false);
   const [pinError, setPinError] = useState<string | null>(null);
-  const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
 
   // Unique Short Link states
-  const [shortCode, setShortCode] = useState<string>('nv86');
+  const [shortCode, setShortCode] = useState<string>(() => currentFamily.code?.toLowerCase().slice(0, 6) || 'giaphatoc');
   const [customSlug, setCustomSlug] = useState<string>('');
   const [isEditingSlug, setIsEditingSlug] = useState<boolean>(false);
   const [isSavingSlug, setIsSavingSlug] = useState<boolean>(false);
@@ -52,8 +49,14 @@ export const FamilySettingsPage: React.FC = () => {
   useEffect(() => {
     async function loadPassAndShortLink() {
       if (currentFamily?.id) {
+        setFamilyName(currentFamily.name);
+        setAncestralHallAddress(currentFamily.ancestral_hall_address || '');
+        setDescription(currentFamily.description || '');
+
         const config = await ClanPassService.getFamilyPassConfig(currentFamily.id);
-        setPassToken(config.pass_token);
+        if (config?.pass_token) {
+          setPassToken(config.pass_token);
+        }
 
         let link = await ShortLinkService.getShortLinkByFamily(currentFamily.id);
         if (!link) {
@@ -67,13 +70,7 @@ export const FamilySettingsPage: React.FC = () => {
       }
     }
     loadPassAndShortLink();
-  }, [currentFamily?.id]);
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(`https://giapha.vn/join?token=${generatedToken}`);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  }, [currentFamily?.id, currentFamily?.name]);
 
   const handleCopyShortLink = () => {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://giaphagiatoc.vn';
@@ -100,10 +97,10 @@ export const FamilySettingsPage: React.FC = () => {
         setIsEditingSlug(false);
         setTimeout(() => setSlugSuccess(false), 3000);
       } else {
-        setSlugError(res.error || 'Không thể cập nhật mã rút gọn.');
+        setSlugError(res.error || 'Không thể cập nhật mã định danh gia tộc.');
       }
     } catch (err: any) {
-      setSlugError(err.message || 'Lỗi khi lưu mã rút gọn.');
+      setSlugError(err.message || 'Lỗi khi lưu mã định danh gia tộc.');
     } finally {
       setIsSavingSlug(false);
     }
@@ -133,23 +130,6 @@ export const FamilySettingsPage: React.FC = () => {
     }
   };
 
-  const handleRegenerateToken = async () => {
-    if (!window.confirm('Bạn có chắc chắn muốn thu hồi mã QR cũ và sinh mã mới? Các bản in cũ tại Từ Đường sẽ không còn sử dụng được.')) {
-      return;
-    }
-    setIsRegenerating(true);
-    try {
-      const res = await ClanPassService.regeneratePassToken(currentFamily.id);
-      if (res.success && res.newToken) {
-        setPassToken(res.newToken);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsRegenerating(false);
-    }
-  };
-
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -167,6 +147,10 @@ export const FamilySettingsPage: React.FC = () => {
       setIsSaving(false);
     }
   };
+
+  // Lọc ban quản trị theo dòng họ hiện tại
+  const familyMemberships = memberships.filter((m) => m.family_id === currentFamily.id);
+  const currentAdminRole = activeMembership?.role || 'OWNER';
 
   return (
     <div className="space-y-6 font-sans animate-fade-in">
@@ -192,7 +176,7 @@ export const FamilySettingsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsBannerModalOpen(true)}
-                className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#166534] text-xs font-bold rounded-xl border border-emerald-200 flex items-center gap-1.5 transition"
+                className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#166534] text-xs font-bold rounded-xl border border-emerald-200 flex items-center gap-1.5 transition cursor-pointer"
               >
                 <Camera className="w-3.5 h-3.5" />
                 <span>Thay Đổi Ảnh</span>
@@ -202,7 +186,7 @@ export const FamilySettingsPage: React.FC = () => {
             <div className="relative h-48 sm:h-56 rounded-2xl overflow-hidden shadow-inner border border-slate-200 bg-slate-900 group">
               <img
                 src={bannerImageUrl}
-                alt="Banner Từ Đường"
+                alt={`Từ Đường ${familyName}`}
                 className="w-full h-full object-cover object-center group-hover:scale-105 transition duration-700"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = ANCESTRAL_PRESETS[0].url;
@@ -250,8 +234,8 @@ export const FamilySettingsPage: React.FC = () => {
                 <input
                   type="text"
                   disabled
-                  value={currentFamily.code}
-                  className="mt-1 block w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-500"
+                  value={currentFamily.code || 'GIAPHA'}
+                  className="mt-1 block w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-500 font-mono"
                 />
               </div>
             </div>
@@ -289,7 +273,7 @@ export const FamilySettingsPage: React.FC = () => {
               <button 
                 type="submit"
                 disabled={isSaving}
-                className="px-5 py-2 bg-[#166534] hover:bg-[#14532D] text-white text-xs font-bold rounded-xl transition shadow-xs disabled:opacity-50 flex items-center gap-1.5"
+                className="px-5 py-2 bg-[#166534] hover:bg-[#14532D] text-white text-xs font-bold rounded-xl transition shadow-xs disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
               >
                 {isSaving ? 'Đang lưu...' : 'Lưu Thay Đổi'}
               </button>
@@ -304,46 +288,63 @@ export const FamilySettingsPage: React.FC = () => {
             </h2>
 
             <div className="divide-y divide-slate-100">
-              {mockMemberships.map((m) => (
-                <div key={m.id} className="py-3 flex items-center justify-between">
+              {familyMemberships.length > 0 ? (
+                familyMemberships.map((m) => (
+                  <div key={m.id} className="py-3 flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-bold text-slate-900">
+                        {user?.id === m.user_id ? user.full_name : 'Quản Trị Viên Gia Tộc'}
+                      </div>
+                      <div className="text-[11px] text-slate-500">
+                        {user?.id === m.user_id ? user.email : 'banquantri@giapha.vn'}
+                      </div>
+                    </div>
+
+                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${ROLE_LABELS[m.role]?.color}`}>
+                      {ROLE_LABELS[m.role]?.label || m.role}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="py-3 flex items-center justify-between">
                   <div>
-                    <div className="text-xs font-bold text-slate-900">Nguyễn Văn Hoàng</div>
-                    <div className="text-[11px] text-slate-500">truongtoc.nguyen@giapha.vn</div>
+                    <div className="text-xs font-bold text-slate-900">{user?.full_name || 'Trưởng Tộc'}</div>
+                    <div className="text-[11px] text-slate-500">{user?.email || 'truongtoc@giapha.vn'}</div>
                   </div>
 
-                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${ROLE_LABELS[m.role]?.color}`}>
-                    {ROLE_LABELS[m.role]?.label || m.role}
+                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${ROLE_LABELS[currentAdminRole]?.color}`}>
+                    {ROLE_LABELS[currentAdminRole]?.label || 'Trưởng Tộc'}
                   </span>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
 
         {/* Right 1 Col: Mã QR, Link Rút Gọn & Hương ước */}
         <div className="space-y-6">
-          {/* Box A: Mã QR & Link Rút Gọn Duy Nhất & Mã PIN */}
+          {/* Box A: Mã QR & Link Rút Gọn & Mã PIN */}
           <div className="bg-gradient-to-br from-amber-50/90 via-white to-amber-50/40 p-6 rounded-2xl border border-amber-300 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-amber-200/80 pb-2">
               <h2 className="text-sm font-bold text-amber-950 flex items-center space-x-2">
                 <QrCode className="w-4 h-4 text-amber-800" />
-                <span>Mã QR & Link Rút Gọn Tra Cứu</span>
+                <span>Mã QR & Liên Kết Tra Cứu Gia Phong</span>
               </h2>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
-                Duy Nhất & Bảo Mật
+                Độc Bản Từ Đường
               </span>
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed">
-              Con cháu quét mã QR hoặc truy cập <strong>Link Rút Gọn Độc Bản</strong> và nhập <strong>Mã PIN bí mật</strong> để xem Cây Phả Hệ & <strong>Số Dư Sổ Quỹ</strong>.
+              Con cháu quét mã QR hoặc truy cập <strong>Liên kết dòng họ</strong> và nhập <strong>Mã PIN gia tộc</strong> để xem Cây Phả Hệ & <strong>Số Dư Sổ Quỹ</strong>.
             </p>
 
             {/* Unique Short Link Card */}
             <div className="p-3.5 bg-white border border-amber-300/80 rounded-xl space-y-2.5 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-700 uppercase">Liên Kết Rút Gọn Duy Nhất:</span>
+                <span className="text-[11px] font-bold text-slate-700 uppercase">Liên Kết Mở Cây Phả Hệ:</span>
                 <span className="text-[10px] font-bold text-[#166534] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  Đã Che Giấu Token
+                  Bảo Mật Gia Tộc
                 </span>
               </div>
 
@@ -354,7 +355,7 @@ export const FamilySettingsPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleCopyShortLink}
-                  className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#166534] text-xs font-bold rounded-xl border border-emerald-200 transition flex items-center gap-1 shrink-0"
+                  className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#166534] text-xs font-bold rounded-xl border border-emerald-200 transition flex items-center gap-1 shrink-0 cursor-pointer"
                 >
                   {copiedShortUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copiedShortUrl ? 'Đã chép' : 'Sao chép'}</span>
@@ -366,13 +367,13 @@ export const FamilySettingsPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsEditingSlug(true)}
-                  className="text-[11px] text-amber-800 hover:text-amber-900 font-semibold underline block text-left"
+                  className="text-[11px] text-amber-800 hover:text-amber-900 font-semibold underline block text-left cursor-pointer"
                 >
-                  + Tùy chỉnh mã link riêng (Ví dụ: ho-nguyen-dong-ky)
+                  + Tùy chỉnh liên kết riêng (Ví dụ: ho-nguyen-yen-mo)
                 </button>
               ) : (
                 <form onSubmit={handleSaveCustomSlug} className="space-y-2 pt-2 border-t border-slate-100">
-                  <label className="block text-[11px] font-bold text-slate-600">Đổi Tên Định Danh Rút Gọn (Chữ thường, số, dấu -):</label>
+                  <label className="block text-[11px] font-bold text-slate-600">Đổi Tên Định Danh Gia Tộc (Chữ thường, số, dấu -):</label>
                   <div className="flex gap-2">
                     <div className="flex items-center flex-1 bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 focus-within:border-[#166534]">
                       <span className="text-[11px] text-slate-400 font-mono">/c/</span>
@@ -387,14 +388,14 @@ export const FamilySettingsPage: React.FC = () => {
                     <button
                       type="submit"
                       disabled={isSavingSlug || !customSlug.trim()}
-                      className="px-3 py-1.5 bg-[#166534] hover:bg-[#14532D] text-white text-xs font-bold rounded-xl disabled:opacity-50"
+                      className="px-3 py-1.5 bg-[#166534] hover:bg-[#14532D] text-white text-xs font-bold rounded-xl disabled:opacity-50 cursor-pointer"
                     >
-                      {isSavingSlug ? '...' : 'Lưu Mã'}
+                      {isSavingSlug ? '...' : 'Lưu'}
                     </button>
                     <button
                       type="button"
                       onClick={() => setIsEditingSlug(false)}
-                      className="px-2 py-1.5 text-slate-500 hover:text-slate-700 text-xs"
+                      className="px-2 py-1.5 text-slate-500 hover:text-slate-700 text-xs cursor-pointer"
                     >
                       Hủy
                     </button>
@@ -405,7 +406,7 @@ export const FamilySettingsPage: React.FC = () => {
 
               {slugSuccess && (
                 <p className="text-[11px] text-emerald-700 font-bold flex items-center gap-1">
-                  <Check className="w-3.5 h-3.5" /> Đã cập nhật mã link rút gọn độc quyền thành công!
+                  <Check className="w-3.5 h-3.5" /> Đã cập nhật liên kết dòng họ thành công!
                 </p>
               )}
 
@@ -413,7 +414,7 @@ export const FamilySettingsPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsQRModalOpen(true)}
-                  className="w-full py-2.5 bg-[#166534] hover:bg-[#14532D] text-white text-xs font-bold rounded-xl flex items-center justify-center space-x-1.5 transition shadow-xs"
+                  className="w-full py-2.5 bg-[#166534] hover:bg-[#14532D] text-white text-xs font-bold rounded-xl flex items-center justify-center space-x-1.5 transition shadow-xs cursor-pointer"
                 >
                   <QrCode className="w-4 h-4" />
                   <span>Xem & In Bản Mã QR Từ Đường</span>
@@ -454,7 +455,7 @@ export const FamilySettingsPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowPin(!showPin)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
                   >
                     {showPin ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </button>
@@ -462,7 +463,7 @@ export const FamilySettingsPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSavingPin || !clanPin}
-                  className="px-4 py-2 bg-amber-800 hover:bg-amber-900 text-white text-xs font-bold rounded-xl transition shadow-xs disabled:opacity-50 shrink-0"
+                  className="px-4 py-2 bg-amber-800 hover:bg-amber-900 text-white text-xs font-bold rounded-xl transition shadow-xs disabled:opacity-50 shrink-0 cursor-pointer"
                 >
                   {isSavingPin ? 'Đang lưu...' : 'Lưu PIN'}
                 </button>
@@ -493,7 +494,7 @@ export const FamilySettingsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsCovenantModalOpen(true)}
-              className="w-full py-2 bg-amber-800 hover:bg-amber-900 text-white text-xs font-bold rounded-xl flex items-center justify-center space-x-1.5 transition shadow-xs"
+              className="w-full py-2 bg-amber-800 hover:bg-amber-900 text-white text-xs font-bold rounded-xl flex items-center justify-center space-x-1.5 transition shadow-xs cursor-pointer"
             >
               <Scroll className="w-3.5 h-3.5" />
               <span>Soạn Thảo / Sửa Hương Ước</span>
@@ -529,4 +530,3 @@ export const FamilySettingsPage: React.FC = () => {
 };
 
 export default FamilySettingsPage;
-

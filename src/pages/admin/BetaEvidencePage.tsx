@@ -11,14 +11,14 @@ export default function BetaEvidencePage() {
       <div className="flex items-center justify-between bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div>
           <Link to="/admin/beta" className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 mb-2">
-            <ArrowLeft className="w-3.5 h-3.5" /> Quay lại Beta Command Center
+            <ArrowLeft className="w-3.5 h-3.5" /> Quay lại Trung Tâm Điều Hành
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <FileCheck className="w-7 h-7 text-emerald-600" />
-            Hồ Sơ Bằng Chứng Closed Beta (Beta Evidence Trail)
+            Hồ Sơ Minh Chứng & Nhật Ký Vận Hành (System Evidence Trail)
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Minh chứng số hóa độc lập từ các dòng họ thử nghiệm thực tế (Mã giao dịch ngân hàng, bản ghi CSDL, khảo sát).
+            Minh chứng số hóa độc lập từ các dòng họ đang hoạt động thực tế (Mã giao dịch ngân hàng, bản ghi CSDL, nhật ký đối soát).
           </p>
         </div>
 

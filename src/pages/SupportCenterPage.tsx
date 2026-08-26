@@ -82,18 +82,18 @@ export default function SupportCenterPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <LifeBuoy className="w-7 h-7 text-emerald-600" />
-            Trung Tâm Hỗ Trợ & Phản Hồi Beta
+            Trung Tâm Hỗ Trợ & Tiếp Nhận Ý Kiến Gia Tộc
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Đội ngũ Kỹ thuật và Vận hành luôn đồng hành hỗ trợ dòng họ 24/7 trong giai đoạn Closed Beta.
+            Đội ngũ Kỹ thuật và Ban Cố vấn luôn đồng hành phụng sự và hỗ trợ dòng họ 24/7 trong suốt quá trình vận hành.
           </p>
         </div>
         <button
           onClick={() => setShowFeedbackModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-xl shadow-sm transition-all"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-medium rounded-xl shadow-sm transition-all cursor-pointer"
         >
           <ThumbsUp className="w-4 h-4" />
-          Đánh Giá Trải Nghiệm
+          Đóng Góp Ý Kiến Gia Tộc
         </button>
       </div>
 
@@ -243,9 +243,9 @@ export default function SupportCenterPage() {
       {showFeedbackModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Đánh Giá Trải Nghiệm Closed Beta</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Đánh Giá Chất Lượng Dịch Vụ Gia Tộc</h3>
             <p className="text-xs text-gray-500 mb-4">
-              Ý kiến quý báu của Quý Gia Tộc giúp hoàn thiện nền tảng trước khi phát hành thương mại.
+              Ý kiến quý báu của Quý Gia Tộc giúp chúng tôi không ngừng hoàn thiện chất lượng phục vụ dòng họ.
             </p>
 
             {feedbackSuccess ? (
@@ -257,7 +257,7 @@ export default function SupportCenterPage() {
               <form onSubmit={handleSubmitFeedback} className="space-y-4">
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    Mức độ sẵn lòng giới thiệu cho dòng họ khác (NPS: 0 - 10)?
+                    Mức độ sẵn lòng giới thiệu cho các chi phái hoặc dòng họ khác (0 - 10)?
                   </label>
                   <div className="flex justify-between items-center gap-1">
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => (
@@ -277,24 +277,24 @@ export default function SupportCenterPage() {
 
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    Mức độ hài lòng chung (CSAT: 1 - 5 sao)?
+                    Mức độ hài lòng chung (1 - 5 sao)?
                   </label>
                   <select
                     value={csat}
                     onChange={(e) => setCsat(Number(e.target.value))}
                     className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm"
                   >
-                    <option value={5}>5 sao - Rất hài lòng và tin cậy</option>
+                    <option value={5}>5 sao - Rất hài lòng và trang nghiêm</option>
                     <option value={4}>4 sao - Hài lòng, dễ sử dụng</option>
                     <option value={3}>3 sao - Bình thường</option>
                     <option value={2}>2 sao - Cần cải thiện</option>
-                    <option value={1}>1 sao - Không hài lòng</option>
+                    <option value={1}>1 sao - Chưa đáp ứng yêu cầu</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    Dòng họ có sẵn lòng chi trả phí thường niên sau khi hết hạn Beta không?
+                    Dòng họ có mong muốn duy trì gói dịch vụ thường niên lâu dài không?
                   </label>
                   <div className="flex gap-4">
                     <label className="flex items-center gap-2 text-sm text-gray-700">

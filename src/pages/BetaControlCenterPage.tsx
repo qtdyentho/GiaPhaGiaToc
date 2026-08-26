@@ -103,12 +103,12 @@ export const BetaControlCenterPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center space-x-1.5 bg-purple-100 text-purple-900 text-[11px] font-bold px-2.5 py-0.5 rounded-full mb-1 border border-purple-200">
+          <div className="inline-flex items-center space-x-1.5 bg-emerald-100 text-emerald-900 text-[11px] font-bold px-2.5 py-0.5 rounded-full mb-1 border border-emerald-300">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>MODULE 48 — CLOSED BETA CONTROL CENTER</span>
+            <span>HỆ THỐNG QUẢN TRỊ NỀN TẢNG — OFFICIAL RELEASE</span>
           </div>
-          <h1 className="text-xl font-bold text-slate-900">Trung Tâm Giám Sát & Vận Hành Closed Beta</h1>
-          <p className="text-xs text-slate-500">Giám sát hành vi thực tế, đo lường Time to First Value (TTFV) và mức độ sẵn sàng chi trả</p>
+          <h1 className="text-xl font-bold text-slate-900">Trung Tâm Giám Sát & Quản Trị Hệ Thống Dòng Họ</h1>
+          <p className="text-xs text-slate-500">Giám sát hoạt động thực tế, mức độ hài lòng và tiến độ số hóa phả hệ toàn bộ các dòng họ</p>
         </div>
       </div>
 
@@ -186,8 +186,8 @@ export const BetaControlCenterPage: React.FC = () => {
         {/* Left Column: Families List */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-            <h2 className="text-xs font-bold text-slate-900 uppercase">Danh Sách Gia Tộc Closed Beta</h2>
-            <span className="text-[11px] text-slate-400 font-semibold">{betaFamilies.length} Họ</span>
+            <h2 className="text-xs font-bold text-slate-900 uppercase">Danh Sách Dòng Họ Đang Hoạt Động</h2>
+            <span className="text-[11px] text-slate-400 font-semibold">{betaFamilies.length} Dòng Họ</span>
           </div>
 
           <div className="space-y-2">

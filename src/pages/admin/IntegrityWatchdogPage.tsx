@@ -21,7 +21,7 @@ export default function IntegrityWatchdogPage() {
       <div className="flex items-center justify-between bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div>
           <Link to="/admin/beta" className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 mb-2">
-            <ArrowLeft className="w-3.5 h-3.5" /> Quay lại Beta Command Center
+            <ArrowLeft className="w-3.5 h-3.5" /> Quay lại Trung Tâm Điều Hành
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <ShieldCheck className="w-7 h-7 text-emerald-600" />

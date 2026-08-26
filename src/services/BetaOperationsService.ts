@@ -32,8 +32,8 @@ export interface BetaFeedback {
 }
 
 export class BetaOperationsService {
-  public static BETA_MODE = true;
-  private static validInviteCodes = new Set(['BETA-2026-GIATOC', 'BETA-HERITAGE-VIP', 'BETA-THUYTO-2026']);
+  public static BETA_MODE = false; // Chế độ Vận Hành Chính Thức
+  private static validInviteCodes = new Set(['BETA-2026-GIATOC', 'BETA-HERITAGE-VIP', 'BETA-THUYTO-2026', 'GIATOC-2026']);
 
   private static tickets: SupportTicket[] = [
     {

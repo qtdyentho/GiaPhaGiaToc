@@ -190,8 +190,8 @@ export const ClanPassUnlockPage: React.FC = () => {
                     {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-500 text-center">
-                  Mã PIN được bảo vệ bằng mã hóa băm SHA-256 an toàn tuyệt đối.
+                <p className="text-[11px] text-slate-400 text-center font-serif italic">
+                  Mã PIN do Ban Quản Trị thiết lập nhằm bảo vệ thông tin nội bộ gia tộc.
                 </p>
               </div>
 

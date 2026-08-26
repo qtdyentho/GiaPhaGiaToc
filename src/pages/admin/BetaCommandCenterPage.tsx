@@ -18,17 +18,17 @@ export default function BetaCommandCenterPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
-              Closed Beta v2.0
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+              Vận Hành Chính Thức v1.0
             </span>
             <span className="text-xs text-gray-400">Live Production Monitoring</span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mt-1 flex items-center gap-2">
             <ShieldCheck className="w-7 h-7 text-emerald-600" />
-            Trung Tâm Chỉ Huy Vận Hành Closed Beta (Command Center)
+            Trung Tâm Điều Hành & Giám Sát Nền Tảng (Command Center)
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Giám sát thời gian thực tiến độ kích hoạt, sức khỏe dòng họ, tính toàn vẹn dữ liệu và đối soát tài chính.
+            Giám sát thời gian thực tiến độ kích hoạt, sức khỏe dòng họ, tính toàn vẹn dữ liệu và đối soát tài chính toàn hệ thống.
           </p>
         </div>
 
