@@ -230,25 +230,19 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   <span className="font-extrabold text-sm tracking-tight text-white leading-tight font-sans truncate">
                     {BRAND.name}
                   </span>
-                  <span className="text-[10px] text-amber-300 font-semibold tracking-wider uppercase font-sans truncate">
-                    {isAdminSpace ? 'Quản Trị Nền Tảng' : isFamilyAdmin ? (activeFamily?.name || 'Quản Trị Dòng Họ') : 'Không Gian Gia Tộc'}
+                  <span className="text-[10px] text-slate-300 font-medium tracking-wide font-sans truncate">
+                    {isAdminSpace ? 'Quản Trị Nền Tảng' : 'Quản Trị Gia Phả'}
                   </span>
                 </div>
               </div>
 
-              {/* Close / Collapse Button */}
+              {/* Close Button Only on Mobile */}
               <button
-                onClick={() => {
-                  if (window.innerWidth < 1024) {
-                    onClose?.();
-                  } else {
-                    onToggleCollapse?.();
-                  }
-                }}
-                aria-label="Thu gọn menu thanh điều hướng"
-                aria-expanded={true}
-                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition cursor-pointer shrink-0"
-                title="Ẩn thanh điều hướng (Thu gọn thành Icon)"
+                type="button"
+                onClick={onClose}
+                aria-label="Đóng menu trên thiết bị di động"
+                className="lg:hidden p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition cursor-pointer shrink-0"
+                title="Đóng menu"
               >
                 <PanelLeftClose className="w-5 h-5" />
               </button>

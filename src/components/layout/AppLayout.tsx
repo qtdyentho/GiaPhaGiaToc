@@ -11,7 +11,7 @@ export const AppLayout: React.FC = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-heritage-bg dark:bg-slate-950 font-sans transition-colors duration-200 text-slate-800 dark:text-slate-100">
+    <div className="flex min-h-screen bg-heritage-bg dark:bg-slate-950 font-sans transition-colors duration-200 text-slate-800 dark:text-slate-100 overflow-x-hidden">
       {/* Sidebar */}
       <AppSidebar
         isOpen={isMobileSidebarOpen}
@@ -22,7 +22,7 @@ export const AppLayout: React.FC = () => {
 
       {/* Main Content Area with Dynamic Left Padding */}
       <div
-        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 overflow-x-hidden ${
           isSidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'
         }`}
       >
@@ -34,7 +34,7 @@ export const AppLayout: React.FC = () => {
         <main
           id="main-content"
           tabIndex={-1}
-          className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto max-w-7xl w-full mx-auto animate-fade-in outline-none focus:ring-0"
+          className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto max-w-7xl w-full mx-auto animate-fade-in outline-none focus:ring-0 overflow-x-hidden"
         >
           <ErrorBoundary>
             <Suspense fallback={<PageSkeleton />}>

@@ -163,9 +163,9 @@ export const FamilySettingsPage: React.FC = () => {
       </div>
 
       {/* Grid: 2 Columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-w-0">
         {/* Left 2 Cols: Ảnh Từ Đường & Thông Tin Cơ Bản */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-6 min-w-0">
           {/* Box 1: Ảnh Từ Đường & Banner Dòng Họ */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -322,7 +322,7 @@ export const FamilySettingsPage: React.FC = () => {
         </div>
 
         {/* Right 1 Col: Mã QR, Link Rút Gọn & Hương ước */}
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0">
           {/* Box A: Mã QR & Link Rút Gọn & Mã PIN */}
           <div className="bg-gradient-to-br from-amber-50/90 via-white to-amber-50/40 p-6 rounded-2xl border border-amber-300 shadow-sm space-y-4">
             <div className="border-b border-amber-200/80 pb-2">

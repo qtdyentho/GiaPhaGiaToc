@@ -183,11 +183,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   };
 
   return (
-    <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs font-sans transition-colors duration-200">
-      {/* Left: Menu Toggle & Active Family & Lunar Widget */}
-      <div className="flex items-center space-x-2 sm:space-x-3">
-        {/* Toggle Sidebar Button (Desktop & Mobile) */}
+    <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200/80 dark:border-slate-800 px-3 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-2xs font-sans transition-colors duration-200 min-w-0 overflow-x-hidden">
+      {/* Left: 1 Single Toggle Menu Button & Lunar Widget */}
+      <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
+        {/* 1 Toggle Sidebar Button Duy Nhất (Desktop & Mobile) */}
         <button
+          type="button"
           onClick={() => {
             if (window.innerWidth < 1024) {
               onMenuToggle?.();
@@ -204,37 +205,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           ) : (
             <PanelLeftClose className="w-5 h-5 text-slate-600 dark:text-slate-300" />
           )}
-          <span className="text-xs font-bold hidden xl:inline text-slate-700 dark:text-slate-200">
-            {isSidebarCollapsed ? 'Hiện Menu' : 'Ẩn Menu'}
-          </span>
         </button>
 
-        {/* Brand / Active Family Badge (Tinh gọn, loại bỏ dropdown Đại Tộc rườm rà) */}
-        <Link
-          to="/app/family/settings"
-          title="Cài đặt thông tin Dòng Họ"
-          aria-label={`Dòng họ đang quản lý: ${activeFamily?.name || 'Gia Tộc'}`}
-          className="flex items-center space-x-2.5 bg-slate-50/90 dark:bg-slate-800/80 hover:bg-emerald-50/60 dark:hover:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200/90 dark:border-slate-700/90 hover:border-emerald-300/80 dark:hover:border-emerald-700/80 text-slate-700 dark:text-slate-200 transition-all cursor-pointer select-none shadow-2xs group shrink-0"
-        >
-          <div className="w-7 h-7 rounded-lg bg-emerald-100/80 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800/80 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-            <Shield className="w-4 h-4 text-[#166534] dark:text-emerald-400" />
-          </div>
-          <div className="text-left">
-            <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate max-w-[130px] sm:max-w-[200px] block leading-tight group-hover:text-[#166534] dark:group-hover:text-emerald-400 transition-colors">
-              {activeFamily?.name || 'Gia Tộc Việt Nam'}
-            </span>
-            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium block leading-none mt-0.5">
-              {activeFamily?.origin_province ? `${activeFamily.origin_province}` : 'Quản trị dòng họ'}
-            </span>
-          </div>
-        </Link>
-
-        {/* Thiết kế lại Widget Lịch Âm Dương (Thanh lịch, chuẩn mực, không gãy dòng) */}
+        {/* Widget Lịch Âm Dương Thanh Lịch */}
         <Link
           to="/app/calendar"
           aria-label={`Hôm nay ngày ${todayInfo.solarDay}/${todayInfo.solarMonth}/${todayInfo.solarYear}, âm lịch ngày ${todayInfo.lunarDay}/${todayInfo.lunarMonth} năm ${todayInfo.canChiYear}`}
           title="Bấm để xem Lịch Gia Tộc & Ngày Giỗ Vạn Niên"
-          className="hidden md:flex items-center space-x-2 bg-slate-50/90 dark:bg-slate-800/80 hover:bg-amber-50/60 dark:hover:bg-amber-950/30 px-3 py-1.5 rounded-xl border border-slate-200/90 dark:border-slate-700/90 hover:border-amber-300/80 dark:hover:border-amber-800/80 text-xs text-slate-700 dark:text-slate-200 shadow-2xs transition-all group shrink-0 whitespace-nowrap"
+          className="hidden xl:flex items-center space-x-2 bg-slate-50/90 dark:bg-slate-800/80 hover:bg-amber-50/60 dark:hover:bg-amber-950/30 px-3 py-1.5 rounded-xl border border-slate-200/90 dark:border-slate-700/90 hover:border-amber-300/80 dark:hover:border-amber-800/80 text-xs text-slate-700 dark:text-slate-200 shadow-2xs transition-all group shrink-0 whitespace-nowrap"
         >
           <Calendar className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400 group-hover:scale-110 transition-transform shrink-0" />
           <span className="font-medium text-slate-600 dark:text-slate-300">
@@ -244,6 +222,24 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800/80 text-[#166534] dark:text-emerald-300 text-[11px] font-bold px-2 py-0.5 rounded-md">
             Âm lịch: {todayInfo.lunarDay}/{todayInfo.lunarMonth} ({todayInfo.canChiYear})
           </span>
+        </Link>
+      </div>
+
+      {/* Center: TÊN DÒNG HỌ TO, TRANG TRỌNG CHÍNH GIỮA HEADER */}
+      <div className="flex-1 flex justify-center items-center px-2 sm:px-4 min-w-0 text-center">
+        <Link
+          to="/app/family/settings"
+          title="Cài đặt thông tin Dòng Họ"
+          className="inline-flex items-center justify-center gap-2 group hover:opacity-90 transition min-w-0"
+        >
+          <span className="text-base sm:text-lg md:text-xl font-black text-[#166534] dark:text-emerald-400 font-serif tracking-tight truncate uppercase">
+            {activeFamily?.name || 'ĐẠI TỘC GIA PHẢ'}
+          </span>
+          {activeFamily?.origin_province && (
+            <span className="hidden sm:inline-block px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shrink-0 font-sans">
+              {activeFamily.origin_province}
+            </span>
+          )}
         </Link>
       </div>
 
