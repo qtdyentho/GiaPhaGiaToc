@@ -42,6 +42,11 @@ let mockPasses: ClanAccessPass[] = [
   },
 ];
 
+function isUUID(str?: string | null): boolean {
+  if (!str) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+}
+
 export class ClanPassService {
   /**
    * Tính mã băm SHA-256 kèm Salt cho mã PIN (Hỗ trợ cả Browser Web Crypto & Node.js Crypto)
@@ -73,13 +78,17 @@ export class ClanPassService {
    */
   static async getClanPass(familyId?: string): Promise<ClanAccessPass | null> {
     if (!familyId) return null;
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase
-        .from('clan_access_passes')
-        .select('*')
-        .eq('family_id', familyId)
-        .single();
-      if (!error && data) return data as ClanAccessPass;
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      try {
+        const { data, error } = await supabase
+          .from('clan_access_passes')
+          .select('*')
+          .eq('family_id', familyId)
+          .maybeSingle();
+        if (!error && data) return data as ClanAccessPass;
+      } catch (err) {
+        console.warn('getClanPass Supabase error:', err);
+      }
     }
     const found = mockPasses.find((p) => p.family_id === familyId);
     return found || null;
@@ -293,34 +302,38 @@ export class ClanPassService {
     const existing = await this.getClanPass(familyId);
     const passToken = existing?.pass_token || `CP-FAM-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
-    if (isSupabaseConfigured()) {
-      const { error } = await supabase
-        .from('clan_access_passes')
-        .upsert(
-          {
-            family_id: familyId,
-            pass_token: passToken,
-            pin_hash: pinHash,
-            pin_salt: salt,
-            is_active: true,
-            failed_attempts: 0,
-            locked_until: null,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'family_id' }
-        );
-
-      if (error) return { success: false, error: error.message };
-
-      // Tự động đảm bảo có Short Link cho mã QR
+    if (isSupabaseConfigured() && isUUID(familyId)) {
       try {
-        const { ShortLinkService } = await import('./ShortLinkService');
-        await ShortLinkService.createOrUpdateShortLink(familyId, passToken);
-      } catch (err: any) {
-        console.warn('ShortLink sync error:', err?.message);
-      }
+        const { error } = await supabase
+          .from('clan_access_passes')
+          .upsert(
+            {
+              family_id: familyId,
+              pass_token: passToken,
+              pin_hash: pinHash,
+              pin_salt: salt,
+              is_active: true,
+              failed_attempts: 0,
+              locked_until: null,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'family_id' }
+          );
 
-      return { success: true };
+        if (error) return { success: false, error: error.message };
+
+        // Tự động đảm bảo có Short Link cho mã QR
+        try {
+          const { ShortLinkService } = await import('./ShortLinkService');
+          await ShortLinkService.createOrUpdateShortLink(familyId, passToken);
+        } catch (err: any) {
+          console.warn('ShortLink sync error:', err?.message);
+        }
+
+        return { success: true };
+      } catch (err: any) {
+        console.warn('setClanPin Supabase error:', err);
+      }
     }
 
     let pass = mockPasses.find((p) => p.family_id === familyId);

@@ -27,13 +27,18 @@ export interface ShortLinkResolution {
   error?: string;
 }
 
+function isUUID(str?: string | null): boolean {
+  if (!str) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+}
+
 // In-memory store for dev / mock mode
 let mockShortLinks: ClanShortLink[] = [
   {
     id: 'csl-001',
     family_id: '532e22f4-f452-457b-974e-992d9021fdff',
     pass_token: 'CP-FAM-NGUYEN-VAN-2026-X89',
-    short_code: 'nv86',
+    short_code: 'honguyen-yenmo',
     is_custom: true,
     clicks_count: 142,
     last_accessed_at: '2026-08-25T10:00:00Z',
@@ -44,7 +49,7 @@ let mockShortLinks: ClanShortLink[] = [
     id: 'csl-002',
     family_id: 'c8177ed9-d4ba-4022-8d7b-1555e7349701',
     pass_token: 'CP-FAM-TRAN-VAN-2026-T99',
-    short_code: 'tv26',
+    short_code: 'hotran-giavien',
     is_custom: true,
     clicks_count: 38,
     created_at: '2026-01-01T00:00:00Z',
@@ -118,14 +123,14 @@ export class ShortLinkService {
     if (!slugRegex.test(clean)) {
       return {
         valid: false,
-        error: 'Mã liên kết chỉ gồm chữ cái (a-z), chữ số (0-9) và dấu gạch ngang (-).',
+        error: 'Mã liên kết chỉ gồm chữ thường (a-z), chữ số (0-9) và dấu gạch ngang (-).',
       };
     }
 
     if (RESERVED_SLUGS.has(clean)) {
       return {
         valid: false,
-        error: `Mã "${clean}" là từ khóa hệ thống. Vui lòng chọn tên khác.`,
+        error: `Tên định danh "${clean}" là từ khóa hệ thống. Vui lòng chọn tên khác.`,
       };
     }
 
@@ -133,7 +138,7 @@ export class ShortLinkService {
   }
 
   /**
-   * Kiểm tra tính khả dụng của mã
+   * Kiểm tra xem tên định danh có bị trùng với dòng họ khác không
    */
   static async isCodeAvailable(code: string, currentFamilyId?: string): Promise<boolean> {
     const clean = code.trim().toLowerCase();
@@ -144,20 +149,21 @@ export class ShortLinkService {
 
     if (isSupabaseConfigured()) {
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('clan_short_links')
           .select('id, family_id, short_code')
           .eq('short_code', clean);
 
-        if (data && data.length > 0) {
+        if (!error && data && data.length > 0) {
+          // Nếu trùng mã nhưng chính là của dòng họ hiện tại -> cho phép
           if (currentFamilyId && data[0].family_id === currentFamilyId) {
             return true;
           }
-          return false;
+          return false; // Đã có dòng họ khác dùng
         }
-        return true;
+        if (!error) return true;
       } catch (err) {
-        console.warn('isCodeAvailable error:', err);
+        console.warn('isCodeAvailable Supabase check error:', err);
       }
     }
 
@@ -171,7 +177,7 @@ export class ShortLinkService {
    * Lấy Short Link theo Family ID
    */
   static async getShortLinkByFamily(familyId: string): Promise<ClanShortLink | null> {
-    if (isSupabaseConfigured() && familyId && familyId.includes('-')) {
+    if (isSupabaseConfigured() && isUUID(familyId)) {
       try {
         const { data, error } = await supabase
           .from('clan_short_links')
@@ -192,7 +198,7 @@ export class ShortLinkService {
   }
 
   /**
-   * Tạo hoặc cập nhật Short Link
+   * Tạo hoặc cập nhật Short Link (Có kiểm tra trùng lặp)
    */
   static async createOrUpdateShortLink(
     familyId: string,
@@ -212,7 +218,7 @@ export class ShortLinkService {
       if (!available) {
         return {
           success: false,
-          error: `Mã liên kết "${finalCode}" đã được dòng họ khác sử dụng. Vui lòng chọn mã khác.`,
+          error: `Tên định danh "${finalCode}" đã được dòng họ khác sử dụng. Vui lòng chọn tên định danh khác.`,
         };
       }
     } else {
@@ -232,7 +238,7 @@ export class ShortLinkService {
 
     const now = new Date().toISOString();
 
-    if (isSupabaseConfigured() && familyId && familyId.includes('-')) {
+    if (isSupabaseConfigured() && isUUID(familyId)) {
       try {
         // Đảm bảo clan_access_passes tồn tại trước khi upsert short link
         const { data: passData } = await supabase
@@ -296,7 +302,7 @@ export class ShortLinkService {
       }
     }
 
-    // Local / In-memory fallback
+    // Local / In-memory fallback (Xử lý an toàn khi familyId không phải UUID hoặc môi trường dev)
     const idx = mockShortLinks.findIndex((l) => l.family_id === familyId);
     if (idx >= 0) {
       mockShortLinks[idx].pass_token = passToken;
@@ -321,105 +327,103 @@ export class ShortLinkService {
   }
 
   /**
-   * Giải mã Short Code sang Pass Token & Thông tin dòng họ
+   * Phân giải Short Code sang Pass Token & Family Info
    */
   static async resolveShortCode(code: string): Promise<ShortLinkResolution> {
     const clean = code.trim().toLowerCase();
 
     if (isSupabaseConfigured()) {
       try {
-        const { data, error } = await supabase.rpc('fn_resolve_short_link', {
-          p_code: clean,
-        });
-
-        if (!error && data && data.success) {
-          return data as ShortLinkResolution;
-        }
-
-        // Direct query fallback on clan_short_links table
-        const { data: linkRecord } = await supabase
+        const { data: linkData, error: linkErr } = await supabase
           .from('clan_short_links')
-          .select('*, families(id, name, code, banner_url)')
+          .select('id, family_id, pass_token, short_code, clicks_count')
           .eq('short_code', clean)
           .maybeSingle();
 
-        if (linkRecord) {
-          const fam = (linkRecord as any).families;
+        if (!linkErr && linkData) {
+          // Tăng clicks_count
+          supabase
+            .from('clan_short_links')
+            .update({
+              clicks_count: (linkData.clicks_count || 0) + 1,
+              last_accessed_at: new Date().toISOString(),
+            })
+            .eq('id', linkData.id)
+            .then();
+
+          // Lấy thông tin family
+          const { data: famData } = await supabase
+            .from('families')
+            .select('id, name, code, ancestral_hall_address')
+            .eq('id', linkData.family_id)
+            .maybeSingle();
+
+          // Lấy salt và lock status
+          const { data: passData } = await supabase
+            .from('clan_access_passes')
+            .select('pin_salt, locked_until, is_active')
+            .eq('family_id', linkData.family_id)
+            .maybeSingle();
+
+          const isLocked = Boolean(
+            passData?.locked_until && new Date(passData.locked_until) > new Date()
+          );
+
           return {
             success: true,
-            short_code: linkRecord.short_code,
-            pass_token: linkRecord.pass_token,
-            family_id: linkRecord.family_id,
-            family_name: fam?.name || 'Gia Tộc',
-            family_code: fam?.code || 'CLAN',
-            pin_salt: 'salt_auto',
-            banner_url: fam?.banner_url,
-            is_locked: false,
-            clicks_count: (linkRecord.clicks_count || 0) + 1,
+            short_code: linkData.short_code,
+            pass_token: linkData.pass_token,
+            family_id: linkData.family_id,
+            family_name: famData?.name || 'Gia Tộc',
+            family_code: famData?.code,
+            pin_salt: passData?.pin_salt,
+            is_locked: isLocked,
+            clicks_count: (linkData.clicks_count || 0) + 1,
           };
         }
-
-        // Check if code matches family code or slug directly
-        const { data: directFam } = await supabase
-          .from('families')
-          .select('*')
-          .or(`code.ilike.${clean},slug.ilike.${clean}`)
-          .maybeSingle();
-
-        if (directFam) {
-          const token = `CP-FAM-${directFam.id.slice(0, 8).toUpperCase()}`;
-          return {
-            success: true,
-            short_code: clean,
-            pass_token: token,
-            family_id: directFam.id,
-            family_name: directFam.name,
-            family_code: directFam.code,
-            banner_url: directFam.banner_url,
-            is_locked: false,
-          };
-        }
-      } catch (err: any) {
-        console.warn('resolveShortCode error:', err.message);
+      } catch (err) {
+        console.warn('resolveShortCode Supabase error:', err);
       }
     }
 
-    // Local / In-memory Resolver
-    const link = mockShortLinks.find((l) => l.short_code.toLowerCase() === clean);
-    if (link) {
-      link.clicks_count += 1;
-      link.last_accessed_at = new Date().toISOString();
-
-      return {
-        success: true,
-        short_code: link.short_code,
-        pass_token: link.pass_token,
-        family_id: link.family_id,
-        family_name: mockFamily.name,
-        family_code: mockFamily.code,
-        pin_salt: 'mock_salt_nguyen_van_2026_clan_pass_key',
-        banner_url: mockFamily.banner_url,
-        is_locked: false,
-        clicks_count: link.clicks_count,
-      };
+    // In-memory fallback
+    const found = mockShortLinks.find((l) => l.short_code.toLowerCase() === clean);
+    if (!found) {
+      return { success: false, error: 'Mã liên kết không tồn tại hoặc đã hết hạn.' };
     }
 
-    // Fallback: Nếu không tìm thấy, cho phép mở khóa với mã pass_token tạm thời
+    found.clicks_count += 1;
+    found.last_accessed_at = new Date().toISOString();
+
     return {
       success: true,
-      short_code: clean,
-      pass_token: `CP-FAM-${clean.toUpperCase()}`,
-      family_id: 'fam-0000-0001',
-      family_name: 'Gia Tộc',
-      is_locked: false,
+      short_code: found.short_code,
+      pass_token: found.pass_token,
+      family_id: found.family_id,
+      family_name: mockFamily.name,
+      family_code: mockFamily.code,
+      clicks_count: found.clicks_count,
     };
   }
 
   /**
-   * Lấy URL đầy đủ của Link Rút Gọn
+   * Tạo URL ngắn hoàn chỉnh dạng https://domain/c/:shortCode
    */
-  static buildShortUrl(shortCode: string): string {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://giaphagiatoc.vn';
-    return `${origin}/c/${shortCode}`;
+  static buildShortUrl(shortCode: string, baseUrl?: string): string {
+    const origin = baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://giaphagiatoc.vn');
+    return `${origin}/c/${shortCode.trim().toLowerCase()}`;
+  }
+
+  /**
+   * Lấy thống kê số lượt truy cập liên kết ngắn
+   */
+  static async getShortLinkStats(familyId: string): Promise<{ clicks_count: number; last_accessed_at?: string }> {
+    const link = await this.getShortLinkByFamily(familyId);
+    return {
+      clicks_count: link?.clicks_count || 0,
+      last_accessed_at: link?.last_accessed_at,
+    };
   }
 }
+
+export default ShortLinkService;

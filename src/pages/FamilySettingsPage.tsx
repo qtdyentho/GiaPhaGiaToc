@@ -325,14 +325,11 @@ export const FamilySettingsPage: React.FC = () => {
         <div className="space-y-6">
           {/* Box A: Mã QR & Link Rút Gọn & Mã PIN */}
           <div className="bg-gradient-to-br from-amber-50/90 via-white to-amber-50/40 p-6 rounded-2xl border border-amber-300 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-amber-200/80 pb-2">
+            <div className="border-b border-amber-200/80 pb-2">
               <h2 className="text-sm font-bold text-amber-950 flex items-center space-x-2">
                 <QrCode className="w-4 h-4 text-amber-800" />
                 <span>Mã QR & Liên Kết Tra Cứu Gia Phong</span>
               </h2>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
-                Độc Bản Từ Đường
-              </span>
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed">
@@ -341,11 +338,8 @@ export const FamilySettingsPage: React.FC = () => {
 
             {/* Unique Short Link Card */}
             <div className="p-3.5 bg-white border border-amber-300/80 rounded-xl space-y-2.5 shadow-xs">
-              <div className="flex items-center justify-between">
+              <div>
                 <span className="text-[11px] font-bold text-slate-700 uppercase">Liên Kết Mở Cây Phả Hệ:</span>
-                <span className="text-[10px] font-bold text-[#166534] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  Bảo Mật Gia Tộc
-                </span>
               </div>
 
               <div className="flex items-center gap-2">
