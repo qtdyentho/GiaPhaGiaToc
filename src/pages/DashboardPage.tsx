@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, Landmark, Wallet, Calendar, ArrowUpRight, Sparkles, 
   ChevronRight, MapPin, Camera, Image, ShieldCheck, HeartHandshake,
-  BookOpen, Megaphone
+  BookOpen, Megaphone, QrCode
 } from 'lucide-react';
 import { LunarCalendarService } from '../services/LunarCalendarService';
+import { ShortLinkService } from '../services/security/ShortLinkService';
+import { ClanPassService } from '../services/security/ClanPassService';
 import { formatCurrency } from '../lib/utils';
 import { mockFamily, mockMembers, mockFunds, mockMemorialDates, mockTransactions } from '../services/mockData';
 import { Link } from 'react-router-dom';
@@ -13,6 +15,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { AncestralBannerModal, ANCESTRAL_PRESETS } from '../components/family/AncestralBannerModal';
 import { ClanCovenantCard } from '../components/family/ClanCovenantCard';
 import { CreateBroadcastModal } from '../components/notifications/CreateBroadcastModal';
+import { PrintableClanQRCodeModal } from '../components/family/PrintableClanQRCodeModal';
 
 export const DashboardPage: React.FC = () => {
   const { activeFamily, isFamilyAdmin, user } = useAuth();
@@ -20,6 +23,9 @@ export const DashboardPage: React.FC = () => {
   
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [shortCode, setShortCode] = useState<string>('');
+  const [passToken, setPassToken] = useState<string>('');
 
   // Nếu tài khoản chưa có dòng họ nào, hiển thị giao diện Onboarding khởi tạo dòng họ
   if (!activeFamily) {
@@ -69,6 +75,18 @@ export const DashboardPage: React.FC = () => {
 
   const bannerImageUrl = currentFamily.banner_url || ANCESTRAL_PRESETS[0].url;
 
+  useEffect(() => {
+    async function loadQR() {
+      if (currentFamily?.id) {
+        const config = await ClanPassService.getFamilyPassConfig(currentFamily.id);
+        if (config?.pass_token) setPassToken(config.pass_token);
+        const link = await ShortLinkService.getShortLinkByFamily(currentFamily.id);
+        if (link?.short_code) setShortCode(link.short_code);
+      }
+    }
+    loadQR();
+  }, [currentFamily?.id]);
+
   return (
     <div className="space-y-6 font-sans animate-fade-in">
       {/* 🏛️ ANCESTRAL HERO BANNER: Không Gian Từ Đường & Phụng Tự Trang Trọng */}
@@ -95,14 +113,23 @@ export const DashboardPage: React.FC = () => {
             <span className="tracking-wide">Ẩm Hà Tư Nguyên • Mộc Hữu Bản, Thủy Hữu Nguyên</span>
           </div>
 
-          {/* Action Buttons: Phát Thông Báo & Thay Đổi Ảnh Từ Đường (Trưởng tộc / Quản trị viên) */}
+          {/* Action Buttons: Mã QR, Phát Thông Báo & Thay Đổi Ảnh Từ Đường */}
           <div className="flex items-center space-x-2 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => setIsQRModalOpen(true)}
+              className="inline-flex items-center space-x-1.5 bg-emerald-700/90 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-full border border-emerald-400/50 backdrop-blur-md transition shadow-xs cursor-pointer"
+            >
+              <QrCode className="w-3.5 h-3.5" />
+              <span>Mã QR Dòng Họ</span>
+            </button>
+
             {isFamilyAdmin && (
               <>
                 <button
                   type="button"
                   onClick={() => setIsBroadcastModalOpen(true)}
-                  className="inline-flex items-center space-x-1.5 bg-amber-500/90 hover:bg-amber-500 text-amber-950 text-xs font-bold px-3.5 py-1.5 rounded-full border border-amber-300 backdrop-blur-md transition shadow-xs"
+                  className="inline-flex items-center space-x-1.5 bg-amber-500/90 hover:bg-amber-500 text-amber-950 text-xs font-bold px-3.5 py-1.5 rounded-full border border-amber-300 backdrop-blur-md transition shadow-xs cursor-pointer"
                 >
                   <Megaphone className="w-3.5 h-3.5" />
                   <span>Phát Thông Báo Đẩy</span>
@@ -111,7 +138,7 @@ export const DashboardPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsBannerModalOpen(true)}
-                  className="inline-flex items-center space-x-1.5 bg-black/40 hover:bg-black/60 text-amber-200 hover:text-white text-xs font-semibold px-3.5 py-1.5 rounded-full border border-white/20 backdrop-blur-md transition shadow-xs hover:border-amber-400/50"
+                  className="inline-flex items-center space-x-1.5 bg-black/40 hover:bg-black/60 text-amber-200 hover:text-white text-xs font-semibold px-3.5 py-1.5 rounded-full border border-white/20 backdrop-blur-md transition shadow-xs hover:border-amber-400/50 cursor-pointer"
                 >
                   <Camera className="w-3.5 h-3.5 text-amber-300" />
                   <span>Đổi Ảnh Từ Đường</span>
@@ -341,6 +368,15 @@ export const DashboardPage: React.FC = () => {
       <CreateBroadcastModal
         isOpen={isBroadcastModalOpen}
         onClose={() => setIsBroadcastModalOpen(false)}
+      />
+
+      {/* 📱 Modal Mã QR Dán Từ Đường */}
+      <PrintableClanQRCodeModal
+        isOpen={isQRModalOpen}
+        onClose={() => setIsQRModalOpen(false)}
+        family={currentFamily}
+        passToken={passToken}
+        shortCode={shortCode}
       />
     </div>
   );

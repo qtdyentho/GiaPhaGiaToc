@@ -162,7 +162,7 @@ export class FundService {
     if (!familyId) return [];
     if (isSupabaseConfigured()) {
       const { data, error } = await supabase.from('funds').select('*').eq('family_id', familyId).order('created_at', { ascending: true });
-      if (!error && data && data.length > 0) return data as Fund[];
+      if (!error && data) return data as Fund[];
     }
     return mockFunds.filter((f) => f.family_id === familyId);
   }
@@ -203,7 +203,7 @@ export class FundService {
       let query = supabase.from('income_categories').select('*');
       if (familyId) query = query.eq('family_id', familyId);
       const { data, error } = await query;
-      if (!error && data && data.length > 0) return data as IncomeCategory[];
+      if (!error && data) return data as IncomeCategory[];
     }
     return mockIncomeCategories;
   }
@@ -213,7 +213,7 @@ export class FundService {
       let query = supabase.from('expense_categories').select('*');
       if (familyId) query = query.eq('family_id', familyId);
       const { data, error } = await query;
-      if (!error && data && data.length > 0) return data as ExpenseCategory[];
+      if (!error && data) return data as ExpenseCategory[];
     }
     return mockExpenseCategories;
   }
@@ -225,7 +225,7 @@ export class FundService {
     if (!familyId) return [];
     if (isSupabaseConfigured()) {
       const { data, error } = await supabase.from('income_assessments').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
-      if (!error && data && data.length > 0) return data as IncomeAssessment[];
+      if (!error && data) return data as IncomeAssessment[];
     }
     return mockAssessments.filter((a) => a.family_id === familyId);
   }
@@ -406,7 +406,7 @@ export class FundService {
     if (!familyId) return [];
     if (isSupabaseConfigured()) {
       const { data, error } = await supabase.from('expense_records').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
-      if (!error && data && data.length > 0) return data as ExpenseRecord[];
+      if (!error && data) return data as ExpenseRecord[];
     }
     return mockExpenses.filter((e) => e.family_id === familyId);
   }
@@ -596,7 +596,7 @@ export class FundService {
       if (filters?.fundId) query = query.eq('fund_id', filters.fundId);
       if (filters?.type) query = query.eq('transaction_type', filters.type);
       const { data, error } = await query;
-      if (!error && data && data.length > 0) return data as FinancialTransaction[];
+      if (!error && data) return data as FinancialTransaction[];
     }
 
     let result = mockTransactions.filter((t) => t.family_id === familyId);

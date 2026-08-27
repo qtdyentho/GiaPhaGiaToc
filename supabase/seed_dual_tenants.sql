@@ -32,24 +32,38 @@ BEGIN
   SELECT id INTO v_user_alpha FROM auth.users WHERE email = 'truongtoc.alpha@giapha.vn' LIMIT 1;
   IF v_user_alpha IS NULL THEN
     v_user_alpha := gen_random_uuid();
+    INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud, created_at, updated_at)
+    VALUES (v_user_alpha, '00000000-0000-0000-0000-000000000000', 'truongtoc.alpha@giapha.vn', crypt('123456', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Trưởng tộc Alpha"}', 'authenticated', 'authenticated', now(), now());
   END IF;
 
   SELECT id INTO v_user_beta FROM auth.users WHERE email = 'truongtoc.beta@giapha.vn' LIMIT 1;
   IF v_user_beta IS NULL THEN
     v_user_beta := gen_random_uuid();
+    INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, role, aud, created_at, updated_at)
+    VALUES (v_user_beta, '00000000-0000-0000-0000-000000000000', 'truongtoc.beta@giapha.vn', crypt('123456', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{"full_name":"Trưởng tộc Beta"}', 'authenticated', 'authenticated', now(), now());
   END IF;
+
+  -- Đảm bảo Profiles tồn tại trước khi liên kết
+  INSERT INTO profiles (id, email, full_name, phone)
+  VALUES 
+    (v_user_alpha, 'truongtoc.alpha@giapha.vn', 'Trưởng tộc Alpha (Nguyễn)', '0901234567'),
+    (v_user_beta, 'truongtoc.beta@giapha.vn', 'Trưởng tộc Beta (Trần)', '0907654321')
+  ON CONFLICT (id) DO NOTHING;
 
   -- -------------------------------------------------------------
   -- 1. TẠO GIA TỘC A: HỌ NGUYỄN (User Alpha quản lý)
   -- -------------------------------------------------------------
-  INSERT INTO families (id, name, surname, description, origin, ancestral_home)
+  INSERT INTO families (id, name, surname, code, slug, description, origin_province, ancestral_hall_address, created_by)
   VALUES (
     v_family_a,
     'Họ Nguyễn — Yên Mô',
     'Nguyễn',
+    'NGUYEN-YENMO',
+    'ho-nguyen-yen-mo',
     'Dòng họ Nguyễn Phúc tại Yên Mô, Ninh Bình',
-    'Yên Mô, Ninh Bình',
-    'Từ đường Họ Nguyễn, Yên Mô'
+    'Ninh Bình',
+    'Từ đường Họ Nguyễn, Yên Mô',
+    v_user_alpha
   );
 
   INSERT INTO family_memberships (id, family_id, user_id, role, status)
@@ -78,14 +92,17 @@ BEGIN
   -- -------------------------------------------------------------
   -- 2. TẠO GIA TỘC B: HỌ TRẦN (User Beta quản lý)
   -- -------------------------------------------------------------
-  INSERT INTO families (id, name, surname, description, origin, ancestral_home)
+  INSERT INTO families (id, name, surname, code, slug, description, origin_province, ancestral_hall_address, created_by)
   VALUES (
     v_family_b,
     'Họ Trần — Gia Viễn',
     'Trần',
+    'TRAN-GIAVIEN',
+    'ho-tran-gia-vien',
     'Dòng họ Trần Văn tại Gia Viễn, Ninh Bình',
-    'Gia Viễn, Ninh Bình',
-    'Từ đường Họ Trần, Gia Viễn'
+    'Ninh Bình',
+    'Từ đường Họ Trần, Gia Viễn',
+    v_user_beta
   );
 
   INSERT INTO family_memberships (id, family_id, user_id, role, status)

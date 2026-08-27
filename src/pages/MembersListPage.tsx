@@ -19,9 +19,17 @@ export const MembersListPage: React.FC = () => {
   const familyBranches = currentFamId ? mockBranches.filter((b) => b.family_id === currentFamId) : [];
 
   const filteredMembers = familyMembers.filter((m) => {
+    const q = search.toLowerCase().trim();
     const matchesSearch =
-      m.full_name.toLowerCase().includes(search.toLowerCase()) ||
-      m.first_name.toLowerCase().includes(search.toLowerCase());
+      !q ||
+      m.full_name.toLowerCase().includes(q) ||
+      m.first_name.toLowerCase().includes(q) ||
+      (m.courtesy_name && m.courtesy_name.toLowerCase().includes(q)) ||
+      (m.religious_name && m.religious_name.toLowerCase().includes(q)) ||
+      (m.birth_time && m.birth_time.toLowerCase().includes(q)) ||
+      (m.death_time && m.death_time.toLowerCase().includes(q)) ||
+      (m.burial_place && m.burial_place.toLowerCase().includes(q)) ||
+      (m.bio && m.bio.toLowerCase().includes(q));
 
     const matchesGen =
       selectedGenFilter === 'ALL' ||
@@ -97,7 +105,7 @@ export const MembersListPage: React.FC = () => {
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Tìm theo tên thành viên, đời, chi họ..."
+            placeholder="Tìm theo tên thành viên, tên Húy/Hiệu, giờ sinh, nơi an táng..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534] focus:bg-white transition"

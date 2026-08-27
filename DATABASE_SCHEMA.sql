@@ -48,6 +48,20 @@ EXCEPTION
 END $$;
 
 DO $$ BEGIN
+    CREATE TYPE relationship_type AS ENUM (
+        'PARENT',
+        'CHILD',
+        'SPOUSE',
+        'SIBLING',
+        'ADOPTIVE_PARENT',
+        'ADOPTED_CHILD',
+        'OTHER'
+    );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
     CREATE TYPE spouse_rank_type AS ENUM (
         'CHINH_THAT',   -- Bà Cả / Nguyên Phối
         'KE_THAT',      -- Bà Hai / Kế Thất
@@ -463,7 +477,7 @@ CREATE TABLE IF NOT EXISTS financial_transactions (
     event_id UUID REFERENCES events(id) ON DELETE SET NULL,
     member_id UUID REFERENCES members(id) ON DELETE SET NULL,
     assessment_id UUID REFERENCES income_assessments(id) ON DELETE SET NULL,
-    expense_id UUID REFERENCES expense_records(id) ON DELETE SET NULL,
+    expense_id UUID,
     amount NUMERIC(15, 2) NOT NULL CHECK (amount > 0),
     payment_method payment_method DEFAULT 'CASH' NOT NULL,
     transaction_date DATE NOT NULL,
@@ -500,6 +514,15 @@ CREATE TABLE IF NOT EXISTS expense_records (
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
+
+-- Thêm Foreign Key từ financial_transactions sang expense_records
+DO $$ BEGIN
+    ALTER TABLE financial_transactions 
+    ADD CONSTRAINT fk_financial_transactions_expense 
+    FOREIGN KEY (expense_id) REFERENCES expense_records(id) ON DELETE SET NULL;
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- BẢNG 18: Đóng góp tự nguyện (Contributions)
 CREATE TABLE IF NOT EXISTS contributions (
@@ -808,6 +831,38 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     ip_address TEXT,
     created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
+
+-- BẢNG 37: Quản lý Mã QR & PIN Khóa Gia Tộc (Clan Access Passes)
+CREATE TABLE IF NOT EXISTS clan_access_passes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+    pass_token TEXT UNIQUE NOT NULL,
+    pin_hash TEXT NOT NULL,
+    pin_salt TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    failed_attempts INTEGER DEFAULT 0 NOT NULL,
+    locked_until TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    CONSTRAINT uq_clan_pass_family UNIQUE (family_id)
+);
+
+-- BẢNG 38: Quản lý Liên Kết Rút Gọn Gia Tộc (Clan Short Links)
+CREATE TABLE IF NOT EXISTS clan_short_links (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    family_id UUID NOT NULL REFERENCES families(id) ON DELETE CASCADE,
+    pass_token TEXT NOT NULL,
+    short_code VARCHAR(50) NOT NULL,
+    is_custom BOOLEAN DEFAULT false,
+    clicks_count INTEGER DEFAULT 0,
+    last_accessed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now(),
+    CONSTRAINT uq_clan_short_links_code UNIQUE (short_code)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_clan_short_links_lower_code 
+ON clan_short_links (LOWER(short_code));
 
 -- ------------------------------------------------------------
 -- 4. PERFORMANCE INDEXES
@@ -1133,6 +1188,19 @@ ALTER TABLE billing_audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_notification_preferences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+
+-- Helper function kiểm tra quyền Super Admin
+CREATE OR REPLACE FUNCTION public.is_superadmin()
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+AS $$
+    SELECT COALESCE(
+        (SELECT (auth.jwt() -> 'app_metadata' ->> 'is_superadmin')::boolean),
+        false
+    );
+$$;
 
 -- Helper function lấy danh sách family_id mà user hiện tại có quyền truy cập
 CREATE OR REPLACE FUNCTION current_user_family_ids()

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Landmark, ArrowLeft, CheckCircle2, XCircle, AlertTriangle, ShieldCheck, Search, Filter, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { AdminBillingService } from '../../services/billing/AdminBillingService';
 import { Invoice } from '../../types/database';
 import { mockInvoices } from '../../services/mockData';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 
 export default function AdminPaymentsPage() {
   const [invoices, setInvoices] = useState<Invoice[]>(mockInvoices);
@@ -22,6 +23,26 @@ export default function AdminPaymentsPage() {
 
   // Notification message
   const [feedback, setFeedback] = useState<{ type: 'SUCCESS' | 'ERROR'; message: string } | null>(null);
+
+  useEffect(() => {
+    async function loadLiveInvoices() {
+      if (isSupabaseConfigured()) {
+        try {
+          const { data, error } = await supabase
+            .from('subscription_invoices')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (!error && data && data.length > 0) {
+            setInvoices(data as Invoice[]);
+          }
+        } catch (err) {
+          console.warn('loadLiveInvoices error:', err);
+        }
+      }
+    }
+    loadLiveInvoices();
+  }, []);
 
   const openConfirmModal = (inv: Invoice) => {
     setSelectedInvoice(inv);
@@ -52,6 +73,9 @@ export default function AdminPaymentsPage() {
 
       if (res.success) {
         setFeedback({ type: 'SUCCESS', message: res.message });
+        setInvoices((prev) =>
+          prev.map((i) => (i.id === selectedInvoice.id ? { ...i, status: 'PAID' as const } : i))
+        );
       } else {
         setFeedback({ type: 'ERROR', message: res.message });
       }
@@ -71,6 +95,9 @@ export default function AdminPaymentsPage() {
       });
 
       setFeedback({ type: 'SUCCESS', message: res.message });
+      setInvoices((prev) =>
+        prev.map((i) => (i.id === selectedInvoice.id ? { ...i, status: 'REJECTED' as const } : i))
+      );
       setIsRejectModalOpen(false);
     } catch (err: any) {
       setFeedback({ type: 'ERROR', message: err.message || 'Lỗi từ chối thanh toán' });

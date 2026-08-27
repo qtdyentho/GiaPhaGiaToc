@@ -70,7 +70,11 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
               <div class="member-card ${isDeceased ? 'deceased' : 'alive'}">
                 <div class="member-branch">${branch ? branch.name : 'Chi Trưởng'}</div>
                 <div class="member-name">${m.full_name.replace(/\(.*?\)/g, '').trim()}</div>
+                ${m.courtesy_name ? `<div class="member-courtesy" style="font-size:10px; color:#78350f; font-style:italic; margin-bottom:2px;">📜 ${m.courtesy_name}</div>` : ''}
                 <div class="member-info">
+                  ${
+                    m.birth_time ? `<span>⏰ Sinh: ${m.birth_time}</span> ` : ''
+                  }
                   ${
                     includeLunarDates && m.death_lunar_day && m.death_lunar_month
                       ? `<span>🕯️ Giỗ: ${m.death_lunar_day}/${m.death_lunar_month} ÂL</span>`
@@ -384,7 +388,7 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
 
   // CSV Export
   const handleExportCSV = () => {
-    const headers = ['ID', 'Họ Tên', 'Giới Tính', 'Tình Trạng', 'Chi Phái', 'Đời', 'Năm Sinh', 'Ngày Giỗ ÂL', 'Nơi An Táng', 'Tiểu Sử'];
+    const headers = ['ID', 'Họ Tên', 'Tên Húy/Hiệu', 'Pháp Danh', 'Giới Tính', 'Tình Trạng', 'Chi Phái', 'Đời', 'Giờ Sinh', 'Năm Sinh', 'Giờ Mất', 'Ngày Giỗ ÂL', 'Nơi An Táng', 'Tiểu Sử'];
     const rows = members.map((m) => {
       const branchName = branches.find((b) => b.id === m.branch_id)?.name || '';
       const genName = generations.find((g) => g.id === m.generation_id)?.name || '';
@@ -392,11 +396,15 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
       return [
         m.id,
         `"${m.full_name}"`,
+        `"${m.courtesy_name || ''}"`,
+        `"${m.religious_name || ''}"`,
         m.gender === 'MALE' ? 'Nam' : 'Nữ',
         m.life_status === 'DECEASED' ? 'Đã mất' : 'Còn sống',
         `"${branchName}"`,
         `"${genName}"`,
-        m.birth_solar_date ? new Date(m.birth_solar_date).getFullYear() : '',
+        `"${m.birth_time || ''}"`,
+        m.birth_solar_date ? new Date(m.birth_solar_date).getFullYear() : (m.birth_lunar_year || ''),
+        `"${m.death_time || ''}"`,
         deathDate,
         `"${m.burial_place || ''}"`,
         `"${m.bio || ''}"`,

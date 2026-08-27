@@ -115,4 +115,42 @@ test('UNIQUE CLAN SHORT LINK & HIGH-READABILITY QR SUITE', async (t) => {
     assert.strictEqual(reSaveRes.success, true);
     console.log('✅ [SHORT-006: Multi-Tenant Owner Re-assignment Idempotency] PASS');
   });
+
+  await t.test('SHORT-007: Vietnamese slugify and auto-suggestion generator', () => {
+    const slug1 = ShortLinkService.suggestSlugFromName('Họ Nguyễn — Yên Mô (Ninh Bình)');
+    assert.strictEqual(slug1, 'ho-nguyen-yen-mo-ninh-binh');
+
+    const slug2 = ShortLinkService.suggestSlugFromName('Đại Tộc Trần Văn Đô');
+    assert.strictEqual(slug2, 'dai-toc-tran-van-do');
+    console.log('✅ [SHORT-007: Vietnamese Slugify & Suggestion] PASS');
+  });
+
+  await t.test('SHORT-008: Multi-tier Resilient Resolution handles trailing slashes, uppercase and accents', async () => {
+    // Uppercase with trailing slash / spaces
+    const resUpper = await ShortLinkService.resolveShortCode('/ALPHA-HERITAGE-2026/ ');
+    assert.strictEqual(resUpper.success, true);
+    assert.strictEqual(resUpper.family_id, familyAlpha.id);
+
+    // Pass token direct fallback
+    const resPassDirect = await ShortLinkService.resolveShortCode('CP-FAM-ALPHA-TOKEN-999');
+    assert.strictEqual(resPassDirect.success, true);
+
+    // Mock family fallback
+    const resMock = await ShortLinkService.resolveShortCode('honguyen-yenmo');
+    assert.strictEqual(resMock.success, true);
+    console.log('✅ [SHORT-008: Multi-Tier Resilient Resolution] PASS');
+  });
+
+  await t.test('SHORT-009: Zalo & Social Share message generation', () => {
+    const shareMsg = ShortLinkService.generateShareMessage(
+      'Họ Nguyễn Yên Mô',
+      'https://giaphagiatoc.vn/c/honguyen-yenmo',
+      '1986'
+    );
+    assert.ok(shareMsg.includes('THÔNG BÁO TỪ ĐƯỜNG'));
+    assert.ok(shareMsg.includes('HỌ NGUYỄN YÊN MÔ'));
+    assert.ok(shareMsg.includes('https://giaphagiatoc.vn/c/honguyen-yenmo'));
+    assert.ok(shareMsg.includes('1986'));
+    console.log('✅ [SHORT-009: Zalo Share Message Generator] PASS');
+  });
 });

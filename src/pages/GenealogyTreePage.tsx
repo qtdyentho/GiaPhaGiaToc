@@ -115,29 +115,37 @@ export const GenealogyTreePage: React.FC = () => {
   const filteredMembers = hierarchyFilteredMembers.filter((m) => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
-    return m.full_name.toLowerCase().includes(q) || (m.bio && m.bio.toLowerCase().includes(q));
+    return (
+      m.full_name.toLowerCase().includes(q) ||
+      (m.courtesy_name && m.courtesy_name.toLowerCase().includes(q)) ||
+      (m.religious_name && m.religious_name.toLowerCase().includes(q)) ||
+      (m.birth_time && m.birth_time.toLowerCase().includes(q)) ||
+      (m.death_time && m.death_time.toLowerCase().includes(q)) ||
+      (m.burial_place && m.burial_place.toLowerCase().includes(q)) ||
+      (m.bio && m.bio.toLowerCase().includes(q))
+    );
   });
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden font-sans bg-white">
+    <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden font-sans bg-slate-50 dark:bg-slate-950">
       {/* Top Filter & Actions Bar */}
-      <div className="px-6 py-3 bg-white border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 z-20 shrink-0">
+      <div className="px-4 sm:px-6 py-2.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2.5 z-20 shrink-0">
         {/* Left: Traditional Lineage Hierarchy Segmented Filter */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full pb-1 sm:pb-0">
           {/* Segmented Filter Pills */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200 text-xs font-bold">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-bold shrink-0">
             <button
               onClick={() => {
                 setFilterMode('ALL');
                 setSelectedChiId('');
               }}
-              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1 ${
+              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
                 filterMode === 'ALL'
-                  ? 'bg-[#166534] text-white shadow-xs'
-                  : 'text-slate-700 hover:text-slate-900'
+                  ? 'bg-white dark:bg-slate-900 text-[#166534] dark:text-emerald-400 shadow-xs'
+                  : 'text-slate-700 dark:text-slate-300 hover:text-slate-900'
               }`}
             >
-              <span>🏛️ Toàn Dòng Họ</span>
+              <span>🌳 Toàn Họ</span>
             </button>
 
             <button
@@ -147,13 +155,13 @@ export const GenealogyTreePage: React.FC = () => {
                   setSelectedChiId(treeData.branches[0].id);
                 }
               }}
-              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1 ${
+              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
                 filterMode === 'CHI'
-                  ? 'bg-[#166534] text-white shadow-xs'
-                  : 'text-slate-700 hover:text-slate-900'
+                  ? 'bg-white dark:bg-slate-900 text-[#166534] dark:text-emerald-400 shadow-xs'
+                  : 'text-slate-700 dark:text-slate-300 hover:text-slate-900'
               }`}
             >
-              <span>🌱 Theo Chi</span>
+              <span>🌿 Theo Chi</span>
             </button>
 
             <button
@@ -163,13 +171,13 @@ export const GenealogyTreePage: React.FC = () => {
                   setSelectedChiId(treeData.branches[0].id);
                 }
               }}
-              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1 ${
+              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
                 filterMode === 'CANH'
-                  ? 'bg-[#166534] text-white shadow-xs'
-                  : 'text-slate-700 hover:text-slate-900'
+                  ? 'bg-white dark:bg-slate-900 text-teal-800 dark:text-teal-400 shadow-xs'
+                  : 'text-slate-700 dark:text-slate-300 hover:text-slate-900'
               }`}
             >
-              <span>🌿 Theo Cành (Phái)</span>
+              <span>🌱 Theo Cành</span>
             </button>
 
             <button
@@ -179,10 +187,10 @@ export const GenealogyTreePage: React.FC = () => {
                   setSelectedChiId(treeData.branches[0].id);
                 }
               }}
-              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1 ${
+              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
                 filterMode === 'NHANH'
-                  ? 'bg-[#166534] text-white shadow-xs'
-                  : 'text-slate-700 hover:text-slate-900'
+                  ? 'bg-white dark:bg-slate-900 text-amber-800 dark:text-amber-400 shadow-xs'
+                  : 'text-slate-700 dark:text-slate-300 hover:text-slate-900'
               }`}
             >
               <span>🍃 Theo Nhánh</span>
@@ -191,11 +199,11 @@ export const GenealogyTreePage: React.FC = () => {
 
           {/* Conditional Dropdown when filtering by Chi */}
           {(filterMode === 'CHI' || filterMode === 'CANH' || filterMode === 'NHANH') && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 shrink-0">
               <select
                 value={selectedChiId}
                 onChange={(e) => setSelectedChiId(e.target.value)}
-                className="px-3 py-1.5 bg-emerald-50 border border-emerald-300 rounded-xl text-xs text-[#166534] font-bold focus:outline-none focus:ring-1 focus:ring-[#166534] cursor-pointer"
+                className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 rounded-xl text-xs text-[#166534] dark:text-emerald-300 font-bold focus:outline-none focus:ring-1 focus:ring-[#166534] cursor-pointer max-w-[160px] truncate"
               >
                 {treeData.branches.map((b) => (
                   <option key={b.id} value={b.id}>
@@ -208,11 +216,11 @@ export const GenealogyTreePage: React.FC = () => {
 
           {/* Conditional Dropdown when filtering by Cành */}
           {filterMode === 'CANH' && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 shrink-0">
               <select
                 value={selectedCanh}
                 onChange={(e) => setSelectedCanh(e.target.value)}
-                className="px-3 py-1.5 bg-teal-50 border border-teal-300 rounded-xl text-xs text-teal-900 font-bold focus:outline-none focus:ring-1 focus:ring-teal-700 cursor-pointer"
+                className="px-3 py-1.5 bg-teal-50 dark:bg-teal-950/60 border border-teal-300 dark:border-teal-700 rounded-xl text-xs text-teal-900 dark:text-teal-300 font-bold focus:outline-none focus:ring-1 focus:ring-teal-700 cursor-pointer"
               >
                 <option value="Cành 1">Cành 1 (Trưởng Chi)</option>
                 <option value="Cành 2">Cành 2 (Thứ)</option>
@@ -223,11 +231,11 @@ export const GenealogyTreePage: React.FC = () => {
 
           {/* Conditional Dropdown when filtering by Nhánh */}
           {filterMode === 'NHANH' && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 shrink-0">
               <select
                 value={selectedNhanh}
                 onChange={(e) => setSelectedNhanh(e.target.value)}
-                className="px-3 py-1.5 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-900 font-bold focus:outline-none focus:ring-1 focus:ring-amber-700 cursor-pointer"
+                className="px-3 py-1.5 bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 rounded-xl text-xs text-amber-900 dark:text-amber-300 font-bold focus:outline-none focus:ring-1 focus:ring-amber-700 cursor-pointer"
               >
                 <option value="Nhánh 1">Nhánh 1</option>
                 <option value="Nhánh 2">Nhánh 2</option>
@@ -237,23 +245,23 @@ export const GenealogyTreePage: React.FC = () => {
           )}
 
           {/* Search Member Input */}
-          <div className="relative hidden md:block">
+          <div className="relative shrink-0">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm theo tên thành viên..."
-              className="pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-[#166534] w-48"
+              placeholder="Tìm theo tên, Húy, Hiệu, giờ sinh/mất..."
+              className="pl-8 pr-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-[#166534] w-48 sm:w-60"
             />
           </div>
         </div>
 
         {/* Right Actions: Export Print Button & Add Member */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar">
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold transition cursor-pointer"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold transition cursor-pointer shrink-0"
           >
             <UploadCloud className="w-3.5 h-3.5 text-slate-500" />
             <span>Nhập File</span>
@@ -261,26 +269,29 @@ export const GenealogyTreePage: React.FC = () => {
 
           <button
             onClick={handleOpenAddNewRoot}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition cursor-pointer border border-slate-300"
+            className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-bold transition cursor-pointer border border-slate-300 dark:border-slate-700 shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Thêm Thành Viên</span>
+            <span className="hidden xs:inline">Thêm Thành Viên</span>
+            <span className="xs:hidden">Thêm</span>
           </button>
 
           <Link
             to="/app/kinship"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-950 text-xs font-bold transition border border-amber-300 shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 dark:hover:bg-amber-900 text-amber-950 dark:text-amber-200 text-xs font-bold transition border border-amber-300 dark:border-amber-700 shadow-2xs shrink-0"
           >
-            <ArrowRightLeft className="w-3.5 h-3.5 text-amber-800" />
-            <span>Tra Cứu Xưng Hô</span>
+            <ArrowRightLeft className="w-3.5 h-3.5 text-amber-800 dark:text-amber-400" />
+            <span className="hidden sm:inline">Tra Cứu Xưng Hô</span>
+            <span className="sm:hidden">Xưng Hô</span>
           </Link>
 
           <button
             onClick={() => setIsExportModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#166534] hover:bg-[#14532d] text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-1.5 bg-[#166534] hover:bg-[#14532d] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer shrink-0"
           >
-            <Printer className="w-4 h-4" />
-            <span>In Ấn & Xuất File (PDF)</span>
+            <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">In Ấn & Xuất File (PDF)</span>
+            <span className="sm:hidden">Xuất PDF</span>
           </button>
         </div>
       </div>

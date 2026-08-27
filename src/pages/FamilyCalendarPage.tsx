@@ -29,6 +29,7 @@ import { CreateEventModal } from '../components/calendar/CreateEventModal';
 import { formatDate } from '../lib/utils';
 import { getCanChiYear } from '../lib/lunar';
 import { useAuth } from '../contexts/AuthContext';
+import { CalendarExportService } from '../services/calendar/CalendarExportService';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 const LUNAR_MONTH_NAMES: Record<number, string> = {
@@ -425,6 +426,14 @@ export const FamilyCalendarPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => CalendarExportService.downloadICSFile(activeFamily?.name || 'Gia Tộc', memorials, events, currentYear)}
+            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition shadow-sm cursor-pointer"
+            title="Đồng bộ toàn bộ ngày giỗ âm lịch và lễ nghi vào điện thoại"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Đồng Bộ Lịch (.ics)</span>
+          </button>
           <button
             onClick={() => printMemorialPDF(memorials as any[], annualYear, annualGroups)}
             className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition shadow-sm"

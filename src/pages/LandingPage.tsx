@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Trees, Calendar, Landmark, Sparkles, ArrowRight, Award, ShieldCheck, 
@@ -6,20 +6,35 @@ import {
   HelpCircle, QrCode, Lock, ArrowUpRight, Check, Star, ShieldAlert,
   ArrowRightLeft, Sparkle, Sun, Moon, Eye, Clock, Shield, ChevronDown,
   Layers, Download, Compass, Scale, ScrollText, ZoomIn, ZoomOut, RotateCcw,
-  X, Send, CheckCircle, Calculator, FileText, Share2, Menu
+  X, Send, CheckCircle, Calculator, FileText, Share2, Menu, LogOut, User
 } from 'lucide-react';
 import { BRAND } from '../lib/constants';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 
 export const LandingPage: React.FC = () => {
   const { isDark, toggleTheme } = useTheme();
+  const { user, activeFamily, isAuthenticated, isSuperAdmin, isFamilyAdmin, signOut } = useAuth();
   
   // Navigation & UI States
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
   const [showSampleTreeModal, setShowSampleTreeModal] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
   const [consultSuccess, setConsultSuccess] = useState(false);
+
+  // Close user dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Hero Tree Interactive States
   const [treeZoom, setTreeZoom] = useState(1);
@@ -364,35 +379,46 @@ export const LandingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-heritage-bg dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-200 selection:bg-[#166534] selection:text-white">
       {/* Top Banner with Classical Motto */}
-      <div className="bg-gradient-to-r from-[#14532D] via-[#166534] to-[#0F3D21] text-amber-200 text-xs py-2.5 px-4 text-center font-medium border-b border-amber-400/20 flex items-center justify-center gap-2">
+      <div className="bg-gradient-to-r from-[#14532D] via-[#166534] to-[#0F3D21] text-amber-200 text-[11px] sm:text-xs py-2 px-3 sm:px-4 text-center font-medium border-b border-amber-400/20 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
         <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse shrink-0" />
         <span className="font-serif italic tracking-wide">
           « Cây có gốc mới nở ngành xanh ngọn, Nước có nguồn mới biển rộng sông sâu »
         </span>
         <span className="hidden md:inline text-amber-400/60">•</span>
-        <span className="hidden md:inline text-white/90">Trải Nghiệm Đầy Đủ 30 Ngày Không Ràng Buộc</span>
-        <Link to="/register" className="underline font-bold text-amber-300 hover:text-white ml-1">Đăng ký ngay →</Link>
+        {user ? (
+          <span className="inline-flex items-center gap-1">
+            <span className="text-white/90">Đã đăng nhập:</span>
+            <strong className="text-amber-300 font-bold">{user.full_name}</strong>
+            <Link to="/app/dashboard" className="underline font-bold text-amber-200 hover:text-white ml-1">Vào Không Gian Gia Tộc →</Link>
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1">
+            <span className="hidden sm:inline text-white/90">Trải Nghiệm Đầy Đủ 30 Ngày Không Ràng Buộc</span>
+            <Link to="/register" className="underline font-bold text-amber-300 hover:text-white ml-1">Đăng ký dùng thử →</Link>
+          </span>
+        )}
       </div>
 
       {/* Glassmorphism Sticky Navbar */}
       <header className="border-b border-slate-200/80 dark:border-slate-800/80 sticky top-0 z-50 backdrop-blur-md bg-white/90 dark:bg-slate-900/90 transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-11 h-11 rounded-2xl bg-[#166534] dark:bg-emerald-700 flex items-center justify-center font-black text-white text-base shadow-md shadow-emerald-900/20 border border-amber-400/30 group-hover:scale-105 transition-transform">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2">
+          {/* Logo & Brand Name */}
+          <Link to="/" className="flex items-center gap-2.5 sm:gap-3 group shrink-0">
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-[#166534] dark:bg-emerald-700 flex items-center justify-center font-black text-white text-sm sm:text-base shadow-md shadow-emerald-900/20 border border-amber-400/30 group-hover:scale-105 transition-transform">
               GP
             </div>
             <div>
-              <span className="font-black text-xl tracking-tight text-slate-900 dark:text-white block font-serif">
+              <span className="font-black text-base sm:text-xl tracking-tight text-slate-900 dark:text-white block font-serif">
                 GIA PHẢ GIA TỘC
               </span>
-              <span className="text-[10px] uppercase font-bold tracking-widest text-[#166534] dark:text-emerald-400 block -mt-1 font-sans">
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-[#166534] dark:text-emerald-400 block -mt-0.5 sm:-mt-1 font-sans">
                 Heritage Ledger Platform
               </span>
             </div>
           </Link>
 
-          {/* Desktop Navigation — Giản Lược Gọn Gàng */}
-          <nav className="hidden lg:flex items-center gap-7 text-xs font-bold text-slate-700 dark:text-slate-200">
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-7 text-xs font-bold text-slate-700 dark:text-slate-200">
             <a href="#features" className="hover:text-[#166534] dark:hover:text-emerald-400 transition-colors">Tính Năng Cốt Lõi</a>
             <a href="#interactive-tree" className="hover:text-[#166534] dark:hover:text-emerald-400 transition-colors">Cây Phả Hệ Mẫu</a>
             <a href="#pricing" className="hover:text-[#166534] dark:hover:text-emerald-400 transition-colors">Bảng Giá</a>
@@ -400,14 +426,14 @@ export const LandingPage: React.FC = () => {
             <a href="#faq" className="hover:text-[#166534] dark:hover:text-emerald-400 transition-colors">Hỏi Đáp</a>
           </nav>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2.5">
+          {/* Action Buttons & Account Control */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5">
             {/* Dark Mode Toggle */}
             <button
               onClick={toggleTheme}
               aria-label={isDark ? 'Chuyển sang giao diện Sáng' : 'Chuyển sang giao diện Tối'}
               title={isDark ? 'Giao diện Sáng' : 'Giao diện Tối'}
-              className="p-2.5 rounded-xl text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer border border-slate-200 dark:border-slate-700"
+              className="p-2 sm:p-2.5 rounded-xl text-slate-500 hover:text-amber-600 dark:text-slate-400 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer border border-slate-200 dark:border-slate-700 shrink-0"
             >
               {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
             </button>
@@ -415,88 +441,315 @@ export const LandingPage: React.FC = () => {
             {import.meta.env.DEV && (
               <Link
                 to="/dev/test-login"
-                className="hidden xl:inline-flex px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700 hover:bg-amber-100 transition-all"
+                className="hidden xl:inline-flex px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700 hover:bg-amber-100 transition-all shadow-2xs"
               >
                 🛠️ Dev Panel
               </Link>
             )}
 
-            <Link
-              to="/login"
-              className="hidden sm:inline-flex px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-[#166534] dark:hover:text-emerald-400 transition-colors"
-            >
-              Đăng Nhập
-            </Link>
+            {/* CASE 1: USER IS LOGGED IN */}
+            {user ? (
+              <div className="flex items-center gap-2">
+                {/* Active Family Tag */}
+                {activeFamily && (
+                  <Link
+                    to="/app/dashboard"
+                    className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50/90 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700/80 text-amber-950 dark:text-amber-200 text-xs font-bold font-serif hover:bg-amber-100 dark:hover:bg-amber-900/60 transition shadow-2xs shrink-0"
+                    title="Dòng họ đang chọn"
+                  >
+                    <span className="text-sm">🏛️</span>
+                    <span className="truncate max-w-[130px]">{activeFamily.name}</span>
+                  </Link>
+                )}
 
-            <Link
-              to="/register"
-              className="px-4 sm:px-5 py-2.5 rounded-xl bg-[#166534] hover:bg-[#14532D] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-bold shadow-md shadow-emerald-950/10 hover:shadow-lg transition-all flex items-center gap-1.5"
-            >
-              <span>Khởi Tạo Dòng Họ</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+                {/* Super Admin Quick Link */}
+                {isSuperAdmin && (
+                  <Link
+                    to="/admin/beta"
+                    className="hidden xl:inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-50 dark:bg-purple-950/50 text-purple-900 dark:text-purple-300 border border-purple-300 dark:border-purple-700 hover:bg-purple-100 transition-all shadow-2xs"
+                    title="Không gian Quản trị viên"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-purple-700 dark:text-purple-400" />
+                    <span>Quản Trị</span>
+                  </Link>
+                )}
+
+                {/* Primary Access CTA */}
+                <Link
+                  to="/app/dashboard"
+                  className="px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-[#166534] hover:bg-[#14532D] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-bold shadow-md shadow-emerald-950/15 hover:shadow-lg transition-all flex items-center gap-1.5 shrink-0"
+                >
+                  <Landmark className="w-4 h-4 shrink-0" />
+                  <span className="hidden sm:inline">Vào Không Gian Gia Tộc</span>
+                  <span className="sm:hidden">Gia Tộc</span>
+                  <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+                </Link>
+
+                {/* User Dropdown Pill */}
+                <div className="relative" ref={userMenuRef}>
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 transition cursor-pointer"
+                    title="Tài khoản cá nhân"
+                  >
+                    {user.avatar_url ? (
+                      <img src={user.avatar_url} alt={user.full_name} className="w-6 h-6 rounded-full object-cover border border-amber-400" />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-[#166534] text-white flex items-center justify-center text-[10px] font-bold">
+                        {user.full_name?.charAt(0) || 'U'}
+                      </div>
+                    )}
+                    <span className="hidden md:inline text-xs font-bold truncate max-w-[100px]">{user.full_name}</span>
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${userMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Dropdown Card */}
+                  {userMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-3 space-y-2 z-50 animate-fade-in text-xs">
+                      <div className="p-2.5 rounded-xl bg-amber-50/90 dark:bg-slate-800/90 border border-amber-200 dark:border-slate-700">
+                        <div className="font-bold text-slate-900 dark:text-white truncate">{user.full_name}</div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</div>
+                        {activeFamily && (
+                          <div className="text-[11px] font-serif font-bold text-[#166534] dark:text-emerald-400 mt-1 truncate">
+                            🏛️ {activeFamily.name}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-1 pt-1 font-semibold text-slate-700 dark:text-slate-200">
+                        <Link
+                          to="/app/dashboard"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                        >
+                          <Landmark className="w-4 h-4 text-[#166534] dark:text-emerald-400" />
+                          <span>Tổng quan gia tộc</span>
+                        </Link>
+                        <Link
+                          to="/app/genealogy"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                        >
+                          <Trees className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                          <span>Cây phả hệ đa chi</span>
+                        </Link>
+                        <Link
+                          to="/app/calendar"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                        >
+                          <Calendar className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                          <span>Lịch giỗ & sự kiện</span>
+                        </Link>
+                        <Link
+                          to="/app/funds"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                        >
+                          <Award className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          <span>Sổ quỹ & Bảng vàng</span>
+                        </Link>
+                        {isSuperAdmin && (
+                          <Link
+                            to="/admin/beta"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-900 dark:text-purple-300 font-bold hover:bg-purple-100 transition"
+                          >
+                            <ShieldCheck className="w-4 h-4 text-purple-700" />
+                            <span>Quản trị toàn hệ thống</span>
+                          </Link>
+                        )}
+                      </div>
+
+                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <button
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            signOut();
+                          }}
+                          className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 font-bold hover:bg-rose-100 transition cursor-pointer"
+                        >
+                          <LogOut className="w-3.5 h-3.5" />
+                          <span>Đăng xuất</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* CASE 2: ANONYMOUS USER (NOT LOGGED IN) */
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/login"
+                  className="hidden sm:inline-flex px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-[#166534] dark:hover:text-emerald-400 transition-colors"
+                >
+                  Đăng Nhập
+                </Link>
+
+                <Link
+                  to="/register"
+                  className="px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-[#166534] hover:bg-[#14532D] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-bold shadow-md shadow-emerald-950/10 hover:shadow-lg transition-all flex items-center gap-1.5"
+                >
+                  <span>Khởi Tạo Dòng Họ</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            )}
 
             {/* Mobile Hamburger Toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700"
+              aria-label={mobileMenuOpen ? 'Đóng menu' : 'Mở menu'}
+              className="lg:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Dropdown Menu — Giản Lược Gọn Gàng */}
+        {/* Mobile Dropdown Menu Drawer */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-5 space-y-3 animate-fade-in shadow-xl">
-            <a 
-              href="#features" 
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-[#166534]"
-            >
-              Tính Năng Cốt Lõi
-            </a>
-            <a 
-              href="#interactive-tree" 
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-[#166534]"
-            >
-              Cây Phả Hệ Mẫu
-            </a>
-            <a 
-              href="#pricing" 
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-[#166534]"
-            >
-              Bảng Giá Gói Cước
-            </a>
-            <a 
-              href="#consult" 
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-[#166534]"
-            >
-              Đăng Ký Tư Vấn
-            </a>
-            <a 
-              href="#faq" 
-              onClick={() => setMobileMenuOpen(false)}
-              className="block py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-[#166534]"
-            >
-              Hỏi Đáp Thường Gặp
-            </a>
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex gap-2">
-              <Link 
-                to="/login"
-                className="flex-1 py-2.5 text-center text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-xl"
+          <div className="lg:hidden border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg px-4 py-5 space-y-4 animate-fade-in shadow-2xl max-h-[calc(100vh-5rem)] overflow-y-auto">
+            {/* User Profile Card on Mobile if Logged in */}
+            {user ? (
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-50 to-emerald-50 dark:from-slate-800 dark:to-slate-800/90 border border-amber-300 dark:border-slate-700 space-y-3">
+                <div className="flex items-center gap-3">
+                  {user.avatar_url ? (
+                    <img src={user.avatar_url} alt={user.full_name} className="w-10 h-10 rounded-full object-cover border-2 border-amber-400" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-[#166534] text-white flex items-center justify-center font-bold text-sm">
+                      {user.full_name?.charAt(0) || 'U'}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-sm text-slate-900 dark:text-white truncate">{user.full_name}</div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user.email}</div>
+                    {activeFamily && (
+                      <div className="text-xs font-serif font-bold text-[#166534] dark:text-emerald-400 mt-0.5 truncate">
+                        🏛️ {activeFamily.name}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <Link
+                    to="/app/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="py-2.5 px-3 rounded-xl bg-[#166534] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm"
+                  >
+                    <Landmark className="w-3.5 h-3.5" />
+                    <span>Vào Gia Tộc</span>
+                  </Link>
+                  <Link
+                    to="/app/genealogy"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="py-2.5 px-3 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 font-bold text-xs flex items-center justify-center gap-1.5 border border-amber-300 dark:border-amber-800"
+                  >
+                    <Trees className="w-3.5 h-3.5" />
+                    <span>Cây Phả Hệ</span>
+                  </Link>
+                </div>
+
+                <div className="flex gap-2">
+                  <Link
+                    to="/app/calendar"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex-1 py-2 px-2 text-center rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-[11px] font-semibold border border-slate-200 dark:border-slate-600"
+                  >
+                    Lịch Giỗ
+                  </Link>
+                  <Link
+                    to="/app/funds"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex-1 py-2 px-2 text-center rounded-lg bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-[11px] font-semibold border border-slate-200 dark:border-slate-600"
+                  >
+                    Sổ Quỹ
+                  </Link>
+                  {isSuperAdmin && (
+                    <Link
+                      to="/admin/beta"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex-1 py-2 px-2 text-center rounded-lg bg-purple-100 dark:bg-purple-950/60 text-purple-900 dark:text-purple-200 text-[11px] font-bold border border-purple-300"
+                    >
+                      Admin
+                    </Link>
+                  )}
+                </div>
+              </div>
+            ) : null}
+
+            {/* Standard Anchor Links */}
+            <div className="space-y-1">
+              <a 
+                href="#features" 
+                onClick={() => setMobileMenuOpen(false)}
+                className="block py-2.5 px-3 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
               >
-                Đăng Nhập
-              </Link>
-              <Link 
-                to="/register"
-                className="flex-1 py-2.5 text-center text-xs font-bold bg-[#166534] text-white rounded-xl"
+                Tính Năng Cốt Lõi
+              </a>
+              <a 
+                href="#interactive-tree" 
+                onClick={() => setMobileMenuOpen(false)}
+                className="block py-2.5 px-3 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
               >
-                Khởi Tạo Ngay
-              </Link>
+                Cây Phả Hệ Mẫu
+              </a>
+              <a 
+                href="#pricing" 
+                onClick={() => setMobileMenuOpen(false)}
+                className="block py-2.5 px-3 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              >
+                Bảng Giá Gói Cước
+              </a>
+              <a 
+                href="#consult" 
+                onClick={() => setMobileMenuOpen(false)}
+                className="block py-2.5 px-3 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              >
+                Đăng Ký Tư Vấn
+              </a>
+              <a 
+                href="#faq" 
+                onClick={() => setMobileMenuOpen(false)}
+                className="block py-2.5 px-3 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              >
+                Hỏi Đáp Thường Gặp
+              </a>
+            </div>
+
+            {/* Mobile Footer CTAs */}
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+              {user ? (
+                <button 
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    signOut();
+                  }}
+                  className="w-full py-2.5 text-center text-xs font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 rounded-xl flex items-center justify-center gap-1.5"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Đăng Xuất Khỏi Tài Khoản</span>
+                </button>
+              ) : (
+                <div className="flex gap-2">
+                  <Link 
+                    to="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex-1 py-2.5 text-center text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-xl"
+                  >
+                    Đăng Nhập
+                  </Link>
+                  <Link 
+                    to="/register"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex-1 py-2.5 text-center text-xs font-bold bg-[#166534] text-white rounded-xl shadow-md"
+                  >
+                    Khởi Tạo Ngay
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -643,13 +896,24 @@ export const LandingPage: React.FC = () => {
 
           {/* Main Action CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-1">
-            <Link
-              to="/register"
-              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-[#166534] hover:bg-[#14532D] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-extrabold text-sm shadow-xl shadow-emerald-950/20 hover:shadow-2xl hover:scale-102 transition-all flex items-center justify-center gap-2"
-            >
-              <span>Khởi Tạo Dòng Họ Miễn Phí (30 Ngày)</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            {user ? (
+              <Link
+                to="/app/dashboard"
+                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-[#166534] hover:bg-[#14532D] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-extrabold text-sm shadow-xl shadow-emerald-950/20 hover:shadow-2xl hover:scale-102 transition-all flex items-center justify-center gap-2"
+              >
+                <Landmark className="w-4 h-4" />
+                <span>Truy Cập Không Gian Dòng Họ</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            ) : (
+              <Link
+                to="/register"
+                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-[#166534] hover:bg-[#14532D] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-extrabold text-sm shadow-xl shadow-emerald-950/20 hover:shadow-2xl hover:scale-102 transition-all flex items-center justify-center gap-2"
+              >
+                <span>Khởi Tạo Dòng Họ Miễn Phí (30 Ngày)</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            )}
             <button
               onClick={() => setShowSampleTreeModal(true)}
               className="w-full sm:w-auto px-7 py-4 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 font-bold text-sm border-2 border-amber-300/80 dark:border-slate-700 shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
@@ -1052,7 +1316,7 @@ export const LandingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Bento 2: AI Tra Cứu Vai Vế */}
+            {/* Phân hệ 2: Tra Cứu Danh Xưng & Vai Vế */}
             <div className="p-7 rounded-3xl bg-heritage-surface dark:bg-slate-900 border border-heritage-border dark:border-slate-800 shadow-card hover:shadow-heritage hover:border-amber-500 transition-all space-y-4 group">
               <div className="flex items-center justify-between">
                 <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 flex items-center justify-center text-amber-800 dark:text-amber-400 shadow-xs group-hover:scale-110 transition-transform">
@@ -1070,7 +1334,7 @@ export const LandingPage: React.FC = () => {
               </p>
             </div>
 
-            {/* Bento 3: Lịch Vạn Niên 2021-2036 */}
+            {/* Phân hệ 3: Lịch Vạn Niên 2021-2036 */}
             <div className="p-7 rounded-3xl bg-heritage-surface dark:bg-slate-900 border border-heritage-border dark:border-slate-800 shadow-card hover:shadow-heritage hover:border-teal-500 transition-all space-y-4 group">
               <div className="flex items-center justify-between">
                 <div className="w-12 h-12 rounded-2xl bg-teal-100 dark:bg-teal-950/60 border border-teal-300 dark:border-teal-700 flex items-center justify-center text-teal-800 dark:text-teal-400 shadow-xs group-hover:scale-110 transition-transform">
@@ -1088,14 +1352,14 @@ export const LandingPage: React.FC = () => {
               </p>
             </div>
 
-            {/* Bento 4: Sổ Quỹ Kép & Reversal */}
+            {/* Phân hệ 4: Sổ Quỹ Kép & Hoàn Bút */}
             <div className="p-7 rounded-3xl bg-heritage-surface dark:bg-slate-900 border border-heritage-border dark:border-slate-800 shadow-card hover:shadow-heritage hover:border-blue-500 transition-all space-y-4 group">
               <div className="flex items-center justify-between">
                 <div className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-950/60 border border-blue-300 dark:border-blue-700 flex items-center justify-center text-blue-800 dark:text-blue-400 shadow-xs group-hover:scale-110 transition-transform">
                   <Landmark className="w-6 h-6" />
                 </div>
                 <span className="text-[10px] font-bold uppercase px-2.5 py-1 bg-blue-50 dark:bg-blue-950 text-blue-800 dark:text-blue-300 rounded-full border border-blue-200 dark:border-blue-800">
-                  Immutable Ledger
+                  Sổ Quỹ Bất Biến
                 </span>
               </div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white font-serif">
@@ -1106,14 +1370,14 @@ export const LandingPage: React.FC = () => {
               </p>
             </div>
 
-            {/* Bento 5: Bảng Vàng VietQR & Thông Báo Đẩy */}
+            {/* Phân hệ 5: Bảng Vàng VietQR & Thông Báo */}
             <div className="p-7 rounded-3xl bg-heritage-surface dark:bg-slate-900 border border-heritage-border dark:border-slate-800 shadow-card hover:shadow-heritage hover:border-amber-600 transition-all space-y-4 group">
               <div className="flex items-center justify-between">
                 <div className="w-12 h-12 rounded-2xl bg-amber-100/80 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 flex items-center justify-center text-amber-900 dark:text-amber-400 shadow-xs group-hover:scale-110 transition-transform">
                   <Award className="w-6 h-6" />
                 </div>
                 <span className="text-[10px] font-bold uppercase px-2.5 py-1 bg-amber-50 dark:bg-amber-950 text-amber-900 dark:text-amber-300 rounded-full border border-amber-200 dark:border-amber-800">
-                  VietQR Automation
+                  Công Đức VietQR
                 </span>
               </div>
               <h3 className="text-lg font-bold text-slate-900 dark:text-white font-serif">

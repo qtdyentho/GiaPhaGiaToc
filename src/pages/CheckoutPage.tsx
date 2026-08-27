@@ -51,13 +51,13 @@ export const CheckoutPage: React.FC = () => {
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8 space-y-6">
         {/* Header */}
         <div className="text-center max-w-lg mx-auto">
-          <div className="inline-flex items-center space-x-1.5 bg-emerald-50 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full mb-2">
+          <div className="inline-flex items-center space-x-1.5 bg-emerald-50 text-[#166534] text-xs font-bold px-3.5 py-1 rounded-full mb-2 border border-emerald-300">
             <QrCode className="w-3.5 h-3.5" />
-            <span>Thanh Toán Chuyển Khoản VietQR</span>
+            <span>Thanh Toán Chuyển Khoản VietQR Napas247</span>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">Thông Tin Chuyển Khoản Gói Dịch Vụ</h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Vui lòng chuyển khoản chính xác số tiền và nội dung bên dưới. Sau khi chuyển, bấm nút xác nhận để Ban Quản Trị đối soát sao kê.
+          <h1 className="text-2xl font-bold text-slate-900 font-serif text-amber-950">Thông Tin Chuyển Khoản Phụng Sự Dòng Họ</h1>
+          <p className="text-xs text-slate-600 mt-1">
+            Vui lòng chuyển khoản chính xác số tiền và nội dung bên dưới. Sau khi hoàn tất, bấm nút xác nhận để Ban Quản Trị đối soát sao kê và kích hoạt gói dịch vụ.
           </p>
         </div>
 

@@ -211,6 +211,7 @@ ON public.clan_short_links (family_id);
 
 ALTER TABLE public.clan_short_links ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS clan_short_links_public_read ON public.clan_short_links;
 CREATE POLICY clan_short_links_public_read ON public.clan_short_links
     FOR SELECT USING (true);
 
@@ -391,5 +392,47 @@ CREATE POLICY invitation_tokens_insert_admin ON public.invitation_tokens
     );
 
 -- ==============================================================================
--- KẾT THÚC MIGRATION CONSOLIDATED (BẢO VỆ DỮ LIỆU ĐA GIA TỘC TRIỆT ĐỂ)
+-- PHẦN 6: BỔ SUNG GIỜ SINH, TÊN HÚY/HIỆU, GIỜ MẤT, PHÁP DANH CHO THÀNH VIÊN (2026-08-26)
+-- ==============================================================================
+
+ALTER TABLE public.members
+  ADD COLUMN IF NOT EXISTS birth_time VARCHAR(50),
+  ADD COLUMN IF NOT EXISTS courtesy_name VARCHAR(255),
+  ADD COLUMN IF NOT EXISTS death_time VARCHAR(50),
+  ADD COLUMN IF NOT EXISTS religious_name VARCHAR(150);
+
+COMMENT ON COLUMN public.members.birth_time IS 'Giờ sinh của thành viên (VD: 08:30 hoặc Giờ Thìn 07h-09h)';
+COMMENT ON COLUMN public.members.courtesy_name IS 'Tên Húy, Tên Hiệu, Tự Hiệu, Thụy Hiệu của bậc tiền nhân';
+COMMENT ON COLUMN public.members.death_time IS 'Giờ mất / Giờ quy tiên của tiền nhân';
+COMMENT ON COLUMN public.members.religious_name IS 'Pháp danh quy y hoặc Tên thánh';
+
+-- ==============================================================================
+-- PHẦN 7: SỔ LƯU BÚT & DÂNG NÉN TÂM HƯƠNG TỪ ĐƯỜNG (2026-08-27)
+-- ==============================================================================
+
+CREATE TABLE IF NOT EXISTS public.clan_guestbook_entries (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    family_id UUID NOT NULL REFERENCES public.families(id) ON DELETE CASCADE,
+    author_name TEXT NOT NULL,
+    branch_name TEXT,
+    location TEXT,
+    message TEXT NOT NULL,
+    incense_count INTEGER DEFAULT 1,
+    is_public BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_guestbook_family ON public.clan_guestbook_entries (family_id, created_at DESC);
+ALTER TABLE public.clan_guestbook_entries ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS guestbook_public_read ON public.clan_guestbook_entries;
+CREATE POLICY guestbook_public_read ON public.clan_guestbook_entries
+    FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS guestbook_public_insert ON public.clan_guestbook_entries;
+CREATE POLICY guestbook_public_insert ON public.clan_guestbook_entries
+    FOR INSERT WITH CHECK (true);
+
+-- ==============================================================================
+-- KẾT THÚC MIGRATION CONSOLIDATED (BẢO VỆ DỮ LIỆU ĐA GIA TỘC TRIỆT ĐỂ & ĐỒNG BỘ 100%)
 -- ==============================================================================

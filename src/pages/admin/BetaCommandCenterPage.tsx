@@ -57,6 +57,61 @@ export default function BetaCommandCenterPage() {
         </div>
       </div>
 
+      {/* Admin Module Navigation Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Link
+          to="/admin/users"
+          className="p-4 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200 shadow-2xs flex items-center gap-3 transition group cursor-pointer"
+        >
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold group-hover:scale-105 transition">
+            <Users className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="font-bold text-xs text-slate-900">Quản Lý Người Dùng</div>
+            <div className="text-[10px] text-slate-400">Mã hóa PII & Phân quyền</div>
+          </div>
+        </Link>
+
+        <Link
+          to="/admin/payments"
+          className="p-4 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200 shadow-2xs flex items-center gap-3 transition group cursor-pointer"
+        >
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold group-hover:scale-105 transition">
+            <Landmark className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="font-bold text-xs text-slate-900">Xác Nhận Nộp Tiền</div>
+            <div className="text-[10px] text-slate-400">Duyệt VietQR & Gói</div>
+          </div>
+        </Link>
+
+        <Link
+          to="/admin/subscriptions"
+          className="p-4 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200 shadow-2xs flex items-center gap-3 transition group cursor-pointer"
+        >
+          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold group-hover:scale-105 transition">
+            <ShieldCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="font-bold text-xs text-slate-900">Quản Lý Thuê Bao</div>
+            <div className="text-[10px] text-slate-400">Gia hạn & Đổi gói cước</div>
+          </div>
+        </Link>
+
+        <Link
+          to="/admin/plans"
+          className="p-4 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200 shadow-2xs flex items-center gap-3 transition group cursor-pointer"
+        >
+          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold group-hover:scale-105 transition">
+            <TrendingUp className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="font-bold text-xs text-slate-900">Gói Cước & Biểu Phí</div>
+            <div className="text-[10px] text-slate-400">Thiết lập hạn mức SaaS</div>
+          </div>
+        </Link>
+      </div>
+
       {/* Top 4 Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">

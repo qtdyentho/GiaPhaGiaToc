@@ -2,15 +2,18 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Bell, Search, Calendar, ChevronDown, User, Shield, Menu, Check, 
   LogOut, Settings, Sparkles, X, ArrowUpRight, DollarSign, Users, Clock,
-  PanelLeftClose, PanelLeftOpen, Megaphone, Sun, Moon
+  PanelLeftClose, PanelLeftOpen, Megaphone, Sun, Moon, QrCode
 } from 'lucide-react';
 import { LunarCalendarService } from '../../services/LunarCalendarService';
+import { ShortLinkService } from '../../services/security/ShortLinkService';
+import { ClanPassService } from '../../services/security/ClanPassService';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { mockMembers, mockMemorialDates, mockFunds } from '../../services/mockData';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatCurrency } from '../../lib/utils';
 import { CreateBroadcastModal } from '../notifications/CreateBroadcastModal';
+import { PrintableClanQRCodeModal } from '../family/PrintableClanQRCodeModal';
 
 interface SearchResultItem {
   id: string;
@@ -39,6 +42,21 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [shortCode, setShortCode] = useState<string>('');
+  const [passToken, setPassToken] = useState<string>('');
+
+  useEffect(() => {
+    async function loadQR() {
+      if (activeFamily?.id) {
+        const config = await ClanPassService.getFamilyPassConfig(activeFamily.id);
+        if (config?.pass_token) setPassToken(config.pass_token);
+        const link = await ShortLinkService.getShortLinkByFamily(activeFamily.id);
+        if (link?.short_code) setShortCode(link.short_code);
+      }
+    }
+    loadQR();
+  }, [activeFamily?.id]);
 
 
   // Search State
@@ -322,6 +340,22 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           )}
         </div>
 
+        {/* Mã QR Dòng Họ Quick Access Button */}
+        {activeFamily && (
+          <button
+            type="button"
+            onClick={() => setIsQRModalOpen(true)}
+            aria-label="Mã QR Dòng Họ & Link Rút Gọn"
+            title="Mở & In Mã QR Dòng Họ Dán Từ Đường"
+            className="p-2 text-amber-800 dark:text-amber-300 hover:text-amber-950 dark:hover:text-white bg-amber-50 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-slate-700 border border-amber-200 dark:border-slate-700 rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
+          >
+            <QrCode className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+            <span className="hidden lg:inline text-xs font-bold text-amber-900 dark:text-amber-300">
+              Mã QR
+            </span>
+          </button>
+        )}
+
         {/* Interactive Dark / Light Mode Toggle Button */}
         <button
           onClick={toggleTheme}
@@ -514,6 +548,17 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         isOpen={isBroadcastModalOpen}
         onClose={() => setIsBroadcastModalOpen(false)}
       />
+
+      {/* Modal Mã QR Dòng Họ */}
+      {activeFamily && (
+        <PrintableClanQRCodeModal
+          isOpen={isQRModalOpen}
+          onClose={() => setIsQRModalOpen(false)}
+          family={activeFamily}
+          passToken={passToken}
+          shortCode={shortCode}
+        />
+      )}
     </header>
   );
 };

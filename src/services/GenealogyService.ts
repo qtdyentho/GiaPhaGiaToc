@@ -32,7 +32,7 @@ export class GenealogyService {
           supabase.from('member_relationships').select('*').eq('family_id', familyId),
         ]);
 
-        if (!membersRes.error && membersRes.data && membersRes.data.length > 0) {
+        if (!membersRes.error && membersRes.data) {
           const mappedMembers: Member[] = (membersRes.data || []).map((dbRow: any) => ({
             id: dbRow.id,
             family_id: dbRow.family_id,
@@ -44,9 +44,14 @@ export class GenealogyService {
             gender: dbRow.gender || 'MALE',
             life_status: dbRow.status || (dbRow.is_deceased ? 'DECEASED' : 'ALIVE'),
             birth_solar_date: dbRow.date_of_birth,
+            birth_time: dbRow.birth_time,
+            courtesy_name: dbRow.courtesy_name,
+            death_solar_date: dbRow.date_of_death_solar,
             death_lunar_day: dbRow.date_of_death_lunar_day,
             death_lunar_month: dbRow.date_of_death_lunar_month,
             death_lunar_year: dbRow.date_of_death_lunar_year,
+            death_time: dbRow.death_time,
+            religious_name: dbRow.religious_name,
             burial_place: dbRow.burial_place,
             bio: dbRow.biography || dbRow.notes,
             avatar_url: dbRow.avatar_url,
@@ -96,9 +101,14 @@ export class GenealogyService {
             gender: data.gender || 'MALE',
             life_status: data.status || (data.is_deceased ? 'DECEASED' : 'ALIVE'),
             birth_solar_date: data.date_of_birth,
+            birth_time: data.birth_time,
+            courtesy_name: data.courtesy_name,
+            death_solar_date: data.date_of_death_solar,
             death_lunar_day: data.date_of_death_lunar_day,
             death_lunar_month: data.date_of_death_lunar_month,
             death_lunar_year: data.date_of_death_lunar_year,
+            death_time: data.death_time,
+            religious_name: data.religious_name,
             burial_place: data.burial_place,
             bio: data.biography || data.notes,
             avatar_url: data.avatar_url,
@@ -134,10 +144,14 @@ export class GenealogyService {
         status: member.life_status || 'ALIVE',
         is_deceased: isDeceased,
         date_of_birth: member.birth_solar_date || null,
+        birth_time: member.birth_time || null,
+        courtesy_name: member.courtesy_name || null,
         date_of_death_solar: member.death_solar_date || null,
         date_of_death_lunar_day: member.death_lunar_day || null,
         date_of_death_lunar_month: member.death_lunar_month || null,
         date_of_death_lunar_year: member.death_lunar_year || null,
+        death_time: member.death_time || null,
+        religious_name: member.religious_name || null,
         burial_place: member.burial_place || null,
         biography: member.bio || null,
       };
@@ -160,9 +174,14 @@ export class GenealogyService {
           gender: data.gender,
           life_status: data.status,
           birth_solar_date: data.date_of_birth,
+          birth_time: data.birth_time,
+          courtesy_name: data.courtesy_name,
+          death_solar_date: data.date_of_death_solar,
           death_lunar_day: data.date_of_death_lunar_day,
           death_lunar_month: data.date_of_death_lunar_month,
           death_lunar_year: data.date_of_death_lunar_year,
+          death_time: data.death_time,
+          religious_name: data.religious_name,
           burial_place: data.burial_place,
           bio: data.biography,
           created_at: data.created_at,
@@ -213,9 +232,14 @@ export class GenealogyService {
       gender: member.gender || 'MALE',
       life_status: member.life_status || 'ALIVE',
       birth_solar_date: member.birth_solar_date,
+      birth_time: member.birth_time,
+      courtesy_name: member.courtesy_name,
+      death_solar_date: member.death_solar_date,
       death_lunar_day: member.death_lunar_day,
       death_lunar_month: member.death_lunar_month,
       death_lunar_year: member.death_lunar_year,
+      death_time: member.death_time,
+      religious_name: member.religious_name,
       burial_place: member.burial_place,
       bio: member.bio,
       created_at: new Date().toISOString(),
@@ -237,6 +261,52 @@ export class GenealogyService {
     }
 
     return { success: true, member: newMember };
+  }
+
+  static async updateMember(
+    id: string,
+    updates: Partial<Member>
+  ): Promise<{ success: boolean; member?: Member; error?: string }> {
+    if (isSupabaseConfigured() && isUUID(id)) {
+      try {
+        const payload: any = {
+          updated_at: new Date().toISOString(),
+        };
+        if (updates.full_name !== undefined) payload.full_name = updates.full_name;
+        if (updates.gender !== undefined) payload.gender = updates.gender;
+        if (updates.life_status !== undefined) {
+          payload.status = updates.life_status;
+          payload.is_deceased = updates.life_status === 'DECEASED';
+        }
+        if (updates.birth_solar_date !== undefined) payload.date_of_birth = updates.birth_solar_date;
+        if (updates.birth_time !== undefined) payload.birth_time = updates.birth_time;
+        if (updates.courtesy_name !== undefined) payload.courtesy_name = updates.courtesy_name;
+        if (updates.death_solar_date !== undefined) payload.date_of_death_solar = updates.death_solar_date;
+        if (updates.death_lunar_day !== undefined) payload.date_of_death_lunar_day = updates.death_lunar_day;
+        if (updates.death_lunar_month !== undefined) payload.date_of_death_lunar_month = updates.death_lunar_month;
+        if (updates.death_lunar_year !== undefined) payload.date_of_death_lunar_year = updates.death_lunar_year;
+        if (updates.death_time !== undefined) payload.death_time = updates.death_time;
+        if (updates.religious_name !== undefined) payload.religious_name = updates.religious_name;
+        if (updates.burial_place !== undefined) payload.burial_place = updates.burial_place;
+        if (updates.bio !== undefined) payload.biography = updates.bio;
+        if (updates.avatar_url !== undefined) payload.avatar_url = updates.avatar_url;
+
+        const { data, error } = await supabase.from('members').update(payload).eq('id', id).select().single();
+        if (error) {
+          return { success: false, error: error.message };
+        }
+        return { success: true, member: data as unknown as Member };
+      } catch (err: any) {
+        return { success: false, error: err.message };
+      }
+    }
+
+    const idx = mockMembers.findIndex((m) => m.id === id);
+    if (idx !== -1) {
+      mockMembers[idx] = { ...mockMembers[idx], ...updates, updated_at: new Date().toISOString() };
+      return { success: true, member: mockMembers[idx] };
+    }
+    return { success: false, error: 'Không tìm thấy thành viên' };
   }
 
   static async addRelationship(rel: Partial<MemberRelationship>): Promise<{ success: boolean; error?: string }> {

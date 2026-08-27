@@ -43,6 +43,7 @@ export const FamilySettingsPage: React.FC = () => {
   const [description, setDescription] = useState(currentFamily.description || '');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [clicksCount, setClicksCount] = useState<number>(0);
 
   const bannerImageUrl = currentFamily.banner_url || ANCESTRAL_PRESETS[0].url;
 
@@ -66,6 +67,7 @@ export const FamilySettingsPage: React.FC = () => {
         if (link) {
           setShortCode(link.short_code);
           setCustomSlug(link.short_code);
+          setClicksCount(link.clicks_count || 0);
         }
       }
     }
@@ -337,9 +339,12 @@ export const FamilySettingsPage: React.FC = () => {
             </p>
 
             {/* Unique Short Link Card */}
-            <div className="p-3.5 bg-white border border-amber-300/80 rounded-xl space-y-2.5 shadow-xs">
-              <div>
+            <div className="p-4 bg-white border border-amber-300/80 rounded-2xl space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold text-slate-700 uppercase">Liên Kết Mở Cây Phả Hệ:</span>
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                  {clicksCount} lượt truy cập
+                </span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -358,16 +363,27 @@ export const FamilySettingsPage: React.FC = () => {
 
               {/* Form Tùy Chỉnh Mã Rút Gọn / Custom Slug */}
               {!isEditingSlug ? (
-                <button
-                  type="button"
-                  onClick={() => setIsEditingSlug(true)}
-                  className="text-[11px] text-amber-800 hover:text-amber-900 font-semibold underline block text-left cursor-pointer"
-                >
-                  + Tùy chỉnh liên kết riêng (Ví dụ: ho-nguyen-yen-mo)
-                </button>
+                <div className="flex items-center justify-between pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingSlug(true)}
+                    className="text-[11px] text-amber-800 hover:text-amber-900 font-semibold underline block text-left cursor-pointer"
+                  >
+                    + Tùy chỉnh liên kết riêng (Ví dụ: ho-nguyen-yen-mo)
+                  </button>
+                </div>
               ) : (
                 <form onSubmit={handleSaveCustomSlug} className="space-y-2 pt-2 border-t border-slate-100">
-                  <label className="block text-[11px] font-bold text-slate-600">Đổi Tên Định Danh Gia Tộc (Chữ thường, số, dấu -):</label>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-bold text-slate-600">Đổi Tên Định Danh Gia Tộc:</label>
+                    <button
+                      type="button"
+                      onClick={() => setCustomSlug(ShortLinkService.suggestSlugFromName(familyName))}
+                      className="text-[10px] text-emerald-700 hover:underline font-semibold cursor-pointer"
+                    >
+                      🪄 Tự tạo từ tên họ
+                    </button>
+                  </div>
                   <div className="flex gap-2">
                     <div className="flex items-center flex-1 bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 focus-within:border-[#166534]">
                       <span className="text-[11px] text-slate-400 font-mono">/c/</span>
@@ -411,7 +427,7 @@ export const FamilySettingsPage: React.FC = () => {
                   className="w-full py-2.5 bg-[#166534] hover:bg-[#14532D] text-white text-xs font-bold rounded-xl flex items-center justify-center space-x-1.5 transition shadow-xs cursor-pointer"
                 >
                   <QrCode className="w-4 h-4" />
-                  <span>Xem & In Bản Mã QR Từ Đường</span>
+                  <span>Xem, Tùy Biến & In Mã QR Từ Đường</span>
                 </button>
               </div>
             </div>
@@ -518,6 +534,7 @@ export const FamilySettingsPage: React.FC = () => {
         family={currentFamily}
         passToken={passToken}
         shortCode={shortCode}
+        clanPin={clanPin}
       />
     </div>
   );

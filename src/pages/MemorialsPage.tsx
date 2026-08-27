@@ -12,14 +12,16 @@ import {
   Trash2,
   GitFork,
   Zap,
-  User
+  User,
+  ScrollText
 } from 'lucide-react';
 import { MemorialService } from '../services/calendar/MemorialService';
-import { MemorialDate, Branch, Generation } from '../types/database';
+import { MemorialDate, Branch, Generation, Member } from '../types/database';
 import { mockMembers, mockBranches, mockGenerations } from '../services/mockData';
 import { formatDate } from '../lib/utils';
 import { Link } from 'react-router-dom';
 import { CreateMemorialModal } from '../components/calendar/CreateMemorialModal';
+import { MemorialPrayerViewerModal } from '../components/genealogy/MemorialPrayerViewerModal';
 import { useAuth } from '../contexts/AuthContext';
 
 export const MemorialsPage: React.FC = () => {
@@ -32,6 +34,7 @@ export const MemorialsPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedPrayerMember, setSelectedPrayerMember] = useState<Member | null>(null);
 
   const currentFamId = activeFamily?.id || '';
 
@@ -303,7 +306,18 @@ export const MemorialsPage: React.FC = () => {
                     Nhắc tự động: 30 - 15 - 7 - 3 - 1 ngày
                   </span>
 
-                  <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2">
+                    {member && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedPrayerMember(member)}
+                        className="px-2.5 py-1 bg-amber-100/80 hover:bg-amber-200 border border-amber-300 text-amber-950 font-bold rounded-lg text-xs flex items-center gap-1 transition cursor-pointer"
+                      >
+                        <ScrollText className="w-3.5 h-3.5 text-amber-800" />
+                        <span>Văn Khấn</span>
+                      </button>
+                    )}
+
                     {!isAutoSynced && (
                       <button
                         onClick={() => handleDelete(mem.id)}
@@ -334,6 +348,15 @@ export const MemorialsPage: React.FC = () => {
         onClose={() => setShowAddModal(false)}
         onSuccess={loadData}
       />
+
+      {selectedPrayerMember && (
+        <MemorialPrayerViewerModal
+          isOpen={!!selectedPrayerMember}
+          onClose={() => setSelectedPrayerMember(null)}
+          member={selectedPrayerMember}
+          familyName={activeFamily?.name}
+        />
+      )}
     </div>
   );
 };

@@ -146,7 +146,7 @@ export const PrintableInvoiceModal: React.FC<PrintableInvoiceModalProps> = ({
                       {invoice.billing_reason || 'Gói Gia Tộc (1 năm) – 300 thành viên'}
                     </div>
                     <div className="text-[11px] text-slate-500 dark:text-slate-400 font-normal mt-1 leading-relaxed">
-                      Bao gồm: Cây phả hệ đa đời không giới hạn, Lịch âm ngày giỗ & nhắc việc tự động, Quản lý thu chi sổ quỹ kép bất biến & Mã QR Từ Đường thông minh.
+                      Bao gồm: Cây phả hệ đa đời không giới hạn, Lịch âm ngày giỗ & nhắc việc tự động, Quản lý thu chi sổ quỹ kép bất biến & Mã QR Từ Đường chuẩn quốc gia Napas247.
                     </div>
                   </td>
                   <td className="py-4 px-4 text-center text-slate-600 dark:text-slate-300 font-medium">

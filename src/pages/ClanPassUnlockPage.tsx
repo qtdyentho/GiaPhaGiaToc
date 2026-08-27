@@ -17,6 +17,8 @@ import {
 import { ClanPassService } from '../services/security/ClanPassService';
 import { useAuth } from '../contexts/AuthContext';
 import { ANCESTRAL_PRESETS } from '../components/family/AncestralBannerModal';
+import { ClanGuestbookModal } from '../components/family/ClanGuestbookModal';
+import { BookOpen, Flame } from 'lucide-react';
 
 export const ClanPassUnlockPage: React.FC = () => {
   const { token = '' } = useParams<{ token: string }>();
@@ -25,6 +27,7 @@ export const ClanPassUnlockPage: React.FC = () => {
 
   const [pin, setPin] = useState('');
   const [showPin, setShowPin] = useState(false);
+  const [isGuestbookOpen, setIsGuestbookOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -212,24 +215,44 @@ export const ClanPassUnlockPage: React.FC = () => {
               </button>
             </form>
 
-            {/* Feature Highlights Grid */}
-            <div className="pt-4 border-t border-slate-800 grid grid-cols-3 gap-2 text-center text-[10px] text-slate-400">
-              <div className="p-2 bg-slate-950/50 rounded-xl border border-slate-800">
-                <TreePine className="w-3.5 h-3.5 text-emerald-400 mx-auto mb-1" />
-                <span className="font-semibold text-slate-300">Cây Phả Hệ</span>
-              </div>
-              <div className="p-2 bg-slate-950/50 rounded-xl border border-slate-800">
-                <Calendar className="w-3.5 h-3.5 text-amber-400 mx-auto mb-1" />
-                <span className="font-semibold text-slate-300">Lịch Âm Giỗ</span>
-              </div>
-              <div className="p-2 bg-slate-950/50 rounded-xl border border-slate-800">
-                <Wallet className="w-3.5 h-3.5 text-blue-400 mx-auto mb-1" />
-                <span className="font-semibold text-slate-300">Số Dư Quỹ</span>
+            {/* Feature Highlights & Guestbook Grid */}
+            <div className="pt-4 border-t border-slate-800 space-y-3">
+              <button
+                type="button"
+                onClick={() => setIsGuestbookOpen(true)}
+                className="w-full py-2.5 px-4 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold font-serif flex items-center justify-center gap-2 transition shadow-inner cursor-pointer"
+              >
+                <Flame className="w-4 h-4 text-amber-400 animate-pulse" />
+                <span>🏮 Dâng Nén Tâm Hương & Ký Sổ Lưu Bút Từ Đường</span>
+                <BookOpen className="w-3.5 h-3.5" />
+              </button>
+
+              <div className="grid grid-cols-3 gap-2 text-center text-[10px] text-slate-400">
+                <div className="p-2 bg-slate-950/50 rounded-xl border border-slate-800">
+                  <TreePine className="w-3.5 h-3.5 text-emerald-400 mx-auto mb-1" />
+                  <span className="font-semibold text-slate-300">Cây Phả Hệ</span>
+                </div>
+                <div className="p-2 bg-slate-950/50 rounded-xl border border-slate-800">
+                  <Calendar className="w-3.5 h-3.5 text-amber-400 mx-auto mb-1" />
+                  <span className="font-semibold text-slate-300">Lịch Âm Giỗ</span>
+                </div>
+                <div className="p-2 bg-slate-950/50 rounded-xl border border-slate-800">
+                  <Wallet className="w-3.5 h-3.5 text-blue-400 mx-auto mb-1" />
+                  <span className="font-semibold text-slate-300">Số Dư Quỹ</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </main>
+
+      {/* Sổ Lưu Bút Ký Tên Modal */}
+      <ClanGuestbookModal
+        isOpen={isGuestbookOpen}
+        onClose={() => setIsGuestbookOpen(false)}
+        familyId={passData.family_id}
+        familyName={passData.family_name}
+      />
 
       {/* Footer */}
       <footer className="relative z-10 p-4 text-center text-xs text-slate-500 font-serif">

@@ -101,6 +101,22 @@ export const UI_COPY = {
     upgradePlan: 'Nâng Cấp Gói',
     payConfirmation: 'Đã gửi thông tin chuyển khoản — Đang chờ duyệt',
   },
+
+  kinship: {
+    title: 'Tra Cứu Danh Xưng & Vai Vế Gia Tộc',
+    subtitle: 'Tính toán chính xác xưng hô chuẩn mực theo thế thứ, chi phái và tục lệ gia phong',
+    selectA: 'Người thứ nhất',
+    selectB: 'Người thứ hai',
+    swap: 'Đổi chiều xưng hô',
+    directLineage: 'Huyết thống trực hệ',
+    branchSeniority: 'Thế thứ Chi Trưởng / Chi Thứ',
+    ruleQuote: '« Bé bằng củ khoai, cứ vai mà gọi » — Con Bác luôn là Anh/Chị bề trên so với con Chú.',
+  },
+
+  covenant: {
+    title: 'Hương Ước & Tộc Quy Dòng Họ',
+    subtitle: 'Lời răn dạy của tiên tổ gìn giữ gia phong, phát huy đạo hiếu và đoàn kết gia tộc',
+  },
 };
 
 export default UI_COPY;

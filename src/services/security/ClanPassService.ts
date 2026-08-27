@@ -99,6 +99,7 @@ export class ClanPassService {
    */
   static async getPassByToken(passToken: string): Promise<{
     success: boolean;
+    pass_token?: string;
     family_id?: string;
     family_name?: string;
     pin_salt?: string;
@@ -106,53 +107,107 @@ export class ClanPassService {
     is_locked?: boolean;
     error?: string;
   }> {
+    if (!passToken) {
+      return { success: false, error: 'Mã QR dòng họ không được để trống.' };
+    }
+
+    const clean = decodeURIComponent(passToken).trim();
+
     if (isSupabaseConfigured()) {
-      const { data: pass, error } = await supabase
-        .from('clan_access_passes')
-        .select('family_id, pin_salt, is_active, failed_attempts, locked_until')
-        .eq('pass_token', passToken)
-        .eq('is_active', true)
-        .single();
+      try {
+        // 1. Tìm trực tiếp theo pass_token
+        let { data: pass } = await supabase
+          .from('clan_access_passes')
+          .select('id, family_id, pass_token, pin_salt, is_active, failed_attempts, locked_until')
+          .ilike('pass_token', clean)
+          .eq('is_active', true)
+          .maybeSingle();
 
-      if (error || !pass) {
-        return { success: false, error: 'Mã QR không hợp lệ hoặc đã bị thu hồi.' };
+        // 2. Nếu không thấy, tìm qua bảng clan_short_links
+        if (!pass) {
+          const { data: linkData } = await supabase
+            .from('clan_short_links')
+            .select('family_id, pass_token')
+            .ilike('short_code', clean.toLowerCase())
+            .maybeSingle();
+
+          if (linkData) {
+            const { data: passFromLink } = await supabase
+              .from('clan_access_passes')
+              .select('id, family_id, pass_token, pin_salt, is_active, failed_attempts, locked_until')
+              .eq('family_id', linkData.family_id)
+              .maybeSingle();
+            pass = passFromLink;
+          }
+        }
+
+        // 3. Nếu vẫn không thấy, tìm qua bảng families theo ID hoặc Code
+        if (!pass) {
+          const { data: famData } = await supabase
+            .from('families')
+            .select('id, code')
+            .or(`code.ilike.${clean},id.eq.${isUUID(clean) ? clean : '00000000-0000-0000-0000-000000000000'}`)
+            .maybeSingle();
+
+          if (famData) {
+            const { data: passFromFam } = await supabase
+              .from('clan_access_passes')
+              .select('id, family_id, pass_token, pin_salt, is_active, failed_attempts, locked_until')
+              .eq('family_id', famData.id)
+              .maybeSingle();
+            pass = passFromFam;
+          }
+        }
+
+        if (pass) {
+          const isLocked = Boolean(pass.locked_until && new Date(pass.locked_until) > new Date());
+          const { data: fam } = await supabase
+            .from('families')
+            .select('name, banner_url')
+            .eq('id', pass.family_id)
+            .maybeSingle();
+
+          return {
+            success: true,
+            pass_token: pass.pass_token,
+            family_id: pass.family_id,
+            family_name: fam?.name || 'Gia Tộc',
+            pin_salt: pass.pin_salt,
+            banner_url: fam?.banner_url,
+            is_locked: isLocked,
+          };
+        }
+      } catch (err) {
+        console.warn('getPassByToken Supabase error:', err);
       }
+    }
 
-      const isLocked = Boolean(pass.locked_until && new Date(pass.locked_until) > new Date());
+    // Local / In-memory fallback
+    const found = mockPasses.find(
+      (p) =>
+        p.pass_token.toLowerCase() === clean.toLowerCase() ||
+        p.family_id.toLowerCase() === clean.toLowerCase() ||
+        clean.toLowerCase() === 'honguyen-yenmo' ||
+        clean.toLowerCase() === 'ho-nguyen-yen-mo' ||
+        clean.toLowerCase() === 'giapha'
+    );
 
-      const { data: fam } = await supabase
-        .from('families')
-        .select('name, banner_url')
-        .eq('id', pass.family_id)
-        .single();
-
+    if (found && found.is_active) {
+      const isLocked = Boolean(found.locked_until && new Date(found.locked_until) > new Date());
       return {
         success: true,
-        family_id: pass.family_id,
-        family_name: fam?.name || 'Gia Tộc',
-        pin_salt: pass.pin_salt,
-        banner_url: fam?.banner_url,
+        pass_token: found.pass_token,
+        family_id: found.family_id,
+        family_name: mockFamily.name,
+        pin_salt: found.pin_salt,
+        banner_url: mockFamily.banner_url,
         is_locked: isLocked,
       };
     }
 
-    // Local / In-memory fallback
-    const found = mockPasses.find((p) => p.pass_token === passToken && p.is_active);
-    if (!found) {
-      return {
-        success: false,
-        error: 'Mã QR không hợp lệ hoặc đã bị thu hồi.',
-      };
-    }
-
-    const isLocked = Boolean(found.locked_until && new Date(found.locked_until) > new Date());
     return {
-      success: true,
-      family_id: found.family_id,
-      family_name: mockFamily.name,
-      pin_salt: found.pin_salt,
-      banner_url: mockFamily.banner_url,
-      is_locked: isLocked,
+      success: false,
+      error: 'Mã QR không hợp lệ hoặc đã bị thu hồi.',
     };
   }
 

@@ -117,7 +117,7 @@ export const KinshipCalculatorPage: React.FC = () => {
             >
               {familyMembers.map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.full_name} — Đời {m.generation_index || '?'} ({m.gender === 'FEMALE' ? 'Nữ' : 'Nam'})
+                  {m.full_name}{m.courtesy_name ? ` (Hiệu: ${m.courtesy_name})` : ''} — Đời {m.generation_index || '?'} ({m.gender === 'FEMALE' ? 'Nữ' : 'Nam'})
                 </option>
               ))}
             </select>
@@ -139,6 +139,11 @@ export const KinshipCalculatorPage: React.FC = () => {
                   <div className="text-xs font-bold text-slate-900 truncate">
                     {memberA.full_name}
                   </div>
+                  {memberA.courtesy_name && (
+                    <div className="text-[11px] text-amber-800 font-serif italic">
+                      📜 {memberA.courtesy_name}
+                    </div>
+                  )}
                   <div className="text-[11px] text-slate-500">
                     {memberA.branch_code ? `Chi/Nhánh: ${memberA.branch_code}` : 'Thành viên trực hệ'} • {memberA.is_direct_lineage ? 'Dòng Trưởng (Đích tôn)' : 'Dòng Thứ'}
                   </div>
@@ -182,7 +187,7 @@ export const KinshipCalculatorPage: React.FC = () => {
             >
               {familyMembers.map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.full_name} — Đời {m.generation_index || '?'} ({m.gender === 'FEMALE' ? 'Nữ' : 'Nam'})
+                  {m.full_name}{m.courtesy_name ? ` (Hiệu: ${m.courtesy_name})` : ''} — Đời {m.generation_index || '?'} ({m.gender === 'FEMALE' ? 'Nữ' : 'Nam'})
                 </option>
               ))}
             </select>
@@ -204,6 +209,11 @@ export const KinshipCalculatorPage: React.FC = () => {
                   <div className="text-xs font-bold text-slate-900 truncate">
                     {memberB.full_name}
                   </div>
+                  {memberB.courtesy_name && (
+                    <div className="text-[11px] text-amber-800 font-serif italic">
+                      📜 {memberB.courtesy_name}
+                    </div>
+                  )}
                   <div className="text-[11px] text-slate-500">
                     {memberB.branch_code ? `Chi/Nhánh: ${memberB.branch_code}` : 'Thành viên trực hệ'} • {memberB.is_direct_lineage ? 'Dòng Trưởng (Đích tôn)' : 'Dòng Thứ'}
                   </div>

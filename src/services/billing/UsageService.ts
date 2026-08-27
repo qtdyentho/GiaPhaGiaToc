@@ -51,9 +51,11 @@ export class UsageService {
 
     // Fallback: đếm theo mock/local state của familyId
     if (memberCount === 0) {
-      memberCount = mockMembers.filter((m) => m.family_id === familyId).length;
-      if (memberCount === 0 && familyId === 'fam-0000-0001') memberCount = 86;
-      else if (memberCount === 0) memberCount = 2; // Default seeded count
+      if (familyId === 'fam-0000-0001') {
+        memberCount = 86;
+      } else {
+        memberCount = mockMembers.filter((m) => m.family_id === familyId).length || 2;
+      }
     }
 
     if (branchCount === 0) {

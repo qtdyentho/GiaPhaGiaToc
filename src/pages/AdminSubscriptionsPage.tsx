@@ -1,10 +1,30 @@
 import React, { useState, useMemo } from 'react';
-import { 
-  CreditCard, Users, Search, Filter, ShieldCheck, CheckCircle2, Clock, 
-  RotateCcw, Sparkles, AlertTriangle, ArrowUpRight, Plus, Download, Calendar,
-  Check, X, Ban, RefreshCw
+import {
+  CreditCard,
+  Users,
+  Search,
+  Filter,
+  ShieldCheck,
+  CheckCircle2,
+  Clock,
+  RotateCcw,
+  Sparkles,
+  AlertTriangle,
+  ArrowUpRight,
+  Plus,
+  Download,
+  Calendar,
+  Check,
+  X,
+  Ban,
+  RefreshCw,
+  Edit3,
+  Save,
+  Layers,
+  Phone,
+  Building,
 } from 'lucide-react';
-import { mockPlans, mockFamily } from '../services/mockData';
+import { mockPlans } from '../services/mockData';
 import { formatDate, formatCurrency } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -15,7 +35,7 @@ export interface AdminSubscriptionItem {
   family_code: string;
   plan_code: 'FREE_TRIAL' | 'GIA_DINH' | 'GIA_TOC' | 'DAI_TOC';
   plan_name: string;
-  status: 'ACTIVE' | 'TRIALING' | 'EXPIRED' | 'WAITING_CONFIRMATION' | 'SUSPENDED';
+  status: 'ACTIVE' | 'TRIALING' | 'EXPIRED' | 'WAITING_CONFIRMATION' | 'SUSPENDED' | 'READ_ONLY';
   billing_cycle: 'YEARLY' | 'MONTHLY';
   members_count: number;
   quota_limit: number;
@@ -25,6 +45,7 @@ export interface AdminSubscriptionItem {
   contact_name: string;
   contact_phone: string;
   last_payment_ref?: string;
+  notes?: string;
 }
 
 export const AdminSubscriptionsPage: React.FC = () => {
@@ -32,7 +53,7 @@ export const AdminSubscriptionsPage: React.FC = () => {
     {
       id: 'sub-001',
       family_id: 'fam-0000-0001',
-      family_name: 'Đại Tộc Nguyễn Văn',
+      family_name: 'Đại Tộc Nguyễn Văn (Yên Mô)',
       family_code: 'NGUYEN-VAN-HN',
       plan_code: 'GIA_TOC',
       plan_name: 'Gói Gia Tộc Chuẩn Mực',
@@ -46,6 +67,7 @@ export const AdminSubscriptionsPage: React.FC = () => {
       contact_name: 'Nguyễn Văn Hoàng',
       contact_phone: '0912345678',
       last_payment_ref: 'FT260824998877',
+      notes: 'Gia tộc hạt nhân thử nghiệm - Đã thanh toán chuyển khoản',
     },
     {
       id: 'sub-002',
@@ -107,7 +129,7 @@ export const AdminSubscriptionsPage: React.FC = () => {
       family_code: 'PHAM-DUC-HD',
       plan_code: 'GIA_DINH',
       plan_name: 'Gói Khởi Lập Gia Đình',
-      status: 'EXPIRED',
+      status: 'READ_ONLY',
       billing_cycle: 'YEARLY',
       members_count: 55,
       quota_limit: 100,
@@ -116,12 +138,24 @@ export const AdminSubscriptionsPage: React.FC = () => {
       period_end: '2026-07-01T00:00:00Z',
       contact_name: 'Phạm Đức Long',
       contact_phone: '0966778899',
+      notes: 'Hết hạn gói - Đã chuyển sang chế độ READ_ONLY bảo toàn dữ liệu',
     },
   ]);
 
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'TRIALING' | 'WAITING_CONFIRMATION' | 'EXPIRED'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [actionNotice, setActionNotice] = useState<string | null>(null);
+
+  // Selected for Edit Modal
+  const [selectedSub, setSelectedSub] = useState<AdminSubscriptionItem | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // Form states
+  const [editPlanCode, setEditPlanCode] = useState<any>('GIA_TOC');
+  const [editStatus, setEditStatus] = useState<any>('ACTIVE');
+  const [editQuota, setEditQuota] = useState<number>(300);
+  const [editPeriodEnd, setEditPeriodEnd] = useState<string>('');
+  const [editNotes, setEditNotes] = useState<string>('');
 
   // Filtered List
   const filteredSubs = useMemo(() => {
@@ -144,33 +178,59 @@ export const AdminSubscriptionsPage: React.FC = () => {
       active: subscriptions.filter((s) => s.status === 'ACTIVE').length,
       trialing: subscriptions.filter((s) => s.status === 'TRIALING').length,
       pending: subscriptions.filter((s) => s.status === 'WAITING_CONFIRMATION').length,
+      readOnly: subscriptions.filter((s) => s.status === 'READ_ONLY' || s.status === 'EXPIRED').length,
       arr: subscriptions.filter((s) => s.status === 'ACTIVE').reduce((sum, s) => sum + s.price_yearly, 0),
     };
   }, [subscriptions]);
 
-  const handleExtendTrial = (subId: string) => {
+  const openEditModal = (sub: AdminSubscriptionItem) => {
+    setSelectedSub(sub);
+    setEditPlanCode(sub.plan_code);
+    setEditStatus(sub.status);
+    setEditQuota(sub.quota_limit);
+    setEditPeriodEnd(sub.period_end.slice(0, 10));
+    setEditNotes(sub.notes || '');
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedSub) return;
+
+    const planNames: Record<string, { name: string; price: number }> = {
+      FREE_TRIAL: { name: 'Gói Dùng Thử Miễn Phí', price: 0 },
+      GIA_DINH: { name: 'Gói Khởi Lập Gia Đình', price: 490000 },
+      GIA_TOC: { name: 'Gói Gia Tộc Chuẩn Mực', price: 990000 },
+      DAI_TOC: { name: 'Gói Đại Gia Tộc Vô Cực', price: 2490000 },
+    };
+
     const updated = subscriptions.map((s) => {
-      if (s.id === subId) {
-        const curEnd = new Date(s.period_end);
-        curEnd.setDate(curEnd.getDate() + 30);
+      if (s.id === selectedSub.id) {
         return {
           ...s,
-          status: 'TRIALING' as const,
-          period_end: curEnd.toISOString(),
+          plan_code: editPlanCode,
+          plan_name: planNames[editPlanCode]?.name || s.plan_name,
+          price_yearly: planNames[editPlanCode]?.price ?? s.price_yearly,
+          status: editStatus,
+          quota_limit: Number(editQuota),
+          period_end: new Date(editPeriodEnd).toISOString(),
+          notes: editNotes,
         };
       }
       return s;
     });
+
     setSubscriptions(updated);
-    setActionNotice('Đã gia hạn thêm 30 ngày dùng thử thành công!');
-    setTimeout(() => setActionNotice(null), 3000);
+    setIsEditModalOpen(false);
+    setActionNotice(`Đã cập nhật thành công thuê bao của dòng họ ${selectedSub.family_name}!`);
+    setTimeout(() => setActionNotice(null), 3500);
   };
 
-  const handleActivateSubscription = (subId: string) => {
+  const handleQuickExtend = (subId: string, days: number) => {
     const updated = subscriptions.map((s) => {
       if (s.id === subId) {
-        const curEnd = new Date();
-        curEnd.setFullYear(curEnd.getFullYear() + 1);
+        const curEnd = new Date(s.period_end);
+        curEnd.setDate(curEnd.getDate() + days);
         return {
           ...s,
           status: 'ACTIVE' as const,
@@ -180,78 +240,76 @@ export const AdminSubscriptionsPage: React.FC = () => {
       return s;
     });
     setSubscriptions(updated);
-    setActionNotice('Kích hoạt thuê bao chính thức thành công (Thời hạn 1 năm)!');
+    setActionNotice(`Đã gia hạn thành công thêm ${days} ngày cho hợp đồng!`);
     setTimeout(() => setActionNotice(null), 3000);
   };
 
   return (
     <div className="space-y-6 animate-fade-in font-sans">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Quản Lý Thuê Bao Toàn Nền Tảng</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Giám sát hợp đồng dịch vụ các dòng họ, gia hạn dùng thử và kích hoạt thuê bao chính thức
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-slate-900">Quản Lý Thuê Bao Toàn Nền Tảng</h1>
+            <span className="text-xs bg-emerald-100 text-emerald-900 font-bold px-2.5 py-0.5 rounded-full border border-emerald-300">
+              Subscription Control
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 mt-1">
+            Giám sát hợp đồng dịch vụ các dòng họ, gia hạn dùng thử, chuyển trạng thái và quản lý hạn mức thành viên.
           </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => {
-              setActionNotice('Đã đồng bộ trạng thái thanh toán từ cổng ngân hàng.');
-              setTimeout(() => setActionNotice(null), 2500);
-            }}
-            className="flex items-center space-x-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition shadow-xs cursor-pointer border border-slate-300"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Đồng Bộ Hóa Đơn</span>
-          </button>
         </div>
       </div>
 
-      {/* Action Notice Alert */}
       {actionNotice && (
-        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-2 text-xs text-emerald-900 font-medium animate-fade-in shadow-2xs">
-          <CheckCircle2 className="w-4 h-4 text-[#166534] shrink-0" />
+        <div className="p-3.5 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-2xl text-xs font-bold flex items-center gap-2 animate-fade-in shadow-sm">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{actionNotice}</span>
         </div>
       )}
 
-      {/* 4 Metric Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-1">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tổng Thuê Bao</div>
-          <div className="text-2xl font-black text-slate-900">{stats.total}</div>
-          <div className="text-[10px] text-slate-500">Dòng họ đã đăng ký</div>
+      {/* KPI Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <div className="text-slate-500 text-[11px] font-bold uppercase">Tổng Thuê Bao</div>
+          <div className="text-2xl font-bold text-slate-900 mt-1">{stats.total}</div>
+          <div className="text-[10px] text-slate-400 mt-0.5">Dòng họ đã đăng ký</div>
         </div>
 
-        <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-1">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Đang Hiệu Lực (Active)</div>
-          <div className="text-2xl font-black text-emerald-700">{stats.active}</div>
-          <div className="text-[10px] text-emerald-600 font-medium">Gia hạn hàng năm</div>
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <div className="text-emerald-600 text-[11px] font-bold uppercase">Đang Kích Hoạt</div>
+          <div className="text-2xl font-bold text-emerald-700 mt-1">{stats.active}</div>
+          <div className="text-[10px] text-emerald-600 font-medium mt-0.5">Doanh thu ARR: {formatCurrency(stats.arr)}</div>
         </div>
 
-        <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-1">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Dùng Thử / Chờ Duyệt</div>
-          <div className="text-2xl font-black text-amber-700">{stats.trialing + stats.pending}</div>
-          <div className="text-[10px] text-amber-600 font-medium">{stats.pending} giao dịch chờ duyệt</div>
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <div className="text-amber-600 text-[11px] font-bold uppercase">Đang Dùng Thử</div>
+          <div className="text-2xl font-bold text-amber-600 mt-1">{stats.trialing}</div>
+          <div className="text-[10px] text-amber-600 font-medium mt-0.5">Kỳ hạn 30 ngày</div>
         </div>
 
-        <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs space-y-1">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Doanh Thu ARR Ước Tính</div>
-          <div className="text-xl font-black text-[#166534]">{formatCurrency(stats.arr)}</div>
-          <div className="text-[10px] text-slate-500">Doanh thu định kỳ năm</div>
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <div className="text-blue-600 text-[11px] font-bold uppercase">Chờ Xác Nhận Tiền</div>
+          <div className="text-2xl font-bold text-blue-600 mt-1">{stats.pending}</div>
+          <div className="text-[10px] text-blue-600 font-medium mt-0.5">Cần đối soát VietQR</div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <div className="text-purple-600 text-[11px] font-bold uppercase">Chế Độ Read-Only</div>
+          <div className="text-2xl font-bold text-purple-700 mt-1">{stats.readOnly}</div>
+          <div className="text-[10px] text-purple-600 font-medium mt-0.5">Bảo toàn 100% dữ liệu</div>
         </div>
       </div>
 
-      {/* Search & Filter */}
-      <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        <div className="relative flex-1 min-w-[240px]">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+      {/* Filter and Search Bar */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+        <div className="relative w-full sm:w-80">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm theo tên dòng họ, mã gia tộc, người đại diện, SĐT..."
+            placeholder="Tìm theo tên dòng họ, mã gia tộc, người đại diện..."
             className="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534] focus:bg-white transition"
           />
         </div>
@@ -259,14 +317,15 @@ export const AdminSubscriptionsPage: React.FC = () => {
         <div className="flex items-center gap-2">
           <select
             value={statusFilter}
-            onChange={(e: any) => setStatusFilter(e.target.value)}
+            onChange={(e) => setStatusFilter(e.target.value)}
             className="px-3 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#166534]"
           >
             <option value="ALL">Tất cả trạng thái</option>
-            <option value="ACTIVE">Đang kích hoạt (Active)</option>
-            <option value="TRIALING">Đang dùng thử (Trial)</option>
-            <option value="WAITING_CONFIRMATION">Chờ xác nhận thanh toán</option>
-            <option value="EXPIRED">Đã hết hạn</option>
+            <option value="ACTIVE">🟢 Đang hiệu lực (Active)</option>
+            <option value="TRIALING">🟡 Đang dùng thử (Trial)</option>
+            <option value="WAITING_CONFIRMATION">🔵 Chờ duyệt tiền</option>
+            <option value="READ_ONLY">🟣 Chế độ Read-Only</option>
+            <option value="EXPIRED">🔴 Đã hết hạn</option>
           </select>
         </div>
       </div>
@@ -282,20 +341,18 @@ export const AdminSubscriptionsPage: React.FC = () => {
                 <th className="py-3.5 px-4">Đại Diện / Liên Hệ</th>
                 <th className="py-3.5 px-4">Thành Viên / Hạn Mức</th>
                 <th className="py-3.5 px-4">Thời Hạn Hợp Đồng</th>
-                <th className="py-3.5 px-4">Trạng Thái</th>
-                <th className="py-3.5 px-4 text-right">Thao Tác Admin</th>
+                <th className="py-3.5 px-4 text-center">Trạng Thái</th>
+                <th className="py-3.5 px-4 text-right">Thao Tác Quản Trị</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredSubs.map((sub) => (
                 <tr key={sub.id} className="hover:bg-slate-50/80 transition">
-                  {/* Family name & code */}
                   <td className="py-3.5 px-4">
-                    <div className="font-bold text-slate-900">{sub.family_name}</div>
+                    <div className="font-bold text-slate-900 font-serif">{sub.family_name}</div>
                     <div className="text-[10px] text-slate-400 font-mono">{sub.family_code}</div>
                   </td>
 
-                  {/* Plan */}
                   <td className="py-3.5 px-4">
                     <span className="font-bold text-emerald-950 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 text-[11px]">
                       {sub.plan_name}
@@ -303,13 +360,11 @@ export const AdminSubscriptionsPage: React.FC = () => {
                     <div className="text-[10px] text-slate-400 mt-0.5">{formatCurrency(sub.price_yearly)} / năm</div>
                   </td>
 
-                  {/* Contact */}
                   <td className="py-3.5 px-4">
                     <div className="font-medium text-slate-900">{sub.contact_name}</div>
                     <div className="text-[10px] text-slate-500 font-mono">{sub.contact_phone}</div>
                   </td>
 
-                  {/* Quota */}
                   <td className="py-3.5 px-4">
                     <div className="flex items-center space-x-1.5">
                       <span className="font-bold text-slate-900">{sub.members_count}</span>
@@ -323,14 +378,12 @@ export const AdminSubscriptionsPage: React.FC = () => {
                     </div>
                   </td>
 
-                  {/* Period End */}
                   <td className="py-3.5 px-4">
                     <div className="text-slate-900 font-medium">{formatDate(sub.period_end)}</div>
                     <div className="text-[10px] text-slate-400">Bắt đầu: {formatDate(sub.period_start)}</div>
                   </td>
 
-                  {/* Status */}
-                  <td className="py-3.5 px-4">
+                  <td className="py-3.5 px-4 text-center">
                     <span
                       className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold ${
                         sub.status === 'ACTIVE'
@@ -339,61 +392,162 @@ export const AdminSubscriptionsPage: React.FC = () => {
                           ? 'bg-amber-100 text-amber-900'
                           : sub.status === 'WAITING_CONFIRMATION'
                           ? 'bg-blue-100 text-blue-900'
+                          : sub.status === 'READ_ONLY'
+                          ? 'bg-purple-100 text-purple-800'
                           : 'bg-rose-100 text-rose-800'
                       }`}
                     >
                       {sub.status === 'ACTIVE'
-                        ? 'Đang hiệu lực'
+                        ? '🟢 Đang hiệu lực'
                         : sub.status === 'TRIALING'
-                        ? 'Dùng thử 30 ngày'
+                        ? '🟡 Dùng thử'
                         : sub.status === 'WAITING_CONFIRMATION'
-                        ? 'Chờ duyệt tiền'
-                        : 'Hết hạn'}
+                        ? '🔵 Chờ duyệt tiền'
+                        : sub.status === 'READ_ONLY'
+                        ? '🟣 Read-Only'
+                        : '🔴 Hết hạn'}
                     </span>
                   </td>
 
-                  {/* Actions */}
                   <td className="py-3.5 px-4 text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      {sub.status === 'TRIALING' && (
-                        <button
-                          onClick={() => handleExtendTrial(sub.id)}
-                          className="px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold rounded-lg text-[11px] transition shadow-2xs cursor-pointer border border-amber-300"
-                        >
-                          +30 Ngày Trial
-                        </button>
-                      )}
-                      {sub.status !== 'ACTIVE' && (
-                        <button
-                          onClick={() => handleActivateSubscription(sub.id)}
-                          className="px-2.5 py-1 bg-[#166534] hover:bg-[#14532D] text-white font-bold rounded-lg text-[11px] transition shadow-2xs cursor-pointer"
-                        >
-                          Kích Hoạt
-                        </button>
-                      )}
-                      {sub.status === 'ACTIVE' && (
-                        <button
-                          onClick={() => handleExtendTrial(sub.id)}
-                          className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-lg text-[11px] transition cursor-pointer border border-slate-300"
-                        >
-                          Gia Hạn
-                        </button>
-                      )}
+                    <div className="flex items-center justify-end space-x-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleQuickExtend(sub.id, 365)}
+                        className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold rounded-lg text-[11px] transition cursor-pointer border border-emerald-200"
+                        title="Gia hạn nhanh 1 năm"
+                      >
+                        +1 Năm
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(sub)}
+                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-lg text-[11px] transition cursor-pointer border border-slate-300 flex items-center gap-1"
+                      >
+                        <Edit3 className="w-3 h-3" />
+                        <span>Sửa</span>
+                      </button>
                     </div>
                   </td>
                 </tr>
               ))}
-              {filteredSubs.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="py-8 text-center text-xs text-slate-400">
-                    Không tìm thấy hợp đồng thuê bao phù hợp.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Full Edit Modal */}
+      {isEditModalOpen && selectedSub && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-3xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl">
+            <div className="p-5 bg-gradient-to-r from-[#14532D] to-[#166534] text-white flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-bold font-serif">Điều Chỉnh Hợp Đồng Thuê Bao</h2>
+                <p className="text-xs text-emerald-200">{selectedSub.family_name}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="p-6 space-y-4 text-xs">
+              <div>
+                <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1">
+                  Gói Dịch Vụ Cung Cấp
+                </label>
+                <select
+                  value={editPlanCode}
+                  onChange={(e) => setEditPlanCode(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
+                >
+                  <option value="FREE_TRIAL">Gói Dùng Thử Miễn Phí (0 ₫)</option>
+                  <option value="GIA_DINH">Gói Khởi Lập Gia Đình (490.000 ₫/năm)</option>
+                  <option value="GIA_TOC">Gói Gia Tộc Chuẩn Mực (990.000 ₫/năm)</option>
+                  <option value="DAI_TOC">Gói Đại Gia Tộc Vô Cực (2.490.000 ₫/năm)</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1">
+                    Trạng Thái Thuê Bao
+                  </label>
+                  <select
+                    value={editStatus}
+                    onChange={(e) => setEditStatus(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
+                  >
+                    <option value="ACTIVE">🟢 Đang hiệu lực (ACTIVE)</option>
+                    <option value="TRIALING">🟡 Đang dùng thử (TRIALING)</option>
+                    <option value="WAITING_CONFIRMATION">🔵 Chờ xác nhận tiền</option>
+                    <option value="READ_ONLY">🟣 Chế độ Read-Only (Bảo toàn)</option>
+                    <option value="EXPIRED">🔴 Hết hạn (EXPIRED)</option>
+                    <option value="SUSPENDED">⛔ Tạm ngưng (SUSPENDED)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1">
+                    Hạn Mức Thành Viên (Quota)
+                  </label>
+                  <input
+                    type="number"
+                    value={editQuota}
+                    onChange={(e) => setEditQuota(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 font-bold text-slate-900 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1">
+                  Ngày Hết Hạn Hợp Đồng (Period End)
+                </label>
+                <input
+                  type="date"
+                  value={editPeriodEnd}
+                  onChange={(e) => setEditPeriodEnd(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 font-mono font-bold text-slate-900 dark:text-white"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 dark:text-slate-300 font-bold mb-1">
+                  Ghi Chú Kiểm Toán Admin
+                </label>
+                <textarea
+                  rows={2}
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  placeholder="Lý do điều chỉnh hạn mức / gia hạn hợp đồng..."
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 font-bold"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-[#166534] hover:bg-[#14532d] text-white font-bold flex items-center gap-1.5 shadow-md cursor-pointer"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>Lưu Thay Đổi</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

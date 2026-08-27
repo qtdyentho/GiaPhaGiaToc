@@ -41,6 +41,8 @@ export const GenealogyTreeNode: React.FC<GenealogyTreeNodeProps> = ({
       <div className="flex items-center gap-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-3 rounded-3xl border-2 border-slate-200/90 dark:border-slate-800 shadow-md hover:shadow-xl transition-all duration-300 relative group z-10">
         {/* Thẻ Thành Viên Trực Hệ (Chồng / Vị Đứng Đầu Nhánh) */}
         <div
+          id={`member-node-${m.id}`}
+          data-member-id={m.id}
           onClick={() => onSelectMember(m)}
           className={`member-card-interactive w-64 bg-white dark:bg-slate-800 rounded-2xl p-4 transition-all duration-200 cursor-pointer border-2 ${
             isSelected
@@ -146,6 +148,8 @@ export const GenealogyTreeNode: React.FC<GenealogyTreeNodeProps> = ({
           return (
             <div
               key={s.id}
+              id={`member-node-${s.id}`}
+              data-member-id={s.id}
               onClick={() => onSelectMember(s)}
               className={`member-card-interactive w-60 bg-white dark:bg-slate-800 rounded-2xl p-4 transition-all duration-200 cursor-pointer border-2 ${
                 isSpouseSelected

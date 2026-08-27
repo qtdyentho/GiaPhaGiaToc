@@ -15,6 +15,7 @@ import { ReversalModal } from '../components/finance/ReversalModal';
 import { CreateFundModal } from '../components/finance/CreateFundModal';
 import { RecordIncomeModal } from '../components/finance/RecordIncomeModal';
 import { FundDetailModal } from '../components/finance/FundDetailModal';
+import { AnnualFinancialReportModal } from '../components/finance/AnnualFinancialReportModal';
 import { useAuth } from '../contexts/AuthContext';
 
 export const FundLedgerPage: React.FC = () => {
@@ -32,6 +33,7 @@ export const FundLedgerPage: React.FC = () => {
   const [reversalTarget, setReversalTarget] = useState<FinancialTransaction | null>(null);
   const [isCreateFundOpen, setIsCreateFundOpen] = useState(false);
   const [isRecordIncomeOpen, setIsRecordIncomeOpen] = useState(false);
+  const [isAnnualReportOpen, setIsAnnualReportOpen] = useState(false);
   const [selectedFundDetail, setSelectedFundDetail] = useState<Fund | null>(null);
 
   const loadData = async () => {
@@ -131,11 +133,11 @@ export const FundLedgerPage: React.FC = () => {
           </button>
 
           <button
-            onClick={() => window.print()}
-            className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
+            onClick={() => setIsAnnualReportOpen(true)}
+            className="px-3.5 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer font-serif"
           >
-            <Printer className="w-4 h-4 text-cyan-700" />
-            <span>In Bản A4</span>
+            <Printer className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+            <span>📑 Báo Cáo Họp Họ (A4/Excel)</span>
           </button>
 
           <button
@@ -348,6 +350,15 @@ export const FundLedgerPage: React.FC = () => {
         onSuccess={loadData}
         funds={funds}
         familyId={activeFamily?.id}
+      />
+
+      {/* Annual Financial Report Modal */}
+      <AnnualFinancialReportModal
+        isOpen={isAnnualReportOpen}
+        onClose={() => setIsAnnualReportOpen(false)}
+        family={activeFamily}
+        funds={funds}
+        transactions={transactions}
       />
     </div>
   );

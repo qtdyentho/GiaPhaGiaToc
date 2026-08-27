@@ -210,12 +210,18 @@ describe('PHASE 5: PRODUCTION OPERATIONS, OBSERVABILITY & SECURITY', () => {
   });
 
   it('P5-BETA-001: Closed Beta Invite-only enforcement -> PASS', () => {
-    const validInvite = BetaOperationsService.verifyInviteCode('BETA-2026-GIATOC');
-    const invalidInvite = BetaOperationsService.verifyInviteCode('RANDOM-CODE-999');
+    const prevMode = BetaOperationsService.BETA_MODE;
+    BetaOperationsService.BETA_MODE = true;
+    try {
+      const validInvite = BetaOperationsService.verifyInviteCode('BETA-2026-GIATOC');
+      const invalidInvite = BetaOperationsService.verifyInviteCode('RANDOM-CODE-999');
 
-    assert.strictEqual(validInvite.valid, true);
-    assert.strictEqual(invalidInvite.valid, false);
-    console.log('✅ [P5-BETA-001: Closed Beta Invite-only enforcement -> PASS] PASS');
+      assert.strictEqual(validInvite.valid, true);
+      assert.strictEqual(invalidInvite.valid, false);
+      console.log('✅ [P5-BETA-001: Closed Beta Invite-only enforcement -> PASS] PASS');
+    } finally {
+      BetaOperationsService.BETA_MODE = prevMode;
+    }
   });
 
   it('P5-BETA-002: 30-day Trial subscription creation -> PASS', async () => {

@@ -11,15 +11,15 @@ export const PricingPage: React.FC = () => {
     <div className="py-8 max-w-6xl mx-auto space-y-8 animate-fade-in">
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto space-y-3">
-        <div className="inline-flex items-center space-x-1.5 bg-emerald-100 text-heritage-green font-semibold text-xs px-3 py-1 rounded-full">
+        <div className="inline-flex items-center space-x-1.5 bg-emerald-100 text-[#166534] font-semibold text-xs px-3.5 py-1 rounded-full border border-emerald-300">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Biểu Phí Thuê Bao Chuẩn Hóa</span>
+          <span>Phụng Sự Gia Tộc & Gìn Giữ Gia Phong</span>
         </div>
-        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-          Chọn Gói Phù Hợp Cho Dòng Tộc Của Bạn
+        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight font-serif text-amber-950">
+          Chọn Gói Dịch Vụ Phù Hợp Cho Dòng Họ
         </h1>
-        <p className="text-sm text-slate-500">
-          Khởi tạo và số hóa gia phả, quản lý lịch giỗ tổ tiên và minh bạch sổ quỹ toàn diện.
+        <p className="text-sm text-slate-600">
+          Khởi tạo và số hóa phả hệ đa đời, quản lý lịch kỵ giỗ tiên tổ và minh bạch sổ quỹ dòng họ toàn diện.
         </p>
 
         {/* Monthly / Yearly Toggle */}

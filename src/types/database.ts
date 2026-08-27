@@ -199,11 +199,15 @@ export interface Member {
   birth_lunar_month?: number;
   birth_lunar_year?: number;
   birth_year?: number;
+  birth_time?: string;
+  courtesy_name?: string;
   death_solar_date?: string;
   death_lunar_day?: number;
   death_lunar_month?: number;
   death_lunar_year?: number;
   death_year?: number;
+  death_time?: string;
+  religious_name?: string;
   burial_place?: string;
   avatar_url?: string;
   bio?: string;
@@ -670,3 +674,42 @@ export interface AuditLog {
   ip_address?: string;
   created_at: string;
 }
+
+export interface ClanAccessPass {
+  id: string;
+  family_id: string;
+  pass_token: string;
+  pin_hash: string;
+  pin_salt: string;
+  is_active: boolean;
+  failed_attempts: number;
+  locked_until?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ClanShortLink {
+  id: string;
+  family_id: string;
+  pass_token: string;
+  short_code: string;
+  is_custom: boolean;
+  clicks_count: number;
+  last_accessed_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ClanGuestbookEntry {
+  id: string;
+  family_id: string;
+  author_name: string;
+  branch_name?: string | null;
+  location?: string | null;
+  message: string;
+  incense_count: number;
+  is_public: boolean;
+  created_at: string;
+}
+
+
