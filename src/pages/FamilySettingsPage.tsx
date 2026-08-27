@@ -59,9 +59,9 @@ export const FamilySettingsPage: React.FC = () => {
           setPassToken(config.pass_token);
         }
 
-        let link = await ShortLinkService.getShortLinkByFamily(currentFamily.id);
+        let link = await ShortLinkService.getShortLinkByFamily(currentFamily.id, currentFamily.name);
         if (!link) {
-          const res = await ShortLinkService.createOrUpdateShortLink(currentFamily.id, config.pass_token);
+          const res = await ShortLinkService.createOrUpdateShortLink(currentFamily.id, config.pass_token, undefined, currentFamily.name);
           link = res.shortLink || null;
         }
         if (link) {

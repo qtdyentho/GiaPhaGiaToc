@@ -1,5 +1,4 @@
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
-import { mockFamily } from '../mockData';
 
 export interface ClanShortLink {
   id: string;
@@ -86,9 +85,10 @@ const RESERVED_SLUGS = new Set([
   'usage',
 ]);
 
-const BASE62_CHARS = '23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ';
+const BASE62_CHARS = '23456789abcdefghjkmnpqrstuvwxyz';
 
 export function slugifyVietnamese(text: string): string {
+  if (!text) return '';
   return text
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -100,55 +100,92 @@ export function slugifyVietnamese(text: string): string {
 
 export class ShortLinkService {
   /**
-   * Sinh mã ngẫu nhiên duy nhất Base62 (6 ký tự)
+   * Sinh mã ngẫu nhiên Base62 an toàn, tránh ký tự dễ nhầm lẫn
    */
   static generateRandomCode(length = 6): string {
     let result = '';
-    for (let i = 0; i < length; i++) {
-      const idx = Math.floor(Math.random() * BASE62_CHARS.length);
-      result += BASE62_CHARS[idx];
+    const bytes = new Uint8Array(length);
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      crypto.getRandomValues(bytes);
+      for (let i = 0; i < length; i++) {
+        result += BASE62_CHARS[bytes[i] % BASE62_CHARS.length];
+      }
+    } else {
+      for (let i = 0; i < length; i++) {
+        result += BASE62_CHARS[Math.floor(Math.random() * BASE62_CHARS.length)];
+      }
     }
-    return result.toLowerCase();
+    return result;
   }
 
   /**
-   * Tạo gợi ý Custom Slug từ tên dòng họ
+   * Tạo URL rút gọn hoàn chỉnh
    */
-  static suggestSlugFromName(familyName: string): string {
-    const slug = slugifyVietnamese(familyName);
-    return slug || 'dong-ho';
+  static buildShortUrl(shortCode: string): string {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://giaphagiatoc.vn';
+    return `${origin}/c/${shortCode}`;
   }
 
   /**
-   * Kiểm tra định dạng Custom Slug hợp lệ
+   * Tạo slug gợi ý từ tên dòng họ
+   */
+  static suggestSlugFromName(name: string): string {
+    return slugifyVietnamese(name);
+  }
+
+  /**
+   * Tạo gợi ý Custom Slug tiếng Việt không dấu chuẩn đẹp theo tên dòng họ
+   */
+  static generateSlugSuggestions(familyName: string, location?: string): string[] {
+    const baseSlug = slugifyVietnamese(familyName);
+    const suggestions: string[] = [];
+
+    if (baseSlug) suggestions.push(baseSlug);
+
+    if (location) {
+      const locSlug = slugifyVietnamese(location);
+      if (locSlug) {
+        suggestions.push(`${baseSlug}-${locSlug}`);
+      }
+    }
+
+    suggestions.push(`${baseSlug}-vietnam`);
+    suggestions.push(`${baseSlug}-${new Date().getFullYear()}`);
+
+    return Array.from(new Set(suggestions)).filter((s) => s.length >= 3 && s.length <= 48);
+  }
+
+  /**
+   * Xác thực tính hợp lệ của Custom Slug
    */
   static validateCustomSlug(slug: string): { valid: boolean; error?: string } {
-    const clean = slug.trim().toLowerCase();
-
-    if (!clean) {
-      return { valid: false, error: 'Mã định danh liên kết không được để trống.' };
+    if (!slug || slug.trim().length === 0) {
+      return { valid: false, error: 'Mã định danh không được để trống.' };
     }
 
-    if (clean.length < 3) {
-      return { valid: false, error: 'Mã định danh liên kết phải có ít nhất 3 ký tự.' };
+    const trimmed = slug.trim().toLowerCase();
+
+    if (trimmed.length < 3) {
+      return { valid: false, error: 'Mã định danh phải có ít nhất 3 ký tự.' };
     }
 
-    if (clean.length > 40) {
-      return { valid: false, error: 'Mã định danh liên kết không được vượt quá 40 ký tự.' };
+    if (trimmed.length > 48) {
+      return { valid: false, error: 'Mã định danh không được vượt quá 48 ký tự.' };
     }
 
-    const slugRegex = /^[a-z0-9-_]+$/;
-    if (!slugRegex.test(clean)) {
+    if (RESERVED_SLUGS.has(trimmed)) {
       return {
         valid: false,
-        error: 'Mã liên kết chỉ gồm chữ thường không dấu (a-z), chữ số (0-9) và dấu gạch ngang (-).',
+        error: `Mã "${trimmed}" là từ khóa hệ thống (bảo lưu). Vui lòng chọn tên khác.`,
       };
     }
 
-    if (RESERVED_SLUGS.has(clean)) {
+    // Chỉ cho phép chữ thường, số và dấu gạch nối (không cho phép ký tự đặc biệt)
+    const regex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+    if (!regex.test(trimmed)) {
       return {
         valid: false,
-        error: `Tên định danh "${clean}" là từ khóa hệ thống. Vui lòng chọn tên khác.`,
+        error: 'Mã định danh chỉ gồm chữ cái không dấu, chữ số và dấu gạch nối giữa các từ.',
       };
     }
 
@@ -156,28 +193,26 @@ export class ShortLinkService {
   }
 
   /**
-   * Kiểm tra xem tên định danh có bị trùng với dòng họ khác không
+   * Kiểm tra mã short code có khả dụng hay không (Uniqueness check)
    */
   static async isCodeAvailable(code: string, currentFamilyId?: string): Promise<boolean> {
     const clean = code.trim().toLowerCase();
-
-    if (RESERVED_SLUGS.has(clean)) {
-      return false;
-    }
+    if (!clean || RESERVED_SLUGS.has(clean)) return false;
 
     if (isSupabaseConfigured()) {
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('clan_short_links')
-          .select('id, family_id, short_code')
+          .select('id, family_id')
           .ilike('short_code', clean);
 
+        if (currentFamilyId && isUUID(currentFamilyId)) {
+          query = query.neq('family_id', currentFamilyId);
+        }
+
+        const { data, error } = await query;
         if (!error && data && data.length > 0) {
-          // Nếu trùng mã nhưng chính là của dòng họ hiện tại -> cho phép
-          if (currentFamilyId && data[0].family_id === currentFamilyId) {
-            return true;
-          }
-          return false; // Đã có dòng họ khác dùng
+          return false;
         }
         if (!error) return true;
       } catch (err) {
@@ -192,9 +227,11 @@ export class ShortLinkService {
   }
 
   /**
-   * Lấy Short Link theo Family ID
+   * Lấy Short Link theo Family ID và tự động khởi tạo theo tên dòng họ nếu chưa có
    */
-  static async getShortLinkByFamily(familyId: string): Promise<ClanShortLink | null> {
+  static async getShortLinkByFamily(familyId: string, familyName?: string): Promise<ClanShortLink | null> {
+    if (!familyId) return null;
+
     if (isSupabaseConfigured() && isUUID(familyId)) {
       try {
         const { data, error } = await supabase
@@ -206,6 +243,21 @@ export class ShortLinkService {
         if (!error && data) {
           return data as ClanShortLink;
         }
+
+        // Tự động khởi tạo short link cho dòng họ nếu chưa có trong bảng
+        if (familyName) {
+          const autoSlug = slugifyVietnamese(familyName) || `clan-${familyId.slice(0, 6)}`;
+          const { data: passData } = await supabase
+            .from('clan_access_passes')
+            .select('pass_token')
+            .eq('family_id', familyId)
+            .maybeSingle();
+          const token = passData?.pass_token || `CP-${autoSlug.toUpperCase()}-${Date.now().toString(36)}`;
+          const created = await this.createOrUpdateShortLink(familyId, token, autoSlug, familyName);
+          if (created.success && created.shortLink) {
+            return created.shortLink;
+          }
+        }
       } catch (err) {
         console.warn('getShortLinkByFamily error:', err);
       }
@@ -214,17 +266,18 @@ export class ShortLinkService {
     const found = mockShortLinks.find((l) => l.family_id === familyId);
     if (found) return found;
 
-    // Tự động sinh link rút gọn cho mock data nếu chưa có
-    const defaultSlug = slugifyVietnamese(mockFamily.name);
+    // Tự động sinh link rút gọn theo tên dòng họ thực tế
+    const targetName = familyName || 'Gia Tộc';
+    const defaultSlug = slugifyVietnamese(targetName) || `clan-${Date.now().toString(36)}`;
     const autoLink: ClanShortLink = {
       id: `csl-${familyId}`,
       family_id: familyId,
-      pass_token: 'CP-FAM-NGUYEN-VAN-2026-X89',
-      short_code: defaultSlug || 'dong-ho',
+      pass_token: `CP-${defaultSlug.toUpperCase()}-${Date.now().toString(36)}`,
+      short_code: defaultSlug,
       is_custom: true,
-      clicks_count: 88,
-      created_at: '2026-01-01T00:00:00Z',
-      updated_at: '2026-01-01T00:00:00Z',
+      clicks_count: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
     mockShortLinks.push(autoLink);
     return autoLink;
@@ -236,7 +289,8 @@ export class ShortLinkService {
   static async createOrUpdateShortLink(
     familyId: string,
     passToken: string,
-    requestedCode?: string
+    requestedCode?: string,
+    familyName?: string
   ): Promise<{ success: boolean; shortLink?: ClanShortLink; error?: string }> {
     let finalCode = requestedCode ? requestedCode.trim().toLowerCase() : '';
     const isCustom = Boolean(requestedCode);
@@ -255,17 +309,16 @@ export class ShortLinkService {
         };
       }
     } else {
-      const existing = await this.getShortLinkByFamily(familyId);
+      const existing = await this.getShortLinkByFamily(familyId, familyName);
       if (existing) {
         finalCode = existing.short_code;
       } else {
-        let code = this.generateRandomCode(5);
-        let tries = 0;
-        while (!(await this.isCodeAvailable(code)) && tries < 5) {
-          code = this.generateRandomCode(6);
-          tries++;
+        const defaultSlug = slugifyVietnamese(familyName || 'gia-toc');
+        if (defaultSlug && (await this.isCodeAvailable(defaultSlug, familyId))) {
+          finalCode = defaultSlug;
+        } else {
+          finalCode = `${defaultSlug || 'clan'}-${this.generateRandomCode(4)}`.toLowerCase();
         }
-        finalCode = code;
       }
     }
 
@@ -345,7 +398,7 @@ export class ShortLinkService {
       return { success: true, shortLink: mockShortLinks[idx] };
     } else {
       const newLink: ClanShortLink = {
-        id: `csl-${Date.now()}`,
+        id: `csl-${familyId}`,
         family_id: familyId,
         pass_token: passToken,
         short_code: finalCode,
@@ -361,7 +414,7 @@ export class ShortLinkService {
 
   /**
    * Phân giải Short Code sang Pass Token & Family Info với cơ chế Multi-tier Fallback Resilient
-   * Tuyệt đối không để xảy ra tình trạng "Liên kết không tồn tại" khi truy cập đúng dòng họ
+   * Luôn hỗ trợ tìm kiếm theo slugified tên dòng họ hoặc mã code
    */
   static async resolveShortCode(code: string): Promise<ShortLinkResolution> {
     if (!code) {
@@ -370,7 +423,7 @@ export class ShortLinkService {
 
     const clean = decodeURIComponent(code).trim().toLowerCase().replace(/^\/+|\/+$/g, '');
 
-    // ─── TIER 1: Truy vấn bảng clan_short_links theo short_code (Case-insensitive) ───
+    // ─── TIER 1: Truy vấn bảng clan_short_links theo short_code ───
     if (isSupabaseConfigured()) {
       try {
         const { data: linkData } = await supabase
@@ -420,7 +473,7 @@ export class ShortLinkService {
           };
         }
 
-        // ─── TIER 2: Truy vấn trực tiếp theo pass_token trong clan_access_passes ───
+        // ─── TIER 2: Truy vấn theo pass_token trong clan_access_passes ───
         const { data: passDirect } = await supabase
           .from('clan_access_passes')
           .select('family_id, pass_token, pin_salt, locked_until, is_active')
@@ -448,42 +501,52 @@ export class ShortLinkService {
           };
         }
 
-        // ─── TIER 3: Truy vấn theo Mã Gia Tộc (Code) hoặc ID trong bảng families ───
-        const { data: famByCode } = await supabase
+        // ─── TIER 3: Truy vấn theo tên dòng họ (Slugified match) hoặc Code trong bảng families ───
+        const { data: allFamilies } = await supabase
           .from('families')
-          .select('id, name, code, banner_url')
-          .or(`code.ilike.${clean},id.eq.${isUUID(clean) ? clean : '00000000-0000-0000-0000-000000000000'}`)
-          .maybeSingle();
+          .select('id, name, code, banner_url');
 
-        if (famByCode) {
-          let { data: famPass } = await supabase
-            .from('clan_access_passes')
-            .select('pass_token, pin_salt, locked_until')
-            .eq('family_id', famByCode.id)
-            .maybeSingle();
+        if (allFamilies && allFamilies.length > 0) {
+          const matchedFam = allFamilies.find(
+            (f) =>
+              f.code?.toLowerCase() === clean ||
+              slugifyVietnamese(f.name) === clean ||
+              f.id.toLowerCase() === clean
+          );
 
-          if (!famPass) {
-            const token = `CP-FAM-${famByCode.code || 'CLAN'}-${Date.now().toString(36).toUpperCase()}`;
-            await supabase.from('clan_access_passes').insert({
-              family_id: famByCode.id,
-              pass_token: token,
-              pin_salt: `salt_${Date.now().toString(36)}`,
-              is_active: true,
-            });
-            famPass = { pass_token: token, pin_salt: `salt_${Date.now().toString(36)}`, locked_until: undefined };
+          if (matchedFam) {
+            let { data: famPass } = await supabase
+              .from('clan_access_passes')
+              .select('pass_token, pin_salt, locked_until')
+              .eq('family_id', matchedFam.id)
+              .maybeSingle();
+
+            if (!famPass) {
+              const token = `CP-${slugifyVietnamese(matchedFam.name).toUpperCase()}-${Date.now().toString(36)}`;
+              await supabase.from('clan_access_passes').insert({
+                family_id: matchedFam.id,
+                pass_token: token,
+                pin_salt: `salt_${Date.now().toString(36)}`,
+                is_active: true,
+              });
+              famPass = { pass_token: token, pin_salt: `salt_${Date.now().toString(36)}`, locked_until: undefined };
+            }
+
+            // Tự động lưu short link
+            this.createOrUpdateShortLink(matchedFam.id, famPass.pass_token, clean, matchedFam.name);
+
+            return {
+              success: true,
+              short_code: clean,
+              pass_token: famPass.pass_token,
+              family_id: matchedFam.id,
+              family_name: matchedFam.name,
+              family_code: matchedFam.code,
+              banner_url: matchedFam.banner_url,
+              pin_salt: famPass.pin_salt,
+              clicks_count: 1,
+            };
           }
-
-          return {
-            success: true,
-            short_code: clean,
-            pass_token: famPass.pass_token,
-            family_id: famByCode.id,
-            family_name: famByCode.name,
-            family_code: famByCode.code,
-            banner_url: famByCode.banner_url,
-            pin_salt: famPass.pin_salt,
-            clicks_count: 1,
-          };
         }
       } catch (err) {
         console.warn('resolveShortCode Supabase error:', err);
@@ -506,64 +569,30 @@ export class ShortLinkService {
         short_code: foundLink.short_code,
         pass_token: foundLink.pass_token,
         family_id: foundLink.family_id,
-        family_name: mockFamily.name,
-        family_code: mockFamily.code,
+        family_name: 'Gia Tộc',
         clicks_count: foundLink.clicks_count,
-      };
-    }
-
-    // ─── TIER 5: Khớp với tên dòng họ mặc định (Slugified name matching) ───
-    const mockSlug = slugifyVietnamese(mockFamily.name);
-    if (clean === mockSlug || clean === mockFamily.code?.toLowerCase() || clean === 'giapha' || clean === 'dong-ho') {
-      return {
-        success: true,
-        short_code: clean,
-        pass_token: 'CP-FAM-NGUYEN-VAN-2026-X89',
-        family_id: mockFamily.id,
-        family_name: mockFamily.name,
-        family_code: mockFamily.code,
-        clicks_count: 99,
       };
     }
 
     return {
       success: false,
-      error: `Mã liên kết /c/${clean} không tồn tại hoặc Trưởng tộc chưa thiết lập.`,
+      error: `Liên kết "/c/${clean}" không tồn tại hoặc đã hết hạn.`,
     };
   }
 
   /**
-   * Tạo URL ngắn hoàn chỉnh dạng https://domain/c/:shortCode
+   * Tạo nội dung tin nhắn chia sẻ qua Zalo & Mạng xã hội
    */
-  static buildShortUrl(shortCode: string, baseUrl?: string): string {
-    const origin = baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://giaphagiatoc.vn');
-    return `${origin}/c/${shortCode.trim().toLowerCase()}`;
-  }
+  static generateShareMessage(familyName: string, shortUrl: string, clanPin?: string): string {
+    const pinInfo = clanPin
+      ? `\n🔐 Mã PIN xác thực con cháu: ${clanPin}`
+      : '\n🔐 Hãy nhập Mã PIN Gia Tộc do Trưởng tộc cấp để mở khóa thông tin.';
 
-  /**
-   * Lấy thống kê số lượt truy cập liên kết ngắn
-   */
-  static async getShortLinkStats(familyId: string): Promise<{ clicks_count: number; last_accessed_at?: string }> {
-    const link = await this.getShortLinkByFamily(familyId);
-    return {
-      clicks_count: link?.clicks_count || 0,
-      last_accessed_at: link?.last_accessed_at,
-    };
-  }
-
-  /**
-   * Tạo nội dung tin nhắn chia sẻ Zalo / Facebook chuẩn mực, trang trọng
-   */
-  static generateShareMessage(familyName: string, shortUrl: string, pin?: string): string {
-    return `📜 THÔNG BÁO TỪ ĐƯỜNG — GIA TỘC ${familyName.toUpperCase()}
-Kính gửi bà con, cô bác và toàn thể con cháu nội ngoại trong dòng họ!
-
-Hội đồng Gia tộc kính mời toàn thể con cháu quét mã QR hoặc truy cập không gian số của dòng họ để tra cứu Cây Phả Hệ, Lịch Âm Ngày Giỗ Tiên Tổ và Minh Bạch Sổ Quỹ Dòng Họ:
-
-👉 Liên kết truy cập: ${shortUrl}
-${pin ? `🔑 Mã PIN xác thực gia tộc: ${pin}\n` : ''}
-Kính chúc toàn thể bà con họ tộc vạn sự bình an, gia đạo hưng thịnh!`;
+    return `🏛️ THÔNG BÁO TỪ ĐƯỜNG — GIA TỘC: ${familyName.toUpperCase()}
+Kính gửi toàn thể cô dì chú bác và con cháu nội ngoại dòng họ.
+Trân trọng kính mời bà con truy cập Cổng Thông Tin Gia Phả & Lịch Giỗ Tổ Tiên tại:
+🌐 ${shortUrl}
+${pinInfo}
+✨ Con cháu có thể tra cứu Cây Phả Hệ, Lịch Âm Ngày Giỗ, Sổ Quỹ & Gửi Lưu Ký Tri Ân Tiên Tổ.`;
   }
 }
-
-export default ShortLinkService;

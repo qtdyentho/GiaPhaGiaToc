@@ -93,7 +93,7 @@ export const DashboardPage: React.FC = () => {
             MemorialService.getUpcomingMemorials(currentFamily.id, 5),
             FundService.getLedger(currentFamily.id),
             ClanPassService.getFamilyPassConfig(currentFamily.id),
-            ShortLinkService.getShortLinkByFamily(currentFamily.id),
+            ShortLinkService.getShortLinkByFamily(currentFamily.id, currentFamily.name),
           ]);
 
           setFamilyFunds(funds || []);

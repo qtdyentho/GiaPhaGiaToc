@@ -1,7 +1,8 @@
-import React, { useState, useRef } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { 
   X, Printer, Download, Copy, Check, QrCode, Sparkles, Landmark, 
-  ShieldCheck, Palette, Layout, MessageSquare, ChevronDown, CheckCircle2 
+  ShieldCheck, Palette, Layout, MessageSquare, ChevronDown, CheckCircle2,
+  Edit2, Save, AlertCircle, RefreshCw
 } from 'lucide-react';
 import { Family } from '../../types/database';
 import { ShortLinkService, slugifyVietnamese } from '../../services/security/ShortLinkService';
@@ -102,13 +103,31 @@ export const PrintableClanQRCodeModal: React.FC<PrintableClanQRCodeModalProps> =
   const [copiedZaloMsg, setCopiedZaloMsg] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
+  // Shortcode state & inline editor
+  const defaultSlug = slugifyVietnamese(family?.name || '') || 'giaphatoc';
+  const initialCode = (shortCode && shortCode !== 'dai-toc-nguyen-van') ? shortCode : defaultSlug;
+  const [currentShortCode, setCurrentShortCode] = useState<string>(initialCode);
+  const [isEditingSlug, setIsEditingSlug] = useState(false);
+  const [slugInputValue, setSlugInputValue] = useState(initialCode);
+  const [slugError, setSlugError] = useState<string | null>(null);
+  const [isSavingSlug, setIsSavingSlug] = useState(false);
+
   const plaqueRef = useRef<HTMLDivElement>(null);
+
+  // Auto-sync slug to Supabase on mount
+  useEffect(() => {
+    if (isOpen && family?.id) {
+      const targetCode = (shortCode && shortCode !== 'dai-toc-nguyen-van') ? shortCode : defaultSlug;
+      setCurrentShortCode(targetCode);
+      setSlugInputValue(targetCode);
+      ShortLinkService.createOrUpdateShortLink(family.id, passToken, targetCode, family.name);
+    }
+  }, [isOpen, family?.id, shortCode, defaultSlug, passToken, family?.name]);
 
   if (!isOpen) return null;
 
   const currentHost = typeof window !== 'undefined' ? window.location.origin : 'https://giaphagiatoc.vn';
-  const effectiveShortCode = shortCode || slugifyVietnamese(family.name) || family.code?.toLowerCase() || 'giaphatoc';
-  const passUrl = `${currentHost}/c/${effectiveShortCode}`;
+  const passUrl = `${currentHost}/c/${currentShortCode}`;
   
   // High-res QR code URL (using 600x600 for sharp rendering)
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(passUrl)}&margin=8`;
@@ -127,6 +146,30 @@ export const PrintableClanQRCodeModal: React.FC<PrintableClanQRCodeModalProps> =
     navigator.clipboard.writeText(msg);
     setCopiedZaloMsg(true);
     setTimeout(() => setCopiedZaloMsg(false), 2500);
+  };
+
+  const handleSaveSlug = async () => {
+    const clean = slugifyVietnamese(slugInputValue);
+    if (!clean) {
+      setSlugError('Tên định danh không hợp lệ.');
+      return;
+    }
+
+    setIsSavingSlug(true);
+    setSlugError(null);
+    try {
+      const res = await ShortLinkService.createOrUpdateShortLink(family.id, passToken, clean, family.name);
+      if (res.success && res.shortLink) {
+        setCurrentShortCode(res.shortLink.short_code);
+        setIsEditingSlug(false);
+      } else {
+        setSlugError(res.error || 'Không thể lưu tên liên kết.');
+      }
+    } catch (err: any) {
+      setSlugError(err.message || 'Lỗi khi lưu.');
+    } finally {
+      setIsSavingSlug(false);
+    }
   };
 
   const handlePrint = () => {
@@ -168,119 +211,119 @@ export const PrintableClanQRCodeModal: React.FC<PrintableClanQRCodeModalProps> =
       ctx.lineWidth = 2;
       ctx.strokeRect(80, 80, width - 160, height - 160);
 
-      // 4. Hoa văn 4 góc (❖)
-      ctx.fillStyle = currentTheme.canvasAccent + '80';
-      ctx.font = 'bold 36px serif';
-      ctx.fillText('❖', 100, 130);
-      ctx.fillText('❖', width - 135, 130);
-      ctx.fillText('❖', 100, height - 110);
-      ctx.fillText('❖', width - 135, height - 110);
-
-      // 5. Khẩu Hiệu Tiên Tổ
+      // 4. Header: Tên Dòng Họ & Khẩu Hiệu
+      ctx.fillStyle = currentTheme.canvasPrimary;
+      ctx.font = 'bold 52px "Times New Roman", serif';
       ctx.textAlign = 'center';
-      ctx.fillStyle = currentTheme.canvasAccent;
-      ctx.font = 'bold 26px serif';
-      ctx.fillText(`🏛️  ${activeMotto.toUpperCase()}  🏛️`, width / 2, 170);
+      ctx.fillText(family.name.toUpperCase(), width / 2, 190);
 
-      // Đường kẻ ngang trang trí
-      ctx.strokeStyle = currentTheme.canvasAccent + '60';
+      // Địa chỉ Từ Đường / Quê quán
+      ctx.fillStyle = '#4B5563';
+      ctx.font = 'italic 24px "Times New Roman", serif';
+      const addressText = family.ancestral_hall_address ? `Từ Đường: ${family.ancestral_hall_address}` : 'Từ Đường Gia Tộc';
+      ctx.fillText(addressText, width / 2, 235);
+
+      // 5. Đường kẻ phân cách hoa văn
+      ctx.strokeStyle = currentTheme.canvasAccent + '80';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(300, 195);
-      ctx.lineTo(width - 300, 195);
+      ctx.moveTo(350, 265);
+      ctx.lineTo(850, 265);
       ctx.stroke();
 
-      // 6. Tên Dòng Họ
-      ctx.fillStyle = currentTheme.canvasPrimary;
-      ctx.font = 'bold 52px serif';
-      ctx.fillText(family.name.toUpperCase(), width / 2, 270);
+      // Vẽ họa tiết tâm điểm
+      ctx.fillStyle = currentTheme.canvasAccent;
+      ctx.font = 'bold 20px serif';
+      ctx.fillText('✦ ❖ ✦', width / 2, 272);
 
-      // 7. Địa chỉ Từ Đường
-      if (family.ancestral_hall_address) {
-        ctx.fillStyle = '#475569';
-        ctx.font = 'italic 24px serif';
-        ctx.fillText(`Từ Đường: ${family.ancestral_hall_address}`, width / 2, 320);
-      }
+      // 6. Khẩu hiệu / Hoành phi
+      ctx.fillStyle = currentTheme.canvasAccent;
+      ctx.font = 'bold 30px "Times New Roman", serif';
+      ctx.fillText(`“ ${activeMotto} ”`, width / 2, 330);
 
-      // 8. Tải và Vẽ Mã QR
+      // 7. Vẽ Mã QR Chính giữa
       const qrImg = new Image();
       qrImg.crossOrigin = 'anonymous';
       qrImg.src = qrImageUrl;
 
-      await new Promise<void>((resolve, reject) => {
-        qrImg.onload = () => resolve();
-        qrImg.onerror = () => resolve(); // Tiếp tục vẽ nếu API offline
+      await new Promise((res, rej) => {
+        qrImg.onload = res;
+        qrImg.onerror = rej;
       });
 
-      const qrSize = 540;
+      const qrSize = 640;
       const qrX = (width - qrSize) / 2;
       const qrY = 380;
+      ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
 
-      // Khung chứa QR
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40);
-      ctx.strokeStyle = currentTheme.canvasAccent + '40';
-      ctx.lineWidth = 4;
-      ctx.strokeRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40);
-
-      try {
-        ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
-      } catch (err) {
-        console.warn('Canvas draw image error:', err);
-      }
-
-      // Con dấu Gia Tộc ở giữa QR
-      const stampSize = 90;
-      const stampX = width / 2 - stampSize / 2;
-      const stampY = qrY + qrSize / 2 - stampSize / 2;
-      ctx.fillStyle = '#FFFFFF';
+      // 8. Huy hiệu Trung tâm QR (Đè lên giữa QR)
+      ctx.fillStyle = currentTheme.canvasPrimary;
       ctx.beginPath();
-      ctx.arc(width / 2, qrY + qrSize / 2, stampSize / 2 + 6, 0, Math.PI * 2);
+      ctx.arc(width / 2, qrY + qrSize / 2, 48, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = currentTheme.canvasAccent;
+      ctx.strokeStyle = '#FFFFFF';
       ctx.lineWidth = 4;
       ctx.stroke();
 
-      ctx.fillStyle = currentTheme.canvasAccent;
-      ctx.font = 'bold 18px serif';
-      ctx.fillText('GIA TỘC', width / 2, qrY + qrSize / 2 + 6);
-
-      // 9. Khung Hướng Dẫn Quét & Mã PIN
-      const guideY = 1000;
-      ctx.fillStyle = currentTheme.canvasBg;
-      ctx.fillRect(140, guideY, width - 280, 420);
-      ctx.strokeStyle = currentTheme.canvasAccent + '50';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(140, guideY, width - 280, 420);
-
-      ctx.textAlign = 'left';
-      ctx.fillStyle = currentTheme.canvasAccent;
-      ctx.font = 'bold 28px sans-serif';
-      ctx.fillText('🛡️  HƯỚNG DẪN DÀNH CHO CON CHÁU DÒNG HỌ:', 180, guideY + 55);
-
-      ctx.fillStyle = '#1E293B';
-      ctx.font = '22px sans-serif';
-      ctx.fillText('1. Dùng Camera điện thoại hoặc ứng dụng Zalo quét mã QR ở trên.', 180, guideY + 115);
-      ctx.fillText(`2. Truy cập trực tiếp liên kết rút gọn: ${passUrl}`, 180, guideY + 165);
-      ctx.fillText('3. Nhập Mã PIN Gia Tộc để xác thực tư cách con cháu họ tộc.', 180, guideY + 215);
-      ctx.fillText('4. Tra cứu Cây Phả Hệ, Ngày Giỗ Tiên Tổ & Minh Bạch Sổ Quỹ.', 180, guideY + 265);
-
-      if (clanPin) {
-        ctx.fillStyle = currentTheme.canvasPrimary;
-        ctx.font = 'bold 26px monospace';
-        ctx.fillText(`🔑 MÃ PIN TRA CỨU: ${clanPin}`, 180, guideY + 340);
-      }
-
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 20px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillStyle = '#64748B';
-      ctx.font = 'italic 18px sans-serif';
-      ctx.fillText('Nền tảng Quản trị Gia Phả & Tài Chính Dòng Họ — giaphagiatoc.vn', width / 2, height - 120);
+      ctx.fillText('GIA', width / 2, qrY + qrSize / 2 - 4);
+      ctx.fillText('TỘC', width / 2, qrY + qrSize / 2 + 18);
 
-      // Xuất file PNG
+      // 9. Khung Hướng Dẫn Con Cháu (Bottom Box)
+      const boxY = 1070;
+      ctx.fillStyle = currentTheme.canvasBg;
+      ctx.fillRect(160, boxY, width - 320, 260);
+      ctx.strokeStyle = currentTheme.canvasAccent + '60';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(160, boxY, width - 320, 260);
+
+      ctx.fillStyle = currentTheme.canvasPrimary;
+      ctx.font = 'bold 26px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('HƯỚNG DẪN TRA CỨU DÀNH CHO CON CHÁU', width / 2, boxY + 45);
+
+      ctx.fillStyle = '#1F2937';
+      ctx.font = '20px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('1. Dùng Camera điện thoại hoặc Zalo quét mã QR ở trên.', 210, boxY + 95);
+      ctx.fillText('2. Nhập Mã PIN Gia Tộc để xác thực tư cách con cháu dòng họ.', 210, boxY + 140);
+      ctx.fillText('3. Tra cứu Cây Phả Hệ, Lịch Âm Ngày Giỗ & Sổ Quỹ minh bạch.', 210, boxY + 185);
+
+      // Đường dẫn trực tiếp /c/code
+      ctx.fillStyle = '#4B5563';
+      ctx.font = 'italic 18px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`Liên kết trực tiếp: ${passUrl}`, width / 2, boxY + 232);
+
+      // 10. Con Dấu Gia Tộc (Red Seal Stamp - Góc dưới phải)
+      const sealX = width - 230;
+      const sealY = height - 190;
+      ctx.fillStyle = currentTheme.canvasAccent;
+      ctx.fillRect(sealX, sealY, 110, 110);
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(sealX + 6, sealY + 6, 98, 98);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 16px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('GIA TỘC', sealX + 55, sealY + 42);
+      ctx.fillText('TRUYỀN', sealX + 55, sealY + 66);
+      ctx.fillText('THỐNG', sealX + 55, sealY + 90);
+
+      // 11. Footer Niên Hiệu
+      ctx.fillStyle = '#6B7280';
+      ctx.font = '16px serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`Nền tảng Quản trị Gia Phả Gia Tộc • ${new Date().getFullYear()}`, width / 2, height - 60);
+
+      // Xuất file PNG tải về
       const dataUrl = canvas.toDataURL('image/png');
       const downloadLink = document.createElement('a');
       downloadLink.href = dataUrl;
-      downloadLink.download = `KhungQR_${effectiveShortCode}_${selectedSize}.png`;
+      downloadLink.download = `KhungQR_${currentShortCode}_${selectedSize}.png`;
       document.body.appendChild(downloadLink);
       downloadLink.click();
       document.body.removeChild(downloadLink);
@@ -292,8 +335,8 @@ export const PrintableClanQRCodeModal: React.FC<PrintableClanQRCodeModalProps> =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xs p-4 overflow-y-auto font-sans">
-      <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl border border-amber-900/30 animate-fade-in print:m-0 print:p-0 print:border-none print:shadow-none print:max-w-none print:max-h-none">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto font-sans">
+      <div className="bg-white rounded-3xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl border border-amber-900/30 animate-fade-in print:m-0 print:p-0 print:border-none print:shadow-none print:max-w-none print:max-h-none">
         
         {/* Header - Hidden on Print */}
         <div className="px-6 py-4 bg-gradient-to-r from-amber-950 via-slate-900 to-amber-950 text-amber-100 flex items-center justify-between border-b border-amber-900/50 shrink-0 print:hidden">
@@ -304,8 +347,8 @@ export const PrintableClanQRCodeModal: React.FC<PrintableClanQRCodeModalProps> =
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <span>Mã QR & Bản In Khung Dán Từ Đường</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30">
-                  /c/{effectiveShortCode}
+                <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30">
+                  /c/{currentShortCode}
                 </span>
               </h3>
               <p className="text-[11px] text-amber-200/80">Tra cứu Cây Phả Hệ, Lễ Giỗ & Số Dư Quỹ bằng Mã PIN</p>
@@ -319,10 +362,10 @@ export const PrintableClanQRCodeModal: React.FC<PrintableClanQRCodeModalProps> =
           </button>
         </div>
 
-        {/* Modal Body: 2 Columns on Desktop (Left: Control Panel, Right: Live Plaque Preview) */}
+        {/* Modal Body: 2 Columns on Desktop */}
         <div className="flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 bg-slate-100">
           
-          {/* Left Panel: Tùy biến & Chia sẻ (Hidden on Print) - 5 Cols */}
+          {/* Left Panel: Tùy biến & Chia sẻ (5 Cols) */}
           <div className="lg:col-span-5 p-5 space-y-5 bg-white border-r border-slate-200 print:hidden overflow-y-auto">
             
             {/* Box 1: Chọn Theme Phong Cách */}
@@ -420,21 +463,65 @@ export const PrintableClanQRCodeModal: React.FC<PrintableClanQRCodeModalProps> =
               )}
             </div>
 
-            {/* Box 4: Chia sẻ Zalo & Facebook */}
-            <div className="p-3.5 bg-amber-50/70 border border-amber-200 rounded-2xl space-y-3">
-              <div className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
-                <MessageSquare className="w-4 h-4 text-emerald-700" />
-                <span>Chia Sẻ Nhanh Cho Bà Con:</span>
+            {/* Box 4: Quản lý & Chia Sẻ Link Rút Gọn */}
+            <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-2xl space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+                  <MessageSquare className="w-4 h-4 text-emerald-700" />
+                  <span>Liên Kết Dòng Họ & Chia Sẻ:</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingSlug(!isEditingSlug)}
+                  className="text-[11px] font-bold text-[#166534] hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <Edit2 className="w-3 h-3" />
+                  <span>{isEditingSlug ? 'Đóng sửa' : 'Đổi tên link'}</span>
+                </button>
               </div>
 
+              {/* Inline Slug Editor */}
+              {isEditingSlug && (
+                <div className="p-2.5 bg-white border border-amber-300 rounded-xl space-y-2 animate-in fade-in">
+                  <label className="block text-[11px] font-bold text-slate-700">
+                    Tên định danh rút gọn (không dấu, cách nhau bởi dấu gạch ngang):
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-mono text-slate-400">/c/</span>
+                    <input
+                      type="text"
+                      value={slugInputValue}
+                      onChange={(e) => setSlugInputValue(e.target.value)}
+                      placeholder="trinh-luu-gia-toc"
+                      className="flex-1 px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-mono text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#166534]"
+                    />
+                    <button
+                      type="button"
+                      disabled={isSavingSlug}
+                      onClick={handleSaveSlug}
+                      className="px-3 py-1.5 bg-[#166534] text-white rounded-lg text-xs font-bold hover:bg-[#14532d] disabled:opacity-50 flex items-center gap-1 cursor-pointer"
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      <span>{isSavingSlug ? '...' : 'Lưu'}</span>
+                    </button>
+                  </div>
+                  {slugError && (
+                    <div className="text-[10px] text-red-600 font-medium flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3 shrink-0" />
+                      <span>{slugError}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex items-center gap-2">
-                <div className="flex-1 px-3 py-1.5 bg-white border border-amber-200 rounded-xl text-xs font-mono font-bold text-[#166534] truncate">
-                  /c/{effectiveShortCode}
+                <div className="flex-1 px-3 py-2 bg-white border border-amber-200 rounded-xl text-xs font-mono font-bold text-[#166534] truncate">
+                  /c/{currentShortCode}
                 </div>
                 <button
                   type="button"
                   onClick={handleCopyLink}
-                  className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#166534] text-xs font-bold rounded-xl border border-emerald-300 transition flex items-center gap-1 shrink-0 cursor-pointer"
+                  className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#166534] text-xs font-bold rounded-xl border border-emerald-300 transition flex items-center gap-1 shrink-0 cursor-pointer"
                 >
                   {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copiedLink ? 'Đã Chép' : 'Chép Link'}</span>
@@ -444,12 +531,12 @@ export const PrintableClanQRCodeModal: React.FC<PrintableClanQRCodeModalProps> =
               <button
                 type="button"
                 onClick={handleCopyZaloMessage}
-                className="w-full py-2 bg-[#0068FF] hover:bg-[#0052cc] text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                className="w-full py-2.5 bg-[#0068FF] hover:bg-[#0052cc] text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-xs cursor-pointer"
               >
                 {copiedZaloMsg ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Đã Chép Lời Nhắn Zalo Chuẩn Mực!</span>
+                    <CheckCircle2 className="w-4 h-4 text-white" />
+                    <span>Đã Sao Chép Lời Nhắn Zalo!</span>
                   </>
                 ) : (
                   <>
@@ -461,110 +548,111 @@ export const PrintableClanQRCodeModal: React.FC<PrintableClanQRCodeModalProps> =
             </div>
           </div>
 
-          {/* Right Panel: Live Plaque Preview (In ấn & Hiển thị) - 7 Cols */}
-          <div className="lg:col-span-7 p-4 sm:p-6 flex items-center justify-center bg-slate-200/70 overflow-y-auto">
+          {/* Right Panel: Live Plaque Preview (7 Cols) */}
+          <div className="lg:col-span-7 p-6 flex flex-col items-center justify-center overflow-y-auto bg-slate-200/60 print:p-0 print:bg-white">
+            
+            {/* The Actual Printable Frame Card */}
             <div
               ref={plaqueRef}
-              className={`w-full max-w-md ${currentTheme.bgCard} text-slate-900 text-center rounded-2xl shadow-xl p-6 sm:p-7 border-4 border-double ${currentTheme.borderColor} relative overflow-hidden transition-all duration-300 print:m-0 print:p-8 print:border-none print:shadow-none print:max-w-none print:w-full`}
+              id="clan-plaque-print-area"
+              className={`w-full max-w-[480px] rounded-2xl border-4 ${currentTheme.borderColor} shadow-2xl p-6 sm:p-8 relative flex flex-col items-center text-center space-y-4 print:shadow-none print:border-8 print:max-w-none print:w-full print:h-screen`}
+              style={{ backgroundColor: currentTheme.canvasBg }}
             >
-              {/* Corner Ornaments */}
-              <div className={`absolute top-2 left-2 ${currentTheme.cornerColor} text-xs font-serif`}>❖</div>
-              <div className={`absolute top-2 right-2 ${currentTheme.cornerColor} text-xs font-serif`}>❖</div>
-              <div className={`absolute bottom-2 left-2 ${currentTheme.cornerColor} text-xs font-serif`}>❖</div>
-              <div className={`absolute bottom-2 right-2 ${currentTheme.cornerColor} text-xs font-serif`}>❖</div>
+              {/* Corner Traditional Accents */}
+              <div className="absolute top-2 left-2 text-xs opacity-40">╔═</div>
+              <div className="absolute top-2 right-2 text-xs opacity-40">═╗</div>
+              <div className="absolute bottom-2 left-2 text-xs opacity-40">╚═</div>
+              <div className="absolute bottom-2 right-2 text-xs opacity-40">═╝</div>
 
-              {/* Plaque Header: Motto & Clan Name */}
-              <div className="space-y-1.5 mb-3">
-                <div className={`inline-flex items-center gap-1.5 ${currentTheme.headerColor} text-[11px] font-black uppercase tracking-widest font-serif border-b border-amber-300/80 pb-1`}>
-                  <Landmark className="w-3.5 h-3.5" />
-                  <span>{activeMotto}</span>
-                </div>
-                <h2 className={`text-xl sm:text-2xl font-black ${currentTheme.titleColor} font-serif uppercase pt-1 tracking-wide`}>
-                  {family.name}
+              {/* Clan Header */}
+              <div className="space-y-1">
+                <h2 className="text-2xl sm:text-3xl font-black font-serif tracking-wide" style={{ color: currentTheme.canvasPrimary }}>
+                  {family.name.toUpperCase()}
                 </h2>
-                {family.ancestral_hall_address && (
-                  <p className="text-[11px] text-slate-600 font-serif italic">
-                    Từ Đường: {family.ancestral_hall_address}
-                  </p>
-                )}
+                <p className="text-xs italic text-slate-600 font-serif">
+                  {family.ancestral_hall_address ? `Từ Đường: ${family.ancestral_hall_address}` : 'Từ Đường Gia Tộc'}
+                </p>
+                <div className="w-24 h-0.5 mx-auto opacity-40" style={{ backgroundColor: currentTheme.canvasAccent }} />
               </div>
 
-              {/* QR Code Container with Central Stamp */}
-              <div className="relative inline-block p-3 bg-white rounded-2xl border-2 border-amber-900/20 shadow-md my-2">
+              {/* Motto */}
+              <div className="px-3 py-1 rounded-full text-xs font-bold border" style={{ backgroundColor: currentTheme.bgCard, color: currentTheme.canvasAccent, borderColor: currentTheme.canvasAccent + '40' }}>
+                “ {activeMotto} ”
+              </div>
+
+              {/* Central QR Code with Badge */}
+              <div className="relative p-3 bg-white rounded-2xl shadow-md border border-slate-200">
                 <img
                   src={qrImageUrl}
                   alt={`Mã QR ${family.name}`}
-                  className="w-48 h-48 sm:w-56 sm:h-56 mx-auto object-contain rounded-lg"
+                  className="w-56 h-56 sm:w-64 sm:h-64 object-contain rounded-lg"
                 />
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className={`w-11 h-11 rounded-full border-2 border-white flex items-center justify-center shadow-md ${currentTheme.stampBg}`}>
-                    <span className="text-[9px] font-black font-serif tracking-tight text-center">GIA<br/>TỘC</span>
-                  </div>
+                
+                {/* Center Badge Icon */}
+                <div 
+                  className="absolute inset-0 m-auto w-12 h-12 rounded-full border-2 border-white shadow-lg flex flex-col items-center justify-center text-[9px] font-black text-white leading-none"
+                  style={{ backgroundColor: currentTheme.canvasAccent }}
+                >
+                  <span>GIA</span>
+                  <span>TỘC</span>
                 </div>
               </div>
 
-              {/* Instruction Box for Descendants */}
-              <div className={`mt-3 p-3 rounded-xl border text-left text-xs space-y-1.5 ${currentTheme.accentBg}`}>
-                <div className="font-bold flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
+              {/* Instructions Box for Clan Members */}
+              <div className="w-full p-3.5 rounded-xl border text-left text-xs space-y-1" style={{ backgroundColor: currentTheme.bgCard, borderColor: currentTheme.canvasAccent + '30' }}>
+                <div className="font-bold flex items-center gap-1.5" style={{ color: currentTheme.canvasPrimary }}>
+                  <ShieldCheck className="w-4 h-4" />
                   <span>Hướng dẫn dành cho con cháu trong dòng họ:</span>
                 </div>
-                <div className="text-[11px] text-slate-700 leading-relaxed pl-5 space-y-0.5">
-                  <p>1. Dùng Camera điện thoại hoặc Zalo quét mã QR ở trên.</p>
-                  <p>2. Nhập <strong>Mã PIN Gia Tộc</strong> để xác thực tư cách con cháu.</p>
-                  <p>3. Tra cứu toàn bộ <strong>Cây Phả Hệ, Lịch Âm Ngày Giỗ & Số Dư Quỹ</strong> minh bạch.</p>
-                </div>
-                {clanPin && (
-                  <div className="mt-1 pt-1.5 border-t border-amber-200/80 pl-5 text-[11px] font-bold text-amber-900 flex items-center justify-between">
-                    <span>Mã PIN Mặc Định:</span>
-                    <span className="font-mono bg-white px-2 py-0.5 rounded-md border border-amber-300 text-[#166534]">
-                      {clanPin}
-                    </span>
-                  </div>
-                )}
+                <ol className="list-decimal list-inside text-[11px] text-slate-700 space-y-0.5 pl-1">
+                  <li>Dùng Camera điện thoại hoặc Zalo quét mã QR ở trên.</li>
+                  <li>Nhập <strong>Mã PIN Gia Tộc</strong> để xác thực tư cách con cháu.</li>
+                  <li>Tra cứu toàn bộ <strong>Cây Phả Hệ, Lịch Âm Ngày Giỗ & Số Dư Quỹ</strong> minh bạch.</li>
+                </ol>
               </div>
 
-              <div className="mt-3 text-[10px] text-slate-500 font-serif italic">
-                giaphagiatoc.vn • Bảo Tồn & Trao Truyền Cội Nguồn
+              {/* Bottom Seal Stamp & URL */}
+              <div className="w-full pt-2 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+                <span className="truncate">{passUrl}</span>
+                <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase" style={{ backgroundColor: currentTheme.canvasAccent, color: '#FFFFFF' }}>
+                  GIA TỘC
+                </span>
               </div>
             </div>
+
           </div>
         </div>
 
-        {/* Footer Actions (Hidden on Print) */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 shrink-0 print:hidden">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-300 transition cursor-pointer"
-          >
-            Đóng
-          </button>
+        {/* Modal Footer Actions - Hidden on Print */}
+        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 shrink-0 print:hidden">
+          <div className="text-xs text-slate-500 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Mã QR sắc nét chuẩn in ấn khổ A4 / A5</span>
+          </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             <button
               type="button"
               disabled={isDownloading}
               onClick={handleDownloadPlaquePNG}
-              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
             >
               <Download className="w-4 h-4" />
-              <span>{isDownloading ? 'Đang Kết Xuất...' : 'Tải Ảnh PNG Bản In'}</span>
+              <span>{isDownloading ? 'Đang tạo ảnh...' : 'Tải Ảnh PNG Bản In'}</span>
             </button>
 
             <button
               type="button"
               onClick={handlePrint}
-              className="px-5 py-2 bg-[#166534] hover:bg-[#14532D] text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 transition cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-[#166534] hover:bg-[#14532d] text-white text-xs font-bold shadow-md transition flex items-center gap-2 cursor-pointer"
             >
               <Printer className="w-4 h-4" />
               <span>In Khung Treo Từ Đường</span>
             </button>
           </div>
         </div>
+
       </div>
     </div>
   );
 };
-
-export default PrintableClanQRCodeModal;
