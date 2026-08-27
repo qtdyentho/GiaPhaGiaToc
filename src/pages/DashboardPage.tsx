@@ -12,7 +12,6 @@ import { FundService } from '../services/FundService';
 import { MemorialService } from '../services/calendar/MemorialService';
 import { Fund, Member, MemorialDate, FinancialTransaction } from '../types/database';
 import { formatCurrency } from '../lib/utils';
-import { mockFamily } from '../services/mockData';
 import { Link } from 'react-router-dom';
 import { UpcomingEventsWidget } from '../components/calendar/UpcomingEventsWidget';
 import { useAuth } from '../contexts/AuthContext';
@@ -244,7 +243,7 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-white mt-2">
-            {familyMembers.length || (currentFamily.id === mockFamily.id ? 86 : 1)}{' '}
+            {familyMembers.length}{' '}
             <span className="text-xs font-normal text-slate-500 dark:text-slate-400 font-sans">thành viên</span>
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center space-x-1">
@@ -265,7 +264,7 @@ export const DashboardPage: React.FC = () => {
             {formatCurrency(totalBalance)}
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center space-x-1">
-            <span className="text-emerald-700 dark:text-emerald-400 font-semibold">{familyFunds.length || 3} Quỹ hoạt động</span>
+            <span className="text-emerald-700 dark:text-emerald-400 font-semibold">{familyFunds.length} Quỹ hoạt động</span>
             <span>• Minh bạch thu chi</span>
           </div>
         </div>
@@ -297,7 +296,7 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-white mt-2">
-            {familyTransactions.length || (currentFamily.id === mockFamily.id ? 24 : 0)}{' '}
+            {familyTransactions.length}{' '}
             <span className="text-xs font-normal text-slate-500 dark:text-slate-400 font-sans">bút toán</span>
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center space-x-1">

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, Plus, Download, FileSpreadsheet, Sparkles, MapPin, Users, ArrowRightLeft, RefreshCw } from 'lucide-react';
 import { Member, Generation, Branch } from '../types/database';
 import { GenealogyService } from '../services/GenealogyService';
-import { mockFamily } from '../services/mockData';
 import { Link } from 'react-router-dom';
 import { DataImportWizardModal } from '../components/genealogy/DataImportWizardModal';
 import { AddMemberRelationModal } from '../components/genealogy/AddMemberRelationModal';
@@ -96,7 +95,7 @@ export const MembersListPage: React.FC = () => {
           <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2 flex-wrap">
             <span>Danh Sách Thành Viên Dòng Họ</span>
             <span className="text-xs px-2.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 text-[#166534] dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-full font-bold">
-              {activeFamily?.name || mockFamily.name}
+              {activeFamily?.name || 'Gia Tộc'}
             </span>
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">

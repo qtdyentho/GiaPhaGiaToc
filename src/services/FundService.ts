@@ -13,6 +13,7 @@ import {
   ExpenseStatus,
   AssessmentStatus,
   SponsorType,
+  Member,
 } from '../types/database';
 import {
   mockFunds,
@@ -236,8 +237,8 @@ export class FundService {
     assessments?: IncomeAssessment[];
     error?: string;
   }> {
-    // 1. Fetch target members — use Supabase when configured (Bug Fix: không dùng global mockMembers)
-    let allMembers = [...mockMembers];
+    // 1. Fetch target members — use Supabase when configured
+    let allMembers: Member[] = [];
     if (isSupabaseConfigured()) {
       let query = supabase
         .from('members')
@@ -267,7 +268,7 @@ export class FundService {
       }));
     } else {
       // Mock fallback: filter by familyId + scope
-      allMembers = allMembers.filter((m) => m.family_id === params.familyId);
+      allMembers = mockMembers.filter((m) => m.family_id === params.familyId);
       if (params.targetScope === 'BRANCH' && params.branchId) {
         allMembers = allMembers.filter((m) => m.branch_id === params.branchId);
       } else if (params.targetScope === 'GENERATION' && params.generationId) {

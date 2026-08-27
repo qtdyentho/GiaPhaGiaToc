@@ -81,11 +81,11 @@ export class FamilyService {
       const totalFundBalance = funds ? funds.reduce((acc, f) => acc + (f.current_balance || 0), 0) : 0;
 
       return {
-        family: (family as Family) || (mockFamily.id === familyId ? mockFamily : null),
-        membersCount: membersCount ?? (mockFamily.id === familyId ? 86 : 0),
-        generationsCount: generationsCount ?? (mockFamily.id === familyId ? 5 : 0),
-        branchesCount: branchesCount ?? (mockFamily.id === familyId ? 3 : 0),
-        upcomingEventsCount: upcomingEventsCount ?? (mockFamily.id === familyId ? 2 : 0),
+        family: (family as Family) || null,
+        membersCount: membersCount || 0,
+        generationsCount: generationsCount || 0,
+        branchesCount: branchesCount || 0,
+        upcomingEventsCount: upcomingEventsCount || 0,
         totalFundBalance,
       };
     }

@@ -3,7 +3,6 @@ import {
   Shield, MapPin, Building, Copy, Plus, UserCheck, Key, CheckCircle2,
   Image, Camera, Sparkles, Landmark, Check, Scroll, QrCode, RefreshCw, Lock, Eye, EyeOff
 } from 'lucide-react';
-import { mockFamily } from '../services/mockData';
 import { ROLE_LABELS } from '../lib/constants';
 import { useAuth } from '../contexts/AuthContext';
 import { AncestralBannerModal, ANCESTRAL_PRESETS } from '../components/family/AncestralBannerModal';
@@ -14,14 +13,14 @@ import { ShortLinkService, ClanShortLink } from '../services/security/ShortLinkS
 
 export const FamilySettingsPage: React.FC = () => {
   const { user, activeFamily, activeMembership, memberships, updateFamily } = useAuth();
-  const currentFamily = activeFamily || mockFamily;
+  const currentFamily = activeFamily;
   const [copied, setCopied] = useState(false);
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [isCovenantModalOpen, setIsCovenantModalOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
 
   // Clan Access Pass & PIN states
-  const [passToken, setPassToken] = useState<string>(() => `CP-FAM-${currentFamily.id.slice(0, 8).toUpperCase()}`);
+  const [passToken, setPassToken] = useState<string>(() => currentFamily?.id ? `CP-FAM-${currentFamily.id.slice(0, 8).toUpperCase()}` : 'CP-FAM-CLAN');
   const [clanPin, setClanPin] = useState<string>('');
   const [showPin, setShowPin] = useState<boolean>(false);
   const [isSavingPin, setIsSavingPin] = useState<boolean>(false);
@@ -29,7 +28,7 @@ export const FamilySettingsPage: React.FC = () => {
   const [pinError, setPinError] = useState<string | null>(null);
 
   // Unique Short Link states
-  const [shortCode, setShortCode] = useState<string>(() => currentFamily.code?.toLowerCase().slice(0, 6) || 'giaphatoc');
+  const [shortCode, setShortCode] = useState<string>(() => currentFamily?.code?.toLowerCase().slice(0, 6) || 'giaphatoc');
   const [customSlug, setCustomSlug] = useState<string>('');
   const [isEditingSlug, setIsEditingSlug] = useState<boolean>(false);
   const [isSavingSlug, setIsSavingSlug] = useState<boolean>(false);
@@ -38,14 +37,14 @@ export const FamilySettingsPage: React.FC = () => {
   const [copiedShortUrl, setCopiedShortUrl] = useState<boolean>(false);
 
   // Form states
-  const [familyName, setFamilyName] = useState(currentFamily.name);
-  const [ancestralHallAddress, setAncestralHallAddress] = useState(currentFamily.ancestral_hall_address || '');
-  const [description, setDescription] = useState(currentFamily.description || '');
+  const [familyName, setFamilyName] = useState(currentFamily?.name || '');
+  const [ancestralHallAddress, setAncestralHallAddress] = useState(currentFamily?.ancestral_hall_address || '');
+  const [description, setDescription] = useState(currentFamily?.description || '');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [clicksCount, setClicksCount] = useState<number>(0);
 
-  const bannerImageUrl = currentFamily.banner_url || ANCESTRAL_PRESETS[0].url;
+  const bannerImageUrl = currentFamily?.banner_url || ANCESTRAL_PRESETS[0].url;
 
   useEffect(() => {
     async function loadPassAndShortLink() {
@@ -83,7 +82,7 @@ export const FamilySettingsPage: React.FC = () => {
 
   const handleSaveCustomSlug = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customSlug.trim()) return;
+    if (!customSlug.trim() || !currentFamily?.id) return;
 
     setIsSavingSlug(true);
     setSlugError(null);
@@ -91,7 +90,8 @@ export const FamilySettingsPage: React.FC = () => {
       const res = await ShortLinkService.createOrUpdateShortLink(
         currentFamily.id,
         passToken,
-        customSlug.trim()
+        customSlug.trim(),
+        currentFamily.name
       );
       if (res.success && res.shortLink) {
         setShortCode(res.shortLink.short_code);
@@ -110,7 +110,7 @@ export const FamilySettingsPage: React.FC = () => {
 
   const handleSavePin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!clanPin.trim() || clanPin.trim().length < 4) {
+    if (!clanPin.trim() || clanPin.trim().length < 4 || !currentFamily?.id) {
       setPinError('Mã PIN phải có tối thiểu 4 chữ số.');
       return;
     }
@@ -134,6 +134,7 @@ export const FamilySettingsPage: React.FC = () => {
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentFamily?.id) return;
     setIsSaving(true);
     try {
       await updateFamily(currentFamily.id, {
@@ -149,6 +150,16 @@ export const FamilySettingsPage: React.FC = () => {
       setIsSaving(false);
     }
   };
+
+  if (!currentFamily) {
+    return (
+      <div className="p-12 bg-white rounded-3xl border border-slate-200 text-center space-y-4 max-w-lg mx-auto my-12">
+        <Building className="w-12 h-12 text-slate-400 mx-auto" />
+        <h2 className="text-base font-bold text-slate-900">Chưa Chọn Dòng Họ Quản Trị</h2>
+        <p className="text-xs text-slate-500">Vui lòng chọn hoặc tạo dòng họ trong hệ thống để thực hiện cài đặt.</p>
+      </div>
+    );
+  }
 
   // Lọc ban quản trị theo dòng họ hiện tại
   const familyMemberships = memberships.filter((m) => m.family_id === currentFamily.id);

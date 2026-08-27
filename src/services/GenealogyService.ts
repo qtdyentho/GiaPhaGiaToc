@@ -66,8 +66,10 @@ export class GenealogyService {
             relationships: (relRes.data as MemberRelationship[]) || [],
           };
         }
+        return { members: [], generations: [], branches: [], relationships: [] };
       } catch (err) {
         console.warn('getFamilyTree Supabase fetch error:', err);
+        return { members: [], generations: [], branches: [], relationships: [] };
       }
     }
 

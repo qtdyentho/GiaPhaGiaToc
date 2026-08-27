@@ -11,7 +11,6 @@ import { LunarCalendarService } from '../services/calendar/LunarCalendarService'
 import { calculateBatTu } from '../lib/fengshui';
 import { MemorialPrayerViewerModal } from '../components/genealogy/MemorialPrayerViewerModal';
 import { useAuth } from '../contexts/AuthContext';
-import { mockMembers } from '../services/mockData';
 
 export const MemberProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -43,9 +42,6 @@ export const MemberProfilePage: React.FC = () => {
           const mem = mems.find((m) => m.member_id === found.id) || null;
           setMemorial(mem);
           setRelationships(tree.relationships.filter((r) => r.member_id === found.id || r.related_member_id === found.id));
-        } else if (!isSupabaseConfigured()) {
-          const mockFound = mockMembers.find((m) => m.id === id) || null;
-          setMember(mockFound);
         } else {
           setMember(null);
         }

@@ -506,14 +506,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             const firstMem = mems?.[0] ?? null;
             const firstFam = (firstMem as any)?.families ?? null;
-            setActiveFamily(firstFam || mockFamily);
-            setActiveMembership(firstMem || mockMemberships[0]);
+            setActiveFamily(firstFam);
+            setActiveMembership(firstMem);
             if (firstFam?.id) {
               sessionStorage.setItem('active_family_id', firstFam.id);
               localStorage.setItem('hl_active_family_id', firstFam.id);
+            } else {
+              sessionStorage.removeItem('active_family_id');
+              localStorage.removeItem('hl_active_family_id');
             }
             setIsLoading(false);
-            return { success: true, activeFamily: firstFam || mockFamily, isSuperAdmin: isSuper };
+            return { success: true, activeFamily: firstFam, isSuperAdmin: isSuper };
           }
         } catch (err) {
           console.warn('[Auth] Supabase auth attempt error, evaluating fallback:', err);
