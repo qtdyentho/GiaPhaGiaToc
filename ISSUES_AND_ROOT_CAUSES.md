@@ -21,6 +21,7 @@
 | **ERR-009** | PIN Security & Brute-Force | Nguy cơ tấn công dò quét mã PIN mở khóa Gia Phả qua Mã QR Từ Đường | **CRITICAL** | ✅ Đã khắc phục triệt để |
 | **ERR-010** | Manual Payment Idempotency | Rủi ro kích hoạt trùng lặp gói cước khi Super Admin bấm duyệt chuyển khoản 2 lần | **HIGH** | ✅ Đã khắc phục triệt để |
 | **ERR-011** | Data Import Schema Constraints | Lỗi không lưu được thành viên vào CSDL Supabase do lệch tên cột schema và enum quan hệ | **HIGH** | ✅ Đã khắc phục triệt để |
+| **ERR-012** | Subscription & Settings Isolation | Gói dịch vụ và Cài đặt hiển thị dữ liệu Mock ảo và không lưu cập nhật về CSDL Supabase | **HIGH** | ✅ Đã khắc phục triệt để |
 
 ---
 
@@ -128,6 +129,22 @@
   - Tích hợp **Thuật toán tự động nhận diện & suy luận thế hệ (Topological BFS Generation Inference)**: Tự động chuyển đổi số La Mã, từ khóa tiếng Việt ("Thủy tổ", "Đời thứ 2"), và tự động lan truyền thế hệ từ Cha sang Con (`gen(child) = gen(parent) + 1`) và giữa Vợ - Chồng (`gen(spouse) = gen(partner)`).
   - Cập nhật `GenealogyCanvas.tsx` để hỗ trợ hiển thị đệ quy đa chiều cho cả quan hệ `PARENT` và `CHILD`.
 - **Biện pháp phòng ngừa**: Bộ test `data_import_12_columns.test.ts` (6/6 PASS).
+
+---
+
+### 12. ERR-012: Gói Dịch Vụ & Cài Đặt Hiển Thị Số Liệu Ảo Và Không Lưu Cập Nhật Lên Supabase
+- **Hiện tượng**:
+  1. Trang `BillingOverviewPage.tsx` hiển thị cố định "86/300 thành viên, 1.24 GB lưu trữ, 3 chi phái, hóa đơn cũ" của dòng họ mẫu dù đang đăng nhập dòng họ khác.
+  2. Trang `FamilySettingsPage.tsx` khi người dùng thay đổi tên dòng họ, địa chỉ từ đường, mô tả hoặc ảnh từ đường, hệ thống chỉ cập nhật biến cục bộ mà không lưu vào bảng `families` trên Supabase (khi refresh trang bị mất).
+- **Nguyên nhân gốc rễ**:
+  1. `BillingOverviewPage.tsx` import tĩnh `mockActiveSubscription, mockPlans, mockInvoices, mockUsageCounters` và render số liệu cứng.
+  2. `SubscriptionService.getSubscription` và `InvoiceService.getInvoices` khi không tìm thấy bản ghi cho `familyId` mới đã fallback về `mockActiveSubscription` và `mockInvoices`.
+  3. `AuthContext.updateFamily` chỉ cập nhật mảng React state `families` mà không thực hiện gọi `supabase.from('families').update(...)`.
+- **Giải pháp xử lý triệt để**:
+  - Viết lại `BillingOverviewPage.tsx`: Tính toán số lượng thành viên thực tế (`members.length`), chi phái thực tế (`branches.length`), và hóa đơn thực tế của dòng họ đang chọn (`activeFamily.id`).
+  - Viết lại `SubscriptionService.getSubscription` và `InvoiceService.getInvoices`: Khởi tạo đối tượng Trialing/Free độc lập cho dòng họ mới với giá trị 0đ, trả về `[]` hóa đơn nếu chưa phát sinh giao dịch.
+  - Cập nhật `AuthContext.updateFamily`: Thực hiện cập nhật trực tiếp vào bảng `families` trên Supabase với các trường `name`, `description`, `ancestral_hall`, `cover_url`, `updated_at`.
+- **Biện pháp phòng ngừa**: Đã kiểm thử qua `npm test` (16 test suites PASS) và `npm run build` PASS 100%.
 
 ---
 

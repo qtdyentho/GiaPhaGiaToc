@@ -50,19 +50,65 @@ export class SubscriptionService {
   }
 
   /**
-   * Lấy thông tin thuê bao hiện tại của Family
+   * Lấy thông tin thuê bao hiện tại của Family (Strict Single-Tenant Isolation)
    */
-  static async getSubscription(familyId: string = 'fam-0000-0001'): Promise<Subscription> {
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('family_id', familyId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+  static async getSubscription(familyId?: string): Promise<Subscription> {
+    const isUUID = (str?: string | null): boolean =>
+      Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
 
-      if (!error && data) return data as Subscription;
+    if (isSupabaseConfigured() && familyId && isUUID(familyId)) {
+      try {
+        const { data, error } = await supabase
+          .from('subscriptions')
+          .select('*')
+          .eq('family_id', familyId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (!error && data) return data as Subscription;
+      } catch (err) {
+        console.warn('Subscription fetch error:', err);
+      }
+
+      // Default Trialing subscription for newly created real family
+      const now = new Date();
+      const trialEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      return {
+        id: `sub-trial-${familyId.slice(0, 8)}`,
+        family_id: familyId,
+        plan_id: 'plan-giatoc',
+        plan_version_id: 'pv-giatoc-v1',
+        status: 'TRIALING',
+        billing_cycle: 'YEARLY',
+        current_period_start: now.toISOString(),
+        current_period_end: trialEnd.toISOString(),
+        cancel_at_period_end: false,
+        auto_renew: false,
+        payment_provider: 'VIETQR',
+        created_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      };
+    }
+
+    if (familyId && familyId !== mockActiveSubscription.family_id) {
+      const now = new Date();
+      const trialEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      return {
+        id: `sub-trial-${familyId}`,
+        family_id: familyId,
+        plan_id: 'plan-giatoc',
+        plan_version_id: 'pv-giatoc-v1',
+        status: 'TRIALING',
+        billing_cycle: 'YEARLY',
+        current_period_start: now.toISOString(),
+        current_period_end: trialEnd.toISOString(),
+        cancel_at_period_end: false,
+        auto_renew: false,
+        payment_provider: 'VIETQR',
+        created_at: now.toISOString(),
+        updated_at: now.toISOString(),
+      };
     }
 
     return mockActiveSubscription;

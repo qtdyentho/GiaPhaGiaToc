@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   Shield, MapPin, Building, Copy, Plus, UserCheck, Key, CheckCircle2,
   Image, Camera, Sparkles, Landmark, Check, Scroll, QrCode, RefreshCw, Lock, Eye, EyeOff
@@ -38,19 +38,19 @@ export const FamilySettingsPage: React.FC = () => {
 
   // Form states
   const [familyName, setFamilyName] = useState(currentFamily?.name || '');
-  const [ancestralHallAddress, setAncestralHallAddress] = useState(currentFamily?.ancestral_hall_address || '');
+  const [ancestralHallAddress, setAncestralHallAddress] = useState(currentFamily?.ancestral_hall_address || (currentFamily as any)?.ancestral_hall || '');
   const [description, setDescription] = useState(currentFamily?.description || '');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [clicksCount, setClicksCount] = useState<number>(0);
 
-  const bannerImageUrl = currentFamily?.banner_url || ANCESTRAL_PRESETS[0].url;
+  const bannerImageUrl = currentFamily?.banner_url || (currentFamily as any)?.cover_url || ANCESTRAL_PRESETS[0].url;
 
   useEffect(() => {
     async function loadPassAndShortLink() {
       if (currentFamily?.id) {
         setFamilyName(currentFamily.name);
-        setAncestralHallAddress(currentFamily.ancestral_hall_address || '');
+        setAncestralHallAddress(currentFamily.ancestral_hall_address || (currentFamily as any)?.ancestral_hall || '');
         setDescription(currentFamily.description || '');
 
         const config = await ClanPassService.getFamilyPassConfig(currentFamily.id);
@@ -153,10 +153,10 @@ export const FamilySettingsPage: React.FC = () => {
 
   if (!currentFamily) {
     return (
-      <div className="p-12 bg-white rounded-3xl border border-slate-200 text-center space-y-4 max-w-lg mx-auto my-12">
+      <div className="p-12 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 text-center space-y-4 max-w-lg mx-auto my-12 font-sans">
         <Building className="w-12 h-12 text-slate-400 mx-auto" />
-        <h2 className="text-base font-bold text-slate-900">Chưa Chọn Dòng Họ Quản Trị</h2>
-        <p className="text-xs text-slate-500">Vui lòng chọn hoặc tạo dòng họ trong hệ thống để thực hiện cài đặt.</p>
+        <h2 className="text-base font-bold text-slate-900 dark:text-white">Chưa Chọn Dòng Họ Quản Trị</h2>
+        <p className="text-xs text-slate-500 dark:text-slate-400">Vui lòng chọn hoặc tạo dòng họ trong hệ thống để thực hiện cài đặt.</p>
       </div>
     );
   }
@@ -170,8 +170,8 @@ export const FamilySettingsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-slate-900">Cài Đặt & Quản Trị Gia Tộc</h1>
-          <p className="text-xs text-slate-500">Cấu hình thông tin dòng họ, Mã QR Từ Đường và phân công ban quản trị</p>
+          <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">Cài Đặt & Quản Trị Gia Tộc</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Cấu hình thông tin dòng họ, Mã QR Từ Đường và phân công ban quản trị</p>
         </div>
       </div>
 
@@ -180,23 +180,23 @@ export const FamilySettingsPage: React.FC = () => {
         {/* Left 2 Cols: Ảnh Từ Đường & Thông Tin Cơ Bản */}
         <div className="lg:col-span-2 space-y-6 min-w-0">
           {/* Box 1: Ảnh Từ Đường & Banner Dòng Họ */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-                <Landmark className="w-4 h-4 text-[#166534]" />
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                <Landmark className="w-4 h-4 text-[#166534] dark:text-emerald-400" />
                 <span>Ảnh Từ Đường & Không Gian Phụng Tự</span>
               </h2>
               <button
                 type="button"
                 onClick={() => setIsBannerModalOpen(true)}
-                className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#166534] text-xs font-bold rounded-xl border border-emerald-200 flex items-center gap-1.5 transition cursor-pointer"
+                className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900 text-[#166534] dark:text-emerald-300 text-xs font-bold rounded-xl border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5 transition cursor-pointer"
               >
                 <Camera className="w-3.5 h-3.5" />
                 <span>Thay Đổi Ảnh</span>
               </button>
             </div>
 
-            <div className="relative h-48 sm:h-56 rounded-2xl overflow-hidden shadow-inner border border-slate-200 bg-slate-900 group">
+            <div className="relative h-48 sm:h-56 rounded-2xl overflow-hidden shadow-inner border border-slate-200 dark:border-slate-700 bg-slate-900 group">
               <img
                 src={bannerImageUrl}
                 alt={`Từ Đường ${familyName}`}
@@ -218,67 +218,67 @@ export const FamilySettingsPage: React.FC = () => {
               </div>
             </div>
 
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               * Ảnh này sẽ hiển thị làm biểu tượng trang trọng nhất trên trang chủ dòng họ cho tất cả bà con cùng chiêm bái.
             </p>
           </div>
 
           {/* Box 2: Thông tin cơ bản dòng họ */}
-          <form onSubmit={handleSaveProfile} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2 border-b border-slate-100 pb-2">
-              <Building className="w-4 h-4 text-[#166534]" />
+          <form onSubmit={handleSaveProfile} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+              <Building className="w-4 h-4 text-[#166534] dark:text-emerald-400" />
               <span>Thông Tin Nhận Diện Gia Tộc</span>
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase">Tên Dòng Họ</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Tên Dòng Họ</label>
                 <input
                   type="text"
                   value={familyName}
                   onChange={(e) => setFamilyName(e.target.value)}
-                  className="mt-1 block w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534]"
+                  className="mt-1 block w-full px-3.5 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#166534]"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase">Mã Gia Tộc (Hệ Thống)</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Mã Gia Tộc (Hệ Thống)</label>
                 <input
                   type="text"
                   disabled
                   value={currentFamily.code || 'GIAPHA'}
-                  className="mt-1 block w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-500 font-mono"
+                  className="mt-1 block w-full px-3.5 py-2 text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-500 font-mono"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase">Địa Chỉ Nhà Thờ Tổ (Từ Đường)</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Địa Chỉ Nhà Thờ Tổ (Từ Đường)</label>
               <input
                 type="text"
                 value={ancestralHallAddress}
                 onChange={(e) => setAncestralHallAddress(e.target.value)}
                 placeholder="Ví dụ: Thôn 3, Xã Định Công, Hoàng Mai, Hà Nội"
-                className="mt-1 block w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534]"
+                className="mt-1 block w-full px-3.5 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#166534]"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase">Mô Tả & Lịch Sử Tóm Tắt Dòng Họ</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Mô Tả & Lịch Sử Tóm Tắt Dòng Họ</label>
               <textarea
                 rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Tóm tắt nguồn gốc, cụ thủy tổ, niên hiệu khởi lập dòng họ..."
-                className="mt-1 block w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534]"
+                className="mt-1 block w-full px-3.5 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#166534]"
               ></textarea>
             </div>
 
             <div className="pt-2 flex items-center justify-between">
               <div>
                 {saveSuccess && (
-                  <span className="text-xs font-bold text-emerald-700 flex items-center gap-1">
+                  <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
                     <Check className="w-4 h-4" /> Đã lưu thông tin dòng họ thành công!
                   </span>
                 )}
@@ -286,7 +286,7 @@ export const FamilySettingsPage: React.FC = () => {
               <button 
                 type="submit"
                 disabled={isSaving}
-                className="px-5 py-2 bg-[#166534] hover:bg-[#14532D] text-white text-xs font-bold rounded-xl transition shadow-xs disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-2 bg-[#166534] hover:bg-[#14532D] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition shadow-xs disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
               >
                 {isSaving ? 'Đang lưu...' : 'Lưu Thay Đổi'}
               </button>
@@ -294,21 +294,21 @@ export const FamilySettingsPage: React.FC = () => {
           </form>
 
           {/* Box 3: Danh sách phân công ban quản trị */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2 border-b border-slate-100 pb-2">
-              <UserCheck className="w-4 h-4 text-[#166534]" />
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+              <UserCheck className="w-4 h-4 text-[#166534] dark:text-emerald-400" />
               <span>Ban Quản Trị & Phân Công Nhiệm Vụ</span>
             </h2>
 
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {familyMemberships.length > 0 ? (
                 familyMemberships.map((m) => (
                   <div key={m.id} className="py-3 flex items-center justify-between">
                     <div>
-                      <div className="text-xs font-bold text-slate-900">
+                      <div className="text-xs font-bold text-slate-900 dark:text-white">
                         {user?.id === m.user_id ? user.full_name : 'Quản Trị Viên Gia Tộc'}
                       </div>
-                      <div className="text-[11px] text-slate-500">
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
                         {user?.id === m.user_id ? user.email : 'banquantri@giapha.vn'}
                       </div>
                     </div>
@@ -321,8 +321,8 @@ export const FamilySettingsPage: React.FC = () => {
               ) : (
                 <div className="py-3 flex items-center justify-between">
                   <div>
-                    <div className="text-xs font-bold text-slate-900">{user?.full_name || 'Trưởng Tộc'}</div>
-                    <div className="text-[11px] text-slate-500">{user?.email || 'truongtoc@giapha.vn'}</div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white">{user?.full_name || 'Trưởng Tộc'}</div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400">{user?.email || 'truongtoc@giapha.vn'}</div>
                   </div>
 
                   <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${ROLE_LABELS[currentAdminRole]?.color}`}>
@@ -337,35 +337,35 @@ export const FamilySettingsPage: React.FC = () => {
         {/* Right 1 Col: Mã QR, Link Rút Gọn & Hương ước */}
         <div className="space-y-6 min-w-0">
           {/* Box A: Mã QR & Link Rút Gọn & Mã PIN */}
-          <div className="bg-gradient-to-br from-amber-50/90 via-white to-amber-50/40 p-6 rounded-2xl border border-amber-300 shadow-sm space-y-4">
-            <div className="border-b border-amber-200/80 pb-2">
-              <h2 className="text-sm font-bold text-amber-950 flex items-center space-x-2">
-                <QrCode className="w-4 h-4 text-amber-800" />
+          <div className="bg-gradient-to-br from-amber-50/90 via-white to-amber-50/40 dark:from-amber-950/40 dark:via-slate-900 dark:to-amber-950/20 p-6 rounded-2xl border border-amber-300 dark:border-amber-800/80 shadow-sm space-y-4">
+            <div className="border-b border-amber-200/80 dark:border-amber-800/60 pb-2">
+              <h2 className="text-sm font-bold text-amber-950 dark:text-amber-200 flex items-center space-x-2">
+                <QrCode className="w-4 h-4 text-amber-800 dark:text-amber-400" />
                 <span>Mã QR & Liên Kết Tra Cứu Gia Phong</span>
               </h2>
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
               Con cháu quét mã QR hoặc truy cập <strong>Liên kết dòng họ</strong> và nhập <strong>Mã PIN gia tộc</strong> để xem Cây Phả Hệ & <strong>Số Dư Sổ Quỹ</strong>.
             </p>
 
             {/* Unique Short Link Card */}
-            <div className="p-4 bg-white border border-amber-300/80 rounded-2xl space-y-3 shadow-xs">
+            <div className="p-4 bg-white dark:bg-slate-800 border border-amber-300/80 dark:border-amber-800/60 rounded-2xl space-y-3 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-700 uppercase">Liên Kết Mở Cây Phả Hệ:</span>
-                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase">Liên Kết Mở Cây Phả Hệ:</span>
+                <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full">
                   {clicksCount} lượt truy cập
                 </span>
               </div>
 
               <div className="flex items-center gap-2">
-                <div className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-[#166534] truncate">
+                <div className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono font-bold text-[#166534] dark:text-emerald-400 truncate">
                   {typeof window !== 'undefined' ? window.location.origin : 'https://giaphagiatoc.vn'}/c/{shortCode}
                 </div>
                 <button
                   type="button"
                   onClick={handleCopyShortLink}
-                  className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#166534] text-xs font-bold rounded-xl border border-emerald-200 transition flex items-center gap-1 shrink-0 cursor-pointer"
+                  className="px-3 py-2 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900 text-[#166534] dark:text-emerald-300 text-xs font-bold rounded-xl border border-emerald-200 dark:border-emerald-800 transition flex items-center gap-1 shrink-0 cursor-pointer"
                 >
                   {copiedShortUrl ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copiedShortUrl ? 'Đã chép' : 'Sao chép'}</span>
@@ -378,32 +378,32 @@ export const FamilySettingsPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setIsEditingSlug(true)}
-                    className="text-[11px] text-amber-800 hover:text-amber-900 font-semibold underline block text-left cursor-pointer"
+                    className="text-[11px] text-amber-800 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-300 font-semibold underline block text-left cursor-pointer"
                   >
                     + Tùy chỉnh liên kết riêng (Ví dụ: ho-nguyen-yen-mo)
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleSaveCustomSlug} className="space-y-2 pt-2 border-t border-slate-100">
+                <form onSubmit={handleSaveCustomSlug} className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-700">
                   <div className="flex items-center justify-between">
-                    <label className="block text-[11px] font-bold text-slate-600">Đổi Tên Định Danh Gia Tộc:</label>
+                    <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300">Đổi Tên Định Danh Gia Tộc:</label>
                     <button
                       type="button"
                       onClick={() => setCustomSlug(ShortLinkService.suggestSlugFromName(familyName))}
-                      className="text-[10px] text-emerald-700 hover:underline font-semibold cursor-pointer"
+                      className="text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline font-semibold cursor-pointer"
                     >
                       🪄 Tự tạo từ tên họ
                     </button>
                   </div>
                   <div className="flex gap-2">
-                    <div className="flex items-center flex-1 bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 focus-within:border-[#166534]">
+                    <div className="flex items-center flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-2.5 py-1.5 focus-within:border-[#166534]">
                       <span className="text-[11px] text-slate-400 font-mono">/c/</span>
                       <input
                         type="text"
                         value={customSlug}
                         onChange={(e) => setCustomSlug(e.target.value)}
                         placeholder="ten-dong-ho"
-                        className="w-full text-xs font-mono font-bold text-slate-900 focus:outline-none pl-1"
+                        className="w-full text-xs font-mono font-bold text-slate-900 dark:text-white bg-transparent focus:outline-none pl-1"
                       />
                     </div>
                     <button
@@ -416,7 +416,7 @@ export const FamilySettingsPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setIsEditingSlug(false)}
-                      className="px-2 py-1.5 text-slate-500 hover:text-slate-700 text-xs cursor-pointer"
+                      className="px-2 py-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-700 text-xs cursor-pointer"
                     >
                       Hủy
                     </button>
@@ -426,7 +426,7 @@ export const FamilySettingsPage: React.FC = () => {
               )}
 
               {slugSuccess && (
-                <p className="text-[11px] text-emerald-700 font-bold flex items-center gap-1">
+                <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1">
                   <Check className="w-3.5 h-3.5" /> Đã cập nhật liên kết dòng họ thành công!
                 </p>
               )}
@@ -435,7 +435,7 @@ export const FamilySettingsPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsQRModalOpen(true)}
-                  className="w-full py-2.5 bg-[#166534] hover:bg-[#14532D] text-white text-xs font-bold rounded-xl flex items-center justify-center space-x-1.5 transition shadow-xs cursor-pointer"
+                  className="w-full py-2.5 bg-[#166534] hover:bg-[#14532D] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-bold rounded-xl flex items-center justify-center space-x-1.5 transition shadow-xs cursor-pointer"
                 >
                   <QrCode className="w-4 h-4" />
                   <span>Xem, Tùy Biến & In Mã QR Từ Đường</span>
@@ -444,21 +444,21 @@ export const FamilySettingsPage: React.FC = () => {
             </div>
 
             {/* Form Thiết lập Mã PIN */}
-            <form onSubmit={handleSavePin} className="space-y-3 pt-2 border-t border-amber-200">
+            <form onSubmit={handleSavePin} className="space-y-3 pt-2 border-t border-amber-200 dark:border-amber-800">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-amber-950 flex items-center gap-1">
-                  <Lock className="w-3.5 h-3.5 text-amber-800" />
+                <label className="text-xs font-bold text-amber-950 dark:text-amber-200 flex items-center gap-1">
+                  <Lock className="w-3.5 h-3.5 text-amber-800 dark:text-amber-400" />
                   <span>Mã PIN Gia Tộc (4 – 6 Số)</span>
                 </label>
                 {pinSuccess && (
-                  <span className="text-[11px] font-bold text-emerald-700 flex items-center gap-1">
+                  <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
                     <Check className="w-3.5 h-3.5" /> Đã cập nhật PIN!
                   </span>
                 )}
               </div>
 
               {pinError && (
-                <div className="p-2 bg-rose-50 text-rose-700 text-[11px] font-semibold rounded-lg border border-rose-200">
+                <div className="p-2 bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 text-[11px] font-semibold rounded-lg border border-rose-200 dark:border-rose-800">
                   {pinError}
                 </div>
               )}
@@ -471,12 +471,12 @@ export const FamilySettingsPage: React.FC = () => {
                     value={clanPin}
                     onChange={(e) => setClanPin(e.target.value)}
                     placeholder="Đặt PIN mới (VD: 1986)"
-                    className="w-full px-3 py-2 text-xs font-mono font-bold bg-white border border-amber-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534]"
+                    className="w-full px-3 py-2 text-xs font-mono font-bold bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 text-slate-900 dark:text-white rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPin(!showPin)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 cursor-pointer"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
                   >
                     {showPin ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </button>
@@ -493,21 +493,21 @@ export const FamilySettingsPage: React.FC = () => {
           </div>
 
           {/* Box: Quản trị Hương Ước Dòng Họ */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2 border-b border-slate-100 pb-2">
-              <Scroll className="w-4 h-4 text-amber-700" />
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+              <Scroll className="w-4 h-4 text-amber-700 dark:text-amber-400" />
               <span>Hương Ước & Tộc Quy</span>
             </h2>
 
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Quy tắc nếp sống, rèn đức luyện tài, hiếu kính tổ tiên và giữ gìn gia phong dòng họ.
             </p>
 
-            <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl space-y-1.5">
-              <div className="text-xs font-bold text-amber-950 font-serif line-clamp-1">
+            <div className="p-3 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-xl space-y-1.5">
+              <div className="text-xs font-bold text-amber-950 dark:text-amber-200 font-serif line-clamp-1">
                 {currentFamily.covenant_title || 'Hương Ước & Tộc Quy Dòng Họ'}
               </div>
-              <div className="text-[11px] text-amber-900 line-clamp-2 italic font-serif">
+              <div className="text-[11px] text-amber-900 dark:text-amber-300 line-clamp-2 italic font-serif">
                 "{currentFamily.covenant_preamble || 'Cây có cội mới trổ cành xanh lá, nước có nguồn mới biển rộng sông sâu...'}"
               </div>
             </div>

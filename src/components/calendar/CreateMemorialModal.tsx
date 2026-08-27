@@ -4,7 +4,6 @@ import { MemorialService } from '../../services/calendar/MemorialService';
 import { GenealogyService } from '../../services/GenealogyService';
 import { Member, MemorialDate } from '../../types/database';
 import { useAuth } from '../../contexts/AuthContext';
-import { mockMembers } from '../../services/mockData';
 import { LunarCalendarService } from '../../services/calendar/LunarCalendarService';
 import { getDaysInLunarMonth, getLeapMonth } from '../../lib/lunar';
 

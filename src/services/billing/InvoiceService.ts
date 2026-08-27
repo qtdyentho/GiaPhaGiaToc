@@ -54,20 +54,32 @@ export class InvoiceService {
   }
 
   /**
-   * Lấy danh sách hóa đơn của Family
+   * Lấy danh sách hóa đơn của Family (Strict Single-Tenant Isolation)
    */
-  static async getInvoices(familyId: string = 'fam-0000-0001'): Promise<Invoice[]> {
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase
-        .from('invoices')
-        .select('*')
-        .eq('family_id', familyId)
-        .order('created_at', { ascending: false });
+  static async getInvoices(familyId?: string): Promise<Invoice[]> {
+    const isUUID = (str?: string | null): boolean =>
+      Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
 
-      if (!error && data && data.length > 0) return data as Invoice[];
+    if (isSupabaseConfigured() && familyId && isUUID(familyId)) {
+      try {
+        const { data, error } = await supabase
+          .from('invoices')
+          .select('*')
+          .eq('family_id', familyId)
+          .order('created_at', { ascending: false });
+
+        if (!error && data) return data as Invoice[];
+      } catch (err) {
+        console.warn('Invoice fetch error:', err);
+      }
+      return [];
     }
 
-    return mockInvoices;
+    if (familyId) {
+      return mockInvoices.filter((i) => i.family_id === familyId);
+    }
+
+    return [];
   }
 
   /**

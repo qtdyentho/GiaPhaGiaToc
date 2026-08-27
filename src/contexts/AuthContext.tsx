@@ -380,28 +380,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateFamily = async (familyId: string, updates: Partial<Family>): Promise<Family> => {
     setIsLoading(true);
     let updatedTarget: Family | null = null;
-    const nextFamilies = families.map((f) => {
-      if (f.id === familyId) {
-        updatedTarget = {
-          ...f,
-          ...updates,
+    const isUUID = (str?: string | null): boolean =>
+      Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      try {
+        const payload: any = {
           updated_at: new Date().toISOString(),
         };
-        return updatedTarget;
-      }
-      return f;
-    });
+        if (updates.name !== undefined) payload.name = updates.name;
+        if (updates.description !== undefined) payload.description = updates.description;
+        if (updates.ancestral_hall_address !== undefined) payload.ancestral_hall = updates.ancestral_hall_address;
+        if (updates.banner_url !== undefined) payload.cover_url = updates.banner_url;
 
-    if (!updatedTarget) {
-      // If not in state yet, update mockFamily
-      updatedTarget = {
-        ...mockFamily,
-        ...updates,
-        updated_at: new Date().toISOString(),
-      };
-      nextFamilies.push(updatedTarget);
+        const { data, error } = await supabase
+          .from('families')
+          .update(payload)
+          .eq('id', familyId)
+          .select()
+          .single();
+
+        if (!error && data) {
+          updatedTarget = {
+            ...data,
+            ancestral_hall_address: data.ancestral_hall || updates.ancestral_hall_address,
+            banner_url: data.cover_url || updates.banner_url,
+          };
+        }
+      } catch (err) {
+        console.error('Lỗi khi cập nhật dòng họ trên Supabase:', err);
+      }
     }
 
+    if (!updatedTarget) {
+      const existing = families.find((f) => f.id === familyId) || activeFamily || ({} as Family);
+      updatedTarget = {
+        ...existing,
+        ...updates,
+        id: familyId,
+        updated_at: new Date().toISOString(),
+      };
+    }
+
+    const nextFamilies = families.map((f) => (f.id === familyId ? updatedTarget! : f));
     setFamilies(nextFamilies);
     if (activeFamily?.id === familyId || !activeFamily) {
       setActiveFamily(updatedTarget);
