@@ -57,12 +57,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
   const {
     user,
-    families,
     activeFamily,
     activeMembership,
     isSuperAdmin,
     isFamilyAdmin,
-    switchFamily,
     signOut,
   } = useAuth();
   const { isDark, toggleTheme } = useTheme();
@@ -70,7 +68,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const navigate = useNavigate();
 
   // Dropdown states
-  const [isFamilyMenuOpen, setIsFamilyMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
@@ -272,101 +269,26 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           )}
         </button>
 
-        {/* Clan Switcher Dropdown Button */}
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setIsFamilyMenuOpen(!isFamilyMenuOpen)}
-            className="flex items-center gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-emerald-50/80 dark:bg-slate-800/90 hover:bg-emerald-100 dark:hover:bg-slate-800 border border-emerald-200/90 dark:border-slate-700 transition cursor-pointer text-left shadow-2xs max-w-[180px] xs:max-w-[220px] sm:max-w-[280px] md:max-w-[340px]"
-            title="Nhấn để xem và chuyển đổi giữa các Dòng Họ"
-          >
-            <div className="w-6 h-6 rounded-lg bg-[#166534] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
-              <Landmark className="w-3.5 h-3.5" />
+        {/* Official Clan Identity Badge (Single Family Model) */}
+        <Link
+          to="/app/family/settings"
+          className="flex items-center gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-emerald-50/90 dark:bg-slate-800/90 hover:bg-emerald-100 dark:hover:bg-slate-800 border border-emerald-200/90 dark:border-slate-700 transition cursor-pointer text-left shadow-2xs max-w-[200px] xs:max-w-[240px] sm:max-w-[320px] md:max-w-[380px] group"
+          title="Thông Tin & Cài Đặt Dòng Họ"
+        >
+          <div className="w-6 h-6 rounded-lg bg-[#166534] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+            <Landmark className="w-3.5 h-3.5" />
+          </div>
+          <div className="flex flex-col min-w-0 truncate">
+            <div className="text-xs font-bold text-slate-900 dark:text-white truncate flex items-center gap-1.5">
+              <span className="truncate">{activeFamily?.name || 'ĐẠI TỘC GIA PHẢ'}</span>
+              {activeFamily?.origin_province && (
+                <span className="hidden sm:inline text-[10px] text-emerald-800 dark:text-emerald-300 font-semibold opacity-90">
+                  ({activeFamily.origin_province})
+                </span>
+              )}
             </div>
-            <div className="flex flex-col min-w-0 truncate">
-              <div className="text-xs font-bold text-slate-900 dark:text-white truncate flex items-center gap-1.5">
-                <span className="truncate">{activeFamily?.name || 'ĐẠI TỘC GIA PHẢ'}</span>
-                {activeFamily?.origin_province && (
-                  <span className="hidden xl:inline text-[10px] text-emerald-800 dark:text-emerald-300 font-semibold opacity-90">
-                    ({activeFamily.origin_province})
-                  </span>
-                )}
-              </div>
-            </div>
-            <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform shrink-0 ${isFamilyMenuOpen ? 'rotate-180' : ''}`} />
-          </button>
-
-          {/* Clan Switcher Dropdown Popover */}
-          {isFamilyMenuOpen && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setIsFamilyMenuOpen(false)} />
-              <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl py-2 z-50 animate-fade-in divide-y divide-slate-100 dark:divide-slate-800">
-                <div className="px-3.5 py-2 flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                    Dòng Họ Của Bạn ({families.length})
-                  </span>
-                  <Link
-                    to="/create-family"
-                    onClick={() => setIsFamilyMenuOpen(false)}
-                    className="text-[11px] font-bold text-[#166534] dark:text-emerald-400 hover:underline flex items-center gap-1"
-                  >
-                    <Plus className="w-3 h-3" />
-                    <span>Tạo Mới</span>
-                  </Link>
-                </div>
-
-                <div className="py-1 max-h-60 overflow-y-auto">
-                  {families.map((fam) => {
-                    const isSelected = fam.id === activeFamily?.id;
-                    return (
-                      <button
-                        key={fam.id}
-                        type="button"
-                        onClick={() => {
-                          switchFamily(fam.id);
-                          setIsFamilyMenuOpen(false);
-                        }}
-                        className={`w-full px-3.5 py-2 text-left flex items-center justify-between gap-2 transition cursor-pointer ${
-                          isSelected
-                            ? 'bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-300 font-bold'
-                            : 'hover:bg-slate-50 dark:hover:bg-slate-800/70 text-slate-700 dark:text-slate-300'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
-                            isSelected
-                              ? 'bg-[#166534] text-white'
-                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                          }`}>
-                            <Building className="w-3.5 h-3.5" />
-                          </div>
-                          <div className="truncate">
-                            <div className="text-xs truncate">{fam.name}</div>
-                            {fam.origin_province && (
-                              <div className="text-[10px] text-slate-400">{fam.origin_province}</div>
-                            )}
-                          </div>
-                        </div>
-                        {isSelected && <Check className="w-4 h-4 text-[#166534] dark:text-emerald-400 shrink-0" />}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="p-2 bg-slate-50 dark:bg-slate-800/50">
-                  <Link
-                    to="/app/family/settings"
-                    onClick={() => setIsFamilyMenuOpen(false)}
-                    className="w-full py-1.5 px-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition text-center shadow-2xs"
-                  >
-                    <Settings className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Cài Đặt Dòng Họ Hiện Tại</span>
-                  </Link>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+          </div>
+        </Link>
 
         {/* Minimalist Lunar Calendar Badge (Desktop only) */}
         <Link
