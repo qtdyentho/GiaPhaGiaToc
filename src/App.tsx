@@ -31,6 +31,9 @@ const MemorialsPage = lazy(() => import('./pages/MemorialsPage').then(m => ({ de
 const EventListPage = lazy(() => import('./pages/EventListPage').then(m => ({ default: m.EventListPage })));
 const EventDetailPage = lazy(() => import('./pages/EventDetailPage').then(m => ({ default: m.EventDetailPage })));
 const ReminderSettingsPage = lazy(() => import('./pages/ReminderSettingsPage').then(m => ({ default: m.ReminderSettingsPage })));
+const ClanIntroductionPage = lazy(() => import('./pages/ClanIntroductionPage'));
+const ClanChroniclesPage = lazy(() => import('./pages/ClanChroniclesPage'));
+const ClanChronicleDetailPage = lazy(() => import('./pages/ClanChronicleDetailPage'));
 
 // ─── Finance Pages (Lazy Loaded) ──────────────────────────────────────────────
 const FinanceDashboardPage = lazy(() => import('./pages/FinanceDashboardPage').then(m => ({ default: m.FinanceDashboardPage })));
@@ -127,6 +130,11 @@ export const App: React.FC = () => {
                 <Route path="events/:id" element={<EventDetailPage />} />
                 <Route path="reminders" element={<ReminderSettingsPage />} />
                 <Route path="settings/reminders" element={<ReminderSettingsPage />} />
+
+                {/* Clan Heritage & Chronicles Routes */}
+                <Route path="clan/intro" element={<ClanIntroductionPage />} />
+                <Route path="clan/chronicles" element={<ClanChroniclesPage />} />
+                <Route path="clan/chronicles/:id" element={<ClanChronicleDetailPage />} />
 
                 {/* Financial Routes (Protected by RoleGuard) */}
                 <Route

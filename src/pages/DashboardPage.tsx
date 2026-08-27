@@ -20,6 +20,7 @@ import { AncestralBannerModal, ANCESTRAL_PRESETS } from '../components/family/An
 import { ClanCovenantCard } from '../components/family/ClanCovenantCard';
 import { CreateBroadcastModal } from '../components/notifications/CreateBroadcastModal';
 import { PrintableClanQRCodeModal } from '../components/family/PrintableClanQRCodeModal';
+import { RecentChroniclesWidget } from '../components/chronicles/RecentChroniclesWidget';
 
 export const DashboardPage: React.FC = () => {
   const { activeFamily, isFamilyAdmin, user } = useAuth();
@@ -310,36 +311,55 @@ export const DashboardPage: React.FC = () => {
         {/* Left Column: Fast Navigation & Recent Memorials */}
         <div className="lg:col-span-2 space-y-6">
           {/* Quick Action Navigation Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Link
+              to="/app/clan/intro"
+              className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-amber-500 dark:hover:border-amber-600 shadow-xs hover:shadow-sm transition flex flex-col justify-between group"
+            >
+              <div className="space-y-1">
+                <div className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider">Cội Nguồn</div>
+                <div className="text-base font-bold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition">
+                  Giới Thiệu Dòng Họ
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">Lịch sử phát tích, từ đường, hoành phi câu đối & ban trị sự</p>
+              </div>
+              <div className="mt-3 flex items-center justify-between text-xs font-bold text-amber-800 dark:text-amber-400">
+                <span>Khám phá</span>
+                <ChevronRight className="w-4 h-4" />
+              </div>
+            </Link>
+
             <Link
               to="/app/genealogy"
-              className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-[#166534] dark:hover:border-emerald-600 shadow-xs hover:shadow-sm transition flex items-center justify-between group"
+              className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-[#166534] dark:hover:border-emerald-600 shadow-xs hover:shadow-sm transition flex flex-col justify-between group"
             >
               <div className="space-y-1">
                 <div className="text-xs font-bold text-[#166534] dark:text-emerald-400 uppercase tracking-wider">Phả Hệ</div>
                 <div className="text-base font-bold text-slate-900 dark:text-white group-hover:text-[#166534] dark:group-hover:text-emerald-400 transition">
                   Cây Gia Phả Dòng Họ
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Tra cứu chi cành, thứ bậc và các thế hệ tiền nhân</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">Tra cứu chi cành, thứ bậc và các thế hệ tiền nhân</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 group-hover:bg-[#166534] text-[#166534] dark:text-emerald-300 group-hover:text-white flex items-center justify-center transition shrink-0 border border-emerald-200 dark:border-emerald-800">
-                <ChevronRight className="w-5 h-5" />
+              <div className="mt-3 flex items-center justify-between text-xs font-bold text-[#166534] dark:text-emerald-400">
+                <span>Tra cứu</span>
+                <ChevronRight className="w-4 h-4" />
               </div>
             </Link>
 
             <Link
               to="/app/finance"
-              className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-[#166534] dark:hover:border-emerald-600 shadow-xs hover:shadow-sm transition flex items-center justify-between group"
+              className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-[#166534] dark:hover:border-emerald-600 shadow-xs hover:shadow-sm transition flex flex-col justify-between group"
             >
               <div className="space-y-1">
                 <div className="text-xs font-bold text-[#166534] dark:text-emerald-400 uppercase tracking-wider">Tài Chính</div>
                 <div className="text-base font-bold text-slate-900 dark:text-white group-hover:text-[#166534] dark:group-hover:text-emerald-400 transition">
                   Sổ Quỹ & Công Đức
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Ghi chép thu chi, hương khói và bảng vàng tri ân</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">Ghi chép thu chi, hương khói và bảng vàng tri ân</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 group-hover:bg-[#166534] text-[#166534] dark:text-emerald-300 group-hover:text-white flex items-center justify-center transition shrink-0 border border-emerald-200 dark:border-emerald-800">
-                <ChevronRight className="w-5 h-5" />
+              <div className="mt-3 flex items-center justify-between text-xs font-bold text-[#166534] dark:text-emerald-400">
+                <span>Sổ quỹ</span>
+                <ChevronRight className="w-4 h-4" />
               </div>
             </Link>
           </div>
@@ -381,9 +401,10 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column: Upcoming Events & Memorials Widget */}
+        {/* Right Column: Upcoming Events & Recent Chronicles Widget */}
         <div className="space-y-6">
           <UpcomingEventsWidget familyId={activeFamily.id} />
+          <RecentChroniclesWidget familyId={activeFamily.id} isFamilyAdmin={isFamilyAdmin} />
         </div>
       </div>
 

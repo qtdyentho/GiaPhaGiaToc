@@ -108,6 +108,13 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       ],
     },
     {
+      title: 'DI SẢN & LƯU TRUYỀN',
+      items: [
+        { to: '/app/clan/intro', icon: Landmark, label: 'Giới Thiệu Dòng Họ' },
+        { to: '/app/clan/chronicles', icon: BookOpen, label: 'Lưu Ký & Ký Sự Họ Tộc' },
+      ],
+    },
+    {
       title: 'LỊCH & TƯỞNG NIỆM',
       items: [
         { to: '/app/calendar', icon: Calendar, label: UI_COPY.navigation.calendar },
@@ -153,6 +160,13 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         { to: '/app/genealogy', icon: GitFork, label: 'Xem Cây Gia Phả' },
         { to: '/app/members', icon: Users, label: 'Danh Sách Bà Con' },
         { to: '/app/kinship', icon: ArrowRightLeft, label: 'Tra Cứu Xưng Hô' },
+      ],
+    },
+    {
+      title: 'DI SẢN & LƯU TRUYỀN',
+      items: [
+        { to: '/app/clan/intro', icon: Landmark, label: 'Giới Thiệu Dòng Họ' },
+        { to: '/app/clan/chronicles', icon: BookOpen, label: 'Lưu Ký & Ký Sự Họ Tộc' },
       ],
     },
     {
