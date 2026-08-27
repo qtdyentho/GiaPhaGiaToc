@@ -455,9 +455,12 @@ export class ClanChronicleService {
       ancestral_hall_address: 'Nhà thờ tổ dòng họ',
       ancestral_hall_architect: 'Kiến trúc cổ truyền 3 gian 2 chái, mái ngói mũi hài, cột gỗ lim',
       ancestral_hall_images: [
-        'https://images.unsplash.com/photo-1548625361-195fe57871b6?auto=format&fit=crop&q=80&w=1200',
-        'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&q=80&w=1200',
-        'https://images.unsplash.com/photo-1599839575945-a9e5af0c3fa5?auto=format&fit=crop&q=80&w=1200',
+        '/images/presets/tu-duong-san-gach.png',
+        '/images/presets/gian-tho-son-son.jpg',
+        '/images/presets/ho-ban-nguyet-tu-duong.png',
+        '/images/presets/lang-mo-da-tien-nhan.png',
+        'https://villagold.vn/uploads/nha-go-nha-co/3-gian-2-chai-xay-1/5-interactive-lightmix.jpg',
+        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRGhYeiltQG5qUQvGDSDnswI7NMoN682brydl58CsCEEIiITcrTJ8blFBQ&s=10',
       ],
       relics_description: 'Văn bia ghi danh công đức, lư hương đồng cổ, gia phả cổ chữ Hán Nôm và các bức đại tự ngàn năm.',
       leadership_board: [
