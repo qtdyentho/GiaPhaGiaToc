@@ -105,7 +105,7 @@ export const HonorRollPage: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-3 py-0.5 rounded-full bg-amber-100 border border-amber-300 text-amber-900 text-xs font-bold uppercase tracking-wider">
-                  Heritage Ledger • Niên Hiệu 2026
+                  Heritage Ledger • Niên Hiệu {new Date().getFullYear()}
                 </span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 font-heritage mt-1.5 tracking-tight">

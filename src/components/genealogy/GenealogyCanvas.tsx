@@ -218,6 +218,55 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
     }
   };
 
+  // ⌨️ Keyboard Shortcuts: F=Fit, +/=/↑=ZoomIn, -/↓=ZoomOut, 0=Reset, Esc=ExitKinship
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore when typing inside an input, textarea, or select
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      switch (e.key) {
+        case 'f':
+        case 'F':
+          e.preventDefault();
+          handleFitToView();
+          break;
+        case '+':
+        case '=':
+        case 'ArrowUp':
+          e.preventDefault();
+          handleZoomIn();
+          break;
+        case '-':
+        case 'ArrowDown':
+          e.preventDefault();
+          handleZoomOut();
+          break;
+        case '0':
+          e.preventDefault();
+          handleResetZoom();
+          break;
+        case 'Escape':
+          if (isKinshipMode) {
+            setIsKinshipMode(false);
+            setKinshipPersonA(null);
+            setKinshipPersonB(null);
+            setKinshipResult(null);
+          }
+          if (isSearchOpen) {
+            setIsSearchOpen(false);
+            setSearchQuery('');
+          }
+          break;
+        default:
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isKinshipMode, isSearchOpen, handleFitToView, handleZoomIn, handleZoomOut, handleResetZoom]);
+
   // Filtered members for Search
   const filteredSearchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];

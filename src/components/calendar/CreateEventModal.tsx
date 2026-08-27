@@ -76,19 +76,19 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-      <div className="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-emerald-500/10 via-amber-500/5 to-transparent">
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-gradient-to-r from-emerald-500/10 dark:from-emerald-950/40 via-amber-500/5 to-transparent">
           <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-900 shadow-xs">
+            <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 flex items-center justify-center text-emerald-900 dark:text-emerald-300 shadow-xs">
               <Calendar className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">Tạo Sự Kiện Gia Tộc Mới</h2>
-              <p className="text-xs text-slate-500">Giỗ Tổ, Họp Họ, Lễ Khuyến Học, Khánh Thành Từ Đường</p>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Tạo Sự Kiện Gia Tộc Mới</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Giỗ Tổ, Họp Họ, Lễ Khuyến Học, Khánh Thành Từ Đường</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-600 transition">
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -104,7 +104,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
           {/* Title */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
               Tên Sự Kiện Họ Tộc *
             </label>
             <input
@@ -112,18 +112,18 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
               placeholder="Ví dụ: Đại Lễ Giỗ Tổ Năm 2026, Họp Hội Đồng Gia Tộc Rằm Tháng Giêng..."
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-heritage-green focus:bg-white font-semibold"
+              className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-heritage-green focus:bg-white font-semibold dark:text-white dark:placeholder-slate-500"
             />
           </div>
 
           {/* Event Type & Branch */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Loại Sự Kiện</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Loại Sự Kiện</label>
               <select
                 value={eventType}
                 onChange={(e) => setEventType(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-heritage-green focus:bg-white font-semibold text-slate-800"
+                className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-heritage-green focus:bg-white font-semibold text-slate-800 dark:text-white"
               >
                 <option value="CLAN_ANCESTRAL_DAY">🏛️ Đại Lễ Giỗ Tổ Họ</option>
                 <option value="FAMILY_MEETING">👥 Họp Hội Đồng Gia Tộc</option>
@@ -136,11 +136,11 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Quy Mô / Chi Phái</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Quy Mô / Chi Phái</label>
               <select
                 value={branchId}
                 onChange={(e) => setBranchId(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-heritage-green focus:bg-white font-semibold text-slate-800"
+                className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-heritage-green focus:bg-white font-semibold text-slate-800 dark:text-white"
               >
                 <option value="ALL">Toàn Thể Dòng Họ (Toàn Tộc)</option>
                 {mockBranches.map((b) => (
@@ -154,7 +154,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
           {/* Date Picker Component */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Thời Gian Tổ Chức (Âm / Dương Đồng Bộ)</label>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Thời Gian Tổ Chức (Âm / Dương Đồng Bộ)</label>
             <LunarDatePicker
               solarValue={solarDate}
               onChange={(data) => {
@@ -169,7 +169,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
           {/* Location */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center space-x-1">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center space-x-1">
               <MapPin className="w-3.5 h-3.5 text-rose-500" />
               <span>Địa Điểm Tổ Chức</span>
             </label>
@@ -178,20 +178,20 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
               placeholder="Địa chỉ nhà thờ họ, nhà văn hóa thôn hoặc tư gia..."
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-heritage-green focus:bg-white font-semibold"
+              className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-heritage-green focus:bg-white font-semibold dark:text-white dark:placeholder-slate-500"
             />
           </div>
 
           {/* Event Budget Integration (BR-EVENT-004) */}
-          <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3.5 space-y-2">
-            <div className="flex items-center space-x-1.5 text-xs font-bold text-emerald-950">
-              <DollarSign className="w-4 h-4 text-heritage-green" />
+          <div className="bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl p-3.5 space-y-2">
+            <div className="flex items-center space-x-1.5 text-xs font-bold text-emerald-950 dark:text-emerald-200">
+              <DollarSign className="w-4 h-4 text-heritage-green dark:text-emerald-400" />
               <span>Dự Toán Ngân Sách & Nguồn Quỹ Chi Trả</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[11px] font-bold text-emerald-900 mb-0.5">Dự Toán Chi Phí (VNĐ)</label>
+                <label className="block text-[11px] font-bold text-emerald-900 dark:text-emerald-300 mb-0.5">Dự Toán Chi Phí (VNĐ)</label>
                 <input
                   type="number"
                   min="0"
@@ -199,16 +199,16 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                   placeholder="0"
                   value={estimatedBudget}
                   onChange={(e) => setEstimatedBudget(Number(e.target.value))}
-                  className="w-full px-3 py-2 text-xs bg-white border border-emerald-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-heritage-green font-bold text-emerald-900"
+                  className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-heritage-green font-bold text-emerald-900 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-emerald-900 mb-0.5">Trích Từ Quỹ Họ</label>
+                <label className="block text-[11px] font-bold text-emerald-900 dark:text-emerald-300 mb-0.5">Trích Từ Quỹ Họ</label>
                 <select
                   value={fundId}
                   onChange={(e) => setFundId(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-white border border-emerald-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-heritage-green font-semibold text-slate-800"
+                  className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-heritage-green font-semibold text-slate-800 dark:text-white"
                 >
                   {mockFunds.map((f) => (
                     <option key={f.id} value={f.id}>
@@ -222,22 +222,22 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Mô Tả Chi Tiết / Chương Trình Lễ</label>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Mô Tả Chi Tiết / Chương Trình Lễ</label>
             <textarea
               rows={2}
               placeholder="Chương trình dâng hương, đại hội tổng kết, văn nghệ con cháu..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-heritage-green focus:bg-white font-medium"
+              className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-heritage-green focus:bg-white font-medium dark:text-white dark:placeholder-slate-500"
             />
           </div>
 
           {/* Actions */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end space-x-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition"
             >
               Hủy
             </button>

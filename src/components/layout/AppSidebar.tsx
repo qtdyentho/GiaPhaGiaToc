@@ -24,10 +24,13 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ArrowRightLeft,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { BRAND } from '../../lib/constants';
 import { UI_COPY } from '../../config/uiCopy';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface NavItem {
   to: string;
@@ -55,6 +58,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   onToggleCollapse,
 }) => {
   const { user, isSuperAdmin, isFamilyAdmin, activeFamily, activeMembership } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const location = useLocation();
   const isAdminSpace = location.pathname.startsWith('/admin');
 
@@ -332,21 +336,31 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         {/* Footer / User Profile summary */}
         <div
           className={`p-3 border-t border-white/10 bg-[#162D4A]/60 flex items-center text-xs font-sans shrink-0 ${
-            isCollapsed ? 'justify-center' : 'justify-between'
+            isCollapsed ? 'flex-col gap-2 justify-center' : 'justify-between'
           }`}
         >
           {isCollapsed ? (
-            <div className="relative group">
-              <div className="w-9 h-9 rounded-full bg-amber-100 border border-amber-300 text-amber-900 flex items-center justify-center font-bold text-xs shadow-xs cursor-pointer">
-                {user?.full_name?.charAt(0) || 'U'}
-              </div>
-              <div className="absolute left-full ml-3 bottom-0 px-3 py-2 bg-slate-900 text-white text-xs rounded-xl whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-150 z-50 border border-slate-700">
-                <div className="font-bold text-white">{user?.full_name || 'Người dùng'}</div>
-                <div className="text-[10px] text-amber-300">
-                  {isAdminSpace ? 'Super Admin' : activeMembership?.role === 'OWNER' ? 'Trưởng Tộc' : isFamilyAdmin ? 'Hội Đồng Dòng Họ' : 'Thành Viên'}
+            <>
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                title={isDark ? 'Chuyển sang Chế độ sáng' : 'Chuyển sang Chế độ tối'}
+              >
+                {isDark ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-slate-300" />}
+              </button>
+              <div className="relative group">
+                <div className="w-9 h-9 rounded-full bg-amber-100 border border-amber-300 text-amber-900 flex items-center justify-center font-bold text-xs shadow-xs cursor-pointer">
+                  {user?.full_name?.charAt(0) || 'U'}
+                </div>
+                <div className="absolute left-full ml-3 bottom-0 px-3 py-2 bg-slate-900 text-white text-xs rounded-xl whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-150 z-50 border border-slate-700">
+                  <div className="font-bold text-white">{user?.full_name || 'Người dùng'}</div>
+                  <div className="text-[10px] text-amber-300">
+                    {isAdminSpace ? 'Super Admin' : activeMembership?.role === 'OWNER' ? 'Trưởng Tộc' : isFamilyAdmin ? 'Hội Đồng Dòng Họ' : 'Thành Viên'}
+                  </div>
                 </div>
               </div>
-            </div>
+            </>
           ) : (
             <>
               <div className="flex items-center gap-2.5 min-w-0">
@@ -362,15 +376,25 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   </span>
                 </div>
               </div>
-              {isFamilyAdmin && !isAdminSpace && (
-                <NavLink
-                  to="/app/family/settings"
-                  className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition shrink-0"
-                  title="Cài đặt gia tộc"
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition cursor-pointer"
+                  title={isDark ? 'Chuyển sang Chế độ sáng' : 'Chuyển sang Chế độ tối'}
                 >
-                  <ChevronRight className="w-4 h-4" />
-                </NavLink>
-              )}
+                  {isDark ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-slate-300" />}
+                </button>
+                {isFamilyAdmin && !isAdminSpace && (
+                  <NavLink
+                    to="/app/family/settings"
+                    className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition shrink-0"
+                    title="Cài đặt gia tộc"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </NavLink>
+                )}
+              </div>
             </>
           )}
         </div>

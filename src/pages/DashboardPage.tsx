@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Users, Landmark, Wallet, Calendar, ArrowUpRight, Sparkles, 
   ChevronRight, MapPin, Camera, Image, ShieldCheck, HeartHandshake,
-  BookOpen, Megaphone, QrCode
+  BookOpen, Megaphone, QrCode, Flame
 } from 'lucide-react';
 import { LunarCalendarService } from '../services/LunarCalendarService';
 import { ShortLinkService } from '../services/security/ShortLinkService';
@@ -113,8 +113,16 @@ export const DashboardPage: React.FC = () => {
             <span className="tracking-wide">Ẩm Hà Tư Nguyên • Mộc Hữu Bản, Thủy Hữu Nguyên</span>
           </div>
 
-          {/* Action Buttons: Mã QR, Phát Thông Báo & Thay Đổi Ảnh Từ Đường */}
-          <div className="flex items-center space-x-2 self-start sm:self-auto">
+          {/* Action Buttons: Thắp Hương, Mã QR, Phát Thông Báo & Thay Đổi Ảnh Từ Đường */}
+          <div className="flex items-center space-x-2 self-start sm:self-auto flex-wrap gap-y-2">
+            <Link
+              to="/app/memorials"
+              className="inline-flex items-center space-x-1.5 bg-amber-500/90 hover:bg-amber-500 text-amber-950 text-xs font-bold px-3.5 py-1.5 rounded-full border border-amber-300 backdrop-blur-md transition shadow-xs cursor-pointer"
+            >
+              <Flame className="w-3.5 h-3.5 text-amber-900 fill-amber-900" />
+              <span>Thắp Hương Online</span>
+            </Link>
+
             <button
               type="button"
               onClick={() => setIsQRModalOpen(true)}
@@ -129,7 +137,7 @@ export const DashboardPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsBroadcastModalOpen(true)}
-                  className="inline-flex items-center space-x-1.5 bg-amber-500/90 hover:bg-amber-500 text-amber-950 text-xs font-bold px-3.5 py-1.5 rounded-full border border-amber-300 backdrop-blur-md transition shadow-xs cursor-pointer"
+                  className="inline-flex items-center space-x-1.5 bg-blue-700/90 hover:bg-blue-700 text-white text-xs font-bold px-3.5 py-1.5 rounded-full border border-blue-400/50 backdrop-blur-md transition shadow-xs cursor-pointer"
                 >
                   <Megaphone className="w-3.5 h-3.5" />
                   <span>Phát Thông Báo Đẩy</span>
@@ -202,72 +210,72 @@ export const DashboardPage: React.FC = () => {
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Stat 1: Thành viên bà con */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-sm transition">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-sm transition">
           <div className="flex items-center justify-between">
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Bà Con Dòng Họ</div>
-            <div className="p-2 bg-emerald-50 text-[#166534] rounded-xl border border-emerald-200">
+            <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Bà Con Dòng Họ</div>
+            <div className="p-2 bg-emerald-50 dark:bg-emerald-950/60 text-[#166534] dark:text-emerald-300 rounded-xl border border-emerald-200 dark:border-emerald-800">
               <Users className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-2">
+          <div className="text-2xl font-black text-slate-900 dark:text-white mt-2">
             {familyMembers.length || (currentFamily.id === mockFamily.id ? 86 : 1)}{' '}
-            <span className="text-xs font-normal text-slate-500 font-sans">thành viên</span>
+            <span className="text-xs font-normal text-slate-500 dark:text-slate-400 font-sans">thành viên</span>
           </div>
-          <div className="text-xs text-slate-500 mt-1 flex items-center space-x-1">
-            <span className="text-emerald-700 font-semibold">Phả đồ trực hệ</span>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center space-x-1">
+            <span className="text-emerald-700 dark:text-emerald-400 font-semibold">Phả đồ trực hệ</span>
             <span>• Đinh & Nữ toàn tộc</span>
           </div>
         </div>
 
         {/* Stat 2: Sổ quỹ gia tộc */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-sm transition">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-sm transition">
           <div className="flex items-center justify-between">
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Số Dư Quỹ Dòng Họ</div>
-            <div className="p-2 bg-emerald-50 text-[#166534] rounded-xl border border-emerald-200">
+            <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Số Dư Quỹ Dòng Họ</div>
+            <div className="p-2 bg-emerald-50 dark:bg-emerald-950/60 text-[#166534] dark:text-emerald-300 rounded-xl border border-emerald-200 dark:border-emerald-800">
               <Wallet className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-2">
+          <div className="text-2xl font-black text-slate-900 dark:text-white mt-2">
             {formatCurrency(totalBalance)}
           </div>
-          <div className="text-xs text-slate-500 mt-1 flex items-center space-x-1">
-            <span className="text-emerald-700 font-semibold">{familyFunds.length || 3} Quỹ hoạt động</span>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center space-x-1">
+            <span className="text-emerald-700 dark:text-emerald-400 font-semibold">{familyFunds.length || 3} Quỹ hoạt động</span>
             <span>• Minh bạch thu chi</span>
           </div>
         </div>
 
         {/* Stat 3: Lễ giỗ gần nhất */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-sm transition">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-sm transition">
           <div className="flex items-center justify-between">
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Ngày Giỗ Tiền Nhân Gần Nhất</div>
-            <div className="p-2 bg-amber-50 text-amber-700 rounded-xl border border-amber-200">
+            <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Ngày Giỗ Tiền Nhân Gần Nhất</div>
+            <div className="p-2 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 rounded-xl border border-amber-200 dark:border-amber-800">
               <Sparkles className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-base font-bold text-slate-900 mt-2 truncate">
+          <div className="text-base font-bold text-slate-900 dark:text-white mt-2 truncate">
             {nextMemorial ? nextMemorial.title.replace('Lễ Giỗ: ', '') : 'Chưa có lịch giỗ'}
           </div>
-          <div className="text-xs text-slate-500 mt-1 flex items-center space-x-1">
-            <span className="text-amber-800 font-semibold">
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center space-x-1">
+            <span className="text-amber-800 dark:text-amber-400 font-semibold">
               {nextMemorial ? `${nextMemorial.lunar_day}/${nextMemorial.lunar_month} Âm lịch` : '—'}
             </span>
           </div>
         </div>
 
         {/* Stat 4: Hoạt động & Ghi chép */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-sm transition">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-sm transition">
           <div className="flex items-center justify-between">
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Sự Kiện & Ghi Chép</div>
-            <div className="p-2 bg-blue-50 text-blue-700 rounded-xl border border-blue-200">
+            <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Sự Kiện & Ghi Chép</div>
+            <div className="p-2 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 rounded-xl border border-blue-200 dark:border-blue-800">
               <Landmark className="w-5 h-5" />
             </div>
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-2">
+          <div className="text-2xl font-black text-slate-900 dark:text-white mt-2">
             {familyTransactions.length || (currentFamily.id === mockFamily.id ? 24 : 0)}{' '}
-            <span className="text-xs font-normal text-slate-500 font-sans">bút toán</span>
+            <span className="text-xs font-normal text-slate-500 dark:text-slate-400 font-sans">bút toán</span>
           </div>
-          <div className="text-xs text-slate-500 mt-1 flex items-center space-x-1">
-            <span className="text-blue-700 font-semibold">Lưu truyền muôn đời</span>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center space-x-1">
+            <span className="text-blue-700 dark:text-blue-400 font-semibold">Lưu truyền muôn đời</span>
           </div>
         </div>
       </div>
@@ -280,65 +288,65 @@ export const DashboardPage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Link
               to="/app/genealogy"
-              className="p-5 rounded-2xl bg-white border border-slate-200 hover:border-[#166534] shadow-xs hover:shadow-sm transition flex items-center justify-between group"
+              className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-[#166534] dark:hover:border-emerald-600 shadow-xs hover:shadow-sm transition flex items-center justify-between group"
             >
               <div className="space-y-1">
-                <div className="text-xs font-bold text-[#166534] uppercase tracking-wider">Phả Hệ</div>
-                <div className="text-base font-bold text-slate-900 group-hover:text-[#166534] transition">
+                <div className="text-xs font-bold text-[#166534] dark:text-emerald-400 uppercase tracking-wider">Phả Hệ</div>
+                <div className="text-base font-bold text-slate-900 dark:text-white group-hover:text-[#166534] dark:group-hover:text-emerald-400 transition">
                   Cây Gia Phả Dòng Họ
                 </div>
-                <p className="text-xs text-slate-500">Tra cứu chi cành, thứ bậc và các thế hệ tiền nhân</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Tra cứu chi cành, thứ bậc và các thế hệ tiền nhân</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 group-hover:bg-[#166534] text-[#166534] group-hover:text-white flex items-center justify-center transition shrink-0 border border-emerald-200">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 group-hover:bg-[#166534] text-[#166534] dark:text-emerald-300 group-hover:text-white flex items-center justify-center transition shrink-0 border border-emerald-200 dark:border-emerald-800">
                 <ChevronRight className="w-5 h-5" />
               </div>
             </Link>
 
             <Link
               to="/app/finance"
-              className="p-5 rounded-2xl bg-white border border-slate-200 hover:border-[#166534] shadow-xs hover:shadow-sm transition flex items-center justify-between group"
+              className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-[#166534] dark:hover:border-emerald-600 shadow-xs hover:shadow-sm transition flex items-center justify-between group"
             >
               <div className="space-y-1">
-                <div className="text-xs font-bold text-[#166534] uppercase tracking-wider">Tài Chính</div>
-                <div className="text-base font-bold text-slate-900 group-hover:text-[#166534] transition">
+                <div className="text-xs font-bold text-[#166534] dark:text-emerald-400 uppercase tracking-wider">Tài Chính</div>
+                <div className="text-base font-bold text-slate-900 dark:text-white group-hover:text-[#166534] dark:group-hover:text-emerald-400 transition">
                   Sổ Quỹ & Công Đức
                 </div>
-                <p className="text-xs text-slate-500">Ghi chép thu chi, hương khói và bảng vàng tri ân</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Ghi chép thu chi, hương khói và bảng vàng tri ân</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 group-hover:bg-[#166534] text-[#166534] group-hover:text-white flex items-center justify-center transition shrink-0 border border-emerald-200">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 group-hover:bg-[#166534] text-[#166534] dark:text-emerald-300 group-hover:text-white flex items-center justify-center transition shrink-0 border border-emerald-200 dark:border-emerald-800">
                 <ChevronRight className="w-5 h-5" />
               </div>
             </Link>
           </div>
 
           {/* Sổ Quỹ Gia Tộc List */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-                <Wallet className="w-4 h-4 text-[#166534]" />
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                <Wallet className="w-4 h-4 text-[#166534] dark:text-emerald-400" />
                 <span>Các Quỹ Đang Hoạt Động ({currentFamily.name})</span>
               </h2>
-              <Link to="/app/finance" className="text-xs font-bold text-[#166534] hover:underline flex items-center space-x-1">
+              <Link to="/app/finance" className="text-xs font-bold text-[#166534] dark:text-emerald-400 hover:underline flex items-center space-x-1">
                 <span>Xem chi tiết</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {familyFunds.map((fund) => (
-                <div key={fund.id} className="p-4 flex items-center justify-between hover:bg-slate-50 transition">
+                <div key={fund.id} className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-[#166534] font-bold flex items-center justify-center text-sm">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-[#166534] dark:text-emerald-300 font-bold flex items-center justify-center text-sm">
                       {fund.name.charAt(0)}
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-slate-900">{fund.name}</div>
-                      <div className="text-[11px] text-slate-500 line-clamp-1">{fund.description}</div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-white">{fund.name}</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">{fund.description}</div>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-black text-slate-900">{formatCurrency(fund.current_balance)}</div>
-                    <div className="text-[10px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded-full inline-block mt-0.5 border border-emerald-200">
+                    <div className="text-sm font-black text-slate-900 dark:text-white">{formatCurrency(fund.current_balance)}</div>
+                    <div className="text-[10px] text-emerald-800 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full inline-block mt-0.5 border border-emerald-200 dark:border-emerald-800">
                       Khả dụng
                     </div>
                   </div>

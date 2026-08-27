@@ -85,19 +85,19 @@ export const CreateMemorialModal: React.FC<CreateMemorialModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-      <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Modal Header */}
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-amber-500/10 via-emerald-500/5 to-transparent">
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-gradient-to-r from-amber-500/10 dark:from-amber-950/40 via-emerald-500/5 to-transparent">
           <div className="flex items-center space-x-2.5">
             <div className="w-9 h-9 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-900 shadow-xs">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">Thiết Lập Ngày Giỗ Họ Tộc</h2>
-              <p className="text-xs text-slate-500">Chu kỳ Âm lịch hàng năm (Tự động quy đổi Dương lịch)</p>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Thiết Lập Ngày Giỗ Họ Tộc</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Chu kỳ Âm lịch hàng năm (Tự động quy đổi Dương lịch)</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-600 transition">
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -113,14 +113,14 @@ export const CreateMemorialModal: React.FC<CreateMemorialModalProps> = ({
 
           {/* Member Selector */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center space-x-1.5">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center space-x-1.5">
               <User className="w-3.5 h-3.5 text-heritage-green" />
               <span>Tiền Nhân / Thành Viên Quá Cố *</span>
             </label>
             <select
               value={memberId}
               onChange={(e) => handleMemberChange(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-heritage-green focus:bg-white font-semibold text-slate-800"
+              className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-heritage-green focus:bg-white font-semibold text-slate-800 dark:text-white"
             >
               {mockMembers.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -132,7 +132,7 @@ export const CreateMemorialModal: React.FC<CreateMemorialModalProps> = ({
 
           {/* Title */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
               Tên / Danh Xưng Lễ Giỗ *
             </label>
             <input
@@ -140,18 +140,18 @@ export const CreateMemorialModal: React.FC<CreateMemorialModalProps> = ({
               placeholder="Ví dụ: Giỗ Cụ Thủy Tổ Nguyễn Văn Phúc, Giỗ Cụ Chi Trưởng..."
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-heritage-green focus:bg-white font-semibold"
+              className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-heritage-green focus:bg-white font-semibold dark:text-white dark:placeholder-slate-500"
             />
           </div>
 
           {/* Lunar Date Pickers */}
-          <div className="grid grid-cols-2 gap-3 bg-amber-50/60 p-3.5 rounded-xl border border-amber-200">
+          <div className="grid grid-cols-2 gap-3 bg-amber-50/60 dark:bg-amber-950/30 p-3.5 rounded-xl border border-amber-200 dark:border-amber-800">
             <div>
-              <label className="block text-[11px] font-bold text-amber-950 mb-1">Ngày Âm Lịch (1 - 30)</label>
+              <label className="block text-[11px] font-bold text-amber-950 dark:text-amber-200 mb-1">Ngày Âm Lịch (1 - 30)</label>
               <select
                 value={lunarDay}
                 onChange={(e) => setLunarDay(Number(e.target.value))}
-                className="w-full px-2.5 py-2 bg-white border border-amber-200 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                className="w-full px-2.5 py-2 bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-800 rounded-lg text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
               >
                 {Array.from({ length: 30 }).map((_, i) => (
                   <option key={i + 1} value={i + 1}>
@@ -162,11 +162,11 @@ export const CreateMemorialModal: React.FC<CreateMemorialModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-amber-950 mb-1">Tháng Âm Lịch (1 - 12)</label>
+              <label className="block text-[11px] font-bold text-amber-950 dark:text-amber-200 mb-1">Tháng Âm Lịch (1 - 12)</label>
               <select
                 value={lunarMonth}
                 onChange={(e) => setLunarMonth(Number(e.target.value))}
-                className="w-full px-2.5 py-2 bg-white border border-amber-200 rounded-lg text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                className="w-full px-2.5 py-2 bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-800 rounded-lg text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
               >
                 {Array.from({ length: 12 }).map((_, i) => (
                   <option key={i + 1} value={i + 1}>
@@ -178,7 +178,7 @@ export const CreateMemorialModal: React.FC<CreateMemorialModalProps> = ({
 
             {/* Leap Month Option (BR-MEMORIAL-003) */}
             <div className="col-span-2 mt-1">
-              <label className="flex items-center space-x-2 text-xs font-semibold text-amber-900 cursor-pointer">
+              <label className="flex items-center space-x-2 text-xs font-semibold text-amber-900 dark:text-amber-300 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={isLeapMonth}
@@ -191,14 +191,14 @@ export const CreateMemorialModal: React.FC<CreateMemorialModalProps> = ({
           </div>
 
           {/* Live Preview Box */}
-          <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl text-xs space-y-1.5">
-            <div className="font-bold text-slate-800 flex items-center justify-between">
+          <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3.5 rounded-xl text-xs space-y-1.5">
+            <div className="font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
               <span>Dương lịch năm {nextOccurrence.solarYear}:</span>
-              <span className="text-heritage-green font-bold text-sm bg-emerald-50 px-2.5 py-0.5 rounded-lg border border-emerald-200">
+              <span className="text-heritage-green font-bold text-sm bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-0.5 rounded-lg border border-emerald-200 dark:border-emerald-800 dark:text-emerald-300">
                 {nextOccurrence.solarDate}
               </span>
             </div>
-            <div className="text-[11px] text-slate-500 flex items-center justify-between">
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
               <span>Đếm ngược thời gian:</span>
               <span className="font-semibold text-amber-700">
                 {nextOccurrence.daysRemaining >= 0
@@ -209,7 +209,7 @@ export const CreateMemorialModal: React.FC<CreateMemorialModalProps> = ({
 
             {/* 30th Lunar Month Fallback Alert (BR-MEMORIAL-004) */}
             {nextOccurrence.isSpecial30Fallback && (
-              <div className="mt-2 p-2.5 bg-amber-100/90 border border-amber-300 rounded-lg text-[11px] text-amber-900 font-medium">
+              <div className="mt-2 p-2.5 bg-amber-100/90 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 rounded-lg text-[11px] text-amber-900 dark:text-amber-200 font-medium">
                 ⚠️ <strong>Lưu ý ngày giỗ 30 Âm:</strong> Năm {nextOccurrence.solarYear} tháng {lunarMonth} chỉ có 29 ngày (tháng thiếu). Lễ cúng sẽ được gợi ý tiến hành vào ngày 29.
               </div>
             )}
@@ -217,22 +217,22 @@ export const CreateMemorialModal: React.FC<CreateMemorialModalProps> = ({
 
           {/* Notes */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Ghi Chú Nghi Lễ / Hướng Dẫn Cúng Tế</label>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Ghi Chú Nghi Lễ / Hướng Dẫn Cúng Tế</label>
             <textarea
               rows={2}
               placeholder="Ghi chú về phân công chuẩn bị mâm lễ, địa điểm nhà thờ hoặc chi phái..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-heritage-green focus:bg-white font-medium"
+              className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-heritage-green focus:bg-white font-medium dark:text-white dark:placeholder-slate-500"
             />
           </div>
 
           {/* Actions */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end space-x-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition"
             >
               Hủy
             </button>
