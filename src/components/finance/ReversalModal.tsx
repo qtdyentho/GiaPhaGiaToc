@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, RotateCcw, ShieldAlert, Check, AlertTriangle } from 'lucide-react';
 import { FinancialTransaction, Fund } from '../../types/database';
 import { FundService } from '../../services/FundService';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface ReversalModalProps {
   isOpen: boolean;
@@ -18,8 +19,10 @@ export const ReversalModal: React.FC<ReversalModalProps> = ({
   onSuccess,
   transaction,
   funds,
-  familyId = 'fam-0000-0001',
+  familyId,
 }) => {
+  const { activeFamily } = useAuth();
+  const targetFamId = familyId || activeFamily?.id || '';
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +42,7 @@ export const ReversalModal: React.FC<ReversalModalProps> = ({
     setError(null);
 
     try {
-      const res = await FundService.reverseTransaction(transaction.id, familyId, reason.trim());
+      const res = await FundService.reverseTransaction(transaction.id, targetFamId, reason.trim());
       if (res.success) {
         onSuccess();
         onClose();

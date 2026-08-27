@@ -60,7 +60,8 @@ export class ReminderService {
   /**
    * Lấy cấu hình các mốc nhắc lịch của gia tộc
    */
-  static async getReminderConfigs(familyId: string = 'fam-0000-0001'): Promise<EventReminderConfig[]> {
+  static async getReminderConfigs(familyId?: string): Promise<EventReminderConfig[]> {
+    if (!familyId) return [];
     return mockReminderConfigs.filter((c) => c.family_id === familyId);
   }
 
@@ -68,9 +69,9 @@ export class ReminderService {
    * Cập nhật bật/tắt một mốc nhắc lịch
    */
   static async toggleReminderConfig(id: string, enabled: boolean): Promise<boolean> {
-    const cfg = mockReminderConfigs.find((c) => c.id === id);
-    if (cfg) {
-      cfg.enabled = enabled;
+    const config = mockReminderConfigs.find((c) => c.id === id);
+    if (config) {
+      config.enabled = enabled;
       return true;
     }
     return false;
@@ -79,15 +80,21 @@ export class ReminderService {
   /**
    * Lấy danh sách thông báo nhắc nhở của gia tộc
    */
-  static async getNotifications(familyId: string = 'fam-0000-0001'): Promise<ClanNotification[]> {
+  static async getNotifications(familyId?: string): Promise<ClanNotification[]> {
+    if (!familyId) return [];
     if (isSupabaseConfigured()) {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('family_id', familyId)
-        .order('created_at', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('family_id', familyId)
+          .order('created_at', { ascending: false });
 
-      if (!error && data) return data as ClanNotification[];
+        if (!error && data) return data as ClanNotification[];
+        return [];
+      } catch (err) {
+        return [];
+      }
     }
     return mockNotifications.filter((n) => n.family_id === familyId);
   }
@@ -95,13 +102,16 @@ export class ReminderService {
   /**
    * Đánh dấu thông báo đã đọc
    */
-  static async markAsRead(notificationId: string, familyId: string = 'fam-0000-0001'): Promise<boolean> {
+  static async markAsRead(notificationId: string, familyId?: string): Promise<boolean> {
+    if (!familyId) return false;
     if (isSupabaseConfigured()) {
-      await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('id', notificationId)
-        .eq('family_id', familyId);
+      try {
+        await supabase
+          .from('notifications')
+          .update({ is_read: true })
+          .eq('id', notificationId)
+          .eq('family_id', familyId);
+      } catch (err) {}
     }
     const notif = mockNotifications.find((n) => n.id === notificationId && n.family_id === familyId);
     if (notif) {
@@ -114,7 +124,8 @@ export class ReminderService {
   /**
    * Bộ máy quét và sinh thông báo nhắc nhở tự động theo chuẩn Idempotency (BR-REMINDER-001)
    */
-  static async generateDailyReminders(familyId: string = 'fam-0000-0001'): Promise<number> {
+  static async generateDailyReminders(familyId?: string): Promise<number> {
+    if (!familyId) return 0;
     let createdCount = 0;
     const upcomingMemorials = await MemorialService.getUpcomingMemorials(familyId, 20);
     const activeConfigs = mockReminderConfigs.filter((c) => c.family_id === familyId && c.enabled);

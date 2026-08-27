@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, CheckCircle2, XCircle, ShieldAlert, DollarSign, Calendar, UserCheck } from 'lucide-react';
 import { ExpenseRecord, Fund } from '../../types/database';
 import { FundService } from '../../services/FundService';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface ExpenseApprovalModalProps {
   isOpen: boolean;
@@ -19,9 +20,12 @@ export const ExpenseApprovalModal: React.FC<ExpenseApprovalModalProps> = ({
   onSuccess,
   expense,
   funds,
-  familyId = 'fam-0000-0001',
-  currentUserId = '11111111-1111-1111-1111-111111111111',
+  familyId,
+  currentUserId,
 }) => {
+  const { user, activeFamily } = useAuth();
+  const targetFamId = familyId || activeFamily?.id || '';
+  const userId = currentUserId || user?.id || '';
   const [rejectMode, setRejectMode] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [loading, setLoading] = useState(false);
@@ -36,7 +40,7 @@ export const ExpenseApprovalModal: React.FC<ExpenseApprovalModalProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const res = await FundService.approveExpense(expense.id, familyId, currentUserId);
+      const res = await FundService.approveExpense(expense.id, targetFamId, userId);
       if (res.success) {
         onSuccess();
         onClose();

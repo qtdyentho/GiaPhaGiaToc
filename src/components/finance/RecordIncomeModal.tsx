@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, QrCode, CheckCircle2, DollarSign, CreditCard, Banknote, ShieldCheck } from 'lucide-react';
-import { Fund, IncomeAssessment, PaymentMethod } from '../../types/database';
+import { IncomeAssessment, Fund, PaymentMethod, Member } from '../../types/database';
 import { FundService } from '../../services/FundService';
+import { GenealogyService } from '../../services/GenealogyService';
 import { VietQRService } from '../../services/VietQRService';
+import { useAuth } from '../../contexts/AuthContext';
 import { mockMembers } from '../../services/mockData';
 
 interface RecordIncomeModalProps {
@@ -20,9 +22,24 @@ export const RecordIncomeModal: React.FC<RecordIncomeModalProps> = ({
   onSuccess,
   assessment,
   funds,
-  familyId = 'fam-0000-0001',
+  familyId,
 }) => {
-  const member = mockMembers.find((m) => m.id === assessment?.member_id);
+  const { activeFamily } = useAuth();
+  const targetFamId = familyId || activeFamily?.id || '';
+  const [member, setMember] = useState<Member | undefined>(undefined);
+
+  useEffect(() => {
+    async function loadMember() {
+      if (assessment?.member_id) {
+        const m = await GenealogyService.getMemberById(assessment.member_id);
+        setMember(m || mockMembers.find((mock) => mock.id === assessment.member_id));
+      }
+    }
+    if (isOpen) {
+      loadMember();
+    }
+  }, [isOpen, assessment?.member_id]);
+
   const remaining = assessment ? Math.max(0, Number(assessment.amount_due) - Number(assessment.amount_paid)) : 500000;
 
   const [fundId, setFundId] = useState(assessment?.fund_id || funds[0]?.id || '');
@@ -30,7 +47,7 @@ export const RecordIncomeModal: React.FC<RecordIncomeModalProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('VIETQR');
   const [transactionDate, setTransactionDate] = useState(new Date().toISOString().slice(0, 10));
   const [description, setDescription] = useState(
-    assessment ? `Thu tiền ${assessment.title} - ${member?.full_name || 'Thành viên'}` : 'Thu quỹ gia tộc'
+    assessment ? `Thu tiền ${assessment.title}` : 'Thu quỹ gia tộc'
   );
   const [showQR, setShowQR] = useState(paymentMethod === 'VIETQR');
   const [loading, setLoading] = useState(false);
@@ -57,7 +74,7 @@ export const RecordIncomeModal: React.FC<RecordIncomeModalProps> = ({
 
     try {
       const res = await FundService.recordIncomePayment({
-        familyId,
+        familyId: targetFamId,
         fundId,
         assessmentId: assessment?.id,
         memberId: assessment?.member_id,

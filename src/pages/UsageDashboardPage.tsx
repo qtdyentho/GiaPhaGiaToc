@@ -21,13 +21,18 @@ export const UsageDashboardPage: React.FC = () => {
   const [metrics, setMetrics] = useState<FeatureUsageSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const familyId = activeFamily?.id || 'fam-0000-0001';
+  const familyId = activeFamily?.id;
 
   useEffect(() => {
     async function loadData() {
+      if (!familyId) {
+        setMetrics([]);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       const data = await UsageService.getUsageSummary(familyId);
-      setMetrics(data);
+      setMetrics(data || []);
       setLoading(false);
     }
     loadData();

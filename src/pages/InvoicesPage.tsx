@@ -24,13 +24,18 @@ export const InvoicesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
-  const familyId = activeFamily?.id || 'fam-0000-0001';
+  const familyId = activeFamily?.id;
 
   useEffect(() => {
     async function loadData() {
+      if (!familyId) {
+        setInvoices([]);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       const data = await InvoiceService.getInvoices(familyId);
-      setInvoices(data);
+      setInvoices(data || []);
       setLoading(false);
     }
     loadData();

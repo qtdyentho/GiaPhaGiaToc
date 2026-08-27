@@ -12,10 +12,10 @@ const AUTO_DISMISS_MS = 5000;
 
 export const EventBroadcastToast: React.FC = () => {
   const { activeFamily } = useAuth();
-  const familyId = activeFamily?.id || 'fam-0000-0001';
+  const familyId = activeFamily?.id;
 
   const [broadcast, setBroadcast] = useState<BroadcastNotification | null>(() => {
-    return BroadcastService.getActiveBroadcast(familyId);
+    return familyId ? BroadcastService.getActiveBroadcast(familyId) : null;
   });
 
   const [isVisible, setIsVisible] = useState(false);

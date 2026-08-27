@@ -44,7 +44,7 @@ export const CreateBroadcastModal: React.FC<CreateBroadcastModalProps> = ({
   onClose,
 }) => {
   const { user, activeFamily, isFamilyAdmin } = useAuth();
-  const currentFamilyId = activeFamily?.id || 'fam-0000-0001';
+  const currentFamilyId = activeFamily?.id || '';
 
   // Default event date: 7 days from now at 08:00
   const defaultDate = new Date();

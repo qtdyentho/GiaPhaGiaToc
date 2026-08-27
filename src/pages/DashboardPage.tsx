@@ -383,7 +383,7 @@ export const DashboardPage: React.FC = () => {
 
         {/* Right Column: Upcoming Events & Memorials Widget */}
         <div className="space-y-6">
-          <UpcomingEventsWidget />
+          <UpcomingEventsWidget familyId={activeFamily.id} />
         </div>
       </div>
 

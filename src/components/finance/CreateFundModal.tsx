@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Landmark, Check } from 'lucide-react';
 import { FundService } from '../../services/FundService';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface CreateFundModalProps {
   isOpen: boolean;
@@ -13,8 +14,10 @@ export const CreateFundModal: React.FC<CreateFundModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  familyId = 'fam-0000-0001',
+  familyId,
 }) => {
+  const { activeFamily } = useAuth();
+  const targetFamId = familyId || activeFamily?.id || '';
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [openingBalance, setOpeningBalance] = useState<string>('0');
@@ -35,7 +38,7 @@ export const CreateFundModal: React.FC<CreateFundModalProps> = ({
 
     try {
       const res = await FundService.createFund({
-        family_id: familyId,
+        family_id: targetFamId,
         name: name.trim(),
         description: description.trim() || undefined,
         opening_balance: Number(openingBalance) || 0,

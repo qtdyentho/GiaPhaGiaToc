@@ -6,6 +6,7 @@ import { FundService } from '../../services/FundService';
 import { Branch, Fund } from '../../types/database';
 import { mockFunds, mockBranches } from '../../services/mockData';
 import { LunarDatePicker } from '../common/LunarDatePicker';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface CreateEventModalProps {
   isOpen: boolean;
@@ -19,15 +20,18 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  familyId = 'fam-0000-0001',
+  familyId,
   defaultDate,
 }) => {
+  const { activeFamily } = useAuth();
+  const targetFamId = familyId || activeFamily?.id || 'fam-0000-0001';
+  
   const [branchesList, setBranchesList] = useState<Branch[]>([]);
   const [fundsList, setFundsList] = useState<Fund[]>([]);
 
   const [title, setTitle] = useState('');
   const [eventType, setEventType] = useState<string>('CLAN_ANCESTRAL_DAY');
-  const [location, setLocation] = useState('Từ Đường Họ Nguyễn Văn, Hoàng Mai, Hà Nội');
+  const [location, setLocation] = useState(activeFamily?.ancestral_hall_address || 'Từ Đường Họ Nguyễn Văn, Hoàng Mai, Hà Nội');
   const [description, setDescription] = useState('');
   const [branchId, setBranchId] = useState<string>('ALL');
   const [estimatedBudget, setEstimatedBudget] = useState<number>(0);
@@ -44,11 +48,11 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
   useEffect(() => {
     async function loadData() {
-      if (isOpen && familyId) {
+      if (isOpen && targetFamId) {
         try {
           const [tree, funds] = await Promise.all([
-            GenealogyService.getFamilyTree(familyId),
-            FundService.getFunds(familyId),
+            GenealogyService.getFamilyTree(targetFamId),
+            FundService.getFunds(targetFamId),
           ]);
           const bList = tree.branches && tree.branches.length > 0 ? tree.branches : mockBranches;
           const fList = funds && funds.length > 0 ? funds : mockFunds;
@@ -65,7 +69,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
       }
     }
     loadData();
-  }, [isOpen, familyId]);
+  }, [isOpen, targetFamId]);
 
   if (!isOpen) return null;
 
@@ -80,7 +84,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
     setError(null);
 
     const res = await EventService.createEvent({
-      family_id: familyId,
+      family_id: targetFamId,
       title: title.trim(),
       description: description.trim(),
       event_type: eventType as any,
@@ -98,10 +102,10 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
     setIsSubmitting(false);
     if (res.success) {
-      onSuccess();
+      onSuccess?.();
       onClose();
     } else {
-      setError(res.error || 'Không thể tạo sự kiện');
+      setError(res.error || 'Có lỗi xảy ra khi tạo sự kiện');
     }
   };
 

@@ -12,46 +12,50 @@ export class MemorialService {
     if (!familyId) return [];
 
     if (isSupabaseConfigured()) {
-      // JOIN memorial_dates → members → generations + branches để lấy đầy đủ thông tin
-      const { data, error } = await supabase
-        .from('memorial_dates')
-        .select(`
-          *,
-          members (
-            id,
-            full_name,
-            burial_place,
-            generation_id,
-            branch_id,
-            generations ( name, generation_number ),
-            branches ( name )
-          )
-        `)
-        .eq('family_id', familyId)
-        .order('lunar_month', { ascending: true })
-        .order('lunar_day', { ascending: true });
+      try {
+        const { data, error } = await supabase
+          .from('memorial_dates')
+          .select(`
+            *,
+            members (
+              id,
+              full_name,
+              burial_place,
+              generation_id,
+              branch_id
+            )
+          `)
+          .eq('family_id', familyId)
+          .order('lunar_month', { ascending: true })
+          .order('lunar_day', { ascending: true });
 
-      if (!error && data) {
-        return data.map((row: any) => {
-          const next = LunarCalendarService.getNextSolarDateForMemorial(
-            row.lunar_day,
-            row.lunar_month,
-            row.is_leap_month
-          );
-          const member = row.members;
-          const gen = member?.generations;
-          const branch = member?.branches;
+        if (!error && data) {
+          return data.map((row: any) => {
+            const next = LunarCalendarService.getNextSolarDateForMemorial(
+              row.lunar_day,
+              row.lunar_month,
+              row.is_leap_month
+            );
+            const member = row.members;
 
-          return {
-            ...row,
-            members: undefined, // loại bỏ nested object khỏi response
-            next_solar_date: next.solarDate,
-            generation_name: gen?.name || (member ? `Đời thứ ${gen?.generation_number || '?'}` : undefined),
-            generation_number: gen?.generation_number || 1,
-            branch_name: branch?.name || 'Chi Trưởng',
-            burial_place: member?.burial_place,
-          } as MemorialDate;
-        });
+            return {
+              ...row,
+              members: undefined, // loại bỏ nested object khỏi response
+              next_solar_date: next.solarDate,
+              generation_name: member ? `Đời thứ ${member.generation_id || '?'}` : undefined,
+              generation_number: 1,
+              branch_name: 'Chi Trưởng',
+              burial_place: member?.burial_place,
+            } as MemorialDate;
+          });
+        }
+        if (error) {
+          console.error('Lỗi khi truy vấn ngày giỗ:', error);
+        }
+        return [];
+      } catch (err) {
+        console.error('MemorialService getMemorials error:', err);
+        return [];
       }
     }
 

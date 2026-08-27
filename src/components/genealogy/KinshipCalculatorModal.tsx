@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 import { Member, KinshipResult } from '../../types/database';
 import { KinshipService } from '../../services/genealogy/KinshipService';
-import { mockMembers } from '../../services/mockData';
+import { GenealogyService } from '../../services/GenealogyService';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface KinshipCalculatorModalProps {
@@ -21,24 +21,40 @@ export const KinshipCalculatorModal: React.FC<KinshipCalculatorModalProps> = ({
   initialMemberBId,
 }) => {
   const { activeFamily } = useAuth();
-  const currentFamilyId = activeFamily?.id || 'fam-0000-0001';
+  const currentFamilyId = activeFamily?.id;
 
-  const familyMembers = useMemo(() => {
-    return mockMembers.filter((m) => m.family_id === currentFamilyId);
-  }, [currentFamilyId]);
+  const [familyMembers, setFamilyMembers] = useState<Member[]>([]);
 
-  const [memberAId, setMemberAId] = useState<string>(
-    initialMemberAId || familyMembers.find((m) => m.id === 'mb-004')?.id || familyMembers[0]?.id || ''
-  );
-  const [memberBId, setMemberBId] = useState<string>(
-    initialMemberBId || familyMembers.find((m) => m.id === 'mb-011')?.id || familyMembers[1]?.id || ''
-  );
+  useEffect(() => {
+    async function loadMembers() {
+      if (isOpen && currentFamilyId) {
+        try {
+          const members = await GenealogyService.getMembers(currentFamilyId);
+          setFamilyMembers(members || []);
+        } catch (err) {
+          console.error('Lỗi khi tải thành viên tra cứu xưng hô:', err);
+        }
+      }
+    }
+    loadMembers();
+  }, [isOpen, currentFamilyId]);
+
+  const [memberAId, setMemberAId] = useState<string>('');
+  const [memberBId, setMemberBId] = useState<string>('');
+
+  useEffect(() => {
+    if (familyMembers.length > 0) {
+      if (initialMemberAId) setMemberAId(initialMemberAId);
+      else if (!memberAId) setMemberAId(familyMembers[0]?.id || '');
+
+      if (initialMemberBId) setMemberBId(initialMemberBId);
+      else if (!memberBId) setMemberBId(familyMembers[1]?.id || familyMembers[0]?.id || '');
+    }
+  }, [familyMembers, initialMemberAId, initialMemberBId]);
 
   const [kinshipResult, setKinshipResult] = useState<KinshipResult | null>(null);
 
   useEffect(() => {
-    if (initialMemberAId) setMemberAId(initialMemberAId);
-    if (initialMemberBId) setMemberBId(initialMemberBId);
   }, [initialMemberAId, initialMemberBId]);
 
   useEffect(() => {

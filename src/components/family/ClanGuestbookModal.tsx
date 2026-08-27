@@ -82,7 +82,7 @@ export const ClanGuestbookModal: React.FC<ClanGuestbookModalProps> = ({
             .eq('family_id', familyId)
             .order('created_at', { ascending: false });
 
-          if (!error && data && data.length > 0) {
+          if (!error && data) {
             setEntries(data as ClanGuestbookEntry[]);
             setLoading(false);
             return;
@@ -92,7 +92,7 @@ export const ClanGuestbookModal: React.FC<ClanGuestbookModalProps> = ({
         }
       }
       // Fallback
-      setEntries(defaultMockGuestbook);
+      setEntries(familyId === 'fam-0000-0001' ? defaultMockGuestbook : []);
       setLoading(false);
     }
 

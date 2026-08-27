@@ -4,6 +4,7 @@ import { Fund, PaymentMethod, SponsorType, Member } from '../../types/database';
 import { FundService } from '../../services/FundService';
 import { GenealogyService } from '../../services/GenealogyService';
 import { VietQRService } from '../../services/VietQRService';
+import { useAuth } from '../../contexts/AuthContext';
 import { mockMembers } from '../../services/mockData';
 
 interface AddContributionModalProps {
@@ -19,8 +20,10 @@ export const AddContributionModal: React.FC<AddContributionModalProps> = ({
   onClose,
   onSuccess,
   funds,
-  familyId = 'fam-0000-0001',
+  familyId,
 }) => {
+  const { activeFamily } = useAuth();
+  const targetFamId = familyId || activeFamily?.id;
   const [membersList, setMembersList] = useState<Member[]>([]);
   const [donorType, setDonorType] = useState<SponsorType>('MEMBER');
   const [selectedMemberId, setSelectedMemberId] = useState('');
@@ -35,22 +38,20 @@ export const AddContributionModal: React.FC<AddContributionModalProps> = ({
 
   useEffect(() => {
     async function loadMembers() {
-      if (isOpen && familyId) {
+      if (isOpen && targetFamId) {
         try {
-          const list = await GenealogyService.getMembers(familyId);
-          const finalMembers = list && list.length > 0 ? list : mockMembers;
-          setMembersList(finalMembers);
-          if (!selectedMemberId && finalMembers[0]) {
-            setSelectedMemberId(finalMembers[0].id);
+          const list = await GenealogyService.getMembers(targetFamId);
+          setMembersList(list || []);
+          if (!selectedMemberId && list && list[0]) {
+            setSelectedMemberId(list[0].id);
           }
         } catch (err) {
           console.error('Lỗi khi tải thành viên đóng góp:', err);
-          setMembersList(mockMembers);
         }
       }
     }
     loadMembers();
-  }, [isOpen, familyId]);
+  }, [isOpen, targetFamId]);
 
   if (!isOpen) return null;
 

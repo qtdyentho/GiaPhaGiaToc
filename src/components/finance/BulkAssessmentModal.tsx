@@ -3,6 +3,7 @@ import { X, Layers, Users, Calendar, Check, AlertCircle, ArrowRight, ShieldCheck
 import { Fund, IncomeCategory, Branch, Generation, Member } from '../../types/database';
 import { FundService } from '../../services/FundService';
 import { GenealogyService } from '../../services/GenealogyService';
+import { useAuth } from '../../contexts/AuthContext';
 import { mockMembers } from '../../services/mockData';
 
 interface BulkAssessmentModalProps {
@@ -24,8 +25,10 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
   categories,
   branches,
   generations,
-  familyId = 'fam-0000-0001',
+  familyId,
 }) => {
+  const { activeFamily } = useAuth();
+  const targetFamId = familyId || activeFamily?.id;
   const [membersList, setMembersList] = useState<Member[]>([]);
   const [step, setStep] = useState<1 | 2>(1);
   const [title, setTitle] = useState('Đóng góp Quỹ Gia Tộc Thường Niên 2026');
@@ -42,23 +45,22 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
 
   useEffect(() => {
     async function loadMembers() {
-      if (isOpen && familyId) {
+      if (isOpen && targetFamId) {
         try {
-          const list = await GenealogyService.getMembers(familyId);
-          setMembersList(list && list.length > 0 ? list : mockMembers);
+          const list = await GenealogyService.getMembers(targetFamId);
+          setMembersList(list || []);
         } catch (err) {
           console.error('Lỗi khi tải thành viên lập định mức:', err);
-          setMembersList(mockMembers);
         }
       }
     }
     loadMembers();
-  }, [isOpen, familyId]);
+  }, [isOpen, targetFamId]);
 
   if (!isOpen) return null;
 
   // Filter members based on target scope
-  let eligibleMembers = (membersList.length > 0 ? membersList : mockMembers).filter((m) => m.life_status === 'ALIVE');
+  let eligibleMembers = membersList.filter((m) => m.life_status === 'ALIVE');
   if (targetScope === 'BRANCH' && selectedBranchId) {
     eligibleMembers = eligibleMembers.filter((m) => m.branch_id === selectedBranchId);
   } else if (targetScope === 'GENERATION' && selectedGenId) {
@@ -81,7 +83,7 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
 
     try {
       const res = await FundService.createBulkAssessment({
-        familyId,
+        familyId: targetFamId || '',
         fundId,
         categoryId,
         title: title.trim(),

@@ -24,11 +24,14 @@ export const EventDetailPage: React.FC = () => {
   const [budgetSummary, setBudgetSummary] = useState<EventBudgetSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const familyId = activeFamily?.id || 'fam-0000-0001';
+  const familyId = activeFamily?.id;
 
   useEffect(() => {
     async function loadData() {
-      if (!id) return;
+      if (!id || !familyId) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       const [evt, budget] = await Promise.all([
         EventService.getEventById(id, familyId),

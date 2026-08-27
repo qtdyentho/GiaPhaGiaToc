@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Sparkles, AlertCircle, CheckCircle2, User } from 'lucide-react';
 import { MemorialService } from '../../services/calendar/MemorialService';
 import { GenealogyService } from '../../services/GenealogyService';
-import { Member } from '../../types/database';
+import { Member, MemorialDate } from '../../types/database';
+import { useAuth } from '../../contexts/AuthContext';
 import { mockMembers } from '../../services/mockData';
 import { LunarCalendarService } from '../../services/calendar/LunarCalendarService';
 import { getDaysInLunarMonth, getLeapMonth } from '../../lib/lunar';
@@ -10,7 +11,7 @@ import { getDaysInLunarMonth, getLeapMonth } from '../../lib/lunar';
 interface CreateMemorialModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess?: () => void;
   familyId?: string;
   defaultMemberId?: string;
 }
@@ -19,9 +20,11 @@ export const CreateMemorialModal: React.FC<CreateMemorialModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  familyId = 'fam-0000-0001',
+  familyId,
   defaultMemberId,
 }) => {
+  const { activeFamily } = useAuth();
+  const targetFamId = familyId || activeFamily?.id;
   const [membersList, setMembersList] = useState<Member[]>([]);
   const [memberId, setMemberId] = useState(defaultMemberId || '');
   const [title, setTitle] = useState('');
@@ -34,29 +37,27 @@ export const CreateMemorialModal: React.FC<CreateMemorialModalProps> = ({
 
   useEffect(() => {
     async function loadMembers() {
-      if (isOpen && familyId) {
+      if (isOpen && targetFamId) {
         try {
-          const members = await GenealogyService.getMembers(familyId);
-          const list = members && members.length > 0 ? members : mockMembers;
-          setMembersList(list);
+          const members = await GenealogyService.getMembers(targetFamId);
+          setMembersList(members || []);
           if (!memberId) {
-            const initialId = defaultMemberId || list[0]?.id || '';
+            const initialId = defaultMemberId || members[0]?.id || '';
             setMemberId(initialId);
-            const initialMember = list.find((m) => m.id === initialId);
+            const initialMember = members.find((m) => m.id === initialId);
             if (initialMember) {
-              setTitle(`Lễ Giỗ Cụ ${initialMember.full_name}`);
+              setTitle(`Lễ Giỗ: ${initialMember.full_name}`);
               if (initialMember.death_lunar_day) setLunarDay(initialMember.death_lunar_day);
               if (initialMember.death_lunar_month) setLunarMonth(initialMember.death_lunar_month);
             }
           }
         } catch (err) {
-          console.error('Lỗi khi tải danh sách thành viên cho lễ giỗ:', err);
-          setMembersList(mockMembers);
+          console.error('Lỗi khi tải danh sách thành viên:', err);
         }
       }
     }
     loadMembers();
-  }, [isOpen, familyId, defaultMemberId]);
+  }, [isOpen, targetFamId, defaultMemberId]);
 
   if (!isOpen) return null;
 
@@ -86,7 +87,7 @@ export const CreateMemorialModal: React.FC<CreateMemorialModalProps> = ({
     setError(null);
 
     const res = await MemorialService.createMemorial({
-      family_id: familyId,
+      family_id: targetFamId || '',
       member_id: memberId,
       title: title.trim(),
       lunar_day: lunarDay,
@@ -97,7 +98,7 @@ export const CreateMemorialModal: React.FC<CreateMemorialModalProps> = ({
 
     setIsSubmitting(false);
     if (res.success) {
-      onSuccess();
+      onSuccess?.();
       onClose();
     } else {
       setError(res.error || 'Không thể tạo ngày giỗ');

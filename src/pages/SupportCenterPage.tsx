@@ -6,10 +6,12 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function SupportCenterPage() {
   const { activeFamily, user } = useAuth();
-  const currentFamilyId = activeFamily?.id || 'fam-0000-0001';
-  const currentUserId = user?.id || 'usr-001';
+  const currentFamilyId = activeFamily?.id || '';
+  const currentUserId = user?.id || '';
 
-  const [tickets, setTickets] = useState<SupportTicket[]>(() => BetaOperationsService.getTicketsByFamily(currentFamilyId));
+  const [tickets, setTickets] = useState<SupportTicket[]>(() =>
+    currentFamilyId ? BetaOperationsService.getTicketsByFamily(currentFamilyId) : []
+  );
   const [subject, setSubject] = useState('');
   const [category, setCategory] = useState<SupportTicket['category']>('GENEALOGY');
   const [severity, setSeverity] = useState<SupportTicket['severity']>('LOW');

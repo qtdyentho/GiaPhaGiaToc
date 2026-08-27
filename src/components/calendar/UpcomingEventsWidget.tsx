@@ -3,29 +3,43 @@ import { Sparkles, Calendar, ChevronRight, Clock, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { MemorialService } from '../../services/calendar/MemorialService';
 import { EventService } from '../../services/calendar/EventService';
+import { useAuth } from '../../contexts/AuthContext';
 import { formatDate } from '../../lib/utils';
 
 export const UpcomingEventsWidget: React.FC<{ familyId?: string; limit?: number }> = ({
-  familyId = 'fam-0000-0001',
+  familyId,
   limit = 5,
 }) => {
+  const { activeFamily } = useAuth();
+  const targetFamilyId = familyId || activeFamily?.id;
   const [upcomingMemorials, setUpcomingMemorials] = useState<any[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
+      if (!targetFamilyId) {
+        setUpcomingMemorials([]);
+        setUpcomingEvents([]);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
-      const [mems, evts] = await Promise.all([
-        MemorialService.getUpcomingMemorials(familyId, limit),
-        EventService.getUpcomingEvents(familyId, limit),
-      ]);
-      setUpcomingMemorials(mems);
-      setUpcomingEvents(evts);
-      setLoading(false);
+      try {
+        const [mems, evts] = await Promise.all([
+          MemorialService.getUpcomingMemorials(targetFamilyId, limit),
+          EventService.getUpcomingEvents(targetFamilyId, limit),
+        ]);
+        setUpcomingMemorials(mems || []);
+        setUpcomingEvents(evts || []);
+      } catch (err) {
+        console.error('Lỗi khi tải sự kiện và ngày giỗ:', err);
+      } finally {
+        setLoading(false);
+      }
     }
     loadData();
-  }, [familyId, limit]);
+  }, [targetFamilyId, limit]);
 
   if (loading) {
     return (

@@ -30,27 +30,36 @@ export class EventService {
     if (!familyId) return [];
 
     if (isSupabaseConfigured()) {
-      let query = supabase
-        .from('events')
-        .select('*')
-        .eq('family_id', familyId)
-        .order('solar_date', { ascending: true });
+      try {
+        let query = supabase
+          .from('events')
+          .select('*')
+          .eq('family_id', familyId)
+          .order('solar_date', { ascending: true });
 
-      if (filters?.eventType && filters.eventType !== 'ALL') {
-        query = query.eq('event_type', filters.eventType);
-      }
-      if (filters?.branchId && filters.branchId !== 'ALL') {
-        query = query.eq('branch_id', filters.branchId);
-      }
-
-      const { data, error } = await query;
-      if (!error && data) {
-        let list = data as Event[];
-        if (filters?.search) {
-          const s = filters.search.toLowerCase();
-          list = list.filter((e) => e.title.toLowerCase().includes(s) || e.location?.toLowerCase().includes(s));
+        if (filters?.eventType && filters.eventType !== 'ALL') {
+          query = query.eq('event_type', filters.eventType);
         }
-        return list;
+        if (filters?.branchId && filters.branchId !== 'ALL') {
+          query = query.eq('branch_id', filters.branchId);
+        }
+
+        const { data, error } = await query;
+        if (!error && data) {
+          let list = data as Event[];
+          if (filters?.search) {
+            const s = filters.search.toLowerCase();
+            list = list.filter((e) => e.title.toLowerCase().includes(s) || e.location?.toLowerCase().includes(s));
+          }
+          return list;
+        }
+        if (error) {
+          console.error('Lỗi khi truy vấn events:', error);
+        }
+        return [];
+      } catch (err) {
+        console.error('EventService getEvents error:', err);
+        return [];
       }
     }
 
@@ -69,15 +78,21 @@ export class EventService {
   /**
    * Lấy chi tiết sự kiện theo ID
    */
-  static async getEventById(id: string, familyId: string = 'fam-0000-0001'): Promise<Event | null> {
+  static async getEventById(id: string, familyId?: string): Promise<Event | null> {
+    if (!familyId) return null;
     if (isSupabaseConfigured()) {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('id', id)
-        .eq('family_id', familyId)
-        .single();
-      if (!error && data) return data as Event;
+      try {
+        const { data, error } = await supabase
+          .from('events')
+          .select('*')
+          .eq('id', id)
+          .eq('family_id', familyId)
+          .single();
+        if (!error && data) return data as Event;
+        return null;
+      } catch (err) {
+        return null;
+      }
     }
 
     const evt = mockEvents.find((e) => e.id === id && e.family_id === familyId);
