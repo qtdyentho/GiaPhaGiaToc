@@ -1,4 +1,4 @@
-﻿# TỔNG QUAN GIẢI PHÁP, KIẾN TRÚC & TÍNH NĂNG DỰ ÁN (PROJECT SOLUTIONS & IMPROVEMENTS)
+# TỔNG QUAN GIẢI PHÁP, KIẾN TRÚC & TÍNH NĂNG DỰ ÁN (PROJECT SOLUTIONS & IMPROVEMENTS)
 ## Nền Tảng Quản Trị Gia Phả & Tài Chính Dòng Họ — GiaPhaGiaToc Enterprise SaaS
 
 > **Trí Nhớ Dự Án & Phiên Làm Việc (Agent Memory)**  
@@ -113,3 +113,4 @@
 5. **Phiên 5 — Giới Thiệu Cội Nguồn & Lưu Ký Gia Tộc**: Ra mắt chuyên trang Giới thiệu dòng họ, Lưu ký & Ký sự, kèm hệ thống nén ảnh WebP tự động và Lazy Loading.
 6. **Phiên 6 — Khắc Phục Lỗi Rút Gọn Link & Modal Z-Index**: Tự động sinh link rút gọn theo tên dòng họ thực tế (`/c/:slug`), sửa xung đột z-index của modal, và cập nhật 100% bộ ảnh mẫu Từ đường cổ truyền Việt Nam.
 7. **Phiên 7 — Thanh Lọc Mock Data 100%**: Loại bỏ toàn bộ mock fallback trong code, bảo đảm 100% CSDL thực tế Supabase vận hành độc lập, không rò rỉ dữ liệu giữa các dòng họ.
+8. **Phiên 8 — Hoàn Thiện Nhập Gia Phả Excel 12 Cột Tiêu Chuẩn & Kéo Thả Tệp**: Tích hợp thư viện `xlsx` (SheetJS) phân tích trực tiếp tại Client, hỗ trợ kéo thả tệp, nút xuất file mẫu Excel 12 cột chuẩn hóa, tự động nhận diện tiêu đề tiếng Việt (Auto-mapping) và nạp nguyên tử vào CSDL Supabase (tạo thế hệ, chi phái, thành viên, quan hệ cha-con/vợ-chồng và lịch giỗ tổ).
