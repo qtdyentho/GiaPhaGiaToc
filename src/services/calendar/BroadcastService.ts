@@ -1,3 +1,5 @@
+import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+
 export interface BroadcastNotification {
   id: string;
   family_id: string;
@@ -80,6 +82,21 @@ class BroadcastServiceClass {
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
     this.notify(newBroadcast);
+
+    if (isSupabaseConfigured()) {
+      supabase
+        .from('notifications')
+        .insert([{
+          family_id: data.family_id,
+          type: 'EVENT_REMINDER',
+          title: data.title,
+          message: data.message,
+          reference_type: 'broadcast',
+          is_read: false,
+        }])
+        .then(() => {});
+    }
+
     return newBroadcast;
   }
 
