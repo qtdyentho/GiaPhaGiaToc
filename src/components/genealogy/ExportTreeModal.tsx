@@ -440,7 +440,7 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-fade-in font-sans">
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
         {/* Top Header */}
         <div className="bg-gradient-to-r from-[#14532D] via-[#166534] to-[#0F3D21] p-6 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
@@ -464,24 +464,24 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 space-y-6 overflow-y-auto text-slate-800 text-xs">
+        <div className="p-6 space-y-6 overflow-y-auto text-slate-800 dark:text-slate-200 text-xs">
           {/* Format Selection */}
           <div className="space-y-2">
-            <label className="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Định Dạng Xuất Bản:</label>
+            <label className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px]">Định Dạng Xuất Bản:</label>
             <div className="grid grid-cols-3 gap-3">
               <button
                 type="button"
                 onClick={() => setExportFormat('PDF_PRINT')}
                 className={`p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between space-y-2 cursor-pointer ${
                   exportFormat === 'PDF_PRINT'
-                    ? 'border-[#166534] bg-emerald-50 text-emerald-950 shadow-xs'
-                    : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                    ? 'border-[#166534] dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-300 shadow-xs'
+                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300'
                 }`}
               >
-                <Printer className={`w-5 h-5 ${exportFormat === 'PDF_PRINT' ? 'text-[#166534]' : 'text-slate-500'}`} />
+                <Printer className={`w-5 h-5 ${exportFormat === 'PDF_PRINT' ? 'text-[#166534] dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} />
                 <div>
                   <div className="font-bold text-xs">In Ấn / Xuất PDF</div>
-                  <div className="text-[10px] text-slate-500">Chuẩn in ấn A0 - A4</div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400">Chuẩn in ấn A0 - A4</div>
                 </div>
               </button>
 
@@ -490,14 +490,14 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
                 onClick={() => setExportFormat('IMAGE')}
                 className={`p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between space-y-2 cursor-pointer ${
                   exportFormat === 'IMAGE'
-                    ? 'border-[#166534] bg-emerald-50 text-emerald-950 shadow-xs'
-                    : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                    ? 'border-[#166534] dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-300 shadow-xs'
+                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300'
                 }`}
               >
-                <ImageIcon className={`w-5 h-5 ${exportFormat === 'IMAGE' ? 'text-[#166534]' : 'text-slate-500'}`} />
+                <ImageIcon className={`w-5 h-5 ${exportFormat === 'IMAGE' ? 'text-[#166534] dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} />
                 <div>
                   <div className="font-bold text-xs">Ảnh Siêu Nét PNG</div>
-                  <div className="text-[10px] text-slate-500">Độ phân giải cao 4K/8K</div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400">Độ phân giải cao 4K/8K</div>
                 </div>
               </button>
 
@@ -506,14 +506,14 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
                 onClick={() => setExportFormat('CSV')}
                 className={`p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between space-y-2 cursor-pointer ${
                   exportFormat === 'CSV'
-                    ? 'border-[#166534] bg-emerald-50 text-emerald-950 shadow-xs'
-                    : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                    ? 'border-[#166534] dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-300 shadow-xs'
+                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300'
                 }`}
               >
-                <FileSpreadsheet className={`w-5 h-5 ${exportFormat === 'CSV' ? 'text-[#166534]' : 'text-slate-500'}`} />
+                <FileSpreadsheet className={`w-5 h-5 ${exportFormat === 'CSV' ? 'text-[#166534] dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} />
                 <div>
                   <div className="font-bold text-xs">File Excel (CSV)</div>
-                  <div className="text-[10px] text-slate-500">Bảng dữ liệu thành viên</div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400">Bảng dữ liệu thành viên</div>
                 </div>
               </button>
             </div>
@@ -521,13 +521,13 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
 
           {/* Paper Size & Layout Options (Only for PDF / Print / Image) */}
           {(exportFormat === 'PDF_PRINT' || exportFormat === 'IMAGE') && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#F7F8F5] p-4 rounded-2xl border border-slate-200/80">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#F7F8F5] dark:bg-slate-800/80 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700">
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-700 text-xs">Khổ Giấy In Ấn:</label>
+                <label className="font-bold text-slate-700 dark:text-slate-300 text-xs">Khổ Giấy In Ấn:</label>
                 <select
                   value={paperSize}
                   onChange={(e: any) => setPaperSize(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#166534]"
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#166534] cursor-pointer"
                 >
                   <option value="A4">Khổ A4 (210 x 297 mm - Xem nhanh)</option>
                   <option value="A3">Khổ A3 (297 x 420 mm - Chuẩn in phòng họp)</option>
@@ -538,11 +538,11 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
               </div>
 
               <div className="space-y-1.5">
-                <label className="font-bold text-slate-700 text-xs">Hướng Trang Giấy:</label>
+                <label className="font-bold text-slate-700 dark:text-slate-300 text-xs">Hướng Trang Giấy:</label>
                 <select
                   value={orientation}
                   onChange={(e: any) => setOrientation(e.target.value)}
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#166534]"
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#166534] cursor-pointer"
                 >
                   <option value="LANDSCAPE">Nằm ngang (Landscape - Khuyên dùng)</option>
                   <option value="PORTRAIT">Nằm dọc (Portrait)</option>
@@ -553,52 +553,52 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
 
           {/* Content Checklist */}
           <div className="space-y-2.5">
-            <label className="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Thông Tin Hiển Thị:</label>
+            <label className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px]">Thông Tin Hiển Thị:</label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-              <label className="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
+              <label className="flex items-center gap-2 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/60">
                 <input
                   type="checkbox"
                   checked={includeLunarDates}
                   onChange={(e) => setIncludeLunarDates(e.target.checked)}
                   className="rounded text-[#166534] focus:ring-[#166534]"
                 />
-                <span className="font-medium text-slate-700">Ngày giỗ Âm Lịch</span>
+                <span className="font-medium text-slate-700 dark:text-slate-200">Ngày giỗ Âm Lịch</span>
               </label>
 
-              <label className="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
+              <label className="flex items-center gap-2 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/60">
                 <input
                   type="checkbox"
                   checked={includeDeceasedInfo}
                   onChange={(e) => setIncludeDeceasedInfo(e.target.checked)}
                   className="rounded text-[#166534] focus:ring-[#166534]"
                 />
-                <span className="font-medium text-slate-700">Trạng thái sinh tử</span>
+                <span className="font-medium text-slate-700 dark:text-slate-200">Trạng thái sinh tử</span>
               </label>
 
-              <label className="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
+              <label className="flex items-center gap-2 p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/60">
                 <input
                   type="checkbox"
                   checked={includeBio}
                   onChange={(e) => setIncludeBio(e.target.checked)}
                   className="rounded text-[#166534] focus:ring-[#166534]"
                 />
-                <span className="font-medium text-slate-700">Thông tin phối ngẫu</span>
+                <span className="font-medium text-slate-700 dark:text-slate-200">Thông tin phối ngẫu</span>
               </label>
             </div>
           </div>
         </div>
 
         {/* Modal Footer Actions */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3 shrink-0">
-          <div className="text-slate-500 text-xs font-medium">
-            Tổng cộng: <strong className="text-slate-900">{members.length}</strong> thành viên • <strong className="text-slate-900">{generations.length}</strong> thế hệ
+        <div className="p-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0">
+          <div className="text-slate-500 dark:text-slate-400 text-xs font-medium">
+            Tổng cộng: <strong className="text-slate-900 dark:text-white">{members.length}</strong> thành viên • <strong className="text-slate-900 dark:text-white">{generations.length}</strong> thế hệ
           </div>
 
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer"
+              className="px-4 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition cursor-pointer"
             >
               Hủy
             </button>
@@ -607,7 +607,7 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
               type="button"
               onClick={handleExecuteExport}
               disabled={isExporting}
-              className="px-6 py-2.5 bg-[#166534] hover:bg-[#14532D] text-white font-bold rounded-xl text-xs transition flex items-center gap-2 shadow-md cursor-pointer disabled:opacity-50"
+              className="px-6 py-2.5 bg-[#166534] hover:bg-[#14532D] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-bold rounded-xl text-xs transition flex items-center gap-2 shadow-md cursor-pointer disabled:opacity-50"
             >
               {exportFormat === 'PDF_PRINT' ? (
                 <>

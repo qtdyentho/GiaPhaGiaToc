@@ -80,7 +80,7 @@ export const MemberDetailPopupModal: React.FC<MemberDetailPopupModalProps> = ({
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto font-sans">
-        <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl animate-fade-in flex flex-col max-h-[90vh]">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl animate-fade-in flex flex-col max-h-[90vh]">
           
           {/* Modal Hero Header Card */}
           <div className={`p-6 border-b transition-all ${
@@ -153,45 +153,45 @@ export const MemberDetailPopupModal: React.FC<MemberDetailPopupModalProps> = ({
           </div>
 
           {/* Modal Scrollable Body */}
-          <div className="p-6 space-y-5 overflow-y-auto text-slate-800 text-xs">
+          <div className="p-6 space-y-5 overflow-y-auto text-slate-800 dark:text-slate-200 text-xs">
             
             {/* Sinh Tử & Ngày Giỗ */}
-            <div className="bg-[#F7F8F5] p-4 rounded-2xl border border-slate-200/80 space-y-3">
-              <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5 uppercase tracking-wider">
-                <Calendar className="w-3.5 h-3.5 text-[#166534]" />
+            <div className="bg-[#F7F8F5] dark:bg-slate-800/80 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 space-y-3">
+              <div className="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5 uppercase tracking-wider">
+                <Calendar className="w-3.5 h-3.5 text-[#166534] dark:text-emerald-400" />
                 <span>Thông Tin Sinh Tử, Giờ Sinh & Lễ Giỗ</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div className="space-y-0.5">
-                  <span className="text-slate-500">Giờ & Ngày Sinh:</span>
-                  <div className="font-semibold text-slate-900">
-                    {member.birth_time && <span className="text-[#166534] font-bold block">{member.birth_time}</span>}
+                  <span className="text-slate-500 dark:text-slate-400">Giờ & Ngày Sinh:</span>
+                  <div className="font-semibold text-slate-900 dark:text-white">
+                    {member.birth_time && <span className="text-[#166534] dark:text-emerald-400 font-bold block">{member.birth_time}</span>}
                     <span>{member.birth_solar_date ? new Date(member.birth_solar_date).toLocaleDateString('vi-VN') : 'Chưa rõ ngày'}</span>
-                    {member.birth_lunar_year && <span className="text-slate-500 font-normal ml-1">({member.birth_lunar_year})</span>}
+                    {member.birth_lunar_year && <span className="text-slate-500 dark:text-slate-400 font-normal ml-1">({member.birth_lunar_year})</span>}
                   </div>
                 </div>
 
                 <div className="space-y-0.5">
-                  <span className="text-slate-500">Giờ Mất & Ngày Giỗ:</span>
-                  <div className="font-semibold text-amber-900">
-                    {member.death_time && <span className="text-amber-800 font-bold block">{member.death_time}</span>}
+                  <span className="text-slate-500 dark:text-slate-400">Giờ Mất & Ngày Giỗ:</span>
+                  <div className="font-semibold text-amber-900 dark:text-amber-300">
+                    {member.death_time && <span className="text-amber-800 dark:text-amber-400 font-bold block">{member.death_time}</span>}
                     <span>
                       {member.death_lunar_day && member.death_lunar_month
                         ? `Ngày ${member.death_lunar_day} Tháng ${member.death_lunar_month} ÂL`
                         : isDeceased ? 'Chưa lưu ngày giỗ' : '—'}
                     </span>
-                    {member.death_lunar_year && <span className="text-slate-500 font-normal ml-1">({member.death_lunar_year})</span>}
+                    {member.death_lunar_year && <span className="text-slate-500 dark:text-slate-400 font-normal ml-1">({member.death_lunar_year})</span>}
                   </div>
                 </div>
 
                 {member.burial_place && (
                   <div className="sm:col-span-2 space-y-0.5">
-                    <span className="text-slate-500 flex items-center gap-1">
-                      <MapPin className="w-3 h-3 text-amber-700" />
+                    <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-amber-700 dark:text-amber-400" />
                       <span>Nơi An Táng / Mộ Phần:</span>
                     </span>
-                    <div className="font-semibold text-slate-900">
+                    <div className="font-semibold text-slate-900 dark:text-white">
                       {member.burial_place}
                     </div>
                   </div>
@@ -199,13 +199,13 @@ export const MemberDetailPopupModal: React.FC<MemberDetailPopupModalProps> = ({
               </div>
 
               {isDeceased && (
-                <div className="pt-2 border-t border-slate-200/80">
+                <div className="pt-2 border-t border-slate-200/80 dark:border-slate-700">
                   <button
                     type="button"
                     onClick={() => setIsPrayerModalOpen(true)}
-                    className="w-full py-2 px-3 bg-amber-100 hover:bg-amber-200/80 border border-amber-300 rounded-xl text-amber-950 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs"
+                    className="w-full py-2 px-3 bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200/80 dark:hover:bg-amber-900 border border-amber-300 dark:border-amber-700 rounded-xl text-amber-950 dark:text-amber-200 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs"
                   >
-                    <ScrollText className="w-4 h-4 text-amber-800" />
+                    <ScrollText className="w-4 h-4 text-amber-800 dark:text-amber-400" />
                     <span>Trích Lục Văn Khấn Cúng Giỗ Tiền Nhân</span>
                   </button>
                 </div>
@@ -213,10 +213,10 @@ export const MemberDetailPopupModal: React.FC<MemberDetailPopupModalProps> = ({
             </div>
 
             {/* Bát Tự & Cung Mệnh Phong Thủy Truyền Thống */}
-            <div className="bg-gradient-to-br from-amber-50/60 to-emerald-50/40 p-4 rounded-2xl border border-amber-200/80 space-y-3">
+            <div className="bg-gradient-to-br from-amber-50/60 to-emerald-50/40 dark:from-slate-800/60 dark:to-slate-800/40 p-4 rounded-2xl border border-amber-200/80 dark:border-slate-700 space-y-3">
               <div className="flex items-center justify-between">
-                <div className="font-bold text-amber-950 text-xs flex items-center gap-1.5 uppercase tracking-wider">
-                  <Compass className="w-3.5 h-3.5 text-amber-800" />
+                <div className="font-bold text-amber-950 dark:text-amber-200 text-xs flex items-center gap-1.5 uppercase tracking-wider">
+                  <Compass className="w-3.5 h-3.5 text-amber-800 dark:text-amber-400" />
                   <span>Bát Tự & Bản Mệnh Phong Thủy</span>
                 </div>
                 <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${batTu.napAm.bgClass} ${batTu.napAm.colorClass} ${batTu.napAm.borderClass}`}>
@@ -226,32 +226,32 @@ export const MemberDetailPopupModal: React.FC<MemberDetailPopupModalProps> = ({
 
               {/* Bốn Trụ Bát Tự */}
               <div className="grid grid-cols-4 gap-2 text-center">
-                <div className="p-2 bg-white/90 border border-amber-200/80 rounded-xl">
-                  <span className="text-[10px] text-slate-500 block">Trụ Năm</span>
-                  <strong className="text-xs text-slate-900 font-bold">{batTu.truNam}</strong>
+                <div className="p-2 bg-white/90 dark:bg-slate-900/90 border border-amber-200/80 dark:border-slate-700 rounded-xl">
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Trụ Năm</span>
+                  <strong className="text-xs text-slate-900 dark:text-slate-100 font-bold">{batTu.truNam}</strong>
                 </div>
-                <div className="p-2 bg-white/90 border border-amber-200/80 rounded-xl">
-                  <span className="text-[10px] text-slate-500 block">Trụ Tháng</span>
-                  <strong className="text-xs text-slate-900 font-bold">{batTu.truThang}</strong>
+                <div className="p-2 bg-white/90 dark:bg-slate-900/90 border border-amber-200/80 dark:border-slate-700 rounded-xl">
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Trụ Tháng</span>
+                  <strong className="text-xs text-slate-900 dark:text-slate-100 font-bold">{batTu.truThang}</strong>
                 </div>
-                <div className="p-2 bg-white/90 border border-amber-200/80 rounded-xl">
-                  <span className="text-[10px] text-slate-500 block">Trụ Ngày</span>
-                  <strong className="text-xs text-slate-900 font-bold">{batTu.truNgay}</strong>
+                <div className="p-2 bg-white/90 dark:bg-slate-900/90 border border-amber-200/80 dark:border-slate-700 rounded-xl">
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Trụ Ngày</span>
+                  <strong className="text-xs text-slate-900 dark:text-slate-100 font-bold">{batTu.truNgay}</strong>
                 </div>
-                <div className="p-2 bg-white/90 border border-amber-200/80 rounded-xl">
-                  <span className="text-[10px] text-slate-500 block">Trụ Giờ</span>
-                  <strong className="text-xs text-slate-900 font-bold">{batTu.truGio}</strong>
+                <div className="p-2 bg-white/90 dark:bg-slate-900/90 border border-amber-200/80 dark:border-slate-700 rounded-xl">
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block">Trụ Giờ</span>
+                  <strong className="text-xs text-slate-900 dark:text-slate-100 font-bold">{batTu.truGio}</strong>
                 </div>
               </div>
 
               {/* Cung Phi Bát Trạch */}
               {batTu.cungPhi && (
-                <div className="p-2.5 bg-white/90 border border-amber-200/80 rounded-xl flex items-center justify-between text-[11px]">
+                <div className="p-2.5 bg-white/90 dark:bg-slate-900/90 border border-amber-200/80 dark:border-slate-700 rounded-xl flex items-center justify-between text-[11px]">
                   <div>
-                    <span className="text-slate-500">Cung Phi: </span>
-                    <strong className="text-amber-950 font-bold">Cung {batTu.cungPhi.cung} ({batTu.cungPhi.elementName}) • {batTu.cungPhi.menhType}</strong>
+                    <span className="text-slate-500 dark:text-slate-400">Cung Phi: </span>
+                    <strong className="text-amber-950 dark:text-amber-200 font-bold">Cung {batTu.cungPhi.cung} ({batTu.cungPhi.elementName}) • {batTu.cungPhi.menhType}</strong>
                   </div>
-                  <span className="text-emerald-800 text-[10px]">
+                  <span className="text-emerald-800 dark:text-emerald-400 text-[10px] font-medium">
                     Hướng cát: {batTu.cungPhi.favorableDirections[0]?.split(' ')[0]}
                   </span>
                 </div>
@@ -260,60 +260,60 @@ export const MemberDetailPopupModal: React.FC<MemberDetailPopupModalProps> = ({
 
             {/* Quan Hệ Huyết Thống */}
             <div className="space-y-3">
-              <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5 uppercase tracking-wider">
-                <Users className="w-3.5 h-3.5 text-[#166534]" />
+              <div className="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5 uppercase tracking-wider">
+                <Users className="w-3.5 h-3.5 text-[#166534] dark:text-emerald-400" />
                 <span>Quan Hệ Thân Tộc Trong Gia Phả</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Cha Mẹ */}
-                <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-1.5 shadow-2xs">
-                  <span className="text-slate-500 font-medium">Bố / Mẹ:</span>
+                <div className="p-3 bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl space-y-1.5 shadow-2xs">
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">Bố / Mẹ:</span>
                   {parents.length > 0 ? (
                     <div className="space-y-1">
                       {parents.map((p) => (
                         <button
                           key={p.id}
                           onClick={() => onSelectAnotherMember && onSelectAnotherMember(p)}
-                          className="text-left font-bold text-slate-900 hover:text-[#166534] block hover:underline"
+                          className="text-left font-bold text-slate-900 dark:text-slate-100 hover:text-[#166534] dark:hover:text-emerald-400 block hover:underline cursor-pointer"
                         >
                           {p.full_name.replace(/\(.*?\)/g, '').trim()} ({p.gender === 'MALE' ? 'Bố' : 'Mẹ'})
                         </button>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-slate-400 italic">Cụ Thủy Tổ khai sáng</div>
+                    <div className="text-slate-400 dark:text-slate-500 italic">Cụ Thủy Tổ khai sáng</div>
                   )}
                 </div>
 
                 {/* Vợ / Chồng */}
-                <div className="p-3 bg-white border border-slate-200 rounded-xl space-y-1.5 shadow-2xs">
-                  <span className="text-slate-500 font-medium">Vợ / Chồng:</span>
+                <div className="p-3 bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl space-y-1.5 shadow-2xs">
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">Vợ / Chồng:</span>
                   {spouses.length > 0 ? (
                     <div className="space-y-1">
                       {spouses.map((s) => (
                         <button
                           key={s.id}
                           onClick={() => onSelectAnotherMember && onSelectAnotherMember(s)}
-                          className="text-left font-bold text-slate-900 hover:text-[#166534] block hover:underline"
+                          className="text-left font-bold text-slate-900 dark:text-slate-100 hover:text-[#166534] dark:hover:text-emerald-400 block hover:underline cursor-pointer"
                         >
                           {s.full_name.replace(/\(.*?\)/g, '').trim()}
                         </button>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-slate-400 italic">Chưa ghi nhận</div>
+                    <div className="text-slate-400 dark:text-slate-500 italic">Chưa ghi nhận</div>
                   )}
                 </div>
 
                 {/* Con Cái */}
-                <div className="sm:col-span-2 p-3 bg-white border border-slate-200 rounded-xl space-y-2 shadow-2xs">
+                <div className="sm:col-span-2 p-3 bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl space-y-2 shadow-2xs">
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500 font-medium">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">
                       Con Cái ({children.length} người):
                     </span>
                     {children.length > 0 && (
-                      <span className="text-[11px] text-[#166534] font-semibold">
+                      <span className="text-[11px] text-[#166534] dark:text-emerald-400 font-semibold">
                         Hậu duệ nối dõi
                       </span>
                     )}
@@ -324,7 +324,7 @@ export const MemberDetailPopupModal: React.FC<MemberDetailPopupModalProps> = ({
                         <button
                           key={c.id}
                           onClick={() => onSelectAnotherMember && onSelectAnotherMember(c)}
-                          className="p-2 rounded-lg bg-slate-50 hover:bg-emerald-50 border border-slate-200 text-left text-xs font-semibold text-slate-900 hover:text-[#166534] transition flex items-center gap-1.5"
+                          className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900/80 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-slate-200 dark:border-slate-700 text-left text-xs font-semibold text-slate-900 dark:text-slate-100 hover:text-[#166534] dark:hover:text-emerald-400 transition flex items-center gap-1.5 cursor-pointer"
                         >
                           <span>{c.gender === 'MALE' ? '👦' : '👧'}</span>
                           <span className="truncate">{c.full_name.replace(/\(.*?\)/g, '').trim()}</span>
@@ -332,7 +332,7 @@ export const MemberDetailPopupModal: React.FC<MemberDetailPopupModalProps> = ({
                       ))}
                     </div>
                   ) : (
-                    <div className="text-slate-400 italic">Chưa có thông tin con cái</div>
+                    <div className="text-slate-400 dark:text-slate-500 italic">Chưa có thông tin con cái</div>
                   )}
                 </div>
               </div>
@@ -341,11 +341,11 @@ export const MemberDetailPopupModal: React.FC<MemberDetailPopupModalProps> = ({
             {/* Tiểu sử & Ghi chép ngọc phả */}
             {member.bio && (
               <div className="space-y-1.5">
-                <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5 uppercase tracking-wider">
-                  <Award className="w-3.5 h-3.5 text-amber-700" />
+                <div className="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5 uppercase tracking-wider">
+                  <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
                   <span>Tiểu Sử & Ghi Chép Công Đức</span>
                 </div>
-                <div className="p-3.5 bg-amber-50/40 border border-amber-200/60 rounded-xl text-slate-800 leading-relaxed italic">
+                <div className="p-3.5 bg-amber-50/40 dark:bg-slate-800/80 border border-amber-200/60 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 leading-relaxed italic">
                   "{member.bio}"
                 </div>
               </div>
@@ -353,16 +353,16 @@ export const MemberDetailPopupModal: React.FC<MemberDetailPopupModalProps> = ({
           </div>
 
           {/* Modal Bottom Action Controls */}
-          <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div className="p-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
             <button
               type="button"
               onClick={() => {
                 onClose();
                 onOpenKinship(member);
               }}
-              className="px-4 py-2.5 bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-950 font-bold rounded-xl text-xs transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+              className="px-4 py-2.5 bg-amber-100 dark:bg-amber-950/60 hover:bg-amber-200 dark:hover:bg-amber-900 border border-amber-300 dark:border-amber-700 text-amber-950 dark:text-amber-200 font-bold rounded-xl text-xs transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
             >
-              <ArrowRightLeft className="w-3.5 h-3.5 text-amber-800" />
+              <ArrowRightLeft className="w-3.5 h-3.5 text-amber-800 dark:text-amber-400" />
               <span>Tra Cứu Xưng Hô</span>
             </button>
 
@@ -373,7 +373,7 @@ export const MemberDetailPopupModal: React.FC<MemberDetailPopupModalProps> = ({
                   onClose();
                   onOpenAddRelation(member, 'CHILD');
                 }}
-                className="px-3.5 py-2.5 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-bold rounded-xl text-xs transition cursor-pointer"
+                className="px-3.5 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition cursor-pointer"
               >
                 Chỉnh Sửa
               </button>
@@ -384,7 +384,7 @@ export const MemberDetailPopupModal: React.FC<MemberDetailPopupModalProps> = ({
                   onClose();
                   navigate(`/app/members/${member.id}`);
                 }}
-                className="px-4 py-2.5 bg-[#166534] hover:bg-[#14532D] text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                className="px-4 py-2.5 bg-[#166534] hover:bg-[#14532D] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm cursor-pointer"
               >
                 <span>Xem Hồ Sơ</span>
                 <ExternalLink className="w-3.5 h-3.5" />
