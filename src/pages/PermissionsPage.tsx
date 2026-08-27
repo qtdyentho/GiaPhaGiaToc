@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { ShieldCheck, UserCheck, Shield, Lock, Check, X, Search, Filter, User } from 'lucide-react';
 import { ROLE_LABELS } from '../lib/constants';
-import { mockMemberships, mockMembers } from '../services/mockData';
 
 export const PermissionsPage: React.FC = () => {
   const [search, setSearch] = useState('');

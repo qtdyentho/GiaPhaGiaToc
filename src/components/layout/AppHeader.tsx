@@ -31,9 +31,9 @@ import { ClanPassService } from '../../services/security/ClanPassService';
 import { GenealogyService } from '../../services/GenealogyService';
 import { FundService } from '../../services/FundService';
 import { MemorialService } from '../../services/calendar/MemorialService';
+import { ReminderService } from '../../services/calendar/ReminderService';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { mockMembers, mockMemorialDates, mockFunds } from '../../services/mockData';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatCurrency } from '../../lib/utils';
 import { CreateBroadcastModal } from '../notifications/CreateBroadcastModal';
@@ -126,47 +126,47 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const currentFamId = activeFamily?.id || '';
   const currentFamName = activeFamily?.name || 'Gia Tộc';
 
-  const familyMemorials = mockMemorialDates.filter((m) => m.family_id === currentFamId);
-  const familyFunds = mockFunds.filter((f) => f.family_id === currentFamId);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
-  const notifications = [
-    ...(familyMemorials.length > 0
-      ? [
-          {
-            id: `notif-mem-${familyMemorials[0].id}`,
-            title: 'Lễ Giỗ Thân Nhân Sắp Tới',
-            message: `Lễ giỗ ${familyMemorials[0].title} (${familyMemorials[0].lunar_day}/${familyMemorials[0].lunar_month} Âm lịch).`,
-            time: 'Nhắc lịch',
-            type: 'MEMORIAL',
-            unread: true,
-            link: '/app/calendar',
-          },
-        ]
-      : [
-          {
-            id: 'notif-welcome',
-            title: 'Không Gian Gia Tộc',
-            message: `Chào mừng bạn đến với không gian số ${currentFamName}.`,
-            time: 'Hôm nay',
-            type: 'MEMORIAL',
-            unread: false,
-            link: '/app/dashboard',
-          },
-        ]),
-    ...(familyFunds.length > 0
-      ? [
-          {
-            id: `notif-fund-${familyFunds[0].id}`,
-            title: 'Biến Động Số Dư Quỹ',
-            message: `${familyFunds[0].name} hiện có số dư: ${formatCurrency(familyFunds[0].current_balance)}.`,
-            time: 'Mới cập nhật',
-            type: 'FINANCE',
-            unread: true,
-            link: '/app/finance',
-          },
-        ]
-      : []),
-  ];
+  useEffect(() => {
+    async function loadNotifications() {
+      if (!currentFamId) {
+        setNotifications([]);
+        return;
+      }
+      try {
+        const notifs = await ReminderService.getNotifications(currentFamId);
+        if (notifs && notifs.length > 0) {
+          setNotifications(
+            notifs.slice(0, 5).map((n) => ({
+              id: n.id,
+              title: n.title,
+              message: n.content,
+              time: 'Mới nhận',
+              type: n.type === 'MEMORIAL_REMINDER' ? 'MEMORIAL' : 'FINANCE',
+              unread: !n.is_read,
+              link: n.reference_type === 'MEMORIAL' ? '/app/calendar' : '/app/finance',
+            }))
+          );
+        } else {
+          setNotifications([
+            {
+              id: 'notif-welcome',
+              title: 'Không Gian Gia Tộc',
+              message: `Chào mừng bạn đến với không gian số ${currentFamName}.`,
+              time: 'Hôm nay',
+              type: 'MEMORIAL',
+              unread: false,
+              link: '/app/dashboard',
+            },
+          ]);
+        }
+      } catch {
+        setNotifications([]);
+      }
+    }
+    loadNotifications();
+  }, [currentFamId, currentFamName]);
 
   // Debounced search with real database services
   useEffect(() => {
@@ -196,7 +196,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         ]);
 
         // 1. Search Members
-        const memList = members && members.length > 0 ? members : mockMembers.filter((m) => m.family_id === currentFamId);
+        const memList = members || [];
         memList
           .filter((m) => m.full_name.toLowerCase().includes(query) || (m.bio && m.bio.toLowerCase().includes(query)))
           .slice(0, 4)
@@ -211,7 +211,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           });
 
         // 2. Search Memorial Dates
-        const memorialList = memorials && memorials.length > 0 ? memorials : mockMemorialDates.filter((m) => m.family_id === currentFamId);
+        const memorialList = memorials || [];
         memorialList
           .filter((m) => m.title.toLowerCase().includes(query))
           .slice(0, 3)
@@ -226,7 +226,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           });
 
         // 3. Search Funds
-        const fundList = funds && funds.length > 0 ? funds : mockFunds.filter((f) => f.family_id === currentFamId);
+        const fundList = funds || [];
         fundList
           .filter((f) => f.name.toLowerCase().includes(query))
           .slice(0, 2)

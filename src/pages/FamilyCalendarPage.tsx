@@ -22,8 +22,8 @@ import {
 import { LunarCalendarService, CalendarDayInfo } from '../services/calendar/LunarCalendarService';
 import { MemorialService } from '../services/calendar/MemorialService';
 import { EventService } from '../services/calendar/EventService';
-import { MemorialDate, Event } from '../types/database';
-import { mockBranches, mockMembers } from '../services/mockData';
+import { MemorialDate, Event, Branch, Member } from '../types/database';
+import { GenealogyService } from '../services/GenealogyService';
 import { CalendarDayDetailDrawer } from '../components/calendar/CalendarDayDetailDrawer';
 import { CreateMemorialModal } from '../components/calendar/CreateMemorialModal';
 import { CreateEventModal } from '../components/calendar/CreateEventModal';
@@ -101,12 +101,12 @@ function calcSolarForYear(
   }
 }
 
-// ─── PDF Export ────────────────────────────────────────────────────────────────
-function printMemorialPDF(
+/** In danh sách lịch giỗ cả năm */
+function printAnnualCalendar(
   memorials: (MemorialDate & {
-    next_solar_date?: string;
-    branch_name?: string;
+    solarDateForYear?: string;
     generation_name?: string;
+    branch_name?: string;
     burial_place?: string;
   })[],
   year: number,
@@ -116,9 +116,7 @@ function printMemorialPDF(
 
   const rows = annualGroups
     .flatMap(({ month, mems }) =>
-      mems.map((m, i) => {
-        const member = mockMembers.find((mb) => mb.id === m.member_id);
-        return `
+      mems.map((m) => `
         <tr>
           <td style="color:#92400e;font-weight:700">${LUNAR_MONTH_NAMES[month]}</td>
           <td style="text-align:center;font-weight:800">${m.lunar_day}/${month}${m.is_leap_month ? '<br><small>(Nhuận)</small>' : ''}</td>
@@ -126,9 +124,8 @@ function printMemorialPDF(
           <td>${m.solarDateForYear ? formatDate(m.solarDateForYear) : (m.next_solar_date ? formatDate(m.next_solar_date) : '—')}</td>
           <td>${m.generation_name || '—'}</td>
           <td>${m.branch_name || '—'}</td>
-          <td>${m.burial_place || member?.burial_place || '—'}</td>
-        </tr>`;
-      })
+          <td>${m.burial_place || '—'}</td>
+        </tr>`)
     )
     .join('');
 
@@ -181,22 +178,22 @@ function printMemorialPDF(
 </body>
 </html>`;
 
-  const win = window.open('', '_blank', 'width=1000,height=750');
+  const win = window.open('', '_blank');
   if (win) {
     win.document.write(html);
     win.document.close();
-    setTimeout(() => win.print(), 700);
+    win.focus();
+    setTimeout(() => win.print(), 300);
   }
 }
 
-// ─── CountdownBadge ───────────────────────────────────────────────────────────
-const CountdownBadge: React.FC<{ days: number }> = ({ days }) => {
+// ─── Badge Đếm Ngược ─────────────────────────────────────────────────────────
+const DaysRemainingBadge: React.FC<{ days: number }> = ({ days }) => {
+  if (days < 0) return null;
   if (days === 0)
-    return <span className="px-2 py-0.5 bg-rose-600 text-white text-[10px] font-black rounded-full animate-pulse">Hôm Nay!</span>;
-  if (days < 0)
-    return <span className="px-2 py-0.5 bg-slate-200 text-slate-500 text-[10px] font-semibold rounded-full">Đã qua</span>;
-  if (days <= 3)
-    return <span className="px-2 py-0.5 bg-rose-100 text-rose-800 border border-rose-300 text-[10px] font-bold rounded-full">Còn {days} ngày</span>;
+    return <span className="px-2 py-0.5 bg-red-100 text-red-800 border border-red-300 text-[10px] font-extrabold rounded-full animate-pulse">Hôm nay</span>;
+  if (days === 1)
+    return <span className="px-2 py-0.5 bg-red-50 text-red-700 border border-red-200 text-[10px] font-bold rounded-full">Ngày mai</span>;
   if (days <= 7)
     return <span className="px-2 py-0.5 bg-orange-100 text-orange-800 border border-orange-300 text-[10px] font-bold rounded-full">Còn {days} ngày</span>;
   if (days <= 30)
@@ -273,6 +270,8 @@ export const FamilyCalendarPage: React.FC = () => {
   const [memorials, setMemorials] = useState<MemorialDate[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [upcomingMemorials, setUpcomingMemorials] = useState<any[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncInfo, setSyncInfo] = useState<{ total: number; autoSynced: number }>({ total: 0, autoSynced: 0 });
   const [showSyncPanel, setShowSyncPanel] = useState(false);
@@ -291,24 +290,34 @@ export const FamilyCalendarPage: React.FC = () => {
       setMemorials([]);
       setEvents([]);
       setUpcomingMemorials([]);
+      setBranches([]);
+      setMembers([]);
       setSyncInfo({ total: 0, autoSynced: 0 });
       setLoading(false);
       return;
     }
     setLoading(true);
-    const [mems, evts, upcoming] = await Promise.all([
-      MemorialService.getMemorials(currentFamId),
-      EventService.getEvents(currentFamId),
-      MemorialService.getUpcomingMemorials(currentFamId, 20),
-    ]);
-    setMemorials(mems);
-    setEvents(evts);
-    setUpcomingMemorials(upcoming);
-    setSyncInfo({
-      total: mems.length,
-      autoSynced: mems.filter((m) => m.id.startsWith('auto-mem-')).length,
-    });
-    setLoading(false);
+    try {
+      const [mems, evts, upcoming, treeData] = await Promise.all([
+        MemorialService.getMemorials(currentFamId),
+        EventService.getEvents(currentFamId),
+        MemorialService.getUpcomingMemorials(currentFamId, 20),
+        GenealogyService.getFamilyTree(currentFamId),
+      ]);
+      setMemorials(mems || []);
+      setEvents(evts || []);
+      setUpcomingMemorials(upcoming || []);
+      setBranches(treeData.branches || []);
+      setMembers(treeData.members || []);
+      setSyncInfo({
+        total: (mems || []).length,
+        autoSynced: (mems || []).filter((m) => m.id.startsWith('auto-mem-')).length,
+      });
+    } catch (err) {
+      console.error('Lỗi khi tải lịch:', err);
+    } finally {
+      setLoading(false);
+    }
   }, [currentFamId]);
 
   useEffect(() => { loadCalendarData(); }, [loadCalendarData]);
@@ -328,10 +337,10 @@ export const FamilyCalendarPage: React.FC = () => {
   const branchFilteredMemorials = useMemo(() =>
     memorials.filter((m) => {
       if (filterMode === 'ALL' || !selectedBranchId) return true;
-      const member = mockMembers.find((mb) => mb.id === m.member_id);
+      const member = members.find((mb) => mb.id === m.member_id);
       return !member?.branch_id || member.branch_id === selectedBranchId;
     }),
-    [memorials, filterMode, selectedBranchId]
+    [memorials, members, filterMode, selectedBranchId]
   );
 
   // ── Month Calendar ─────────────────────────────────────────────────
@@ -446,7 +455,7 @@ export const FamilyCalendarPage: React.FC = () => {
             <span>Đồng Bộ Lịch (.ics)</span>
           </button>
           <button
-            onClick={() => printMemorialPDF(memorials as any[], annualYear, annualGroups)}
+            onClick={() => printAnnualCalendar(memorials as any[], annualYear, annualGroups)}
             className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl transition shadow-2xs cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
@@ -485,7 +494,7 @@ export const FamilyCalendarPage: React.FC = () => {
               <p className="font-bold text-sm">Cơ Chế Đồng Bộ Tự Động Ngày Giỗ</p>
               <p>
                 Hệ thống quét Cây Phả Hệ, tạo ngày giỗ cho{' '}
-                <strong>{mockMembers.filter((m) => m.life_status === 'DECEASED' && m.death_lunar_day && m.death_lunar_month).length} thành viên đã khuất</strong>{' '}
+                <strong>{members.filter((m) => m.life_status === 'DECEASED' && m.death_lunar_day && m.death_lunar_month).length} thành viên đã khuất</strong>{' '}
                 có ghi nhận ngày mất Âm lịch.
               </p>
               <ul className="list-disc ml-4 space-y-0.5 mt-1">
@@ -571,7 +580,7 @@ export const FamilyCalendarPage: React.FC = () => {
                     </div>
                   )}
                 </div>
-                <CountdownBadge days={mem.daysRemaining} />
+                <DaysRemainingBadge days={mem.daysRemaining} />
               </div>
             ))}
           </div>
@@ -593,7 +602,7 @@ export const FamilyCalendarPage: React.FC = () => {
           <button
             onClick={() => {
               setFilterMode('BRANCH');
-              if (!selectedBranchId && mockBranches.length > 0) setSelectedBranchId(mockBranches[0].id);
+              if (!selectedBranchId && branches.length > 0) setSelectedBranchId(branches[0].id);
             }}
             className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
               filterMode === 'BRANCH' ? 'bg-[#2E1E6B] text-white shadow-sm' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
@@ -608,7 +617,7 @@ export const FamilyCalendarPage: React.FC = () => {
               onChange={(e) => setSelectedBranchId(e.target.value)}
               className="px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-full text-xs text-slate-900 font-bold focus:outline-none focus:border-[#2E1E6B]"
             >
-              {mockBranches.map((b) => (
+              {branches.map((b) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
             </select>
@@ -894,7 +903,7 @@ export const FamilyCalendarPage: React.FC = () => {
                 {expandedMonths.size === 12 ? 'Thu gọn tất cả' : 'Mở rộng tất cả'}
               </button>
               <button
-                onClick={() => printMemorialPDF(memorials as any[], annualYear, annualGroups)}
+                onClick={() => printAnnualCalendar(memorials as any[], annualYear, annualGroups)}
                 className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-white text-xs font-bold rounded-xl transition shadow-sm"
               >
                 <Download className="w-4 h-4" />
@@ -974,7 +983,7 @@ export const FamilyCalendarPage: React.FC = () => {
                     ) : (
                       <div className="divide-y divide-slate-100/80">
                         {mems.map((m) => {
-                          const member = mockMembers.find((mb) => mb.id === m.member_id);
+                          const member = members.find((mb) => mb.id === m.member_id);
                           const isAutoSynced = m.id.startsWith('auto-mem-');
                           const isLeapMemorial = m.is_leap_month;
 
@@ -1028,7 +1037,7 @@ export const FamilyCalendarPage: React.FC = () => {
                                 </div>
                                 <div className="text-[10px] text-slate-400">Dương lịch {annualYear}</div>
                                 {m.daysRemaining !== undefined && m.daysRemaining < 999 && (
-                                  <CountdownBadge days={m.daysRemaining} />
+                                  <DaysRemainingBadge days={m.daysRemaining} />
                                 )}
                               </div>
                             </div>

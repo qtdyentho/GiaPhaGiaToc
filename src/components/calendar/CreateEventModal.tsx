@@ -4,14 +4,13 @@ import { EventService } from '../../services/calendar/EventService';
 import { GenealogyService } from '../../services/GenealogyService';
 import { FundService } from '../../services/FundService';
 import { Branch, Fund } from '../../types/database';
-import { mockFunds, mockBranches } from '../../services/mockData';
 import { LunarDatePicker } from '../common/LunarDatePicker';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface CreateEventModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess?: () => void;
   familyId?: string;
   defaultDate?: string;
 }
@@ -24,14 +23,14 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
   defaultDate,
 }) => {
   const { activeFamily } = useAuth();
-  const targetFamId = familyId || activeFamily?.id || 'fam-0000-0001';
+  const targetFamId = familyId || activeFamily?.id || '';
   
   const [branchesList, setBranchesList] = useState<Branch[]>([]);
   const [fundsList, setFundsList] = useState<Fund[]>([]);
 
   const [title, setTitle] = useState('');
   const [eventType, setEventType] = useState<string>('CLAN_ANCESTRAL_DAY');
-  const [location, setLocation] = useState(activeFamily?.ancestral_hall_address || 'Từ Đường Họ Nguyễn Văn, Hoàng Mai, Hà Nội');
+  const [location, setLocation] = useState(activeFamily?.ancestral_hall_address || 'Nhà thờ họ / Từ đường');
   const [description, setDescription] = useState('');
   const [branchId, setBranchId] = useState<string>('ALL');
   const [estimatedBudget, setEstimatedBudget] = useState<number>(0);
@@ -54,8 +53,8 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
             GenealogyService.getFamilyTree(targetFamId),
             FundService.getFunds(targetFamId),
           ]);
-          const bList = tree.branches && tree.branches.length > 0 ? tree.branches : mockBranches;
-          const fList = funds && funds.length > 0 ? funds : mockFunds;
+          const bList = tree.branches || [];
+          const fList = funds || [];
           setBranchesList(bList);
           setFundsList(fList);
           if (!fundId && fList[0]) {
@@ -63,8 +62,6 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
           }
         } catch (err) {
           console.error('Lỗi khi tải danh sách chi phái và quỹ cho sự kiện:', err);
-          setBranchesList(mockBranches);
-          setFundsList(mockFunds);
         }
       }
     }

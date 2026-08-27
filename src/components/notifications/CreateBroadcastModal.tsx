@@ -5,7 +5,6 @@ import {
 } from 'lucide-react';
 import { BroadcastService } from '../../services/calendar/BroadcastService';
 import { useAuth } from '../../contexts/AuthContext';
-import { mockEvents } from '../../services/mockData';
 
 interface CreateBroadcastModalProps {
   isOpen: boolean;

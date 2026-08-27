@@ -18,7 +18,6 @@ import {
 } from '../types/database';
 import { BulkAssessmentModal } from '../components/finance/BulkAssessmentModal';
 import { RecordIncomeModal } from '../components/finance/RecordIncomeModal';
-import { mockMembers } from '../services/mockData';
 import { useAuth } from '../contexts/AuthContext';
 
 export const IncomeAssessmentsPage: React.FC = () => {
@@ -81,7 +80,7 @@ export const IncomeAssessmentsPage: React.FC = () => {
   const totalPending = totalDue - totalPaid;
 
   const filteredAssessments = assessments.filter((asm) => {
-    const member = members.find((m) => m.id === asm.member_id) || mockMembers.find((m) => m.id === asm.member_id);
+    const member = members.find((m) => m.id === asm.member_id);
     const matchStatus =
       selectedStatus === 'ALL'
         ? true
@@ -209,7 +208,7 @@ export const IncomeAssessmentsPage: React.FC = () => {
                 </tr>
               ) : (
                 filteredAssessments.map((asm) => {
-                  const member = members.find((m) => m.id === asm.member_id) || mockMembers.find((m) => m.id === asm.member_id);
+                  const member = members.find((m) => m.id === asm.member_id);
                   const isPaid = asm.status === 'PAID';
 
                   return (

@@ -4,15 +4,18 @@ import { ArrowLeft, User, Calendar, MapPin, Heart, GitFork, Sparkles, Edit3, Plu
 import { Member, MemberRelationship, MemorialDate } from '../types/database';
 import { GenealogyService } from '../services/GenealogyService';
 import { MemorialService } from '../services/calendar/MemorialService';
-import { mockMembers, mockRelationships, mockMemorialDates, mockFamily } from '../services/mockData';
+import { isSupabaseConfigured } from '../lib/supabase';
 import { formatLunarDate, formatDate } from '../lib/utils';
 import { CreateMemorialModal } from '../components/calendar/CreateMemorialModal';
 import { LunarCalendarService } from '../services/calendar/LunarCalendarService';
 import { calculateBatTu } from '../lib/fengshui';
 import { MemorialPrayerViewerModal } from '../components/genealogy/MemorialPrayerViewerModal';
+import { useAuth } from '../contexts/AuthContext';
+import { mockMembers } from '../services/mockData';
 
 export const MemberProfilePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { activeFamily } = useAuth();
   const [activeTab, setActiveTab] = useState<'info' | 'relations' | 'memorial'>('info');
   const [showAddMemorialModal, setShowAddMemorialModal] = useState(false);
   const [showPrayerModal, setShowPrayerModal] = useState(false);
@@ -24,7 +27,10 @@ export const MemberProfilePage: React.FC = () => {
 
   useEffect(() => {
     async function loadMemberData() {
-      if (!id) return;
+      if (!id) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       try {
         const found = await GenealogyService.getMemberById(id);
@@ -37,12 +43,15 @@ export const MemberProfilePage: React.FC = () => {
           const mem = mems.find((m) => m.member_id === found.id) || null;
           setMemorial(mem);
           setRelationships(tree.relationships.filter((r) => r.member_id === found.id || r.related_member_id === found.id));
+        } else if (!isSupabaseConfigured()) {
+          const mockFound = mockMembers.find((m) => m.id === id) || null;
+          setMember(mockFound);
         } else {
-          setMember(mockMembers.find((m) => m.id === id) || mockMembers[0]);
+          setMember(null);
         }
       } catch (err) {
         console.error('Lỗi khi tải thông tin thành viên:', err);
-        setMember(mockMembers.find((m) => m.id === id) || mockMembers[0]);
+        setMember(null);
       } finally {
         setLoading(false);
       }
@@ -50,7 +59,35 @@ export const MemberProfilePage: React.FC = () => {
     loadMemberData();
   }, [id]);
 
-  const effectiveMember = member || mockMembers.find((m) => m.id === id) || mockMembers[0];
+  if (loading) {
+    return (
+      <div className="py-20 text-center text-slate-500 dark:text-slate-400 font-sans">
+        <div className="w-8 h-8 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p className="text-sm font-semibold">Đang tải hồ sơ thành viên...</p>
+      </div>
+    );
+  }
+
+  if (!member) {
+    return (
+      <div className="py-16 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 max-w-lg mx-auto font-sans">
+        <User className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Không tìm thấy thành viên</h2>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-6">
+          Thành viên này không tồn tại hoặc bạn không có quyền truy cập thông tin gia phả này.
+        </p>
+        <Link
+          to="/app/members"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#166534] hover:bg-[#14532d] text-white text-xs font-bold rounded-xl shadow-sm transition"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Quay lại danh bạ dòng họ</span>
+        </Link>
+      </div>
+    );
+  }
+
+  const effectiveMember = member;
 
   const nextOccurrence = LunarCalendarService.getNextSolarDateForMemorial(
     effectiveMember.death_lunar_day || 15,
@@ -362,7 +399,7 @@ export const MemberProfilePage: React.FC = () => {
         isOpen={showPrayerModal}
         onClose={() => setShowPrayerModal(false)}
         member={member}
-        familyName={mockFamily.name}
+        familyName={activeFamily?.name || 'Gia Tộc'}
       />
     </div>
   );

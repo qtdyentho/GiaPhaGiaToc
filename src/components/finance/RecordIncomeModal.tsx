@@ -4,6 +4,7 @@ import { IncomeAssessment, Fund, PaymentMethod, Member } from '../../types/datab
 import { FundService } from '../../services/FundService';
 import { GenealogyService } from '../../services/GenealogyService';
 import { VietQRService } from '../../services/VietQRService';
+import { isSupabaseConfigured } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { mockMembers } from '../../services/mockData';
 
@@ -32,7 +33,13 @@ export const RecordIncomeModal: React.FC<RecordIncomeModalProps> = ({
     async function loadMember() {
       if (assessment?.member_id) {
         const m = await GenealogyService.getMemberById(assessment.member_id);
-        setMember(m || mockMembers.find((mock) => mock.id === assessment.member_id));
+        if (m) {
+          setMember(m);
+        } else if (!isSupabaseConfigured()) {
+          setMember(mockMembers.find((mock) => mock.id === assessment.member_id));
+        } else {
+          setMember(undefined);
+        }
       }
     }
     if (isOpen) {

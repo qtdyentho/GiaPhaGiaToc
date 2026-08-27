@@ -16,8 +16,8 @@ import {
   ScrollText
 } from 'lucide-react';
 import { MemorialService } from '../services/calendar/MemorialService';
+import { GenealogyService } from '../services/GenealogyService';
 import { MemorialDate, Branch, Generation, Member } from '../types/database';
-import { mockMembers, mockBranches, mockGenerations } from '../services/mockData';
 import { formatDate } from '../lib/utils';
 import { Link } from 'react-router-dom';
 import { CreateMemorialModal } from '../components/calendar/CreateMemorialModal';
@@ -27,6 +27,9 @@ import { useAuth } from '../contexts/AuthContext';
 export const MemorialsPage: React.FC = () => {
   const { activeFamily } = useAuth();
   const [memorials, setMemorials] = useState<MemorialDate[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [generations, setGenerations] = useState<Generation[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [filterMode, setFilterMode] = useState<'ALL' | 'BRANCH' | 'SUB_BRANCH'>('ALL');
   const [selectedBranchId, setSelectedBranchId] = useState<string>('');
   const [selectedSubBranch, setSelectedSubBranch] = useState<string>('CÀNH 1');
@@ -43,13 +46,27 @@ export const MemorialsPage: React.FC = () => {
   const loadData = async () => {
     if (!currentFamId) {
       setMemorials([]);
+      setBranches([]);
+      setGenerations([]);
+      setMembers([]);
       setLoading(false);
       return;
     }
     setLoading(true);
-    const data = await MemorialService.getMemorials(currentFamId);
-    setMemorials(data);
-    setLoading(false);
+    try {
+      const [data, treeData] = await Promise.all([
+        MemorialService.getMemorials(currentFamId),
+        GenealogyService.getFamilyTree(currentFamId),
+      ]);
+      setMemorials(data || []);
+      setBranches(treeData.branches || []);
+      setGenerations(treeData.generations || []);
+      setMembers(treeData.members || []);
+    } catch (err) {
+      console.error('Lỗi khi tải dữ liệu ngày giỗ:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -64,7 +81,7 @@ export const MemorialsPage: React.FC = () => {
   };
 
   const filteredMemorials = memorials.filter((m) => {
-    const member = mockMembers.find((mb) => mb.id === m.member_id);
+    const member = members.find((mb) => mb.id === m.member_id);
     const matchMonth = selectedMonth === 'ALL' || String(m.lunar_month) === selectedMonth;
     const matchSearch =
       m.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -103,7 +120,7 @@ export const MemorialsPage: React.FC = () => {
 
         <div className="flex items-center gap-2 flex-wrap shrink-0">
           <button
-            onClick={() => setSelectedPrayerMember(mockMembers[0] || null)}
+            onClick={() => setSelectedPrayerMember(members[0] || null)}
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900 border border-amber-300 dark:border-amber-700 text-amber-950 dark:text-amber-300 text-xs font-bold rounded-xl transition shadow-2xs cursor-pointer"
           >
             <ScrollText className="w-4 h-4 text-amber-700 dark:text-amber-400" />
@@ -141,8 +158,8 @@ export const MemorialsPage: React.FC = () => {
           <button
             onClick={() => {
               setFilterMode('BRANCH');
-              if (!selectedBranchId && mockBranches.length > 0) {
-                setSelectedBranchId(mockBranches[0].id);
+              if (!selectedBranchId && branches.length > 0) {
+                setSelectedBranchId(branches[0].id);
               }
             }}
             className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
@@ -172,7 +189,7 @@ export const MemorialsPage: React.FC = () => {
               onChange={(e) => setSelectedBranchId(e.target.value)}
               className="px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-full text-xs text-slate-900 font-bold focus:outline-none focus:border-[#2E1E6B]"
             >
-              {mockBranches.map((b) => (
+              {branches.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
                 </option>
@@ -235,9 +252,9 @@ export const MemorialsPage: React.FC = () => {
           </div>
         ) : (
           filteredMemorials.map((mem) => {
-            const member = mockMembers.find((m) => m.id === mem.member_id);
-            const branchName = mockBranches.find((b) => b.id === member?.branch_id)?.name || 'Chi Trưởng';
-            const genName = mockGenerations.find((g) => g.id === member?.generation_id)?.name || 'Thế hệ tiền bối';
+            const member = members.find((m) => m.id === mem.member_id);
+            const branchName = branches.find((b) => b.id === member?.branch_id)?.name || 'Chi Trưởng';
+            const genName = generations.find((g) => g.id === member?.generation_id)?.name || 'Thế hệ tiền bối';
             const is30thDay = mem.lunar_day === 30;
             const isAutoSynced = mem.id.startsWith('auto-mem-');
 

@@ -4,7 +4,6 @@ import { Fund, IncomeCategory, Branch, Generation, Member } from '../../types/da
 import { FundService } from '../../services/FundService';
 import { GenealogyService } from '../../services/GenealogyService';
 import { useAuth } from '../../contexts/AuthContext';
-import { mockMembers } from '../../services/mockData';
 
 interface BulkAssessmentModalProps {
   isOpen: boolean;
