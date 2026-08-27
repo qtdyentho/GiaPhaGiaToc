@@ -201,6 +201,8 @@ export const ClanChronicleDetailPage: React.FC = () => {
             <img
               src={chronicle.cover_image_url}
               alt={chronicle.title}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover"
             />
           </div>

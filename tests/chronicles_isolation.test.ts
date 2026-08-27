@@ -112,4 +112,27 @@ test('▶ CLAN HERITAGE INTRODUCTION & CHRONICLES TEST SUITE', async (t) => {
     assert.equal(updateRes.intro.couplets.length, 1);
     assert.equal(updateRes.intro.couplets[0].horizontal, 'ĐỨC LƯU QUANG');
   });
+
+  await t.test('CHRONICLE-005: Ancestral Hall Images management & persistence', async () => {
+    const imagesToSave = [
+      'https://images.unsplash.com/photo-1548625361-195fe57871b6?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&q=80&w=1200',
+    ];
+
+    const updateRes = await ClanChronicleService.updateClanIntro(familyAlpha, {
+      ancestral_hall_images: imagesToSave,
+    });
+
+    assert.equal(updateRes.success, true);
+    assert.ok(updateRes.intro);
+    assert.ok(updateRes.intro.ancestral_hall_images);
+    assert.equal(updateRes.intro.ancestral_hall_images.length, 2);
+    assert.equal(updateRes.intro.ancestral_hall_images[0], imagesToSave[0]);
+
+    // Retrieve again to confirm persistence
+    const reloaded = await ClanChronicleService.getClanIntro(familyAlpha);
+    assert.ok(reloaded.ancestral_hall_images);
+    assert.equal(reloaded.ancestral_hall_images.length, 2);
+    assert.equal(reloaded.ancestral_hall_images[0], imagesToSave[0]);
+  });
 });

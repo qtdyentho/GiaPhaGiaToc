@@ -1,7 +1,11 @@
 ﻿import React, { useState } from 'react';
-import { X, Save, Landmark, Plus, Trash2, BookOpen, AlertCircle } from 'lucide-react';
+import { 
+  X, Save, Landmark, Plus, Trash2, BookOpen, AlertCircle, 
+  Upload, Image as ImageIcon, Sparkles, Check, ChevronRight 
+} from 'lucide-react';
 import { ClanIntroConfig, ClanIntroCouplet, ClanLeaderItem } from '../../types/chronicle';
 import { ClanChronicleService } from '../../services/ClanChronicleService';
+import { compressImage, ANCESTRAL_HALL_PRESETS } from '../../lib/imageCompressor';
 
 interface EditClanIntroModalProps {
   isOpen: boolean;
@@ -24,6 +28,15 @@ export const EditClanIntroModal: React.FC<EditClanIntroModalProps> = ({
   const [ancestralHallAddress, setAncestralHallAddress] = useState(initialIntro.ancestral_hall_address || '');
   const [ancestralHallArchitect, setAncestralHallArchitect] = useState(initialIntro.ancestral_hall_architect || '');
   const [relicsDescription, setRelicsDescription] = useState(initialIntro.relics_description || '');
+
+  // Ancestral Hall Images State
+  const [ancestralHallImages, setAncestralHallImages] = useState<string[]>(
+    initialIntro.ancestral_hall_images && initialIntro.ancestral_hall_images.length > 0
+      ? initialIntro.ancestral_hall_images
+      : [ANCESTRAL_HALL_PRESETS[0].url, ANCESTRAL_HALL_PRESETS[1].url]
+  );
+  const [customImageUrl, setCustomImageUrl] = useState('');
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const [couplets, setCouplets] = useState<ClanIntroCouplet[]>(
     initialIntro.couplets && initialIntro.couplets.length > 0
@@ -61,6 +74,42 @@ export const EditClanIntroModal: React.FC<EditClanIntroModalProps> = ({
     setLeadershipBoard(leadershipBoard.filter((_, i) => i !== index));
   };
 
+  // Image Management Handlers
+  const handleAddCustomImageUrl = () => {
+    if (!customImageUrl.trim()) return;
+    setAncestralHallImages([...ancestralHallImages, customImageUrl.trim()]);
+    setCustomImageUrl('');
+  };
+
+  const handleSelectPresetImage = (url: string) => {
+    if (!ancestralHallImages.includes(url)) {
+      setAncestralHallImages([...ancestralHallImages, url]);
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setAncestralHallImages(ancestralHallImages.filter((_, i) => i !== index));
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsCompressing(true);
+    setError(null);
+    try {
+      const file = files[0];
+      // Tự động nén ảnh chất lượng cao max 1200px
+      const compressedBase64 = await compressImage(file, 1200, 1200, 0.82);
+      setAncestralHallImages([...ancestralHallImages, compressedBase64]);
+    } catch (err: any) {
+      setError('Lỗi khi xử lý nén ảnh: ' + (err.message || 'Vui lòng thử lại'));
+    } finally {
+      setIsCompressing(false);
+      e.target.value = '';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -74,6 +123,7 @@ export const EditClanIntroModal: React.FC<EditClanIntroModalProps> = ({
       clan_motto: clanMotto.trim(),
       ancestral_hall_address: ancestralHallAddress.trim(),
       ancestral_hall_architect: ancestralHallArchitect.trim(),
+      ancestral_hall_images: ancestralHallImages,
       relics_description: relicsDescription.trim(),
       couplets,
       leadership_board: leadershipBoard,
@@ -102,7 +152,7 @@ export const EditClanIntroModal: React.FC<EditClanIntroModalProps> = ({
                 Chỉnh Sửa Giới Thiệu & Lịch Sử Dòng Họ
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Cập nhật cội nguồn phát tích, hoành phi câu đối, nhà thờ tổ và ban trị sự
+                Cập nhật cội nguồn phát tích, ảnh từ đường, hoành phi câu đối và ban trị sự
               </p>
             </div>
           </div>
@@ -195,11 +245,149 @@ export const EditClanIntroModal: React.FC<EditClanIntroModalProps> = ({
             </div>
           </div>
 
-          {/* Section 2: Hoành Phi & Câu Đối */}
+          {/* Section 2: Quản Lý Hình Ảnh Từ Đường & Presets */}
+          <div className="p-5 bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-200/70 dark:border-emerald-800/60 rounded-2xl space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-emerald-950 dark:text-emerald-300 flex items-center gap-2">
+                <span>🖼️</span> 2. Quản Lý Hình Ảnh Từ Đường & Nhà Thờ Họ
+              </h3>
+              <span className="text-[11px] text-slate-400">
+                Đã chọn: <strong>{ancestralHallImages.length}</strong> ảnh
+              </span>
+            </div>
+
+            {/* Current Images List */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {ancestralHallImages.map((imgUrl, idx) => (
+                <div
+                  key={idx}
+                  className="relative h-28 rounded-xl overflow-hidden border-2 border-emerald-500/40 dark:border-emerald-700/60 group shadow-xs"
+                >
+                  <img
+                    src={imgUrl}
+                    alt={`Từ đường ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(idx)}
+                      className="p-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                      title="Xóa ảnh này"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="absolute bottom-1 left-1.5 px-1.5 py-0.5 rounded bg-black/60 text-[9px] font-bold text-white">
+                    Ảnh #{idx + 1}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Upload & Add Custom URL */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              {/* Upload with Auto-compression */}
+              <div className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl space-y-1.5">
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                  Tải ảnh từ máy tính (Tự động nén WebP)
+                </label>
+                <div className="flex items-center gap-2">
+                  <label className="px-3.5 py-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/60 hover:bg-emerald-200 text-emerald-900 dark:text-emerald-200 text-xs font-bold cursor-pointer transition flex items-center gap-1.5">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{isCompressing ? 'Đang nén ảnh...' : 'Chọn file ảnh'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      disabled={isCompressing}
+                      className="hidden"
+                    />
+                  </label>
+                  <span className="text-[10px] text-slate-400">PNG, JPG, WebP</span>
+                </div>
+              </div>
+
+              {/* Add Custom URL */}
+              <div className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl space-y-1.5">
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                  Hoặc nhập đường dẫn link ảnh (URL)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="url"
+                    value={customImageUrl}
+                    onChange={(e) => setCustomImageUrl(e.target.value)}
+                    placeholder="https://..."
+                    className="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCustomImageUrl}
+                    className="px-3 py-1.5 rounded-lg bg-[#166534] text-white text-xs font-bold shrink-0 hover:bg-[#14532d]"
+                  >
+                    Thêm
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Presets Gallery */}
+            <div className="space-y-2 pt-2 border-t border-emerald-200/60 dark:border-emerald-800/40">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-emerald-900 dark:text-emerald-300 flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Bộ Sưu Tập Mẫu Từ Đường Cổ Truyền Việt Nam (Bấm để chọn thêm)</span>
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {ANCESTRAL_HALL_PRESETS.map((preset) => {
+                  const isSelected = ancestralHallImages.includes(preset.url);
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => handleSelectPresetImage(preset.url)}
+                      className={`p-2 rounded-xl border text-left transition flex items-center gap-2 relative ${
+                        isSelected
+                          ? 'bg-emerald-100/80 dark:bg-emerald-950 border-emerald-500 ring-2 ring-emerald-500'
+                          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-emerald-400'
+                      }`}
+                    >
+                      <img
+                        src={preset.thumbnail}
+                        alt={preset.title}
+                        className="w-10 h-10 rounded-lg object-cover shrink-0"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] font-bold text-slate-900 dark:text-white truncate">
+                          {preset.title}
+                        </div>
+                        <div className="text-[9px] text-slate-400 truncate">
+                          {isSelected ? 'Đã thêm vào bộ ảnh' : 'Bấm để thêm'}
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <div className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                          <Check className="w-2.5 h-2.5" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Hoành Phi & Câu Đối */}
           <div className="p-5 bg-rose-50/40 dark:bg-rose-950/20 border border-rose-200/70 dark:border-rose-800/60 rounded-2xl space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold text-rose-950 dark:text-rose-300 flex items-center gap-2">
-                <span>🏮</span> 2. Hoành Phi & Câu Đối Từ Đường
+                <span>🏮</span> 3. Hoành Phi & Câu Đối Từ Đường
               </h3>
               <button
                 type="button"
@@ -270,10 +458,10 @@ export const EditClanIntroModal: React.FC<EditClanIntroModalProps> = ({
             </div>
           </div>
 
-          {/* Section 3: Nhà Thờ Họ & Di Tích */}
-          <div className="p-5 bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-200/70 dark:border-emerald-800/60 rounded-2xl space-y-4">
-            <h3 className="text-xs font-bold text-emerald-950 dark:text-emerald-300 flex items-center gap-2">
-              <span>🏯</span> 3. Nhà Thờ Tổ & Di Tích Lăng Mộ
+          {/* Section 4: Nhà Thờ Họ & Di Tích Chi Tiết */}
+          <div className="p-5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl space-y-4">
+            <h3 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>🏯</span> 4. Thông Tin Địa Lý & Kiến Trúc Từ Đường
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -317,11 +505,11 @@ export const EditClanIntroModal: React.FC<EditClanIntroModalProps> = ({
             </div>
           </div>
 
-          {/* Section 4: Ban Trị Sự & Hội Đồng Gia Tộc */}
+          {/* Section 5: Ban Trị Sự & Hội Đồng Gia Tộc */}
           <div className="p-5 bg-blue-50/40 dark:bg-blue-950/20 border border-blue-200/70 dark:border-blue-800/60 rounded-2xl space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold text-blue-950 dark:text-blue-300 flex items-center gap-2">
-                <span>👥</span> 4. Hội Đồng Gia Tộc & Ban Trị Sự Đương Nhiệm
+                <span>👥</span> 5. Hội Đồng Gia Tộc & Ban Trị Sự Đương Nhiệm
               </h3>
               <button
                 type="button"
@@ -392,14 +580,14 @@ export const EditClanIntroModal: React.FC<EditClanIntroModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              className="px-5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             >
               Hủy bỏ
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-2.5 rounded-2xl bg-[#166534] hover:bg-[#14532d] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-bold shadow-md hover:shadow-lg transition flex items-center gap-2 disabled:opacity-50"
+              disabled={isSubmitting || isCompressing}
+              className="px-6 py-2.5 rounded-2xl bg-[#166534] hover:bg-[#14532d] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-bold shadow-md hover:shadow-lg transition flex items-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               <Save className="w-4 h-4" />
               <span>{isSubmitting ? 'Đang lưu...' : 'Lưu Thông Tin Giới Thiệu'}</span>

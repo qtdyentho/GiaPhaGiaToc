@@ -1,8 +1,9 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { X, Send, Image, Tag, Sparkles, BookOpen, AlertCircle, FileText } from 'lucide-react';
 import { ChronicleCategory, CHRONICLE_CATEGORY_LABELS } from '../../types/chronicle';
 import { ClanChronicleService } from '../../services/ClanChronicleService';
 import { useAuth } from '../../contexts/AuthContext';
+import { compressImage } from '../../lib/imageCompressor';
 
 interface CreateChronicleModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export const CreateChronicleModal: React.FC<CreateChronicleModalProps> = ({
   const [summary, setSummary] = useState('');
   const [content, setContent] = useState('');
   const [coverImageUrl, setCoverImageUrl] = useState('');
+  const [isCompressing, setIsCompressing] = useState(false);
   const [authorName, setAuthorName] = useState(user?.full_name || 'Con cháu dòng tộc');
   const [authorBranch, setAuthorBranch] = useState('');
   const [authorGeneration, setAuthorGeneration] = useState<string>('');
@@ -139,15 +141,58 @@ export const CreateChronicleModal: React.FC<CreateChronicleModalProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Link ảnh bìa tư liệu (URL)
+                  Ảnh bìa bài viết (Tải file hoặc nhập URL)
                 </label>
-                <input
-                  type="url"
-                  value={coverImageUrl}
-                  onChange={(e) => setCoverImageUrl(e.target.value)}
-                  placeholder="https://images.unsplash.com/..."
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#166534]"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="url"
+                    value={coverImageUrl}
+                    onChange={(e) => setCoverImageUrl(e.target.value)}
+                    placeholder="https://..."
+                    className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-white focus:outline-none"
+                  />
+                  <label className="px-3 py-2 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 hover:bg-emerald-200 text-emerald-900 dark:text-emerald-200 text-xs font-bold cursor-pointer transition shrink-0">
+                    <span>{isCompressing ? 'Đang nén...' : 'Tải file ảnh'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={isCompressing}
+                      onChange={async (e) => {
+                        const files = e.target.files;
+                        if (!files || files.length === 0) return;
+                        try {
+                          setIsCompressing(true);
+                          const compressed = await compressImage(files[0], 1200, 800, 0.82);
+                          setCoverImageUrl(compressed);
+                        } catch (err) {
+                          console.warn('Lỗi nén ảnh:', err);
+                        } finally {
+                          setIsCompressing(false);
+                          e.target.value = '';
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                {coverImageUrl && (
+                  <div className="mt-2 relative h-24 rounded-xl overflow-hidden border border-emerald-500/40 w-40">
+                    <img
+                      src={coverImageUrl}
+                      alt="Xem trước ảnh bìa"
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setCoverImageUrl('')}
+                      className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-md hover:bg-black/80 text-[10px]"
+                    >
+                      Xóa
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

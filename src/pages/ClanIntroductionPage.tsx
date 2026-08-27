@@ -16,6 +16,7 @@ import {
   Award,
   ChevronRight,
   ShieldCheck,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ClanIntroConfig } from '../types/chronicle';
@@ -24,6 +25,7 @@ import { GenealogyService } from '../services/GenealogyService';
 import { Branch, Generation, Member } from '../types/database';
 import { EditClanIntroModal } from '../components/chronicles/EditClanIntroModal';
 import { PrintableClanQRCodeModal } from '../components/family/PrintableClanQRCodeModal';
+import { ANCESTRAL_HALL_PRESETS } from '../lib/imageCompressor';
 
 export const ClanIntroductionPage: React.FC = () => {
   const { activeFamily, isFamilyAdmin } = useAuth();
@@ -39,6 +41,7 @@ export const ClanIntroductionPage: React.FC = () => {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [selectedLightboxImage, setSelectedLightboxImage] = useState<{ url: string; title: string } | null>(null);
 
   const loadData = async () => {
     if (!currentFamId) {
@@ -300,23 +303,29 @@ export const ClanIntroductionPage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {(currentIntro.ancestral_hall_images && currentIntro.ancestral_hall_images.length > 0
                   ? currentIntro.ancestral_hall_images
-                  : [
-                      'https://images.unsplash.com/photo-1599839575945-a9e5af0c3fa5?auto=format&fit=crop&q=80&w=1200',
-                      'https://images.unsplash.com/photo-1548625361-195fe57871b6?auto=format&fit=crop&q=80&w=800',
-                    ]
+                  : [ANCESTRAL_HALL_PRESETS[0].url, ANCESTRAL_HALL_PRESETS[1].url]
                 ).map((imgUrl, idx) => (
                   <div
                     key={idx}
-                    className="relative h-48 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 group"
+                    onClick={() => setSelectedLightboxImage({ url: imgUrl, title: `Hình ảnh từ đường tư liệu #${idx + 1}` })}
+                    className="relative h-48 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 group cursor-pointer shadow-xs"
                   >
                     <img
                       src={imgUrl}
                       alt="Từ đường dòng họ"
+                      loading="lazy"
+                      decoding="async"
+                      onError={(e) => {
+                        e.currentTarget.src = ANCESTRAL_HALL_PRESETS[0].url;
+                      }}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-3">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end justify-between p-3">
                       <span className="text-[11px] font-bold text-white">
                         Tư liệu từ đường #{idx + 1}
+                      </span>
+                      <span className="text-[10px] bg-white/20 backdrop-blur-xs text-white px-2 py-0.5 rounded-md font-semibold opacity-0 group-hover:opacity-100 transition">
+                        Bấm để phóng to 🔍
                       </span>
                     </div>
                   </div>
@@ -584,6 +593,38 @@ export const ClanIntroductionPage: React.FC = () => {
           family={activeFamily}
           passToken={activeFamily.code || 'GIA-TOC'}
         />
+      )}
+
+      {/* Fullscreen Lightbox Image Viewer */}
+      {selectedLightboxImage && (
+        <div
+          onClick={() => setSelectedLightboxImage(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-200"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-5xl max-h-[90vh] bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-700 flex flex-col"
+          >
+            <div className="p-4 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 flex items-center justify-between">
+              <span className="text-sm font-bold text-white">
+                {selectedLightboxImage.title}
+              </span>
+              <button
+                onClick={() => setSelectedLightboxImage(null)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-2 overflow-auto flex items-center justify-center bg-black">
+              <img
+                src={selectedLightboxImage.url}
+                alt={selectedLightboxImage.title}
+                className="max-h-[75vh] w-auto max-w-full object-contain rounded-xl"
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

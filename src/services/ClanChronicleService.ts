@@ -455,8 +455,9 @@ export class ClanChronicleService {
       ancestral_hall_address: 'Nhà thờ tổ dòng họ',
       ancestral_hall_architect: 'Kiến trúc cổ truyền 3 gian 2 chái, mái ngói mũi hài, cột gỗ lim',
       ancestral_hall_images: [
+        'https://images.unsplash.com/photo-1548625361-195fe57871b6?auto=format&fit=crop&q=80&w=1200',
+        'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&q=80&w=1200',
         'https://images.unsplash.com/photo-1599839575945-a9e5af0c3fa5?auto=format&fit=crop&q=80&w=1200',
-        'https://images.unsplash.com/photo-1548625361-195fe57871b6?auto=format&fit=crop&q=80&w=800',
       ],
       relics_description: 'Văn bia ghi danh công đức, lư hương đồng cổ, gia phả cổ chữ Hán Nôm và các bức đại tự ngàn năm.',
       leadership_board: [
@@ -488,11 +489,17 @@ export class ClanChronicleService {
       try {
         const { data, error } = await supabase
           .from('families')
-          .select('description, ancestral_hall_address, origin_province, origin_district, origin_commune')
+          .select('description, ancestral_hall_address, origin_province, origin_district, origin_commune, covenant_preamble')
           .eq('id', familyId)
           .single();
 
         if (!error && data) {
+          if (data.covenant_preamble && data.covenant_preamble.startsWith('{')) {
+            try {
+              const parsed = JSON.parse(data.covenant_preamble);
+              return { ...defaultIntro, ...parsed };
+            } catch {}
+          }
           if (data.description) defaultIntro.historical_origin = data.description;
           if (data.ancestral_hall_address) defaultIntro.ancestral_hall_address = data.ancestral_hall_address;
           if (data.origin_province) defaultIntro.origin_province = data.origin_province;
@@ -538,6 +545,7 @@ export class ClanChronicleService {
             origin_province: updated.origin_province,
             origin_district: updated.origin_district,
             origin_commune: updated.origin_commune,
+            covenant_preamble: JSON.stringify(updated),
           })
           .eq('id', familyId);
       } catch (err) {
