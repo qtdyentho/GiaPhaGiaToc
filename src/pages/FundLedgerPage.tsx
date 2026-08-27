@@ -118,31 +118,31 @@ export const FundLedgerPage: React.FC = () => {
         <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
           <button
             onClick={() => setIsCreateFundOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+            className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
           >
-            <Landmark className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+            <Landmark className="w-4 h-4 text-slate-500 dark:text-slate-400" />
             <span>Tạo Quỹ Mới</span>
           </button>
 
           <button
             onClick={exportCSV}
-            className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+            className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
           >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>Xuất CSV</span>
           </button>
 
           <button
             onClick={() => setIsAnnualReportOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer font-serif"
+            className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
           >
-            <Printer className="w-4 h-4 text-amber-700 dark:text-amber-400" />
-            <span>📑 Báo Cáo Họp Họ</span>
+            <Printer className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            <span>Báo Cáo Họp Họ</span>
           </button>
 
           <button
             onClick={() => setIsRecordIncomeOpen(true)}
-            className="px-4 py-2 rounded-xl bg-[#166534] hover:bg-[#14532d] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-[#166534] hover:bg-[#14532d] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Thu Quỹ Trực Tiếp</span>

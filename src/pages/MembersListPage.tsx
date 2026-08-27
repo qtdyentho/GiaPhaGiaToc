@@ -77,16 +77,16 @@ export const MembersListPage: React.FC = () => {
         <div className="flex items-center space-x-2 flex-wrap gap-y-2">
           <Link
             to="/app/kinship"
-            className="flex items-center space-x-1.5 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-amber-950 text-xs font-bold rounded-xl transition shadow-2xs border border-amber-400 cursor-pointer"
+            className="flex items-center space-x-1.5 px-3 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl transition shadow-2xs border border-slate-200 dark:border-slate-700 cursor-pointer"
           >
-            <ArrowRightLeft className="w-4 h-4" />
+            <ArrowRightLeft className="w-4 h-4 text-amber-600 dark:text-amber-400" />
             <span>Tra Cứu Xưng Hô</span>
           </Link>
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className="flex items-center space-x-1.5 px-3 py-2 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900 text-[#166534] dark:text-emerald-300 text-xs font-bold rounded-xl transition shadow-2xs cursor-pointer"
+            className="flex items-center space-x-1.5 px-3 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl transition shadow-2xs cursor-pointer"
           >
-            <FileSpreadsheet className="w-4 h-4" />
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>Nhập Excel (4 Bước)</span>
           </button>
           <button

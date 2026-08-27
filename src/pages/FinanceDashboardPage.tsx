@@ -134,13 +134,13 @@ export const FinanceDashboardPage: React.FC = () => {
           </Button>
 
           <Button
-            variant="danger"
+            variant="secondary"
             size="sm"
             onClick={() => {
               setTargetExpenseFund(null);
               setIsCreateExpenseOpen(true);
             }}
-            icon={<ArrowUpRight className="w-4 h-4" />}
+            icon={<ArrowUpRight className="w-4 h-4 text-rose-500" />}
           >
             Đề Xuất Chi
           </Button>
