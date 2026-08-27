@@ -79,29 +79,29 @@ export const MemorialsPage: React.FC = () => {
   return (
     <div className="space-y-6 animate-fade-in font-sans">
       {/* Header Banner with Auto-Sync Callout */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#166534] via-[#C49A3A] to-[#1E3A5F]" />
         
         <div>
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
               Ngày Giỗ Tổ Tiên & Thân Nhân
             </h1>
-            <span className="text-xs bg-amber-100 text-amber-900 font-bold px-2.5 py-0.5 rounded-full border border-amber-300">
+            <span className="text-xs bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-300 font-bold px-2.5 py-0.5 rounded-full border border-amber-300 dark:border-amber-800">
               Chu Kỳ Âm Lịch Vạn Niên
             </span>
-            <span className="text-xs bg-emerald-50 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full border border-emerald-300 flex items-center gap-1">
-              <Zap className="w-3 h-3 text-emerald-600" /> Tự Động Đồng Bộ Cây Phả Hệ
+            <span className="text-xs bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold px-2.5 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
+              <Zap className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Tự Động Đồng Bộ Cây Phả Hệ
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
             Toàn bộ tiền nhân có ngày mất âm lịch trên Cây Phả Hệ được tự động đưa vào lịch giỗ hàng năm. Hỗ trợ xem theo dòng họ, theo chi, cành.
           </p>
         </div>
 
         <button
           onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#166534] hover:bg-[#14532d] text-white text-xs font-bold rounded-xl transition shadow-sm shrink-0"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#166534] hover:bg-[#14532d] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition shadow-sm shrink-0 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Thêm Ngày Giỗ Bổ Sung</span>
@@ -109,7 +109,7 @@ export const MemorialsPage: React.FC = () => {
       </div>
 
       {/* Filter & View Switcher Bar (Exact Stitch Design) */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-center justify-between gap-4">
         {/* Left: Pill Segmented Filter Group */}
         <div className="flex items-center gap-2 flex-wrap">
           <button
@@ -117,10 +117,10 @@ export const MemorialsPage: React.FC = () => {
               setFilterMode('ALL');
               setSelectedBranchId('');
             }}
-            className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
+            className={`px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer ${
               filterMode === 'ALL'
-                ? 'bg-[#2E1E6B] text-white shadow-sm'
-                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                ? 'bg-[#166534] text-white shadow-sm'
+                : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
             }`}
           >
             Toàn dòng họ ({memorials.length})

@@ -401,26 +401,26 @@ export const FamilyCalendarPage: React.FC = () => {
     <div className="space-y-5 animate-fade-in font-sans pb-10">
 
       {/* ══ 1. Header Banner ══════════════════════════════════════════════ */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#166534] via-[#C49A3A] to-[#1E3A5F]" />
 
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
               Lịch Gia Tộc &amp; Ngày Giỗ Vạn Niên
             </h1>
-            <span className="text-[10px] bg-emerald-100 text-emerald-900 font-bold px-2 py-0.5 rounded-full border border-emerald-300">
+            <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-300 font-bold px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">
               Chuẩn Việt Nam • UTC+7
             </span>
             <button
               onClick={() => setShowSyncPanel(!showSyncPanel)}
-              className="text-[10px] bg-amber-50 text-amber-900 font-bold px-2.5 py-0.5 rounded-full border border-amber-300 flex items-center gap-1 hover:bg-amber-100 transition"
+              className="text-[10px] bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 font-bold px-2.5 py-0.5 rounded-full border border-amber-300 dark:border-amber-800 flex items-center gap-1 hover:bg-amber-100 dark:hover:bg-amber-900 transition cursor-pointer"
             >
-              <Zap className="w-3 h-3 text-amber-600" />
+              <Zap className="w-3 h-3 text-amber-600 dark:text-amber-400" />
               {syncInfo.autoSynced} Tự Động / {syncInfo.total} Ngày Giỗ
             </button>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Tra cứu Lịch Âm-Dương song hành, Can Chi, Tiết Khí, Giờ Hoàng Đạo &amp; Ngày Giỗ tự động đồng bộ theo chi, cành.
           </p>
         </div>
@@ -428,7 +428,7 @@ export const FamilyCalendarPage: React.FC = () => {
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => CalendarExportService.downloadICSFile(activeFamily?.name || 'Gia Tộc', memorials, events, currentYear)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition shadow-sm cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 bg-emerald-800 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition shadow-sm cursor-pointer"
             title="Đồng bộ toàn bộ ngày giỗ âm lịch và lễ nghi vào điện thoại"
           >
             <Download className="w-3.5 h-3.5" />
@@ -436,28 +436,28 @@ export const FamilyCalendarPage: React.FC = () => {
           </button>
           <button
             onClick={() => printMemorialPDF(memorials as any[], annualYear, annualGroups)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition shadow-sm cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>Xuất PDF</span>
           </button>
           <button
             onClick={() => setShowCreateMemorialModal(true)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition shadow-sm cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>Thêm Ngày Giỗ</span>
           </button>
           <button
             onClick={() => setShowCreateEventModal(true)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-[#166534] hover:bg-[#14532d] text-white text-xs font-bold rounded-xl transition shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-2 bg-[#166534] hover:bg-[#14532d] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition shadow-sm cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Tạo Sự Kiện</span>
           </button>
           <button
             onClick={loadCalendarData}
-            className="p-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-xl transition"
+            className="p-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-xl transition cursor-pointer"
             title="Đồng bộ lại từ Cây Phả Hệ"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />

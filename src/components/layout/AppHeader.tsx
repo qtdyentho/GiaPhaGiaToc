@@ -244,17 +244,17 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       </div>
 
       {/* Center: TÊN DÒNG HỌ TO, TRANG TRỌNG CHÍNH GIỮA HEADER */}
-      <div className="flex-1 flex justify-center items-center px-2 sm:px-4 min-w-0 text-center">
+      <div className="flex-1 flex justify-center items-center px-1 sm:px-4 min-w-0 text-center">
         <Link
           to="/app/family/settings"
           title="Cài đặt thông tin Dòng Họ"
-          className="inline-flex items-center justify-center gap-2 group hover:opacity-90 transition min-w-0"
+          className="inline-flex items-center justify-center gap-1.5 sm:gap-2 group hover:opacity-90 transition min-w-0"
         >
-          <span className="text-base sm:text-lg md:text-xl font-black text-[#166534] dark:text-emerald-400 font-serif tracking-tight truncate uppercase">
+          <span className="text-sm xs:text-base sm:text-lg md:text-xl font-black text-[#166534] dark:text-emerald-400 font-serif tracking-tight truncate uppercase max-w-[160px] xs:max-w-[220px] sm:max-w-[320px] md:max-w-[460px] lg:max-w-[560px]">
             {activeFamily?.name || 'ĐẠI TỘC GIA PHẢ'}
           </span>
           {activeFamily?.origin_province && (
-            <span className="hidden sm:inline-block px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shrink-0 font-sans">
+            <span className="hidden md:inline-block px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shrink-0 font-sans">
               {activeFamily.origin_province}
             </span>
           )}
@@ -263,9 +263,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
 
       {/* Right: Search, Dark Mode, Notifications, Profile */}
-      <div className="flex items-center space-x-2 sm:space-x-3">
+      <div className="flex items-center space-x-1.5 sm:space-x-3 shrink-0">
         {/* Interactive Real-Time Search */}
-        <div ref={searchContainerRef} className="relative hidden md:block w-48 lg:w-64">
+        <div ref={searchContainerRef} className="relative hidden md:block w-44 lg:w-64">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
@@ -295,7 +295,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           {/* Search Results Dropdown */}
           {isSearching && searchResults.length > 0 && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl py-2 z-50 animate-fade-in divide-y divide-slate-100 dark:divide-slate-800 max-h-80 overflow-y-auto">
-              <div className="px-3.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <div className="px-3.5 py-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 Kết quả tìm kiếm ({searchResults.length})
               </div>
               <div className="py-1">
@@ -307,7 +307,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                       setIsSearching(false);
                       setSearchQuery('');
                     }}
-                    className="px-3.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center justify-between text-xs transition group block"
+                    className="px-3.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center justify-between text-xs transition group block"
                   >
                     <div className="flex items-center space-x-2.5">
                       <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
@@ -323,10 +323,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                         <div className="font-bold text-slate-900 dark:text-slate-100 group-hover:text-[#166534] dark:group-hover:text-emerald-400 transition truncate max-w-[150px]">
                           {item.title}
                         </div>
-                        <div className="text-[10px] text-slate-400">{item.subtitle}</div>
+                        <div className="text-[10px] text-slate-400 dark:text-slate-500">{item.subtitle}</div>
                       </div>
                     </div>
-                    <ArrowUpRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-[#166534] transition" />
+                    <ArrowUpRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:text-[#166534] dark:group-hover:text-emerald-400 transition" />
                   </Link>
                 ))}
               </div>
@@ -334,7 +334,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           )}
 
           {isSearching && searchQuery.trim() && searchResults.length === 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl p-4 z-50 text-center text-xs text-slate-400">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl p-4 z-50 text-center text-xs text-slate-400 dark:text-slate-500">
               Không tìm thấy thông tin phù hợp với "{searchQuery}"
             </div>
           )}
@@ -387,56 +387,56 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           {isNotificationOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setIsNotificationOpen(false)} />
-              <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-50 animate-fade-in divide-y divide-slate-100">
+              <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl py-2 z-50 animate-fade-in divide-y divide-slate-100 dark:divide-slate-800">
                 <div className="px-4 py-2.5 flex items-center justify-between">
-                  <div className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
+                  <div className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-1.5">
                     <span>Thông Báo Gia Tộc</span>
-                    <span className="px-1.5 py-0.5 bg-red-50 text-red-600 rounded-full text-[10px] font-bold">2 mới</span>
+                    <span className="px-1.5 py-0.5 bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 rounded-full text-[10px] font-bold">2 mới</span>
                   </div>
-                  <span className="text-[11px] text-[#166534] font-medium cursor-pointer hover:underline">
+                  <span className="text-[11px] text-[#166534] dark:text-emerald-400 font-medium cursor-pointer hover:underline">
                     Đã đọc tất cả
                   </span>
                 </div>
 
-                <div className="divide-y divide-slate-50 max-h-72 overflow-y-auto">
+                <div className="divide-y divide-slate-50 dark:divide-slate-800 max-h-72 overflow-y-auto">
                   {notifications.map((notif) => (
                     <Link
                       key={notif.id}
                       to={notif.link}
                       onClick={() => setIsNotificationOpen(false)}
-                      className={`p-3 hover:bg-slate-50 flex items-start space-x-3 transition block ${
-                        notif.unread ? 'bg-emerald-50/30' : ''
+                      className={`p-3 hover:bg-slate-50 dark:hover:bg-slate-800/70 flex items-start space-x-3 transition block ${
+                        notif.unread ? 'bg-emerald-50/40 dark:bg-emerald-950/40' : ''
                       }`}
                     >
                       <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
-                        notif.type === 'MEMORIAL' ? 'bg-amber-100 text-amber-800' :
-                        notif.type === 'FINANCE' ? 'bg-emerald-100 text-emerald-800' :
-                        'bg-blue-100 text-blue-800'
+                        notif.type === 'MEMORIAL' ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300' :
+                        notif.type === 'FINANCE' ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300' :
+                        'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300'
                       }`}>
                         {notif.type === 'MEMORIAL' && <Sparkles className="w-4 h-4" />}
                         {notif.type === 'FINANCE' && <DollarSign className="w-4 h-4" />}
                         {notif.type === 'EXPENSE' && <Clock className="w-4 h-4" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-bold text-slate-900 flex items-center justify-between">
+                        <div className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center justify-between">
                           <span className="truncate">{notif.title}</span>
-                          <span className="text-[10px] text-slate-400 font-normal">{notif.time}</span>
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal">{notif.time}</span>
                         </div>
-                        <p className="text-[11px] text-slate-600 mt-0.5 line-clamp-2">{notif.message}</p>
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 line-clamp-2">{notif.message}</p>
                       </div>
                     </Link>
                   ))}
                 </div>
 
                 {isFamilyAdmin && (
-                  <div className="p-2 bg-amber-50/70 border-t border-amber-200">
+                  <div className="p-2 bg-amber-50/70 dark:bg-amber-950/40 border-t border-amber-200 dark:border-amber-900">
                     <button
                       type="button"
                       onClick={() => {
                         setIsNotificationOpen(false);
                         setIsBroadcastModalOpen(true);
                       }}
-                      className="w-full py-1.5 bg-amber-500 hover:bg-amber-600 text-amber-950 font-bold text-xs rounded-xl flex items-center justify-center space-x-1.5 transition shadow-2xs"
+                      className="w-full py-1.5 bg-amber-500 hover:bg-amber-600 text-amber-950 font-bold text-xs rounded-xl flex items-center justify-center space-x-1.5 transition shadow-2xs cursor-pointer"
                     >
                       <Megaphone className="w-3.5 h-3.5" />
                       <span>Phát Thông Báo Đẩy Sự Kiện</span>
@@ -448,7 +448,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   <Link
                     to="/app/notifications"
                     onClick={() => setIsNotificationOpen(false)}
-                    className="text-xs font-bold text-[#166534] hover:underline block py-1"
+                    className="text-xs font-bold text-[#166534] dark:text-emerald-400 hover:underline block py-1"
                   >
                     Xem tất cả thông báo & nhắc nhở →
                   </Link>
@@ -462,35 +462,35 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <div className="relative">
           <div
             onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-            className="flex items-center space-x-2 sm:space-x-3 pl-2 sm:pl-3 border-l border-slate-200 cursor-pointer select-none"
+            className="flex items-center space-x-2 sm:space-x-3 pl-2 sm:pl-3 border-l border-slate-200 dark:border-slate-700 cursor-pointer select-none"
           >
             {user?.avatar_url ? (
               <img
                 src={user.avatar_url}
                 alt={user.full_name}
-                className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0"
+                className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0"
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-emerald-100 text-[#166534] flex items-center justify-center font-bold text-xs shrink-0 border border-emerald-300">
+              <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-950 text-[#166534] dark:text-emerald-300 flex items-center justify-center font-bold text-xs shrink-0 border border-emerald-300 dark:border-emerald-800">
                 <User className="w-4 h-4" />
               </div>
             )}
             <div className="hidden lg:block text-left">
-              <div className="text-xs font-bold text-slate-900 leading-tight">{user?.full_name || 'Khách'}</div>
-              <div className="text-[10px] font-semibold text-amber-800">{getRoleLabel()}</div>
+              <div className="text-xs font-bold text-slate-900 dark:text-slate-100 leading-tight">{user?.full_name || 'Khách'}</div>
+              <div className="text-[10px] font-semibold text-amber-800 dark:text-amber-400">{getRoleLabel()}</div>
             </div>
-            <ChevronDown className={`w-3.5 h-3.5 text-slate-400 hidden sm:block transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-3.5 h-3.5 text-slate-400 dark:text-slate-500 hidden sm:block transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
           </div>
 
           {/* Profile Dropdown Menu */}
           {isProfileMenuOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setIsProfileMenuOpen(false)} />
-              <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-2xl border border-slate-200 shadow-xl py-2 z-50 animate-fade-in divide-y divide-slate-100">
+              <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl py-2 z-50 animate-fade-in divide-y divide-slate-100 dark:divide-slate-800">
                 <div className="px-4 py-2.5">
-                  <div className="text-xs font-bold text-slate-900">{user?.full_name}</div>
-                  <div className="text-[11px] text-slate-500 truncate">{user?.email}</div>
-                  <div className="mt-1 text-[10px] bg-amber-50 text-amber-900 border border-amber-200 px-2 py-0.5 rounded-md font-bold inline-block">
+                  <div className="text-xs font-bold text-slate-900 dark:text-slate-100">{user?.full_name}</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{user?.email}</div>
+                  <div className="mt-1 text-[10px] bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-md font-bold inline-block">
                     {getRoleLabel()}
                   </div>
                 </div>
@@ -499,9 +499,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   <Link
                     to="/app/members/me"
                     onClick={() => setIsProfileMenuOpen(false)}
-                    className="w-full px-4 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium"
+                    className="w-full px-4 py-2 text-left text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center gap-2 font-medium"
                   >
-                    <User className="w-4 h-4 text-slate-400" />
+                    <User className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                     <span>Hồ Sơ Của Tôi</span>
                   </Link>
 
@@ -509,9 +509,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     <Link
                       to="/app/family/settings"
                       onClick={() => setIsProfileMenuOpen(false)}
-                      className="w-full px-4 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium"
+                      className="w-full px-4 py-2 text-left text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center gap-2 font-medium"
                     >
-                      <Settings className="w-4 h-4 text-slate-400" />
+                      <Settings className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                       <span>Cài Đặt Dòng Họ ({activeFamily?.name})</span>
                     </Link>
                   )}
@@ -520,9 +520,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     <Link
                       to="/admin/beta"
                       onClick={() => setIsProfileMenuOpen(false)}
-                      className="w-full px-4 py-2 text-left text-purple-700 hover:bg-purple-50 flex items-center gap-2 font-bold"
+                      className="w-full px-4 py-2 text-left text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/50 flex items-center gap-2 font-bold"
                     >
-                      <Shield className="w-4 h-4 text-purple-600" />
+                      <Shield className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                       <span>Quản Trị Hệ Thống Nền Tảng</span>
                     </Link>
                   )}
@@ -531,7 +531,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 <div className="p-1">
                   <button
                     onClick={handleSignOut}
-                    className="w-full px-3.5 py-2 text-left text-rose-700 hover:bg-rose-50 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer"
+                    className="w-full px-3.5 py-2 text-left text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Đăng Xuất</span>

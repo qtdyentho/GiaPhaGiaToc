@@ -99,50 +99,50 @@ export const FundLedgerPage: React.FC = () => {
   return (
     <div className="space-y-6 animate-fade-in font-sans">
       {/* Header Banner */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#166534] via-[#C49A3A] to-[#1E3A5F]" />
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-800 shadow-sm">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center text-amber-800 dark:text-amber-300 shadow-sm shrink-0">
             <BookOpen className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
               Sổ Quỹ Gia Tộc
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
               Nhật ký thu chi và lịch sử biến động số dư các quỹ của dòng họ
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
           <button
             onClick={() => setIsCreateFundOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
+            className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
           >
-            <Landmark className="w-4 h-4 text-amber-700" />
+            <Landmark className="w-4 h-4 text-amber-700 dark:text-amber-400" />
             <span>Tạo Quỹ Mới</span>
           </button>
 
           <button
             onClick={exportCSV}
-            className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
+            className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
           >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-700" />
-            <span>Xuất File CSV</span>
+            <FileSpreadsheet className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+            <span>Xuất CSV</span>
           </button>
 
           <button
             onClick={() => setIsAnnualReportOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer font-serif"
+            className="px-3.5 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer font-serif"
           >
             <Printer className="w-4 h-4 text-amber-700 dark:text-amber-400" />
-            <span>📑 Báo Cáo Họp Họ (A4/Excel)</span>
+            <span>📑 Báo Cáo Họp Họ</span>
           </button>
 
           <button
             onClick={() => setIsRecordIncomeOpen(true)}
-            className="px-4 py-2 rounded-xl bg-[#166534] hover:bg-[#14532d] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
+            className="px-4 py-2 rounded-xl bg-[#166534] hover:bg-[#14532d] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Thu Quỹ Trực Tiếp</span>
@@ -156,23 +156,23 @@ export const FundLedgerPage: React.FC = () => {
           <div
             key={f.id}
             onClick={() => setSelectedFundDetail(f)}
-            className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm space-y-2 hover:border-[#166534] hover:shadow-md cursor-pointer transition-all group"
+            className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm space-y-2 hover:border-[#166534] dark:hover:border-emerald-500 hover:shadow-md cursor-pointer transition-all group"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider group-hover:text-[#166534] transition">
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider group-hover:text-[#166534] dark:group-hover:text-emerald-400 transition">
                 {f.name}
               </span>
               <div className="flex items-center gap-1">
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold border border-emerald-200">
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-800">
                   ACTIVE
                 </span>
-                <Info className="w-3.5 h-3.5 text-slate-300 group-hover:text-[#166534] transition" />
+                <Info className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:text-[#166534] dark:group-hover:text-emerald-400 transition" />
               </div>
             </div>
-            <p className="text-2xl font-black text-amber-800">
+            <p className="text-2xl font-black text-amber-800 dark:text-amber-400">
               {Number(f.current_balance || 0).toLocaleString()} ₫
             </p>
-            {f.description && <p className="text-[11px] text-slate-500 line-clamp-1 italic">{f.description}</p>}
+            {f.description && <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 italic">{f.description}</p>}
           </div>
         ))}
       </div>

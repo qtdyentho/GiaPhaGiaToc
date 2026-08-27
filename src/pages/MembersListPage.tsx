@@ -64,43 +64,43 @@ export const MembersListPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2 flex-wrap">
             <span>Danh Sách Thành Viên Dòng Họ</span>
-            <span className="text-xs px-2.5 py-0.5 bg-emerald-50 text-[#166534] border border-emerald-200 rounded-full font-bold">
+            <span className="text-xs px-2.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 text-[#166534] dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-full font-bold">
               {activeFamily?.name || mockFamily.name}
             </span>
           </h1>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Quản lý {familyMembers.length} thành viên thuộc các chi phái và thế hệ
           </p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 flex-wrap gap-y-2">
           <Link
             to="/app/kinship"
-            className="flex items-center space-x-1.5 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-amber-950 text-xs font-bold rounded-xl transition shadow-2xs border border-amber-400"
+            className="flex items-center space-x-1.5 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-amber-950 text-xs font-bold rounded-xl transition shadow-2xs border border-amber-400 cursor-pointer"
           >
             <ArrowRightLeft className="w-4 h-4" />
             <span>Tra Cứu Xưng Hô</span>
           </Link>
           <button
             onClick={() => setIsImportModalOpen(true)}
-            className="flex items-center space-x-1.5 px-3 py-2 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 text-[#166534] text-xs font-bold rounded-xl transition shadow-2xs cursor-pointer"
+            className="flex items-center space-x-1.5 px-3 py-2 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900 text-[#166534] dark:text-emerald-300 text-xs font-bold rounded-xl transition shadow-2xs cursor-pointer"
           >
             <FileSpreadsheet className="w-4 h-4" />
             <span>Nhập Excel (4 Bước)</span>
           </button>
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center space-x-1.5 px-3.5 py-2 bg-[#166534] hover:bg-[#14532d] text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer"
+            className="flex items-center space-x-1.5 px-3.5 py-2 bg-[#166534] hover:bg-[#14532d] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>Thêm Thành Viên Mới</span>
+            <span>Thêm Thành Viên</span>
           </button>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div className="relative flex-1 min-w-[240px]">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input

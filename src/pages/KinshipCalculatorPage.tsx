@@ -68,14 +68,14 @@ export const KinshipCalculatorPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center space-x-1.5 bg-amber-100 text-amber-900 text-xs font-bold px-3 py-1 rounded-full border border-amber-300 mb-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-amber-700" />
+          <div className="inline-flex items-center space-x-1.5 bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 text-xs font-bold px-3 py-1 rounded-full border border-amber-300 dark:border-amber-800 mb-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
             <span>Quy Chuẩn Danh Xưng & Vai Vế Gia Tộc</span>
           </div>
-          <h1 className="text-xl md:text-2xl font-black text-slate-900 font-serif tracking-tight text-amber-950">
+          <h1 className="text-xl md:text-2xl font-black font-serif tracking-tight text-amber-950 dark:text-amber-200">
             Tra Cứu Danh Xưng & Thứ Bậc Dòng Họ
           </h1>
-          <p className="text-xs text-slate-500 max-w-2xl">
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-2xl mt-0.5">
             Tính toán chính xác danh xưng xưng hô chuẩn mực giữa 2 thành viên bất kỳ theo cành nhánh, đời thứ và tục lệ gia phong <em>« Bé bằng củ khoai, cứ vai mà gọi »</em>.
           </p>
         </div>
@@ -83,16 +83,16 @@ export const KinshipCalculatorPage: React.FC = () => {
         <div className="flex items-center space-x-2">
           <Link
             to="/app/genealogy"
-            className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl border border-slate-300 shadow-2xs transition flex items-center gap-1.5"
+            className="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-700 shadow-2xs transition flex items-center gap-1.5 cursor-pointer"
           >
-            <Network className="w-4 h-4 text-[#166534]" />
+            <Network className="w-4 h-4 text-[#166534] dark:text-emerald-400" />
             <span>Xem Cây Gia Phả</span>
           </Link>
         </div>
       </div>
 
       {/* Selectors Grid: Member A <-> Swap <-> Member B */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-6">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-11 gap-4 items-center">
           {/* Member A Selector */}
           <div className="md:col-span-5 p-5 rounded-2xl bg-emerald-50/50 border border-emerald-200 space-y-3">
