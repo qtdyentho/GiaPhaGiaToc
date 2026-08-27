@@ -254,10 +254,10 @@ export const FinanceDashboardPage: React.FC = () => {
         {/* Left 2 Cols: Funds List with Clickable Interaction */}
         <div className="lg:col-span-2 space-y-4">
           <Card className="p-0 overflow-hidden shadow-sm">
-            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+            <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div>
-                <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Landmark className="w-4 h-4 text-[#166534]" />
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Landmark className="w-4 h-4 text-[#166534] dark:text-emerald-400" />
                   <span>Danh Sách Quỹ Gia Tộc Hoạt Động</span>
                 </h2>
                 <p className="text-[11px] text-slate-400 mt-0.5">
@@ -267,7 +267,64 @@ export const FinanceDashboardPage: React.FC = () => {
               <Badge variant="neutral">{summary.funds.length} Quỹ</Badge>
             </div>
 
-            <div className="divide-y divide-slate-100">
+            {/* Visual Fund Allocation Distribution Bar */}
+            {summary.totalBalance > 0 && (
+              <div className="p-4 sm:p-5 bg-gradient-to-r from-emerald-50/70 via-amber-50/50 to-emerald-50/70 dark:from-slate-800/80 dark:via-slate-800/60 dark:to-slate-800/80 border-b border-slate-100 dark:border-slate-800 space-y-2.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-slate-700 dark:text-slate-300">Cơ Cấu Phân Bổ Nguồn Vốn Gia Tộc</span>
+                  <span className="font-bold text-[#166534] dark:text-emerald-400">{formatCurrency(summary.totalBalance)}</span>
+                </div>
+                
+                {/* Multi-segment Progress Bar */}
+                <div className="h-3 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden flex shadow-inner">
+                  {summary.funds.map((fund, idx) => {
+                    const percent = summary.totalBalance > 0 ? (fund.current_balance / summary.totalBalance) * 100 : 0;
+                    if (percent <= 0) return null;
+                    const colorPalette = [
+                      'bg-emerald-600',
+                      'bg-amber-500',
+                      'bg-indigo-600',
+                      'bg-teal-500',
+                      'bg-rose-500',
+                      'bg-sky-500',
+                    ];
+                    const barColor = colorPalette[idx % colorPalette.length];
+                    return (
+                      <div
+                        key={fund.id}
+                        style={{ width: `${percent}%` }}
+                        className={`${barColor} h-full transition-all`}
+                        title={`${fund.name}: ${formatCurrency(fund.current_balance)} (${percent.toFixed(1)}%)`}
+                      />
+                    );
+                  })}
+                </div>
+
+                {/* Legend */}
+                <div className="flex items-center gap-3.5 flex-wrap text-[11px] text-slate-600 dark:text-slate-400 pt-1">
+                  {summary.funds.map((fund, idx) => {
+                    const percent = summary.totalBalance > 0 ? (fund.current_balance / summary.totalBalance) * 100 : 0;
+                    const colorPalette = [
+                      'bg-emerald-600',
+                      'bg-amber-500',
+                      'bg-indigo-600',
+                      'bg-teal-500',
+                      'bg-rose-500',
+                      'bg-sky-500',
+                    ];
+                    const dotColor = colorPalette[idx % colorPalette.length];
+                    return (
+                      <div key={fund.id} className="flex items-center gap-1.5">
+                        <span className={`w-2.5 h-2.5 rounded-full ${dotColor}`} />
+                        <span className="font-medium">{fund.name}: <strong className="text-slate-800 dark:text-slate-200">{percent.toFixed(0)}%</strong></span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {summary.funds.map((fund) => (
                 <div
                   key={fund.id}

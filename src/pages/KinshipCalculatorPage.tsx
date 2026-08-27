@@ -30,6 +30,7 @@ export const KinshipCalculatorPage: React.FC = () => {
 
   const [kinshipResult, setKinshipResult] = useState<KinshipResult | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [regionalDialect, setRegionalDialect] = useState<'BAC' | 'TRUNG' | 'NAM'>('BAC');
 
   const memberA = useMemo(
     () => familyMembers.find((m) => m.id === memberAId),
@@ -63,30 +64,85 @@ export const KinshipCalculatorPage: React.FC = () => {
     setMemberBId(temp);
   };
 
+  // Get Dialect Specific Advice
+  const getDialectLabel = (term: string) => {
+    if (regionalDialect === 'TRUNG') {
+      if (term.includes('Cô')) return term.replace('Cô', 'O (Cô)');
+      if (term.includes('Mợ')) return term.replace('Mợ', 'Mự (Mợ)');
+      if (term.includes('Bố')) return term.replace('Bố', 'Ba / Thầy');
+      if (term.includes('Mẹ')) return term.replace('Mẹ', 'Mạ (Mẹ)');
+    } else if (regionalDialect === 'NAM') {
+      if (term.includes('Bố')) return term.replace('Bố', 'Ba / Tía');
+      if (term.includes('Mẹ')) return term.replace('Mẹ', 'Má');
+      if (term.includes('Anh họ')) return term.replace('Anh họ', 'Anh Hai / Anh họ');
+      if (term.includes('Chị họ')) return term.replace('Chị họ', 'Chị Ba / Chị họ');
+    }
+    return term;
+  };
+
   return (
     <div className="space-y-6 animate-fade-in font-sans">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#166534] via-[#C49A3A] to-[#1E3A5F]" />
         <div>
-          <div className="inline-flex items-center space-x-1.5 bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 text-xs font-bold px-3 py-1 rounded-full border border-amber-300 dark:border-amber-800 mb-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
-            <span>Quy Chuẩn Danh Xưng & Vai Vế Gia Tộc</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+              Tra Cứu Danh Xưng & Thứ Bậc Dòng Họ
+            </h1>
+            <span className="text-xs bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-300 font-bold px-2.5 py-0.5 rounded-full border border-amber-300 dark:border-amber-800">
+              Thuật Toán Cửu Tộc 9 Đời
+            </span>
           </div>
-          <h1 className="text-xl md:text-2xl font-black font-serif tracking-tight text-amber-950 dark:text-amber-200">
-            Tra Cứu Danh Xưng & Thứ Bậc Dòng Họ
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-2xl mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-2xl mt-1">
             Tính toán chính xác danh xưng xưng hô chuẩn mực giữa 2 thành viên bất kỳ theo cành nhánh, đời thứ và tục lệ gia phong <em>« Bé bằng củ khoai, cứ vai mà gọi »</em>.
           </p>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Regional Dialect Selector */}
+          <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shrink-0">
+            <button
+              type="button"
+              onClick={() => setRegionalDialect('BAC')}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                regionalDialect === 'BAC'
+                  ? 'bg-[#166534] text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              🏛️ Bắc Bộ
+            </button>
+            <button
+              type="button"
+              onClick={() => setRegionalDialect('TRUNG')}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                regionalDialect === 'TRUNG'
+                  ? 'bg-[#166534] text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              🌊 Trung Bộ
+            </button>
+            <button
+              type="button"
+              onClick={() => setRegionalDialect('NAM')}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                regionalDialect === 'NAM'
+                  ? 'bg-[#166534] text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              🌾 Nam Bộ
+            </button>
+          </div>
+
           <Link
             to="/app/genealogy"
-            className="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-700 shadow-2xs transition flex items-center gap-1.5 cursor-pointer"
+            className="px-3.5 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-700 shadow-2xs transition flex items-center gap-1.5 cursor-pointer"
           >
             <Network className="w-4 h-4 text-[#166534] dark:text-emerald-400" />
-            <span>Xem Cây Gia Phả</span>
+            <span>Cây Gia Phả</span>
           </Link>
         </div>
       </div>
@@ -237,16 +293,16 @@ export const KinshipCalculatorPage: React.FC = () => {
                 <Award className="w-3.5 h-3.5 text-amber-700" />
                 <span>KẾT QUẢ DANH XƯNG CHUẨN XÁC</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-amber-950 font-serif tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-black text-amber-950 dark:text-amber-200 font-serif tracking-tight">
                 {memberA?.first_name} gọi {memberB?.first_name} là «{' '}
-                <span className="text-[#166534] underline decoration-amber-400">
-                  {kinshipResult.term_a_calls_b}
+                <span className="text-[#166534] dark:text-emerald-400 underline decoration-amber-400">
+                  {getDialectLabel(kinshipResult.term_a_calls_b)}
                 </span>{' '}
                 »
               </h2>
-              <p className="text-xs text-slate-600">
+              <p className="text-xs text-slate-600 dark:text-slate-300">
                 Ngược lại, {memberB?.first_name} gọi {memberA?.first_name} là «{' '}
-                <strong>{kinshipResult.term_b_calls_a}</strong> »
+                <strong>{getDialectLabel(kinshipResult.term_b_calls_a)}</strong> »
               </p>
             </div>
 

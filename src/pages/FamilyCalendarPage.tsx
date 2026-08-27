@@ -17,6 +17,7 @@ import {
   TreePine,
   Info,
   ChevronDown,
+  ScrollText,
 } from 'lucide-react';
 import { LunarCalendarService, CalendarDayInfo } from '../services/calendar/LunarCalendarService';
 import { MemorialService } from '../services/calendar/MemorialService';
@@ -26,6 +27,7 @@ import { mockBranches, mockMembers } from '../services/mockData';
 import { CalendarDayDetailDrawer } from '../components/calendar/CalendarDayDetailDrawer';
 import { CreateMemorialModal } from '../components/calendar/CreateMemorialModal';
 import { CreateEventModal } from '../components/calendar/CreateEventModal';
+import { MemorialPrayerViewerModal } from '../components/genealogy/MemorialPrayerViewerModal';
 import { formatDate } from '../lib/utils';
 import { getCanChiYear } from '../lib/lunar';
 import { useAuth } from '../contexts/AuthContext';
@@ -279,6 +281,7 @@ export const FamilyCalendarPage: React.FC = () => {
   const [selectedDay, setSelectedDay] = useState<CalendarDayInfo | null>(null);
   const [showCreateMemorialModal, setShowCreateMemorialModal] = useState(false);
   const [showCreateEventModal, setShowCreateEventModal] = useState(false);
+  const [showPrayerModal, setShowPrayerModal] = useState(false);
 
   const currentFamId = activeFamily?.id || '';
 
@@ -426,6 +429,14 @@ export const FamilyCalendarPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setShowPrayerModal(true)}
+            className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900 border border-amber-300 dark:border-amber-700 text-amber-950 dark:text-amber-300 text-xs font-bold rounded-xl transition shadow-2xs cursor-pointer"
+            title="Tra cứu 8 bài văn khấn cổ truyền chuẩn mực phong tục gia tộc"
+          >
+            <ScrollText className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+            <span>Văn Khấn Cổ Truyền</span>
+          </button>
           <button
             onClick={() => CalendarExportService.downloadICSFile(activeFamily?.name || 'Gia Tộc', memorials, events, currentYear)}
             className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl transition shadow-2xs cursor-pointer"
@@ -1049,6 +1060,11 @@ export const FamilyCalendarPage: React.FC = () => {
         isOpen={showCreateEventModal}
         onClose={() => setShowCreateEventModal(false)}
         onSuccess={loadCalendarData}
+      />
+      <MemorialPrayerViewerModal
+        isOpen={showPrayerModal}
+        onClose={() => setShowPrayerModal(false)}
+        familyName={activeFamily?.name || 'Đại Tộc Gia Tiên'}
       />
     </div>
   );
