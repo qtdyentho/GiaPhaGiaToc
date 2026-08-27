@@ -22,17 +22,27 @@ dist-ssr
 # Environment & Secrets (CRITICAL FOR ZERO DATA LEAKAGE)
 .env
 .env.*
+.env*.local
 !.env.example
 *.pem
 *.key
 *.cert
+*.p12
+*.pfx
 *.credentials
 *.secret
 *.id_rsa
 *.id_ed25519
+id_rsa*
+id_ed25519*
 credentials.json
 token.json
 serviceAccountKey.json
+service-account*.json
+*.sqlite
+*.sqlite3
+*.dump
+*.sql.gz
 .vercel
 .netlify
 
