@@ -338,10 +338,13 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
         }
       });
 
-    // 2. Tập hợp các ID con cái (có quan hệ CHILD)
+    // 2. Tập hợp các ID con cái (có quan hệ CHILD hoặc PARENT)
     const childIds = new Set<string>();
     relationships
-      .filter((r) => r.relationship === 'CHILD' || r.relationship_type === 'CHILD')
+      .filter((r) => 
+        r.relationship === 'CHILD' || r.relationship_type === 'CHILD' ||
+        r.relationship === 'PARENT' || r.relationship_type === 'PARENT'
+      )
       .forEach((r) => childIds.add(r.related_member_id));
 
     // 3. Root Members: Không có cha mẹ trong cây và không phải là vợ phụ thuộc
@@ -384,7 +387,8 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
       relationships
         .filter(
           (r) =>
-            (r.relationship === 'CHILD' || r.relationship_type === 'CHILD') &&
+            (r.relationship === 'CHILD' || r.relationship_type === 'CHILD' ||
+             r.relationship === 'PARENT' || r.relationship_type === 'PARENT') &&
             parentIds.includes(r.member_id)
         )
         .forEach((r) => {

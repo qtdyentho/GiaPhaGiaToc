@@ -2,7 +2,7 @@
 import { 
   Upload, FileSpreadsheet, CheckCircle2, AlertTriangle, XCircle, 
   ArrowRight, ArrowLeft, ShieldCheck, Download, Loader2, Sparkles, 
-  RotateCcw, FileText, Check, HelpCircle, Eye
+  RotateCcw, FileText, Check, HelpCircle, Eye, Network
 } from 'lucide-react';
 import { 
   DataImportService, 
@@ -99,6 +99,7 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
     if (result.success) {
       setCommitResult(result);
       setStep(5);
+      onSuccess();
     } else {
       setParseError(result.error || result.message);
     }
@@ -124,7 +125,7 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 z-[100] animate-fade-in font-sans">
       <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-4xl w-full p-5 sm:p-7 space-y-6 shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[92vh] flex flex-col">
         
-        {/* Header & Steps */}
+        {/* Header & Stepper */}
         <div className="border-b border-slate-100 dark:border-slate-800 pb-4 shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -137,9 +138,13 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                   <span className="text-[11px] font-bold px-2 py-0.5 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 rounded-full">
                     Chuẩn 12 Cột
                   </span>
+                  <span className="text-[11px] font-bold px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 text-[#166534] dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-full flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-amber-500" />
+                    <span>Tự Động Nhận Diện Đời</span>
+                  </span>
                 </h1>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Tự động phân tích phả đồ, tạo quan hệ thế hệ cha con và lịch giỗ tổ vào CSDL Supabase
+                  Tự động phân tích phả đồ, tạo thế hệ cha con và đồng bộ 100% Cây Gia Phả & Danh Sách Thành Viên
                 </p>
               </div>
             </div>
@@ -157,7 +162,7 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
               1. Tải Lên Tệp
             </div>
             <div className={`p-1.5 rounded-xl transition ${step >= 2 ? 'bg-emerald-50 dark:bg-emerald-950/60 text-[#166534] dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-slate-50 dark:bg-slate-800 text-slate-400'}`}>
-              2. Ghép 12 Cột
+              2. Nhận Diện Đời
             </div>
             <div className={`p-1.5 rounded-xl transition ${step >= 3 ? 'bg-emerald-50 dark:bg-emerald-950/60 text-[#166534] dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-slate-50 dark:bg-slate-800 text-slate-400'}`}>
               3. Quét Lỗi Logic
@@ -272,28 +277,39 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
             </div>
           )}
 
-          {/* STEP 2: Auto-Mapping 12 Cột */}
+          {/* STEP 2: Auto-Mapping & Generation Auto-Inference */}
           {step === 2 && parseResult && (
             <div className="space-y-4">
-              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/50 rounded-2xl border border-emerald-200 dark:border-emerald-800 flex items-center justify-between text-emerald-900 dark:text-emerald-300">
-                <span className="font-bold flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  <span>Đã nhận diện {parseResult.mappedMembers.length} dòng thành viên từ tệp Excel</span>
-                </span>
-                <span className="text-[10px] bg-emerald-200 dark:bg-emerald-900 font-bold px-2.5 py-0.5 rounded-full">
-                  Ghép {mappings.filter(m => m.targetField !== 'unknown').length}/{mappings.length} cột
-                </span>
+              <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/50 rounded-2xl border border-emerald-200 dark:border-emerald-800 space-y-2 text-emerald-900 dark:text-emerald-300">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold flex items-center gap-1.5 text-xs sm:text-sm">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Đã nhận diện {parseResult.mappedMembers.length} thành viên từ tệp Excel</span>
+                  </span>
+                  <span className="text-[10px] bg-emerald-200 dark:bg-emerald-900 font-bold px-2.5 py-0.5 rounded-full">
+                    Ghép {mappings.filter(m => m.targetField !== 'unknown').length}/{mappings.length} cột
+                  </span>
+                </div>
+
+                {parseResult.autoInferredCount > 0 && (
+                  <div className="p-2.5 bg-white/80 dark:bg-slate-800/80 rounded-xl border border-emerald-200 dark:border-emerald-800 flex items-center gap-2 text-xs text-emerald-800 dark:text-emerald-300 font-medium">
+                    <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+                    <span>
+                      <strong>Thuật toán thông minh:</strong> Đã tự động suy luận và điền chính xác <strong>{parseResult.autoInferredCount} thế hệ (đời)</strong> dựa trên mối liên kết Cha - Con & Vợ - Chồng.
+                    </span>
+                  </div>
+                )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-64 overflow-y-auto p-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-60 overflow-y-auto p-1">
                 {mappings.map((m, idx) => (
                   <div key={idx} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                     <div>
-                      <div className="text-[10px] text-slate-400 font-medium uppercase">Cột trong tệp</div>
+                      <div className="text-[10px] text-slate-400 font-medium uppercase">Cột trong tệp Excel</div>
                       <div className="font-bold text-slate-800 dark:text-white text-xs">{m.sourceHeader}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-[10px] text-slate-400 font-medium uppercase">Hệ Thống Ánh Xạ</div>
+                      <div className="text-[10px] text-slate-400 font-medium uppercase">Ánh Xạ Hệ Thống</div>
                       <div className="font-bold text-emerald-700 dark:text-emerald-400 text-xs flex items-center gap-1">
                         <span>→ {m.label}</span>
                         {m.confidence >= 0.9 && <Check className="w-3.5 h-3.5 text-emerald-600" />}
@@ -352,7 +368,7 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                       <th className="p-2.5">#</th>
                       <th className="p-2.5">Họ và Tên</th>
                       <th className="p-2.5">Giới Tính</th>
-                      <th className="p-2.5">Đời</th>
+                      <th className="p-2.5">Đời (Thế Hệ)</th>
                       <th className="p-2.5">Chi Phái</th>
                       <th className="p-2.5">Tên Cha</th>
                       <th className="p-2.5">Vợ / Chồng</th>
@@ -360,7 +376,7 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                       <th className="p-2.5">Năm Sinh</th>
                       <th className="p-2.5">Ngày Mất Âm</th>
                       <th className="p-2.5">Nơi An Táng</th>
-                      <th className="p-2.5 text-right">Đánh Giá</th>
+                      <th className="p-2.5 text-right">Trạng Thái</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -373,7 +389,16 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                             {row.data.gender === 'MALE' ? 'Nam' : 'Nữ'}
                           </span>
                         </td>
-                        <td className="p-2.5 font-semibold text-slate-800 dark:text-slate-200">Đời {row.data.generationNumber}</td>
+                        <td className="p-2.5 font-semibold text-slate-800 dark:text-slate-200">
+                          <span className="inline-flex items-center gap-1">
+                            <span>Đời {row.data.generationNumber}</span>
+                            {row.data.isAutoInferredGen && (
+                              <span className="text-[9px] px-1.5 py-0.2 bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 rounded font-normal">
+                                ✨ Tự động
+                              </span>
+                            )}
+                          </span>
+                        </td>
                         <td className="p-2.5">{row.data.branchName}</td>
                         <td className="p-2.5 text-slate-600 dark:text-slate-400">{row.data.parentName || '— (Khởi Tổ)'}</td>
                         <td className="p-2.5 text-slate-600 dark:text-slate-400">{row.data.spouseName || '—'}</td>

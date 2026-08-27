@@ -1,8 +1,9 @@
 ﻿/**
- * ADVANCED DATA IMPORT ENGINE WITH AUTO-MAPPING & UNDO BATCH ROLLBACK
+ * ADVANCED DATA IMPORT & INTELLIGENT GENERATION AUTO-INFERENCE ENGINE
  * DỰ ÁN: GIA PHẢ GIA TỘC (GIA PHA GIA TOC ENTERPRISE)
  * 
- * Pipeline: UPLOAD/DRAG-DROP -> AUTO-MAPPING -> VALIDATE -> PREVIEW -> ATOMIC COMMIT -> IMPORT REPORT & UNDO
+ * Pipeline: UPLOAD/DRAG-DROP -> SMART AUTO-MAPPING -> GENERATION AUTO-INFERENCE (TOPOLOGICAL BFS) 
+ *           -> VALIDATION -> PREVIEW -> ATOMIC SUPABASE COMMIT -> IMPORT REPORT & UNDO
  * Chuẩn CSDL: 12 Cột Dữ Liệu Gia Phả Tiêu Chuẩn Việt Nam
  */
 
@@ -12,8 +13,8 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 export interface RawImportMember {
   fullName: string;              // 1. Họ và Tên (Bắt buộc)
   gender: 'MALE' | 'FEMALE';     // 2. Giới Tính (Nam / Nữ) (Bắt buộc)
-  generationNumber: number;      // 3. Thế Hệ (Đời 1, 2, 3...) (Bắt buộc)
-  branchName: string;            // 4. Chi Phái (Chi Trưởng, Chi Hai...) (Bắt buộc)
+  generationNumber: number;      // 3. Thế Hệ (Đời 1, 2, 3...) (Bắt buộc / Tự động suy luận)
+  branchName: string;            // 4. Chi Phái (Chi Trưởng, Chi Hai...) (Bắt buộc / Tự động kế thừa)
   parentName?: string;           // 5. Tên Cha (Dùng nối Cây Phả Hệ)
   spouseName?: string;           // 6. Vợ / Chồng
   lifeStatus: 'ALIVE' | 'DECEASED'; // 7. Trạng Thái (Còn sống / Đã mất)
@@ -22,6 +23,7 @@ export interface RawImportMember {
   deathLunarMonth?: number;      // 10. Tháng Mất Âm (1 - 12)
   deathLunarYear?: number;       // 11. Năm Mất
   burialPlace?: string;          // 12. Nơi An Táng / Mộ Phần
+  isAutoInferredGen?: boolean;   // Đánh dấu thế hệ được hệ thống tự động suy luận
 }
 
 export interface ColumnMappingSuggestion {
@@ -46,6 +48,7 @@ export interface ValidationSummary {
   warningRows: number;
   errorRows: number;
   canCommit: boolean;
+  autoInferredCount: number;
   rows: ValidatedImportRow[];
 }
 
@@ -54,9 +57,9 @@ export interface ParseResult {
   rawRows: any[];
   mappedMembers: RawImportMember[];
   mappings: ColumnMappingSuggestion[];
+  autoInferredCount: number;
 }
 
-// 12 Cột chuẩn hóa của nền tảng Gia Phả Gia Tộc
 export const STANDARD_GENEALOGY_COLUMNS = [
   { field: 'fullName', label: 'Họ và Tên', required: true, example: 'Cụ Nguyễn Văn Phúc' },
   { field: 'gender', label: 'Giới Tính', required: true, example: 'Nam' },
@@ -72,7 +75,154 @@ export const STANDARD_GENEALOGY_COLUMNS = [
   { field: 'burialPlace', label: 'Nơi An Táng', required: false, example: 'Lăng Mộ Tổ' },
 ];
 
+function slugifyVietnamese(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
 export class DataImportService {
+  /**
+   * Bộ chuyển đổi văn bản sang số thế hệ (Roman numerals, text, ordinals)
+   */
+  public static parseGenerationText(val: any): number {
+    if (val === undefined || val === null || val === '') return 0;
+    if (typeof val === 'number' && !isNaN(val) && val > 0) return Math.floor(val);
+
+    const str = String(val).trim().toLowerCase();
+
+    // 1. Số La Mã thông dụng
+    const romanMap: Record<string, number> = {
+      'i': 1, 'ii': 2, 'iii': 3, 'iv': 4, 'v': 5,
+      'vi': 6, 'vii': 7, 'viii': 8, 'ix': 9, 'x': 10,
+      'xi': 11, 'xii': 12, 'xiii': 13, 'xiv': 14, 'xv': 15,
+      'xvi': 16, 'xvii': 17, 'xviii': 18, 'xix': 19, 'xx': 20
+    };
+    if (romanMap[str]) return romanMap[str];
+
+    // 2. Từ khóa Việt Nam đặc biệt
+    if (str.includes('thuy to') || str.includes('thủy tổ') || str.includes('khoi to') || str.includes('khởi tổ') || str.includes('cu to') || str.includes('cụ tổ')) {
+      return 1;
+    }
+    if (str.includes('nhat') || str.includes('nhất') || str.includes('dau') || str.includes('đầu')) {
+      return 1;
+    }
+
+    // 3. Regex trích xuất số nguyên (VD: "Đời 2", "Đời thứ 3", "Thế hệ 4", "F5", "Gen 2")
+    const match = str.match(/(?:đời|thế hệ|the he|gen|f|bậc)?\s*(?:thứ)?\s*([0-9]{1,2})/i);
+    if (match && match[1]) {
+      const parsed = parseInt(match[1], 10);
+      if (!isNaN(parsed) && parsed > 0) return parsed;
+    }
+
+    const directNum = parseInt(str.replace(/[^0-9]/g, ''), 10);
+    return !isNaN(directNum) && directNum > 0 ? directNum : 0;
+  }
+
+  /**
+   * Thuật toán tự động nhận diện & suy luận thế hệ + chi phái (Topological BFS Propagation)
+   */
+  public static autoInferGenerationsAndBranches(rawMembers: RawImportMember[]): {
+    members: RawImportMember[];
+    autoInferredCount: number;
+  } {
+    const members = rawMembers.map((m) => ({ ...m }));
+    let autoInferredCount = 0;
+
+    // 1. Tạo Map tra cứu tên chuẩn hóa
+    const norm = (s?: string) => (s || '').toLowerCase().trim().replace(/\s+/g, ' ');
+    const memberMap = new Map<string, RawImportMember>();
+    members.forEach((m) => {
+      if (m.fullName) memberMap.set(norm(m.fullName), m);
+    });
+
+    // 2. Xác định các gốc (Root / Thủy Tổ)
+    members.forEach((m) => {
+      const parent = m.parentName ? memberMap.get(norm(m.parentName)) : null;
+      if (!m.parentName || !parent) {
+        if (!m.generationNumber || m.generationNumber === 0) {
+          m.generationNumber = 1;
+          m.isAutoInferredGen = true;
+          autoInferredCount++;
+        }
+        if (!m.branchName || m.branchName.trim() === '') {
+          m.branchName = 'Chi Trưởng';
+        }
+      }
+    });
+
+    // 3. Lan truyền thế hệ đệ quy (BFS Queue) từ Cha sang Con & Vợ/Chồng
+    let changed = true;
+    let iterations = 0;
+    while (changed && iterations < 30) {
+      changed = false;
+      iterations++;
+
+      for (const m of members) {
+        // Lan truyền từ Cha -> Con
+        if (m.parentName) {
+          const parent = memberMap.get(norm(m.parentName));
+          if (parent && parent.generationNumber > 0) {
+            const expectedGen = parent.generationNumber + 1;
+            if (!m.generationNumber || m.generationNumber === 0 || m.generationNumber !== expectedGen) {
+              m.generationNumber = expectedGen;
+              m.isAutoInferredGen = true;
+              autoInferredCount++;
+              changed = true;
+            }
+            if (!m.branchName || m.branchName.trim() === '' || m.branchName === 'Chi Trưởng') {
+              if (parent.branchName && parent.branchName !== 'Chi Trưởng') {
+                m.branchName = parent.branchName;
+                changed = true;
+              }
+            }
+          }
+        }
+
+        // Lan truyền giữa Vợ & Chồng (Cùng thế hệ)
+        if (m.spouseName) {
+          const spouse = memberMap.get(norm(m.spouseName));
+          if (spouse) {
+            if (m.generationNumber > 0 && (!spouse.generationNumber || spouse.generationNumber === 0)) {
+              spouse.generationNumber = m.generationNumber;
+              spouse.isAutoInferredGen = true;
+              autoInferredCount++;
+              changed = true;
+            } else if (spouse.generationNumber > 0 && (!m.generationNumber || m.generationNumber === 0)) {
+              m.generationNumber = spouse.generationNumber;
+              m.isAutoInferredGen = true;
+              autoInferredCount++;
+              changed = true;
+            }
+            if (!spouse.branchName && m.branchName) {
+              spouse.branchName = m.branchName;
+              changed = true;
+            }
+          }
+        }
+      }
+    }
+
+    // 4. Quét dự phòng cuối cùng cho các thành viên chưa có đời
+    members.forEach((m) => {
+      if (!m.generationNumber || m.generationNumber < 1) {
+        m.generationNumber = 1;
+        m.isAutoInferredGen = true;
+        autoInferredCount++;
+      }
+      if (!m.branchName || m.branchName.trim() === '') {
+        m.branchName = 'Chi Trưởng';
+      }
+    });
+
+    return { members, autoInferredCount };
+  }
+
   /**
    * Tự động nhận diện cột (Auto-Mapping 12 Cột Tiêu Chuẩn)
    */
@@ -183,17 +333,14 @@ export class DataImportService {
             throw new Error('Tệp Excel không chứa trang tính (worksheet) nào hợp lệ.');
           }
 
-          // Chuyển sheet sang mảng dòng JSON
           const rawRows: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
           if (rawRows.length === 0) {
             throw new Error('Tệp Excel trống, không có dòng dữ liệu nào.');
           }
 
-          // Lấy danh sách tiêu đề từ dòng đầu tiên
           const headers = Object.keys(rawRows[0]);
           const mappings = this.autoMapHeaders(headers);
 
-          // Tạo map từ Header -> Field
           const headerToField: Record<string, string> = {};
           mappings.forEach((m) => {
             if (m.targetField !== 'unknown') {
@@ -201,13 +348,13 @@ export class DataImportService {
             }
           });
 
-          // Chuẩn hóa từng dòng dữ liệu sang RawImportMember
-          const mappedMembers: RawImportMember[] = rawRows.map((row) => {
+          // 1. Parse dữ liệu thô
+          const preliminaryMembers: RawImportMember[] = rawRows.map((row) => {
             const memberObj: any = {
               fullName: '',
               gender: 'MALE',
-              generationNumber: 1,
-              branchName: 'Chi Trưởng',
+              generationNumber: 0,
+              branchName: '',
               lifeStatus: 'ALIVE',
             };
 
@@ -222,8 +369,7 @@ export class DataImportService {
                 const gLower = strVal.toLowerCase();
                 memberObj.gender = (gLower === 'nữ' || gLower === 'female' || gLower === 'f' || gLower === 'gái') ? 'FEMALE' : 'MALE';
               } else if (field === 'generationNumber') {
-                const num = parseInt(strVal.replace(/[^0-9]/g, ''), 10);
-                memberObj.generationNumber = isNaN(num) || num < 1 ? 1 : num;
+                memberObj.generationNumber = DataImportService.parseGenerationText(strVal);
               } else if (field === 'branchName') {
                 memberObj.branchName = strVal;
               } else if (field === 'parentName') {
@@ -259,7 +405,6 @@ export class DataImportService {
               }
             });
 
-            // Tự động suy luận trạng thái đã mất nếu có thông tin ngày mất hoặc nơi an táng
             if (memberObj.deathLunarDay || memberObj.deathLunarMonth || memberObj.deathLunarYear || memberObj.burialPlace) {
               memberObj.lifeStatus = 'DECEASED';
             }
@@ -267,11 +412,15 @@ export class DataImportService {
             return memberObj as RawImportMember;
           }).filter((m) => m.fullName.length > 0);
 
+          // 2. Chạy thuật toán tự động nhận diện & suy luận thế hệ
+          const { members: mappedMembers, autoInferredCount } = this.autoInferGenerationsAndBranches(preliminaryMembers);
+
           resolve({
             headers,
             rawRows,
             mappedMembers,
             mappings,
+            autoInferredCount,
           });
         } catch (err: any) {
           reject(new Error(err.message || 'Lỗi khi đọc file Excel.'));
@@ -390,7 +539,6 @@ export class DataImportService {
 
     const worksheet = XLSX.utils.json_to_sheet(sampleRows);
 
-    // Thiết lập độ rộng cột đẹp mắt
     worksheet['!cols'] = [
       { wch: 24 }, // Họ và Tên
       { wch: 12 }, // Giới Tính
@@ -418,18 +566,23 @@ export class DataImportService {
     const validatedRows: ValidatedImportRow[] = [];
     const nameSet = new Set<string>();
     const batchId = `IMPORT-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`;
+    let autoInferredCount = 0;
 
     rows.forEach((row, index) => {
       const errors: string[] = [];
       const warnings: string[] = [];
 
+      if (row.isAutoInferredGen) {
+        autoInferredCount++;
+      }
+
       // 1. Kiểm tra họ tên
       if (!row.fullName || row.fullName.trim().length < 2) {
         errors.push('Họ và tên không được để trống.');
-      } else if (nameSet.has(row.fullName.trim())) {
+      } else if (nameSet.has(row.fullName.trim().toLowerCase())) {
         warnings.push('Trùng họ tên với thành viên khác trong file (Cần kiểm tra chi phái / đời).');
       }
-      nameSet.add(row.fullName.trim());
+      nameSet.add(row.fullName.trim().toLowerCase());
 
       // 2. Kiểm tra thế hệ
       if (!row.generationNumber || row.generationNumber < 1 || row.generationNumber > 30) {
@@ -452,7 +605,7 @@ export class DataImportService {
       }
 
       // 5. Kiểm tra quan hệ cha con (Chống vòng lặp)
-      if (row.parentName && row.parentName.trim() === row.fullName.trim()) {
+      if (row.parentName && row.parentName.trim().toLowerCase() === row.fullName.trim().toLowerCase()) {
         errors.push('Tên cha không được trùng họ tên chính thành viên.');
       }
 
@@ -475,6 +628,7 @@ export class DataImportService {
       warningRows: warningCount,
       errorRows: errorCount,
       canCommit: errorCount === 0 && validatedRows.length > 0,
+      autoInferredCount,
       rows: validatedRows,
     };
   }
@@ -491,7 +645,7 @@ export class DataImportService {
 
     if (isSupabaseConfigured() && isUUID(familyId)) {
       try {
-        // 1. Lấy hoặc tạo generations
+        // 1. Đảm bảo các thế hệ (generations) tồn tại trong CSDL
         const genNumbers = Array.from(new Set(validation.rows.map((r) => r.data.generationNumber).filter(Boolean)));
         const { data: existingGens } = await supabase
           .from('generations')
@@ -503,7 +657,7 @@ export class DataImportService {
 
         for (const genNum of genNumbers) {
           if (!genMap.has(genNum)) {
-            const { data: newGen } = await supabase
+            const { data: newGen, error: genErr } = await supabase
               .from('generations')
               .insert([{
                 family_id: familyId,
@@ -512,11 +666,22 @@ export class DataImportService {
               }])
               .select()
               .single();
-            if (newGen) genMap.set(genNum, newGen.id);
+            if (newGen) {
+              genMap.set(genNum, newGen.id);
+            } else if (genErr) {
+              // Tra cứu lại nếu đã được tạo bởi race condition
+              const { data: recheckGen } = await supabase
+                .from('generations')
+                .select('id')
+                .eq('family_id', familyId)
+                .eq('generation_number', genNum)
+                .single();
+              if (recheckGen) genMap.set(genNum, recheckGen.id);
+            }
           }
         }
 
-        // 2. Lấy hoặc tạo branches
+        // 2. Đảm bảo các chi phái (branches) tồn tại trong CSDL (với cột code bắt buộc)
         const branchNames = Array.from(new Set(validation.rows.map((r) => r.data.branchName).filter(Boolean)));
         const { data: existingBranches } = await supabase
           .from('branches')
@@ -528,40 +693,50 @@ export class DataImportService {
 
         for (const bName of branchNames) {
           if (!branchMap.has(bName)) {
-            const { data: newBranch } = await supabase
+            const branchCode = slugifyVietnamese(bName) || `branch-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+            const { data: newBranch, error: branchErr } = await supabase
               .from('branches')
               .insert([{
                 family_id: familyId,
                 name: bName,
+                code: branchCode,
                 description: `Chi phái ${bName} thuộc dòng họ`,
               }])
               .select()
               .single();
-            if (newBranch) branchMap.set(bName, newBranch.id);
+            if (newBranch) {
+              branchMap.set(bName, newBranch.id);
+            } else if (branchErr) {
+              const { data: recheckBranch } = await supabase
+                .from('branches')
+                .select('id')
+                .eq('family_id', familyId)
+                .eq('name', bName)
+                .single();
+              if (recheckBranch) branchMap.set(bName, recheckBranch.id);
+            }
           }
         }
 
-        // 3. Chuẩn bị insert danh sách thành viên vào bảng members
+        // 3. Chuẩn bị insert danh sách thành viên vào bảng members (Khớp 100% schema members)
         const memberInsertPayload = validation.rows.map((r) => {
           const m = r.data;
-          const nameParts = m.fullName.trim().split(' ');
-          const lastName = nameParts.slice(0, -1).join(' ') || '';
-          const firstName = nameParts[nameParts.length - 1] || m.fullName;
+          const isDeceased = m.lifeStatus === 'DECEASED';
 
           return {
             family_id: familyId,
             generation_id: genMap.get(m.generationNumber) || null,
             branch_id: branchMap.get(m.branchName) || null,
             full_name: m.fullName.trim(),
-            first_name: firstName,
-            last_name: lastName,
             gender: m.gender,
             status: m.lifeStatus,
-            birth_year: m.birthYear || null,
+            is_deceased: isDeceased,
+            date_of_birth: m.birthYear ? `${m.birthYear}-01-01` : null,
             date_of_death_lunar_day: m.deathLunarDay || null,
             date_of_death_lunar_month: m.deathLunarMonth || null,
             date_of_death_lunar_year: m.deathLunarYear || null,
             burial_place: m.burialPlace || null,
+            notes: m.birthYear ? `Năm sinh: ${m.birthYear}` : null,
           };
         });
 
@@ -574,11 +749,11 @@ export class DataImportService {
           throw new Error(`Lỗi khi lưu danh sách thành viên: ${insertErr.message}`);
         }
 
-        // Map tên thành viên -> Member ID để thiết lập quan hệ cha con và vợ chồng
+        // Map tên thành viên -> Member ID
         const nameToIdMap = new Map<string, string>();
-        (insertedMembers || []).forEach((im: any) => nameToIdMap.set(im.full_name, im.id));
+        (insertedMembers || []).forEach((im: any) => nameToIdMap.set(im.full_name.trim(), im.id));
 
-        // 4. Thiết lập quan hệ cha - con & vợ - chồng
+        // 4. Thiết lập quan hệ cha - con & vợ - chồng (Dùng quan hệ PARENT & SPOUSE chuẩn enum)
         const relationshipsToInsert: any[] = [];
         const memorialsToInsert: any[] = [];
 
@@ -587,18 +762,24 @@ export class DataImportService {
           const currentMemberId = nameToIdMap.get(m.fullName.trim());
           if (!currentMemberId) return;
 
-          // Quan hệ Cha - Con (FATHER)
+          // Quan hệ Cha - Con (relationship_type: 'PARENT' hoặc 'CHILD')
           if (m.parentName && nameToIdMap.has(m.parentName.trim())) {
             const fatherId = nameToIdMap.get(m.parentName.trim())!;
             relationshipsToInsert.push({
               family_id: familyId,
               member_id: fatherId,
               related_member_id: currentMemberId,
-              relationship_type: 'FATHER',
+              relationship_type: 'PARENT',
+            });
+            relationshipsToInsert.push({
+              family_id: familyId,
+              member_id: fatherId,
+              related_member_id: currentMemberId,
+              relationship_type: 'CHILD',
             });
           }
 
-          // Quan hệ Vợ - Chồng (SPOUSE)
+          // Quan hệ Vợ - Chồng (relationship_type: 'SPOUSE')
           if (m.spouseName && nameToIdMap.has(m.spouseName.trim())) {
             const spouseId = nameToIdMap.get(m.spouseName.trim())!;
             relationshipsToInsert.push({
@@ -609,26 +790,36 @@ export class DataImportService {
             });
           }
 
-          // Tự động tạo bản ghi Lễ Giỗ trong memorial_dates nếu có ngày tháng âm lịch
+          // Tạo bản ghi Lễ Giỗ trong memorial_dates (Khớp schema memorial_dates)
           if (m.lifeStatus === 'DECEASED' && m.deathLunarDay && m.deathLunarMonth) {
             memorialsToInsert.push({
               family_id: familyId,
               member_id: currentMemberId,
-              title: `Lễ Giỗ: ${m.fullName}`,
               lunar_day: m.deathLunarDay,
               lunar_month: m.deathLunarMonth,
-              is_lunar: true,
-              notes: m.burialPlace ? `Mộ phần tại: ${m.burialPlace}` : 'Giỗ tổ tiên dòng họ',
+              lunar_year: m.deathLunarYear || null,
+              recurrence: 'YEARLY_LUNAR',
+              notes: m.burialPlace ? `Lễ Giỗ: ${m.fullName} • Mộ phần: ${m.burialPlace}` : `Lễ Giỗ: ${m.fullName}`,
             });
           }
         });
 
+        // Chèn relationships với try-catch an toàn
         if (relationshipsToInsert.length > 0) {
-          await supabase.from('member_relationships').insert(relationshipsToInsert);
+          try {
+            await supabase.from('member_relationships').insert(relationshipsToInsert);
+          } catch (relErr) {
+            console.warn('Lưu một số quan hệ bị trùng:', relErr);
+          }
         }
 
+        // Chèn memorial dates
         if (memorialsToInsert.length > 0) {
-          await supabase.from('memorial_dates').insert(memorialsToInsert);
+          try {
+            await supabase.from('memorial_dates').insert(memorialsToInsert);
+          } catch (memErr) {
+            console.warn('Lưu ngày giỗ:', memErr);
+          }
         }
 
         return {

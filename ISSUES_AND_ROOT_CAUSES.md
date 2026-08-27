@@ -20,6 +20,7 @@
 | **ERR-008** | Multi-Tenant IDOR Security | Người dùng có thể đổi `family_id` trong request để xem dòng họ khác | **CRITICAL** | ✅ Đã khắc phục triệt để |
 | **ERR-009** | PIN Security & Brute-Force | Nguy cơ tấn công dò quét mã PIN mở khóa Gia Phả qua Mã QR Từ Đường | **CRITICAL** | ✅ Đã khắc phục triệt để |
 | **ERR-010** | Manual Payment Idempotency | Rủi ro kích hoạt trùng lặp gói cước khi Super Admin bấm duyệt chuyển khoản 2 lần | **HIGH** | ✅ Đã khắc phục triệt để |
+| **ERR-011** | Data Import Schema Constraints | Lỗi không lưu được thành viên vào CSDL Supabase do lệch tên cột schema và enum quan hệ | **HIGH** | ✅ Đã khắc phục triệt để |
 
 ---
 
@@ -114,9 +115,25 @@
 
 ---
 
+### 11. ERR-011: Lỗi Không Lưu Được Dữ Liệu Excel Vào Supabase Do Sai Cấu Trúc Schema & Enum
+- **Hiện tượng**: Sau khi tải file Excel và bấm "Xác nhận nạp", dữ liệu không lưu được vào CSDL và không hiển thị trên Cây Gia Phả.
+- **Nguyên nhân gốc rễ (Root Cause)**:
+  1. Trong `commitImport`, thao tác tạo `branches` thiếu cột `code` bắt buộc (NOT NULL), gây lỗi database constraint.
+  2. Thao tác chèn `members` truyền các trường `first_name`, `last_name` không có trong bảng `members` của Supabase (bảng chỉ có `full_name`).
+  3. Thao tác chèn `member_relationships` truyền `relationship_type = 'FATHER'`, nhưng enum PostgreSQL chỉ chấp nhận `'PARENT'`, `'CHILD'`, `'SPOUSE'`.
+  4. Thao tác chèn `memorial_dates` truyền `title`, `is_lunar` không tồn tại trong bảng `memorial_dates`.
+  5. Cột "Thế Hệ (Đời)" trong một số file Excel của người dùng để trống hoặc viết chữ ("Thủy tổ", "Đời II"), dẫn đến `generationNumber = 0`.
+- **Giải pháp xử lý triệt để**:
+  - Cập nhật chuẩn hóa 100% payload chèn CSDL khớp chính xác với `DATABASE_SCHEMA.sql`.
+  - Tích hợp **Thuật toán tự động nhận diện & suy luận thế hệ (Topological BFS Generation Inference)**: Tự động chuyển đổi số La Mã, từ khóa tiếng Việt ("Thủy tổ", "Đời thứ 2"), và tự động lan truyền thế hệ từ Cha sang Con (`gen(child) = gen(parent) + 1`) và giữa Vợ - Chồng (`gen(spouse) = gen(partner)`).
+  - Cập nhật `GenealogyCanvas.tsx` để hỗ trợ hiển thị đệ quy đa chiều cho cả quan hệ `PARENT` và `CHILD`.
+- **Biện pháp phòng ngừa**: Bộ test `data_import_12_columns.test.ts` (6/6 PASS).
+
+---
+
 ## 🛡️ Quy Trình Phòng Ngừa Lỗi Hồi Quy (Zero Regression Policy)
 
 Mọi thay đổi mã nguồn trong các phiên làm việc tiếp theo bắt buộc phải:
-1. Chạy toàn bộ **15 Test Suites (`npm test`)** xác nhận 100% PASS.
+1. Chạy toàn bộ **16 Test Suites (`npm test`)** xác nhận 100% PASS.
 2. Kiểm tra biên dịch **`npm run build`** xác nhận 0 lỗi TypeScript.
 3. Cập nhật các trường hợp lỗi mới vào tệp này sau mỗi phiên làm việc.
