@@ -1,15 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Landmark, Calendar, MapPin, DollarSign, Plus, Search, Filter, Clock } from 'lucide-react';
-import { mockEvents } from '../services/mockData';
+import { Event } from '../types/database';
+import { EventService } from '../services/calendar/EventService';
+import { useAuth } from '../contexts/AuthContext';
 import { formatCurrency, formatDate } from '../lib/utils';
 import { EVENT_TYPE_LABELS } from '../lib/constants';
+import { CreateEventModal } from '../components/calendar/CreateEventModal';
 
 export const EventsListPage: React.FC = () => {
+  const { activeFamily } = useAuth();
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<string>('ALL');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const filteredEvents = mockEvents.filter(
-    (e) => filterType === 'ALL' || e.event_type === filterType
-  );
+  const loadEvents = useCallback(async () => {
+    if (!activeFamily?.id) {
+      setEvents([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const data = await EventService.getEvents(activeFamily.id, {
+        eventType: filterType === 'ALL' ? undefined : filterType,
+      });
+      setEvents(data || []);
+    } catch (err) {
+      console.error('Lỗi khi tải danh sách sự kiện:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeFamily?.id, filterType]);
+
+  useEffect(() => {
+    loadEvents();
+  }, [loadEvents]);
+
+  const filteredEvents = events;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -20,7 +48,10 @@ export const EventsListPage: React.FC = () => {
           <p className="text-xs text-slate-500">Quản lý các chương trình giỗ tổ, họp họ, mừng thọ và tu sửa từ đường</p>
         </div>
 
-        <button className="flex items-center space-x-1.5 px-3.5 py-2 bg-heritage-green hover:bg-heritage-green-light text-white text-xs font-semibold rounded-xl transition shadow-sm">
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="flex items-center space-x-1.5 px-3.5 py-2 bg-heritage-green hover:bg-heritage-green-light text-white text-xs font-semibold rounded-xl transition shadow-sm cursor-pointer"
+        >
           <Plus className="w-4 h-4" />
           <span>Tạo Sự Kiện Mới</span>
         </button>
@@ -61,60 +92,79 @@ export const EventsListPage: React.FC = () => {
       </div>
 
       {/* Events Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredEvents.map((event) => (
-          <div
-            key={event.id}
-            className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-heritage transition p-5 space-y-4"
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-heritage-green flex items-center justify-center font-bold">
-                  <Landmark className="w-5 h-5" />
+      {loading ? (
+        <div className="py-16 text-center text-slate-400">
+          <div className="w-8 h-8 border-2 border-emerald-500/20 border-t-[#166534] rounded-full animate-spin mx-auto mb-2" />
+          Đang tải danh sách sự kiện họ tộc...
+        </div>
+      ) : filteredEvents.length === 0 ? (
+        <div className="py-16 text-center text-slate-400 bg-white rounded-2xl border border-slate-200">
+          Chưa có sự kiện nào được tạo trong danh sách
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filteredEvents.map((event) => (
+            <div
+              key={event.id}
+              className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-heritage transition p-5 space-y-4"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-heritage-green flex items-center justify-center font-bold">
+                    <Landmark className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-900">{event.title}</h2>
+                    <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded">
+                      {EVENT_TYPE_LABELS[event.event_type] || event.event_type}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-sm font-bold text-slate-900">{event.title}</h2>
-                  <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded">
-                    {EVENT_TYPE_LABELS[event.event_type] || event.event_type}
+              </div>
+
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {event.description}
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-3 border-t border-slate-100 text-slate-600">
+                <div className="flex items-center space-x-2">
+                  <Calendar className="w-3.5 h-3.5 text-heritage-green shrink-0" />
+                  <span>
+                    {formatDate(event.solar_date)} ({event.lunar_day}/{event.lunar_month} Âm)
                   </span>
                 </div>
+                <div className="flex items-center space-x-2">
+                  <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span>{event.solar_time || '08:00'}</span>
+                </div>
+                <div className="flex items-center space-x-2 sm:col-span-2">
+                  <MapPin className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                  <span className="truncate">{event.location}</span>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <div className="text-xs text-slate-500">
+                  Dự toán ngân sách:{' '}
+                  <strong className="text-heritage-navy">{formatCurrency(event.estimated_budget)}</strong>
+                </div>
+
+                <button className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-lg transition">
+                  Chi tiết chương trình
+                </button>
               </div>
             </div>
+          ))}
+        </div>
+      )}
 
-            <p className="text-xs text-slate-600 leading-relaxed">
-              {event.description}
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-3 border-t border-slate-100 text-slate-600">
-              <div className="flex items-center space-x-2">
-                <Calendar className="w-3.5 h-3.5 text-heritage-green shrink-0" />
-                <span>
-                  {formatDate(event.solar_date)} ({event.lunar_day}/{event.lunar_month} Âm)
-                </span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span>{event.solar_time || '08:00'}</span>
-              </div>
-              <div className="flex items-center space-x-2 sm:col-span-2">
-                <MapPin className="w-3.5 h-3.5 text-rose-600 shrink-0" />
-                <span className="truncate">{event.location}</span>
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-              <div className="text-xs text-slate-500">
-                Dự toán ngân sách:{' '}
-                <strong className="text-heritage-navy">{formatCurrency(event.estimated_budget)}</strong>
-              </div>
-
-              <button className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-lg transition">
-                Chi tiết chương trình
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Create Event Modal */}
+      <CreateEventModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={loadEvents}
+        familyId={activeFamily?.id}
+      />
     </div>
   );
 };

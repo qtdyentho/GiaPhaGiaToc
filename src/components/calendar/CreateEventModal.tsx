@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Calendar, AlertCircle, CheckCircle2, MapPin, DollarSign, Users, Building } from 'lucide-react';
 import { EventService } from '../../services/calendar/EventService';
+import { GenealogyService } from '../../services/GenealogyService';
+import { FundService } from '../../services/FundService';
+import { Branch, Fund } from '../../types/database';
 import { mockFunds, mockBranches } from '../../services/mockData';
 import { LunarDatePicker } from '../common/LunarDatePicker';
 
@@ -19,13 +22,16 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
   familyId = 'fam-0000-0001',
   defaultDate,
 }) => {
+  const [branchesList, setBranchesList] = useState<Branch[]>([]);
+  const [fundsList, setFundsList] = useState<Fund[]>([]);
+
   const [title, setTitle] = useState('');
   const [eventType, setEventType] = useState<string>('CLAN_ANCESTRAL_DAY');
   const [location, setLocation] = useState('Từ Đường Họ Nguyễn Văn, Hoàng Mai, Hà Nội');
   const [description, setDescription] = useState('');
   const [branchId, setBranchId] = useState<string>('ALL');
   const [estimatedBudget, setEstimatedBudget] = useState<number>(0);
-  const [fundId, setFundId] = useState<string>(mockFunds[0]?.id || '');
+  const [fundId, setFundId] = useState<string>('');
   
   const [solarDate, setSolarDate] = useState<string>(defaultDate || new Date().toISOString().split('T')[0]);
   const [lunarDay, setLunarDay] = useState<number>(1);
@@ -35,6 +41,31 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      if (isOpen && familyId) {
+        try {
+          const [tree, funds] = await Promise.all([
+            GenealogyService.getFamilyTree(familyId),
+            FundService.getFunds(familyId),
+          ]);
+          const bList = tree.branches && tree.branches.length > 0 ? tree.branches : mockBranches;
+          const fList = funds && funds.length > 0 ? funds : mockFunds;
+          setBranchesList(bList);
+          setFundsList(fList);
+          if (!fundId && fList[0]) {
+            setFundId(fList[0].id);
+          }
+        } catch (err) {
+          console.error('Lỗi khi tải danh sách chi phái và quỹ cho sự kiện:', err);
+          setBranchesList(mockBranches);
+          setFundsList(mockFunds);
+        }
+      }
+    }
+    loadData();
+  }, [isOpen, familyId]);
 
   if (!isOpen) return null;
 
@@ -143,7 +174,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                 className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-heritage-green focus:bg-white font-semibold text-slate-800 dark:text-white"
               >
                 <option value="ALL">Toàn Thể Dòng Họ (Toàn Tộc)</option>
-                {mockBranches.map((b) => (
+                {branchesList.map((b) => (
                   <option key={b.id} value={b.id}>
                     {b.name}
                   </option>
@@ -210,7 +241,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                   onChange={(e) => setFundId(e.target.value)}
                   className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-heritage-green font-semibold text-slate-800 dark:text-white"
                 >
-                  {mockFunds.map((f) => (
+                  {fundsList.map((f) => (
                     <option key={f.id} value={f.id}>
                       {f.name} (Số dư: {new Intl.NumberFormat('vi-VN').format(f.current_balance)} đ)
                     </option>

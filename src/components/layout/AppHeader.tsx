@@ -28,6 +28,9 @@ import {
 import { LunarCalendarService } from '../../services/LunarCalendarService';
 import { ShortLinkService } from '../../services/security/ShortLinkService';
 import { ClanPassService } from '../../services/security/ClanPassService';
+import { GenealogyService } from '../../services/GenealogyService';
+import { FundService } from '../../services/FundService';
+import { MemorialService } from '../../services/calendar/MemorialService';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { mockMembers, mockMemorialDates, mockFunds } from '../../services/mockData';
@@ -165,7 +168,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       : []),
   ];
 
-  // Debounced search
+  // Debounced search with real database services
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -174,58 +177,75 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     }
 
     setIsSearching(true);
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       const query = searchQuery.toLowerCase();
       const results: SearchResultItem[] = [];
-      const currentFamId = activeFamily?.id || 'fam-0000-0001';
+      const currentFamId = activeFamily?.id || '';
 
-      // 1. Search Members
-      const familyMembers = mockMembers.filter((m) => m.family_id === currentFamId);
-      familyMembers
-        .filter((m) => m.full_name.toLowerCase().includes(query) || (m.bio && m.bio.toLowerCase().includes(query)))
-        .slice(0, 4)
-        .forEach((m) => {
-          results.push({
-            id: m.id,
-            type: 'MEMBER',
-            title: m.full_name,
-            subtitle: `Thành viên • ${m.life_status === 'DECEASED' ? 'Đã mất' : 'Còn sống'}`,
-            link: `/app/genealogy?member=${m.id}`,
+      if (!currentFamId) {
+        setSearchResults([]);
+        setIsSearching(false);
+        return;
+      }
+
+      try {
+        const [members, memorials, funds] = await Promise.all([
+          GenealogyService.getMembers(currentFamId),
+          MemorialService.getMemorials(currentFamId),
+          FundService.getFunds(currentFamId),
+        ]);
+
+        // 1. Search Members
+        const memList = members && members.length > 0 ? members : mockMembers.filter((m) => m.family_id === currentFamId);
+        memList
+          .filter((m) => m.full_name.toLowerCase().includes(query) || (m.bio && m.bio.toLowerCase().includes(query)))
+          .slice(0, 4)
+          .forEach((m) => {
+            results.push({
+              id: m.id,
+              type: 'MEMBER',
+              title: m.full_name,
+              subtitle: `Thành viên • ${m.life_status === 'DECEASED' ? 'Đã mất' : 'Còn sống'}`,
+              link: `/app/genealogy?member=${m.id}`,
+            });
           });
-        });
 
-      // 2. Search Memorial Dates
-      const famMems = mockMemorialDates.filter((m) => m.family_id === currentFamId);
-      famMems
-        .filter((m) => m.title.toLowerCase().includes(query))
-        .slice(0, 3)
-        .forEach((m) => {
-          results.push({
-            id: m.id,
-            type: 'MEMORIAL',
-            title: m.title,
-            subtitle: `Ngày Giỗ • ${m.lunar_day}/${m.lunar_month} Âm lịch`,
-            link: '/app/calendar',
+        // 2. Search Memorial Dates
+        const memorialList = memorials && memorials.length > 0 ? memorials : mockMemorialDates.filter((m) => m.family_id === currentFamId);
+        memorialList
+          .filter((m) => m.title.toLowerCase().includes(query))
+          .slice(0, 3)
+          .forEach((m) => {
+            results.push({
+              id: m.id,
+              type: 'MEMORIAL',
+              title: m.title,
+              subtitle: `Ngày Giỗ • ${m.lunar_day}/${m.lunar_month} Âm lịch`,
+              link: '/app/calendar',
+            });
           });
-        });
 
-      // 3. Search Funds
-      const famFunds = mockFunds.filter((f) => f.family_id === currentFamId);
-      famFunds
-        .filter((f) => f.name.toLowerCase().includes(query))
-        .slice(0, 2)
-        .forEach((f) => {
-          results.push({
-            id: f.id,
-            type: 'FUND',
-            title: f.name,
-            subtitle: `Quỹ Gia Tộc • Số dư: ${formatCurrency(f.current_balance)}`,
-            link: '/app/finance',
+        // 3. Search Funds
+        const fundList = funds && funds.length > 0 ? funds : mockFunds.filter((f) => f.family_id === currentFamId);
+        fundList
+          .filter((f) => f.name.toLowerCase().includes(query))
+          .slice(0, 2)
+          .forEach((f) => {
+            results.push({
+              id: f.id,
+              type: 'FUND',
+              title: f.name,
+              subtitle: `Quỹ Gia Tộc • Số dư: ${formatCurrency(f.current_balance)}`,
+              link: '/app/finance',
+            });
           });
-        });
 
-      setSearchResults(results);
-      setIsSearching(false);
+        setSearchResults(results);
+      } catch (err) {
+        console.error('Lỗi tìm kiếm:', err);
+      } finally {
+        setIsSearching(false);
+      }
     }, 250);
 
     return () => clearTimeout(timer);

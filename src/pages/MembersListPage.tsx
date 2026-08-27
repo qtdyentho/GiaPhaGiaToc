@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { Search, Filter, Plus, Download, FileSpreadsheet, Sparkles, MapPin, Users, ArrowRightLeft } from 'lucide-react';
-import { mockMembers, mockGenerations, mockBranches, mockFamily } from '../services/mockData';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Search, Filter, Plus, Download, FileSpreadsheet, Sparkles, MapPin, Users, ArrowRightLeft, RefreshCw } from 'lucide-react';
+import { Member, Generation, Branch } from '../types/database';
+import { GenealogyService } from '../services/GenealogyService';
+import { mockFamily } from '../services/mockData';
 import { Link } from 'react-router-dom';
 import { DataImportWizardModal } from '../components/genealogy/DataImportWizardModal';
 import { AddMemberRelationModal } from '../components/genealogy/AddMemberRelationModal';
@@ -13,10 +15,37 @@ export const MembersListPage: React.FC = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
+  const [familyMembers, setFamilyMembers] = useState<Member[]>([]);
+  const [familyGenerations, setFamilyGenerations] = useState<Generation[]>([]);
+  const [familyBranches, setFamilyBranches] = useState<Branch[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const currentFamId = activeFamily?.id || '';
-  const familyMembers = currentFamId ? mockMembers.filter((m) => m.family_id === currentFamId) : [];
-  const familyGenerations = currentFamId ? mockGenerations.filter((g) => g.family_id === currentFamId) : [];
-  const familyBranches = currentFamId ? mockBranches.filter((b) => b.family_id === currentFamId) : [];
+
+  const loadData = useCallback(async () => {
+    if (!currentFamId) {
+      setFamilyMembers([]);
+      setFamilyGenerations([]);
+      setFamilyBranches([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const tree = await GenealogyService.getFamilyTree(currentFamId);
+      setFamilyMembers(tree.members || []);
+      setFamilyGenerations(tree.generations || []);
+      setFamilyBranches(tree.branches || []);
+    } catch (err) {
+      console.error('Lỗi khi tải danh sách thành viên:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentFamId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const filteredMembers = familyMembers.filter((m) => {
     const q = search.toLowerCase().trim();
@@ -147,67 +176,82 @@ export const MembersListPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredMembers.map((member) => (
-                <tr key={member.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition">
-                  <td className="py-3.5 px-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-700 flex items-center justify-center font-bold text-[#166534] dark:text-emerald-300">
-                        {member.first_name[0] || 'N'}
-                      </div>
-                      <div>
-                        <div className="font-bold text-slate-900 dark:text-white">{member.full_name}</div>
-                        {member.burial_place && (
-                          <div className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-                            <MapPin className="w-3 h-3 text-rose-400 shrink-0" />
-                            <span className="truncate max-w-[160px]">{member.burial_place}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-4 font-medium dark:text-slate-300">
-                    {member.gender === 'MALE' ? '👨 Nam (Đinh)' : '👩 Nữ'}
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="font-bold text-slate-800 dark:text-slate-200">{getGenerationName(member.generation_id)}</span>
-                      <span className="text-[10px] text-[#166534] font-semibold">{getBranchName(member.branch_id)}</span>
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-4 font-medium text-slate-700 dark:text-slate-300">
-                    {formatLifeSpan(member)}
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        member.life_status === 'ALIVE'
-                          ? 'bg-emerald-50 dark:bg-emerald-950/60 text-[#166534] dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
-                          : 'bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
-                      }`}
-                    >
-                      {member.life_status === 'ALIVE' ? '🌿 Còn sống' : '🕯️ Đã tạ thế'}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 font-semibold text-amber-900">
-                    {member.death_lunar_day && member.death_lunar_month ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 rounded-lg text-[11px]">
-                        <Sparkles className="w-3 h-3 text-amber-600" />
-                        <span>{member.death_lunar_day}/{member.death_lunar_month} Âm lịch</span>
-                      </span>
-                    ) : (
-                      <span className="text-slate-400 text-[11px]">—</span>
-                    )}
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <Link
-                      to={`/app/genealogy?member=${member.id}`}
-                      className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 hover:text-[#166534] dark:hover:text-emerald-300 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition"
-                    >
-                      Xem Cây Phả
-                    </Link>
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                    <div className="w-8 h-8 border-2 border-emerald-500/20 border-t-[#166534] rounded-full animate-spin mx-auto mb-2" />
+                    Đang tải danh sách thành viên...
                   </td>
                 </tr>
-              ))}
+              ) : filteredMembers.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                    Chưa có thành viên nào trong danh bạ
+                  </td>
+                </tr>
+              ) : (
+                filteredMembers.map((member) => (
+                  <tr key={member.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition">
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/60 border border-emerald-300 dark:border-emerald-700 flex items-center justify-center font-bold text-[#166534] dark:text-emerald-300">
+                          {member.first_name[0] || 'N'}
+                        </div>
+                        <div>
+                          <div className="font-bold text-slate-900 dark:text-white">{member.full_name}</div>
+                          {member.burial_place && (
+                            <div className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                              <MapPin className="w-3 h-3 text-rose-400 shrink-0" />
+                              <span className="truncate max-w-[160px]">{member.burial_place}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 font-medium dark:text-slate-300">
+                      {member.gender === 'MALE' ? '👨 Nam (Đinh)' : '👩 Nữ'}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-bold text-slate-800 dark:text-slate-200">{getGenerationName(member.generation_id)}</span>
+                        <span className="text-[10px] text-[#166534] font-semibold">{getBranchName(member.branch_id)}</span>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 font-medium text-slate-700 dark:text-slate-300">
+                      {formatLifeSpan(member)}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          member.life_status === 'ALIVE'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/60 text-[#166534] dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                            : 'bg-amber-50 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                        }`}
+                      >
+                        {member.life_status === 'ALIVE' ? '🌿 Còn sống' : '🕯️ Đã tạ thế'}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 font-semibold text-amber-900">
+                      {member.death_lunar_day && member.death_lunar_month ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 rounded-lg text-[11px]">
+                          <Sparkles className="w-3 h-3 text-amber-600" />
+                          <span>{member.death_lunar_day}/{member.death_lunar_month} Âm lịch</span>
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 text-[11px]">—</span>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <Link
+                        to={`/app/genealogy?member=${member.id}`}
+                        className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 hover:text-[#166534] dark:hover:text-emerald-300 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-bold transition"
+                      >
+                        Xem Cây Phả
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -217,14 +261,14 @@ export const MembersListPage: React.FC = () => {
       <DataImportWizardModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
-        onSuccess={() => {}}
+        onSuccess={loadData}
       />
 
       {/* Add Member Relation Modal */}
       <AddMemberRelationModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onSuccess={() => {}}
+        onSuccess={loadData}
         generations={familyGenerations}
         branches={familyBranches}
       />

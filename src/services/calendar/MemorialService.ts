@@ -31,7 +31,7 @@ export class MemorialService {
         .order('lunar_month', { ascending: true })
         .order('lunar_day', { ascending: true });
 
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         return data.map((row: any) => {
           const next = LunarCalendarService.getNextSolarDateForMemorial(
             row.lunar_day,

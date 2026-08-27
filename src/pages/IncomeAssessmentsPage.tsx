@@ -14,6 +14,7 @@ import {
   IncomeCategory,
   Branch,
   Generation,
+  Member,
 } from '../types/database';
 import { BulkAssessmentModal } from '../components/finance/BulkAssessmentModal';
 import { RecordIncomeModal } from '../components/finance/RecordIncomeModal';
@@ -27,6 +28,7 @@ export const IncomeAssessmentsPage: React.FC = () => {
   const [categories, setCategories] = useState<IncomeCategory[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [generations, setGenerations] = useState<Generation[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Filters
@@ -44,6 +46,7 @@ export const IncomeAssessmentsPage: React.FC = () => {
       setCategories([]);
       setBranches([]);
       setGenerations([]);
+      setMembers([]);
       setLoading(false);
       return;
     }
@@ -61,6 +64,7 @@ export const IncomeAssessmentsPage: React.FC = () => {
       setCategories(catData);
       setBranches(treeData.branches);
       setGenerations(treeData.generations);
+      setMembers(treeData.members || []);
     } catch (err) {
       console.error('Lỗi khi tải danh sách định mức thu:', err);
     } finally {
@@ -77,7 +81,7 @@ export const IncomeAssessmentsPage: React.FC = () => {
   const totalPending = totalDue - totalPaid;
 
   const filteredAssessments = assessments.filter((asm) => {
-    const member = mockMembers.find((m) => m.id === asm.member_id);
+    const member = members.find((m) => m.id === asm.member_id) || mockMembers.find((m) => m.id === asm.member_id);
     const matchStatus =
       selectedStatus === 'ALL'
         ? true
@@ -205,7 +209,7 @@ export const IncomeAssessmentsPage: React.FC = () => {
                 </tr>
               ) : (
                 filteredAssessments.map((asm) => {
-                  const member = mockMembers.find((m) => m.id === asm.member_id);
+                  const member = members.find((m) => m.id === asm.member_id) || mockMembers.find((m) => m.id === asm.member_id);
                   const isPaid = asm.status === 'PAID';
 
                   return (

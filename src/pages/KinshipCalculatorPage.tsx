@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { Member, KinshipResult } from '../types/database';
 import { KinshipService } from '../services/genealogy/KinshipService';
-import { mockMembers } from '../services/mockData';
+import { GenealogyService } from '../services/GenealogyService';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
 
@@ -14,19 +14,29 @@ export const KinshipCalculatorPage: React.FC = () => {
   const { activeFamily } = useAuth();
   const currentFamilyId = activeFamily?.id || '';
 
-  // Filter members belonging to current family
-  const familyMembers = useMemo(() => {
-    if (!currentFamilyId) return [];
-    return mockMembers.filter((m) => m.family_id === currentFamilyId);
-  }, [currentFamilyId]);
+  const [familyMembers, setFamilyMembers] = useState<Member[]>([]);
+  const [memberAId, setMemberAId] = useState<string>('');
+  const [memberBId, setMemberBId] = useState<string>('');
 
-  // Default selection
-  const [memberAId, setMemberAId] = useState<string>(
-    familyMembers[0]?.id || ''
-  );
-  const [memberBId, setMemberBId] = useState<string>(
-    familyMembers[1]?.id || ''
-  );
+  useEffect(() => {
+    async function loadMembers() {
+      if (currentFamilyId) {
+        try {
+          const members = await GenealogyService.getMembers(currentFamilyId);
+          setFamilyMembers(members || []);
+          if (members && members.length >= 2) {
+            setMemberAId((prev) => prev || members[0].id);
+            setMemberBId((prev) => prev || members[1].id);
+          } else if (members && members.length === 1) {
+            setMemberAId((prev) => prev || members[0].id);
+          }
+        } catch (err) {
+          console.error('Lỗi khi tải danh sách thành viên cho cây xưng hô:', err);
+        }
+      }
+    }
+    loadMembers();
+  }, [currentFamilyId]);
 
   const [kinshipResult, setKinshipResult] = useState<KinshipResult | null>(null);
   const [loading, setLoading] = useState<boolean>(false);

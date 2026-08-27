@@ -7,8 +7,12 @@ import {
 import { LunarCalendarService } from '../services/LunarCalendarService';
 import { ShortLinkService } from '../services/security/ShortLinkService';
 import { ClanPassService } from '../services/security/ClanPassService';
+import { GenealogyService } from '../services/GenealogyService';
+import { FundService } from '../services/FundService';
+import { MemorialService } from '../services/calendar/MemorialService';
+import { Fund, Member, MemorialDate, FinancialTransaction } from '../types/database';
 import { formatCurrency } from '../lib/utils';
-import { mockFamily, mockMembers, mockFunds, mockMemorialDates, mockTransactions } from '../services/mockData';
+import { mockFamily } from '../services/mockData';
 import { Link } from 'react-router-dom';
 import { UpcomingEventsWidget } from '../components/calendar/UpcomingEventsWidget';
 import { useAuth } from '../contexts/AuthContext';
@@ -66,25 +70,46 @@ export const DashboardPage: React.FC = () => {
   }
 
   const currentFamily = activeFamily;
-  const familyFunds = mockFunds.filter((f) => f.family_id === currentFamily.id);
-  const totalBalance = familyFunds.reduce((sum, f) => sum + Number(f.current_balance || 0), 0);
-  const familyMembers = mockMembers.filter((m) => m.family_id === currentFamily.id);
-  const familyMemorials = mockMemorialDates.filter((m) => m.family_id === currentFamily.id);
-  const nextMemorial = familyMemorials[0] || null;
-  const familyTransactions = mockTransactions.filter((t) => t.family_id === currentFamily.id);
 
+  const [familyFunds, setFamilyFunds] = useState<Fund[]>([]);
+  const [familyMembers, setFamilyMembers] = useState<Member[]>([]);
+  const [familyMemorials, setFamilyMemorials] = useState<MemorialDate[]>([]);
+  const [familyTransactions, setFamilyTransactions] = useState<FinancialTransaction[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+
+  const totalBalance = familyFunds.reduce((sum, f) => sum + Number(f.current_balance || 0), 0);
+  const nextMemorial = familyMemorials[0] || null;
   const bannerImageUrl = currentFamily.banner_url || ANCESTRAL_PRESETS[0].url;
 
   useEffect(() => {
-    async function loadQR() {
+    async function loadData() {
       if (currentFamily?.id) {
-        const config = await ClanPassService.getFamilyPassConfig(currentFamily.id);
-        if (config?.pass_token) setPassToken(config.pass_token);
-        const link = await ShortLinkService.getShortLinkByFamily(currentFamily.id);
-        if (link?.short_code) setShortCode(link.short_code);
+        setLoadingData(true);
+        try {
+          const [funds, members, mems, txs, config, link] = await Promise.all([
+            FundService.getFunds(currentFamily.id),
+            GenealogyService.getMembers(currentFamily.id),
+            MemorialService.getUpcomingMemorials(currentFamily.id, 5),
+            FundService.getLedger(currentFamily.id),
+            ClanPassService.getFamilyPassConfig(currentFamily.id),
+            ShortLinkService.getShortLinkByFamily(currentFamily.id),
+          ]);
+
+          setFamilyFunds(funds || []);
+          setFamilyMembers(members || []);
+          setFamilyMemorials(mems || []);
+          setFamilyTransactions(txs || []);
+
+          if (config?.pass_token) setPassToken(config.pass_token);
+          if (link?.short_code) setShortCode(link.short_code);
+        } catch (err) {
+          console.error('Lỗi khi tải dữ liệu trang tổng quan:', err);
+        } finally {
+          setLoadingData(false);
+        }
       }
     }
-    loadQR();
+    loadData();
   }, [currentFamily?.id]);
 
   return (

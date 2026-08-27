@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, User, Calendar, MapPin, Heart, GitFork, Sparkles, Edit3, Plus, ShieldCheck, Compass, ScrollText } from 'lucide-react';
+import { Member, MemberRelationship, MemorialDate } from '../types/database';
+import { GenealogyService } from '../services/GenealogyService';
+import { MemorialService } from '../services/calendar/MemorialService';
 import { mockMembers, mockRelationships, mockMemorialDates, mockFamily } from '../services/mockData';
 import { formatLunarDate, formatDate } from '../lib/utils';
 import { CreateMemorialModal } from '../components/calendar/CreateMemorialModal';
@@ -14,24 +17,58 @@ export const MemberProfilePage: React.FC = () => {
   const [showAddMemorialModal, setShowAddMemorialModal] = useState(false);
   const [showPrayerModal, setShowPrayerModal] = useState(false);
 
-  const member = mockMembers.find((m) => m.id === id) || mockMembers[0];
-  const memorial = mockMemorialDates.find((m) => m.member_id === member.id);
+  const [member, setMember] = useState<Member | null>(null);
+  const [memorial, setMemorial] = useState<MemorialDate | null>(null);
+  const [relationships, setRelationships] = useState<MemberRelationship[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadMemberData() {
+      if (!id) return;
+      setLoading(true);
+      try {
+        const found = await GenealogyService.getMemberById(id);
+        if (found) {
+          setMember(found);
+          const [mems, tree] = await Promise.all([
+            MemorialService.getMemorials(found.family_id),
+            GenealogyService.getFamilyTree(found.family_id),
+          ]);
+          const mem = mems.find((m) => m.member_id === found.id) || null;
+          setMemorial(mem);
+          setRelationships(tree.relationships.filter((r) => r.member_id === found.id || r.related_member_id === found.id));
+        } else {
+          setMember(mockMembers.find((m) => m.id === id) || mockMembers[0]);
+        }
+      } catch (err) {
+        console.error('Lỗi khi tải thông tin thành viên:', err);
+        setMember(mockMembers.find((m) => m.id === id) || mockMembers[0]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadMemberData();
+  }, [id]);
+
+  const effectiveMember = member || mockMembers.find((m) => m.id === id) || mockMembers[0];
 
   const nextOccurrence = LunarCalendarService.getNextSolarDateForMemorial(
-    member.death_lunar_day || 15,
-    member.death_lunar_month || 1,
+    effectiveMember.death_lunar_day || 15,
+    effectiveMember.death_lunar_month || 1,
     false
   );
   const nextSolarDate = memorial?.next_solar_date || nextOccurrence.solarDate;
 
   const batTu = calculateBatTu(
-    member.birth_solar_date,
-    member.birth_lunar_year,
+    effectiveMember.birth_solar_date,
+    effectiveMember.birth_lunar_year,
     undefined,
     undefined,
-    member.birth_time,
-    member.gender
+    effectiveMember.birth_time,
+    effectiveMember.gender
   );
+
+  const displayMember = effectiveMember;
 
   return (
     <div className="space-y-6 animate-fade-in font-sans">
@@ -49,50 +86,50 @@ export const MemberProfilePage: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center space-x-5">
             <div className="w-20 h-20 rounded-2xl bg-emerald-50 border-2 border-amber-300 flex items-center justify-center font-bold text-emerald-950 text-2xl shadow-xs overflow-hidden">
-              {member.avatar_url ? (
-                <img src={member.avatar_url} alt={member.full_name} className="w-full h-full rounded-2xl object-cover" />
+              {displayMember.avatar_url ? (
+                <img src={displayMember.avatar_url} alt={displayMember.full_name} className="w-full h-full rounded-2xl object-cover" />
               ) : (
-                member.first_name[0]
+                displayMember.first_name[0]
               )}
             </div>
 
             <div>
               <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-                <h1 className="text-2xl font-black text-slate-900 font-serif">{member.full_name}</h1>
+                <h1 className="text-2xl font-black text-slate-900 font-serif">{displayMember.full_name}</h1>
                 <span
                   className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
-                    member.life_status === 'DECEASED'
+                    displayMember.life_status === 'DECEASED'
                       ? 'bg-amber-100 text-amber-800 border border-amber-300'
                       : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                   }`}
                 >
-                  {member.life_status === 'DECEASED' ? 'Tiền Nhân (Đã mất)' : 'Đương Thời (Còn sống)'}
+                  {displayMember.life_status === 'DECEASED' ? 'Tiền Nhân (Đã mất)' : 'Đương Thời (Còn sống)'}
                 </span>
                 <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${batTu.napAm.bgClass} ${batTu.napAm.colorClass} ${batTu.napAm.borderClass}`}>
                   {batTu.napAm.napAm}
                 </span>
               </div>
 
-              {member.courtesy_name && (
+              {displayMember.courtesy_name && (
                 <div className="text-xs text-amber-800 font-serif italic mt-0.5 flex items-center gap-1">
                   <span>📜</span>
-                  <span>{member.courtesy_name}</span>
+                  <span>{displayMember.courtesy_name}</span>
                 </div>
               )}
 
               <div className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-3">
                 <span className="bg-slate-100 font-semibold px-2 py-0.5 rounded text-slate-700">
-                  {member.generation_id ? `Đời thứ ${member.generation_id.replace('gen-', '')}` : 'N/A'}
+                  {displayMember.generation_id ? `Đời thứ ${displayMember.generation_id.replace('gen-', '')}` : 'N/A'}
                 </span>
-                <span>• Giới tính: {member.gender === 'MALE' ? 'Nam' : 'Nữ'}</span>
-                {member.religious_name && <span>• Pháp danh: <strong className="text-amber-800">{member.religious_name}</strong></span>}
+                <span>• Giới tính: {displayMember.gender === 'MALE' ? 'Nam' : 'Nữ'}</span>
+                {displayMember.religious_name && <span>• Pháp danh: <strong className="text-amber-800">{displayMember.religious_name}</strong></span>}
                 <span>• Chi phái: Chi Trưởng</span>
               </div>
             </div>
           </div>
 
           <div className="flex items-center space-x-2">
-            {member.life_status === 'DECEASED' && (
+            {displayMember.life_status === 'DECEASED' && (
               <button
                 onClick={() => setShowPrayerModal(true)}
                 className="px-3.5 py-2 bg-amber-100 hover:bg-amber-200/80 border border-amber-300 text-amber-950 text-xs font-bold rounded-xl flex items-center space-x-1.5 transition shadow-2xs cursor-pointer"
@@ -130,13 +167,13 @@ export const MemberProfilePage: React.FC = () => {
           >
             Quan Hệ Nhân Thân & Phả Hệ
           </button>
-          {member.life_status === 'DECEASED' && (
+          {displayMember.life_status === 'DECEASED' && (
             <button
               onClick={() => setActiveTab('memorial')}
               className={`pb-3 border-b-2 transition ${
                 activeTab === 'memorial'
                   ? 'border-[#166534] text-[#166534]'
-                  : 'border-transparent text-slate-400 hover:text-slate-600'
+                : 'border-transparent text-slate-400 hover:text-slate-600'
               }`}
             >
               Lễ Giỗ, Văn Khấn & Nơi An Táng
@@ -152,20 +189,20 @@ export const MemberProfilePage: React.FC = () => {
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-3">
             <h2 className="text-sm font-bold text-slate-900 font-serif">Thông Tin Tiểu Sử & Ghi Chép Công Đức</h2>
             <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100 italic">
-              {member.bio || 'Chưa cập nhật tiểu sử chi tiết cho thành viên này.'}
+              {displayMember.bio || 'Chưa cập nhật tiểu sử chi tiết cho thành viên này.'}
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100 text-xs">
               <div>
                 <span className="text-slate-500">Giờ & Năm sinh ÂL:</span>{' '}
                 <span className="font-semibold text-slate-900">
-                  {member.birth_time ? `${member.birth_time}, ` : ''}{member.birth_lunar_year || 'Chưa rõ'}
+                  {displayMember.birth_time ? `${displayMember.birth_time}, ` : ''}{displayMember.birth_lunar_year || 'Chưa rõ'}
                 </span>
               </div>
               <div>
                 <span className="text-slate-500">Giờ & Năm mất ÂL:</span>{' '}
                 <span className="font-semibold text-slate-900">
-                  {member.death_time ? `${member.death_time}, ` : ''}{member.death_lunar_year || '—'}
+                  {displayMember.death_time ? `${displayMember.death_time}, ` : ''}{displayMember.death_lunar_year || '—'}
                 </span>
               </div>
             </div>
@@ -228,29 +265,32 @@ export const MemberProfilePage: React.FC = () => {
           </h2>
 
           <div className="space-y-3">
-            {mockRelationships
-              .filter((r) => r.member_id === member.id || r.related_member_id === member.id)
-              .map((rel) => {
-                const targetId = rel.member_id === member.id ? rel.related_member_id : rel.member_id;
-                const target = mockMembers.find((m) => m.id === targetId);
+            {relationships.length === 0 ? (
+              <div className="p-4 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-slate-100">
+                Chưa có ghi nhận mối quan hệ trực hệ
+              </div>
+            ) : (
+              relationships.map((rel) => {
+                const targetId = rel.member_id === displayMember.id ? rel.related_member_id : rel.member_id;
                 return (
                   <div key={rel.id} className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
                     <div>
-                      <div className="text-xs font-bold text-slate-900">{target?.full_name}</div>
-                      <div className="text-[11px] text-slate-500">Mối quan hệ: Con trực hệ</div>
+                      <div className="text-xs font-bold text-slate-900">Mã quan hệ: {targetId}</div>
+                      <div className="text-[11px] text-slate-500">Mối quan hệ: {rel.relationship_type || 'Trực hệ'}</div>
                     </div>
                     <span className="text-[11px] font-semibold bg-emerald-100 text-[#166534] px-2 py-0.5 rounded-full">
-                      Trực Hệ
+                      {rel.relationship_type || 'Trực Hệ'}
                     </span>
                   </div>
                 );
-              })}
+              })
+            )}
           </div>
         </div>
       )}
 
       {/* Tab Content: MEMORIAL */}
-      {activeTab === 'memorial' && member.life_status === 'DECEASED' && (
+      {activeTab === 'memorial' && displayMember.life_status === 'DECEASED' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2 font-serif">
@@ -285,11 +325,11 @@ export const MemberProfilePage: React.FC = () => {
                 </span>
               </div>
               <div className="text-sm font-extrabold text-amber-900 font-serif">
-                Ngày {member.death_lunar_day || 15} Tháng {member.death_lunar_month || 1} (Âm Lịch)
+                Ngày {displayMember.death_lunar_day || 15} Tháng {displayMember.death_lunar_month || 1} (Âm Lịch)
               </div>
-              {member.death_time && (
+              {displayMember.death_time && (
                 <div className="text-[11px] text-amber-900 font-medium">
-                  Giờ Quy Tiên: <strong>{member.death_time}</strong>
+                  Giờ Quy Tiên: <strong>{displayMember.death_time}</strong>
                 </div>
               )}
               <div className="text-[11px] text-amber-800">
@@ -303,7 +343,7 @@ export const MemberProfilePage: React.FC = () => {
                 <span>Nơi An Táng / Mộ Phần</span>
               </div>
               <div className="text-slate-700 font-medium">
-                {member.burial_place || 'Chưa cập nhật vị trí lăng mộ'}
+                {displayMember.burial_place || 'Chưa cập nhật vị trí lăng mộ'}
               </div>
             </div>
           </div>
@@ -315,7 +355,7 @@ export const MemberProfilePage: React.FC = () => {
         isOpen={showAddMemorialModal}
         onClose={() => setShowAddMemorialModal(false)}
         onSuccess={() => {}}
-        defaultMemberId={member.id}
+        defaultMemberId={displayMember.id}
       />
 
       <MemorialPrayerViewerModal

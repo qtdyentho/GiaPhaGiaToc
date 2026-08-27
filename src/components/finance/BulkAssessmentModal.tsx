@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Layers, Users, Calendar, Check, AlertCircle, ArrowRight, ShieldCheck } from 'lucide-react';
 import { Fund, IncomeCategory, Branch, Generation, Member } from '../../types/database';
 import { FundService } from '../../services/FundService';
+import { GenealogyService } from '../../services/GenealogyService';
 import { mockMembers } from '../../services/mockData';
 
 interface BulkAssessmentModalProps {
@@ -25,6 +26,7 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
   generations,
   familyId = 'fam-0000-0001',
 }) => {
+  const [membersList, setMembersList] = useState<Member[]>([]);
   const [step, setStep] = useState<1 | 2>(1);
   const [title, setTitle] = useState('Đóng góp Quỹ Gia Tộc Thường Niên 2026');
   const [fundId, setFundId] = useState(funds[0]?.id || '');
@@ -38,10 +40,25 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    async function loadMembers() {
+      if (isOpen && familyId) {
+        try {
+          const list = await GenealogyService.getMembers(familyId);
+          setMembersList(list && list.length > 0 ? list : mockMembers);
+        } catch (err) {
+          console.error('Lỗi khi tải thành viên lập định mức:', err);
+          setMembersList(mockMembers);
+        }
+      }
+    }
+    loadMembers();
+  }, [isOpen, familyId]);
+
   if (!isOpen) return null;
 
   // Filter members based on target scope
-  let eligibleMembers = mockMembers.filter((m) => m.life_status === 'ALIVE');
+  let eligibleMembers = (membersList.length > 0 ? membersList : mockMembers).filter((m) => m.life_status === 'ALIVE');
   if (targetScope === 'BRANCH' && selectedBranchId) {
     eligibleMembers = eligibleMembers.filter((m) => m.branch_id === selectedBranchId);
   } else if (targetScope === 'GENERATION' && selectedGenId) {

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, HeartHandshake, QrCode, Check, Building, User, EyeOff, Sparkles } from 'lucide-react';
-import { Fund, PaymentMethod, SponsorType } from '../../types/database';
+import { Fund, PaymentMethod, SponsorType, Member } from '../../types/database';
 import { FundService } from '../../services/FundService';
+import { GenealogyService } from '../../services/GenealogyService';
 import { VietQRService } from '../../services/VietQRService';
 import { mockMembers } from '../../services/mockData';
 
@@ -20,8 +21,9 @@ export const AddContributionModal: React.FC<AddContributionModalProps> = ({
   funds,
   familyId = 'fam-0000-0001',
 }) => {
+  const [membersList, setMembersList] = useState<Member[]>([]);
   const [donorType, setDonorType] = useState<SponsorType>('MEMBER');
-  const [selectedMemberId, setSelectedMemberId] = useState(mockMembers[0]?.id || '');
+  const [selectedMemberId, setSelectedMemberId] = useState('');
   const [customDonorName, setCustomDonorName] = useState('');
   const [fundId, setFundId] = useState(funds[0]?.id || '');
   const [amount, setAmount] = useState<string>('5000000');
@@ -31,11 +33,30 @@ export const AddContributionModal: React.FC<AddContributionModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    async function loadMembers() {
+      if (isOpen && familyId) {
+        try {
+          const list = await GenealogyService.getMembers(familyId);
+          const finalMembers = list && list.length > 0 ? list : mockMembers;
+          setMembersList(finalMembers);
+          if (!selectedMemberId && finalMembers[0]) {
+            setSelectedMemberId(finalMembers[0].id);
+          }
+        } catch (err) {
+          console.error('Lỗi khi tải thành viên đóng góp:', err);
+          setMembersList(mockMembers);
+        }
+      }
+    }
+    loadMembers();
+  }, [isOpen, familyId]);
+
   if (!isOpen) return null;
 
   const resolvedDonorName =
     donorType === 'MEMBER'
-      ? mockMembers.find((m) => m.id === selectedMemberId)?.full_name || 'Thành viên'
+      ? membersList.find((m) => m.id === selectedMemberId)?.full_name || 'Thành viên'
       : donorType === 'ANONYMOUS'
       ? 'Nhà hảo tâm ẩn danh'
       : customDonorName.trim() || 'Nhà tài trợ';
@@ -164,7 +185,7 @@ export const AddContributionModal: React.FC<AddContributionModalProps> = ({
                 onChange={(e) => setSelectedMemberId(e.target.value)}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-[#166534]"
               >
-                {mockMembers.map((m) => (
+                {membersList.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.full_name} ({m.life_status === 'DECEASED' ? 'Tiền bối' : 'Hậu duệ'})
                   </option>
