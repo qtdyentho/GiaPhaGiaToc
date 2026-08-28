@@ -8,64 +8,114 @@ import { RoleGuard } from './components/auth/RoleGuard';
 import { AppLayout } from './components/layout/AppLayout';
 import { PageSkeleton } from './components/ui/PageSkeleton';
 
-// ─── Public Pages (Lazy Loaded) ───────────────────────────────────────────────
-const LandingPage = lazy(() => import('./pages/LandingPage').then(m => ({ default: m.LandingPage })));
-const PricingPage = lazy(() => import('./pages/PricingPage').then(m => ({ default: m.PricingPage })));
-const HelpPage = lazy(() => import('./pages/HelpPage').then(m => ({ default: m.HelpPage })));
-const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
-const RegisterPage = lazy(() => import('./pages/RegisterPage').then(m => ({ default: m.RegisterPage })));
-const InviteRegisterPage = lazy(() => import('./pages/InviteRegisterPage').then(m => ({ default: m.InviteRegisterPage })));
-const ClanPassUnlockPage = lazy(() => import('./pages/ClanPassUnlockPage').then(m => ({ default: m.ClanPassUnlockPage })));
-const ShortLinkRedirectPage = lazy(() => import('./pages/ShortLinkRedirectPage').then(m => ({ default: m.ShortLinkRedirectPage })));
-const DevTestLoginPage = lazy(() => import('./pages/DevTestLoginPage').then(m => ({ default: m.DevTestLoginPage })));
+import { ScrollToTop } from './components/ui/ScrollToTop';
 
-// ─── Onboarding & Core Family Pages (Lazy Loaded) ─────────────────────────────
-const CreateFamilyPage = lazy(() => import('./pages/CreateFamilyPage').then(m => ({ default: m.CreateFamilyPage })));
-const DashboardPage = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
-const GenealogyTreePage = lazy(() => import('./pages/GenealogyTreePage').then(m => ({ default: m.GenealogyTreePage })));
-const MembersListPage = lazy(() => import('./pages/MembersListPage').then(m => ({ default: m.MembersListPage })));
-const KinshipCalculatorPage = lazy(() => import('./pages/KinshipCalculatorPage').then(m => ({ default: m.KinshipCalculatorPage })));
-const MemberProfilePage = lazy(() => import('./pages/MemberProfilePage').then(m => ({ default: m.MemberProfilePage })));
-const FamilyCalendarPage = lazy(() => import('./pages/FamilyCalendarPage').then(m => ({ default: m.FamilyCalendarPage })));
-const MemorialsPage = lazy(() => import('./pages/MemorialsPage').then(m => ({ default: m.MemorialsPage })));
-const EventListPage = lazy(() => import('./pages/EventListPage').then(m => ({ default: m.EventListPage })));
-const EventDetailPage = lazy(() => import('./pages/EventDetailPage').then(m => ({ default: m.EventDetailPage })));
-const ReminderSettingsPage = lazy(() => import('./pages/ReminderSettingsPage').then(m => ({ default: m.ReminderSettingsPage })));
-const ClanIntroductionPage = lazy(() => import('./pages/ClanIntroductionPage'));
-const ClanChroniclesPage = lazy(() => import('./pages/ClanChroniclesPage'));
-const ClanChronicleDetailPage = lazy(() => import('./pages/ClanChronicleDetailPage'));
+/**
+ * Trình nạp Lazy Component tự phục hồi:
+ * - Khắc phục triệt để lỗi màn hình trắng khi chuyển trang trên SPA
+ * - Tự động nhận diện cả default export lẫn named export
+ * - Tự động tải lại chunk mới khi Vercel deploy bản cập nhật
+ */
+function lazyRetry<T extends React.ComponentType<any>>(
+  factory: () => Promise<any>,
+  name?: string
+) {
+  return lazy(async () => {
+    try {
+      const module = await factory();
+      if (name && module[name]) {
+        return { default: module[name] };
+      }
+      if (module.default) {
+        return { default: module.default };
+      }
+      const firstExportKey = Object.keys(module).find(
+        (k) => typeof module[k] === 'function' || (typeof module[k] === 'object' && module[k] !== null)
+      );
+      if (firstExportKey && module[firstExportKey]) {
+        return { default: module[firstExportKey] };
+      }
+      return module;
+    } catch (error: any) {
+      console.warn('[ChunkLoader] Lỗi nạp mô-đun trang động:', error);
+      const isChunkError =
+        error?.message?.includes('Failed to fetch dynamically imported module') ||
+        error?.message?.includes('Importing a module script failed') ||
+        error?.name === 'ChunkLoadError';
 
-// ─── Finance Pages (Lazy Loaded) ──────────────────────────────────────────────
-const FinanceDashboardPage = lazy(() => import('./pages/FinanceDashboardPage').then(m => ({ default: m.FinanceDashboardPage })));
-const FundLedgerPage = lazy(() => import('./pages/FundLedgerPage').then(m => ({ default: m.FundLedgerPage })));
-const IncomeAssessmentsPage = lazy(() => import('./pages/IncomeAssessmentsPage').then(m => ({ default: m.IncomeAssessmentsPage })));
-const ExpensesPage = lazy(() => import('./pages/ExpensesPage').then(m => ({ default: m.ExpensesPage })));
-const ContributionsPage = lazy(() => import('./pages/ContributionsPage').then(m => ({ default: m.ContributionsPage })));
-const HonorRollPage = lazy(() => import('./pages/HonorRollPage').then(m => ({ default: m.HonorRollPage })));
+      if (isChunkError && typeof window !== 'undefined') {
+        const lastReloadKey = 'hl_last_chunk_reload';
+        const lastReloadTime = Number(sessionStorage.getItem(lastReloadKey) || 0);
+        const now = Date.now();
+        if (now - lastReloadTime > 10000) {
+          sessionStorage.setItem(lastReloadKey, String(now));
+          window.location.reload();
+          return new Promise(() => {});
+        }
+      }
+      throw error;
+    }
+  });
+}
 
-// ─── Billing & Settings Pages (Lazy Loaded) ───────────────────────────────────
-const BillingOverviewPage = lazy(() => import('./pages/BillingOverviewPage').then(m => ({ default: m.BillingOverviewPage })));
-const UsageDashboardPage = lazy(() => import('./pages/UsageDashboardPage').then(m => ({ default: m.UsageDashboardPage })));
-const InvoicesPage = lazy(() => import('./pages/InvoicesPage').then(m => ({ default: m.InvoicesPage })));
-const CheckoutPage = lazy(() => import('./pages/CheckoutPage').then(m => ({ default: m.CheckoutPage })));
-const SupportCenterPage = lazy(() => import('./pages/SupportCenterPage'));
-const NotificationsPage = lazy(() => import('./pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
-const FamilySettingsPage = lazy(() => import('./pages/FamilySettingsPage').then(m => ({ default: m.FamilySettingsPage })));
-const PermissionsPage = lazy(() => import('./pages/PermissionsPage').then(m => ({ default: m.PermissionsPage })));
-const AuditLogsPage = lazy(() => import('./pages/AuditLogsPage').then(m => ({ default: m.AuditLogsPage })));
+// ─── Public Pages (Lazy Loaded with Auto-Retry) ────────────────────────────────
+const LandingPage = lazyRetry(() => import('./pages/LandingPage'), 'LandingPage');
+const PricingPage = lazyRetry(() => import('./pages/PricingPage'), 'PricingPage');
+const HelpPage = lazyRetry(() => import('./pages/HelpPage'), 'HelpPage');
+const LoginPage = lazyRetry(() => import('./pages/LoginPage'), 'LoginPage');
+const RegisterPage = lazyRetry(() => import('./pages/RegisterPage'), 'RegisterPage');
+const InviteRegisterPage = lazyRetry(() => import('./pages/InviteRegisterPage'), 'InviteRegisterPage');
+const ClanPassUnlockPage = lazyRetry(() => import('./pages/ClanPassUnlockPage'), 'ClanPassUnlockPage');
+const ShortLinkRedirectPage = lazyRetry(() => import('./pages/ShortLinkRedirectPage'), 'ShortLinkRedirectPage');
+const DevTestLoginPage = lazyRetry(() => import('./pages/DevTestLoginPage'), 'DevTestLoginPage');
 
-// ─── Super Admin Pages (Lazy Loaded) ──────────────────────────────────────────
-const BetaCommandCenterPage = lazy(() => import('./pages/admin/BetaCommandCenterPage'));
-const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage').then(m => ({ default: m.AdminUsersPage })));
-const AdminPaymentsPage = lazy(() => import('./pages/admin/AdminPaymentsPage'));
-const AdminBillingConfigPage = lazy(() => import('./pages/admin/AdminBillingConfigPage'));
-const IntegrityWatchdogPage = lazy(() => import('./pages/admin/IntegrityWatchdogPage'));
-const FinancialReconciliationPage = lazy(() => import('./pages/admin/FinancialReconciliationPage'));
-const BetaEvidencePage = lazy(() => import('./pages/admin/BetaEvidencePage'));
-const BetaExitAuditPage = lazy(() => import('./pages/admin/BetaExitAuditPage'));
-const AdminRevenuePage = lazy(() => import('./pages/AdminRevenuePage').then(m => ({ default: m.AdminRevenuePage })));
-const AdminPlansPage = lazy(() => import('./pages/AdminPlansPage').then(m => ({ default: m.AdminPlansPage })));
-const AdminSubscriptionsPage = lazy(() => import('./pages/AdminSubscriptionsPage').then(m => ({ default: m.AdminSubscriptionsPage })));
+// ─── Onboarding & Core Family Pages (Lazy Loaded with Auto-Retry) ──────────────
+const CreateFamilyPage = lazyRetry(() => import('./pages/CreateFamilyPage'), 'CreateFamilyPage');
+const DashboardPage = lazyRetry(() => import('./pages/DashboardPage'), 'DashboardPage');
+const GenealogyTreePage = lazyRetry(() => import('./pages/GenealogyTreePage'), 'GenealogyTreePage');
+const MembersListPage = lazyRetry(() => import('./pages/MembersListPage'), 'MembersListPage');
+const KinshipCalculatorPage = lazyRetry(() => import('./pages/KinshipCalculatorPage'), 'KinshipCalculatorPage');
+const MemberProfilePage = lazyRetry(() => import('./pages/MemberProfilePage'), 'MemberProfilePage');
+const FamilyCalendarPage = lazyRetry(() => import('./pages/FamilyCalendarPage'), 'FamilyCalendarPage');
+const MemorialsPage = lazyRetry(() => import('./pages/MemorialsPage'), 'MemorialsPage');
+const EventListPage = lazyRetry(() => import('./pages/EventListPage'), 'EventListPage');
+const EventDetailPage = lazyRetry(() => import('./pages/EventDetailPage'), 'EventDetailPage');
+const ReminderSettingsPage = lazyRetry(() => import('./pages/ReminderSettingsPage'), 'ReminderSettingsPage');
+const ClanIntroductionPage = lazyRetry(() => import('./pages/ClanIntroductionPage'), 'ClanIntroductionPage');
+const ClanChroniclesPage = lazyRetry(() => import('./pages/ClanChroniclesPage'), 'ClanChroniclesPage');
+const ClanChronicleDetailPage = lazyRetry(() => import('./pages/ClanChronicleDetailPage'), 'ClanChronicleDetailPage');
+
+// ─── Finance Pages (Lazy Loaded with Auto-Retry) ───────────────────────────────
+const FinanceDashboardPage = lazyRetry(() => import('./pages/FinanceDashboardPage'), 'FinanceDashboardPage');
+const FundLedgerPage = lazyRetry(() => import('./pages/FundLedgerPage'), 'FundLedgerPage');
+const IncomeAssessmentsPage = lazyRetry(() => import('./pages/IncomeAssessmentsPage'), 'IncomeAssessmentsPage');
+const ExpensesPage = lazyRetry(() => import('./pages/ExpensesPage'), 'ExpensesPage');
+const ContributionsPage = lazyRetry(() => import('./pages/ContributionsPage'), 'ContributionsPage');
+const HonorRollPage = lazyRetry(() => import('./pages/HonorRollPage'), 'HonorRollPage');
+
+// ─── Billing & Settings Pages (Lazy Loaded with Auto-Retry) ────────────────────
+const BillingOverviewPage = lazyRetry(() => import('./pages/BillingOverviewPage'), 'BillingOverviewPage');
+const UsageDashboardPage = lazyRetry(() => import('./pages/UsageDashboardPage'), 'UsageDashboardPage');
+const InvoicesPage = lazyRetry(() => import('./pages/InvoicesPage'), 'InvoicesPage');
+const CheckoutPage = lazyRetry(() => import('./pages/CheckoutPage'), 'CheckoutPage');
+const SupportCenterPage = lazyRetry(() => import('./pages/SupportCenterPage'), 'SupportCenterPage');
+const NotificationsPage = lazyRetry(() => import('./pages/NotificationsPage'), 'NotificationsPage');
+const FamilySettingsPage = lazyRetry(() => import('./pages/FamilySettingsPage'), 'FamilySettingsPage');
+const PermissionsPage = lazyRetry(() => import('./pages/PermissionsPage'), 'PermissionsPage');
+const AuditLogsPage = lazyRetry(() => import('./pages/AuditLogsPage'), 'AuditLogsPage');
+
+// ─── Super Admin Pages (Lazy Loaded with Auto-Retry) ───────────────────────────
+const BetaCommandCenterPage = lazyRetry(() => import('./pages/admin/BetaCommandCenterPage'), 'BetaCommandCenterPage');
+const AdminUsersPage = lazyRetry(() => import('./pages/admin/AdminUsersPage'), 'AdminUsersPage');
+const AdminPaymentsPage = lazyRetry(() => import('./pages/admin/AdminPaymentsPage'), 'AdminPaymentsPage');
+const AdminBillingConfigPage = lazyRetry(() => import('./pages/admin/AdminBillingConfigPage'), 'AdminBillingConfigPage');
+const IntegrityWatchdogPage = lazyRetry(() => import('./pages/admin/IntegrityWatchdogPage'), 'IntegrityWatchdogPage');
+const FinancialReconciliationPage = lazyRetry(() => import('./pages/admin/FinancialReconciliationPage'), 'FinancialReconciliationPage');
+const BetaEvidencePage = lazyRetry(() => import('./pages/admin/BetaEvidencePage'), 'BetaEvidencePage');
+const BetaExitAuditPage = lazyRetry(() => import('./pages/admin/BetaExitAuditPage'), 'BetaExitAuditPage');
+const AdminRevenuePage = lazyRetry(() => import('./pages/AdminRevenuePage'), 'AdminRevenuePage');
+const AdminPlansPage = lazyRetry(() => import('./pages/AdminPlansPage'), 'AdminPlansPage');
+const AdminSubscriptionsPage = lazyRetry(() => import('./pages/AdminSubscriptionsPage'), 'AdminSubscriptionsPage');
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -82,6 +132,7 @@ export const App: React.FC = () => {
       <ThemeProvider>
         <AuthProvider>
           <BrowserRouter>
+            <ScrollToTop />
             <Suspense fallback={<PageSkeleton />}>
               <Routes>
               {/* Public Routes */}
