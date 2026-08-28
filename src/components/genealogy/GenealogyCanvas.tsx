@@ -313,7 +313,7 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
     }
   }, [kinshipPersonA, kinshipPersonB, members]);
 
-  // 🌳 XÂY DỰNG CẤU TRÚC CÂY PHẢ HỆ ĐỆ QUY
+  // 🌳 XÂY DỰNG CẤU TRÚC CÂY PHẢ HỆ ĐỆ QUY CHUẨN XÁC
   const treeRoots = useMemo(() => {
     let filteredMembers = members;
     if (selectedBranchId) {
@@ -322,7 +322,7 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
 
     const genMap = new Map(generations.map((g) => [g.id, g.generation_number]));
 
-    // 1. Tập hợp các ID vợ/chồng để không chọn làm Root độc lập
+    // 1. Tập hợp các ID vợ/chồng phụ thuộc để không chọn làm Root độc lập
     const spouseIds = new Set<string>();
     relationships
       .filter((r) => r.relationship === 'SPOUSE' || r.relationship_type === 'SPOUSE')
@@ -338,18 +338,44 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
         }
       });
 
-    // 2. Tập hợp các ID con cái (có quan hệ CHILD hoặc PARENT)
-    const childIds = new Set<string>();
-    relationships
-      .filter((r) => 
-        r.relationship === 'CHILD' || r.relationship_type === 'CHILD' ||
-        r.relationship === 'PARENT' || r.relationship_type === 'PARENT'
-      )
-      .forEach((r) => childIds.add(r.related_member_id));
+    // 2. Xây dựng bản đồ Cha/Mẹ -> Con cái chuẩn xác hai chiều
+    // parentToChildrenMap: Parent ID -> Set<Child ID>
+    // childHasParentSet: Set<Child ID>
+    const parentToChildrenMap = new Map<string, Set<string>>();
+    const childHasParentSet = new Set<string>();
+
+    const registerParentChild = (parentId: string, childId: string) => {
+      if (!parentId || !childId || parentId === childId) return;
+      if (!parentToChildrenMap.has(parentId)) {
+        parentToChildrenMap.set(parentId, new Set());
+      }
+      parentToChildrenMap.get(parentId)!.add(childId);
+      childHasParentSet.add(childId);
+    };
+
+    // Nạp từ bảng relationships
+    relationships.forEach((r) => {
+      const relType = r.relationship_type || r.relationship;
+      if (relType === 'CHILD') {
+        // member_id là cha/mẹ, related_member_id là con
+        registerParentChild(r.member_id, r.related_member_id);
+      } else if (relType === 'PARENT') {
+        // related_member_id là cha/mẹ, member_id là con
+        registerParentChild(r.related_member_id, r.member_id);
+      }
+    });
+
+    // Nạp thêm từ trường father_id / mother_id / parent_id trên member (nếu có)
+    members.forEach((m: any) => {
+      if (m.father_id) registerParentChild(m.father_id, m.id);
+      if (m.mother_id) registerParentChild(m.mother_id, m.id);
+      if (m.parent_id) registerParentChild(m.parent_id, m.id);
+    });
 
     // 3. Root Members: Không có cha mẹ trong cây và không phải là vợ phụ thuộc
-    let roots = filteredMembers.filter((m) => !childIds.has(m.id) && !spouseIds.has(m.id));
+    let roots = filteredMembers.filter((m) => !childHasParentSet.has(m.id) && !spouseIds.has(m.id));
 
+    // Fallback: Nếu không tìm thấy roots hoặc tất cả đều có liên kết, lấy những người ở đời nhỏ nhất (Đời 1)
     if (roots.length === 0 && filteredMembers.length > 0) {
       const minGenNum = Math.min(
         ...filteredMembers.map((m) => genMap.get(m.generation_id || '') || 1)
@@ -359,12 +385,23 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
       );
     }
 
+    // Nếu vẫn rỗng (ví dụ toàn là nữ), lấy người đầu tiên của đời nhỏ nhất
+    if (roots.length === 0 && filteredMembers.length > 0) {
+      const minGenNum = Math.min(
+        ...filteredMembers.map((m) => genMap.get(m.generation_id || '') || 1)
+      );
+      roots = filteredMembers.filter(
+        (m) => (genMap.get(m.generation_id || '') || 1) === minGenNum
+      );
+    }
+
     const visited = new Set<string>();
 
     function buildNode(member: Member): FamilyTreeNodeData {
       visited.add(member.id);
       const genNum = genMap.get(member.generation_id || '') || 1;
 
+      // Tìm danh sách vợ / chồng
       const memberSpouses: Member[] = [];
       relationships
         .filter(
@@ -381,27 +418,30 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
           }
         });
 
+      // Lấy danh sách con cái từ parentToChildrenMap cho cả member và các spouse
+      const childIdsSet = new Set<string>();
+      const pIds = [member.id, ...memberSpouses.map((s) => s.id)];
+      pIds.forEach((pId) => {
+        const cIds = parentToChildrenMap.get(pId);
+        if (cIds) {
+          cIds.forEach((cId) => childIdsSet.add(cId));
+        }
+      });
+
       const childMembers: Member[] = [];
-      const parentIds = [member.id, ...memberSpouses.map((s) => s.id)];
+      childIdsSet.forEach((cId) => {
+        const child = members.find((m) => m.id === cId);
+        if (child && !childMembers.some((c) => c.id === child.id)) {
+          childMembers.push(child);
+        }
+      });
 
-      relationships
-        .filter(
-          (r) =>
-            (r.relationship === 'CHILD' || r.relationship_type === 'CHILD' ||
-             r.relationship === 'PARENT' || r.relationship_type === 'PARENT') &&
-            parentIds.includes(r.member_id)
-        )
-        .forEach((r) => {
-          const child = members.find((m) => m.id === r.related_member_id);
-          if (child && !childMembers.some((c) => c.id === child.id)) {
-            childMembers.push(child);
-          }
-        });
-
+      // Sắp xếp con cái theo thứ tự năm sinh hoặc tên
       childMembers.sort((a, b) => {
-        const yearA = a.birth_solar_date ? new Date(a.birth_solar_date).getFullYear() : 0;
-        const yearB = b.birth_solar_date ? new Date(b.birth_solar_date).getFullYear() : 0;
-        return yearA - yearB;
+        const yearA = a.birth_solar_date ? new Date(a.birth_solar_date).getFullYear() : (a as any).birth_year || 0;
+        const yearB = b.birth_solar_date ? new Date(b.birth_solar_date).getFullYear() : (b as any).birth_year || 0;
+        if (yearA !== yearB) return yearA - yearB;
+        return a.full_name.localeCompare(b.full_name);
       });
 
       const childrenNodes = childMembers

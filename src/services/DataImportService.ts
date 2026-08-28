@@ -777,45 +777,98 @@ export class DataImportService {
             throw new Error(`Lỗi khi lưu danh sách thành viên: ${insertErr.message}`);
           }
 
-          // Map tên thành viên -> Member ID
-          const nameToIdMap = new Map<string, string>();
-          (insertedMembers || []).forEach((im: any) => nameToIdMap.set(im.full_name.trim(), im.id));
+          // Map tên thành viên -> Member ID (hỗ trợ cả tên gốc và tên chuẩn hóa không dấu/bỏ bí danh)
+          const normalizeForMatch = (str: string) =>
+            (str || '')
+              .replace(/\(.*?\)/g, '')
+              .replace(/^(cụ|ông|bà|bác|chú|cô|thủy tổ|khởi tổ|tiền nhân)\s+/i, '')
+              .trim()
+              .toLowerCase()
+              .normalize('NFD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .replace(/[đĐ]/g, 'd');
 
-          // 4. Thiết lập quan hệ cha - con & vợ - chồng (Dùng quan hệ PARENT & SPOUSE chuẩn enum)
+          const nameToIdMap = new Map<string, string>();
+          const normNameToIdMap = new Map<string, { id: string; genNum: number }>();
+
+          (insertedMembers || []).forEach((im: any, idx: number) => {
+            const fullName = im.full_name.trim();
+            const genNum = validation.rows[idx]?.data?.generationNumber || 1;
+            nameToIdMap.set(fullName, im.id);
+            normNameToIdMap.set(normalizeForMatch(fullName), { id: im.id, genNum });
+          });
+
+          const findMatchingMemberId = (queryName: string, childGen?: number, excludeId?: string): string | null => {
+            if (!queryName) return null;
+            const trimmed = queryName.trim();
+            if (nameToIdMap.has(trimmed) && nameToIdMap.get(trimmed) !== excludeId) {
+              return nameToIdMap.get(trimmed)!;
+            }
+            const queryNorm = normalizeForMatch(queryName);
+            if (normNameToIdMap.has(queryNorm)) {
+              const res = normNameToIdMap.get(queryNorm)!;
+              if (res.id !== excludeId) return res.id;
+            }
+
+            // Tìm khớp gần đúng ưu tiên thế hệ cha (childGen - 1)
+            for (const [normKey, val] of normNameToIdMap.entries()) {
+              if (val.id !== excludeId && (childGen === undefined || val.genNum === childGen - 1)) {
+                if (normKey === queryNorm || normKey.includes(queryNorm) || queryNorm.includes(normKey)) {
+                  return val.id;
+                }
+              }
+            }
+
+            // Tìm khớp rộng hơn
+            for (const [normKey, val] of normNameToIdMap.entries()) {
+              if (val.id !== excludeId && (childGen === undefined || val.genNum < (childGen || 99))) {
+                if (normKey.includes(queryNorm) || queryNorm.includes(normKey)) {
+                  return val.id;
+                }
+              }
+            }
+            return null;
+          };
+
+          // 4. Thiết lập quan hệ cha - con & vợ - chồng (Dùng quan hệ PARENT, CHILD & SPOUSE chuẩn enum)
           const relationshipsToInsert: any[] = [];
           const memorialsToInsert: any[] = [];
 
           validation.rows.forEach((r) => {
             const m = r.data;
-            const currentMemberId = nameToIdMap.get(m.fullName.trim());
+            const currentMemberId = nameToIdMap.get(m.fullName.trim()) || findMatchingMemberId(m.fullName);
             if (!currentMemberId) return;
 
-            // Quan hệ Cha - Con (relationship_type: 'PARENT' và 'CHILD')
-            if (m.parentName && nameToIdMap.has(m.parentName.trim())) {
-              const fatherId = nameToIdMap.get(m.parentName.trim())!;
-              relationshipsToInsert.push({
-                family_id: targetFamilyUUID,
-                member_id: fatherId,
-                related_member_id: currentMemberId,
-                relationship_type: 'PARENT',
-              });
-              relationshipsToInsert.push({
-                family_id: targetFamilyUUID,
-                member_id: fatherId,
-                related_member_id: currentMemberId,
-                relationship_type: 'CHILD',
-              });
+            // Quan hệ Cha - Con (relationship_type: 'CHILD' và 'PARENT')
+            if (m.parentName) {
+              const fatherId = findMatchingMemberId(m.parentName, m.generationNumber, currentMemberId);
+              if (fatherId && fatherId !== currentMemberId) {
+                relationshipsToInsert.push({
+                  family_id: targetFamilyUUID,
+                  member_id: fatherId,
+                  related_member_id: currentMemberId,
+                  relationship_type: 'CHILD',
+                });
+                relationshipsToInsert.push({
+                  family_id: targetFamilyUUID,
+                  member_id: fatherId,
+                  related_member_id: currentMemberId,
+                  relationship_type: 'PARENT',
+                });
+              }
             }
 
             // Quan hệ Vợ - Chồng (relationship_type: 'SPOUSE')
-            if (m.spouseName && nameToIdMap.has(m.spouseName.trim())) {
-              const spouseId = nameToIdMap.get(m.spouseName.trim())!;
-              relationshipsToInsert.push({
-                family_id: targetFamilyUUID,
-                member_id: currentMemberId,
-                related_member_id: spouseId,
-                relationship_type: 'SPOUSE',
-              });
+            if (m.spouseName) {
+              const spouseId = findMatchingMemberId(m.spouseName, m.generationNumber, currentMemberId);
+              if (spouseId && spouseId !== currentMemberId) {
+                relationshipsToInsert.push({
+                  family_id: targetFamilyUUID,
+                  member_id: currentMemberId,
+                  related_member_id: spouseId,
+                  relationship_type: 'SPOUSE',
+                });
+              }
             }
 
             // Tạo bản ghi Lễ Giỗ trong memorial_dates (Khớp schema memorial_dates)

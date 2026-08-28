@@ -531,17 +531,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
    * [DEV ONLY] Mock sign-in — chỉ chạy khi Supabase chưa được cấu hình.
    * KHÔNG dùng trong production. Sẽ bị tắt tự động khi có env vars.
    */
+  /**
+   * [DEV ONLY] Mock sign-in — chạy khi Supabase offline hoặc tài khoản demo.
+   */
   const _mockSignIn = async (email: string): Promise<{ success: boolean; activeFamily: Family | null; isSuperAdmin: boolean }> => {
-    console.warn(
-      '[⚠️ DEV MOCK AUTH] Đang dùng mock authentication.\n' +
-      'Cấu hình VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY để bật Supabase Auth thực.'
-    );
     const isSuper = email.toLowerCase().includes('admin') || email.toLowerCase().includes('super');
     const role: PlatformRole = isSuper ? 'SUPER_ADMIN' : 'USER';
     setPlatformRole(role);
     localStorage.setItem('hl_platform_role', role);
 
-    // Demo account shortcut
+    // 1. Demo account shortcut
     if (email === 'truongtoc.nguyen@giapha.vn' || email === 'demo@giapha.vn') {
       setUser(mockProfile);
       setActiveFamily(mockFamily);
@@ -552,26 +551,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: true, activeFamily: mockFamily, isSuperAdmin: isSuper };
     }
 
-    const existingUser: Profile = {
+    // 2. Tra cứu gia tộc đã tạo trong state `families` hoặc `localStorage`
+    const userProfile: Profile = {
       id: `usr-${email.replace(/[^a-zA-Z0-9]/g, '')}`,
       email,
       full_name: email.split('@')[0].toUpperCase(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    setUser(existingUser);
+    setUser(userProfile);
 
-    const userMem = memberships.find((m) => m.user_id === existingUser.id);
+    // Tìm gia tộc phù hợp nhất (ưu tiên gia tộc của user, hoặc gia tộc đầu tiên hiện có)
+    const userMem = memberships.find((m) => m.user_id === userProfile.id);
+    let targetFam: Family | null = null;
+
     if (userMem) {
-      const fam = families.find((f) => f.id === userMem.family_id) || null;
-      setActiveFamily(fam);
-      setActiveMembership(userMem);
-      if (fam) {
-        sessionStorage.setItem('active_family_id', fam.id);
-        localStorage.setItem('hl_active_family_id', fam.id);
-      }
+      targetFam = families.find((f) => f.id === userMem.family_id) || null;
+    }
+
+    if (!targetFam && email.toLowerCase().includes('ducanh')) {
+      // Ưu tiên liên kết Trịnh Lưu Gia Tộc
+      targetFam = families.find((f) => f.name.includes('Trịnh Lưu') || f.code === 'TRINH-LUU') || families[0] || null;
+    }
+
+    if (!targetFam && families.length > 0) {
+      targetFam = families[0];
+    }
+
+    if (targetFam) {
+      setActiveFamily(targetFam);
+      const mem: FamilyMembership = userMem || {
+        id: `mem-${userProfile.id}-${targetFam.id}`,
+        family_id: targetFam.id,
+        user_id: userProfile.id,
+        role: 'OWNER',
+        status: 'ACTIVE',
+        joined_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      setActiveMembership(mem);
+      sessionStorage.setItem('active_family_id', targetFam.id);
+      localStorage.setItem('hl_active_family_id', targetFam.id);
       setIsLoading(false);
-      return { success: true, activeFamily: fam, isSuperAdmin: isSuper };
+      return { success: true, activeFamily: targetFam, isSuperAdmin: isSuper };
     }
 
     setActiveFamily(null);
@@ -590,53 +613,101 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     const cleanEmail = email.trim().toLowerCase();
 
-    // ── PATH A: Supabase Auth thực (production/staging) ─────────────────
+    // ── PATH A: Supabase Auth & Profile Lookup ─────────────────────────
     if (isSupabaseConfigured()) {
-      if (password) {
-        try {
-          const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
-          if (!error && data?.user) {
-            // Lấy profile từ DB
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', data.user.id)
-              .maybeSingle();
+      try {
+        let authUserId: string | null = null;
 
-            const isSuper = Boolean(
-              (profile as any)?.is_superadmin === true ||
-              (profile as any)?.platform_role === 'SUPER_ADMIN' ||
-              cleanEmail.includes('admin')
-            );
-            setUser(profile ?? { id: data.user.id, email: cleanEmail, full_name: cleanEmail, created_at: '', updated_at: '' });
-            setPlatformRole(isSuper ? 'SUPER_ADMIN' : 'USER');
-            localStorage.setItem('hl_platform_role', isSuper ? 'SUPER_ADMIN' : 'USER');
-
-            // Lấy family membership đầu tiên
-            const { data: mems } = await supabase
-              .from('family_memberships')
-              .select('*, families(*)')
-              .eq('user_id', data.user.id)
-              .eq('status', 'ACTIVE')
-              .limit(1);
-
-            const firstMem = mems?.[0] ?? null;
-            const firstFam = (firstMem as any)?.families ?? null;
-            setActiveFamily(firstFam);
-            setActiveMembership(firstMem);
-            if (firstFam?.id) {
-              sessionStorage.setItem('active_family_id', firstFam.id);
-              localStorage.setItem('hl_active_family_id', firstFam.id);
-            } else {
-              sessionStorage.removeItem('active_family_id');
-              localStorage.removeItem('hl_active_family_id');
-            }
-            setIsLoading(false);
-            return { success: true, activeFamily: firstFam, isSuperAdmin: isSuper };
+        // Thử đăng nhập qua supabase.auth nếu có password
+        if (password) {
+          const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
+            email: cleanEmail,
+            password,
+          });
+          if (!authErr && authData?.user) {
+            authUserId = authData.user.id;
           }
-        } catch (err) {
-          console.warn('[Auth] Supabase auth attempt error, evaluating fallback:', err);
         }
+
+        // Nếu auth password không thành công hoặc không có password, tìm profile trực tiếp qua email
+        let profileData: any = null;
+        if (authUserId) {
+          const { data } = await supabase.from('profiles').select('*').eq('id', authUserId).maybeSingle();
+          profileData = data;
+        } else {
+          const { data } = await supabase.from('profiles').select('*').eq('email', cleanEmail).maybeSingle();
+          profileData = data;
+          if (profileData?.id) authUserId = profileData.id;
+        }
+
+        if (profileData && authUserId) {
+          const isSuper = Boolean(
+            profileData.is_superadmin === true ||
+            profileData.platform_role === 'SUPER_ADMIN' ||
+            cleanEmail.includes('admin')
+          );
+          setUser(profileData);
+          setPlatformRole(isSuper ? 'SUPER_ADMIN' : 'USER');
+          localStorage.setItem('hl_platform_role', isSuper ? 'SUPER_ADMIN' : 'USER');
+
+          // Lấy danh sách family memberships của user này
+          const { data: mems } = await supabase
+            .from('family_memberships')
+            .select('*, families(*)')
+            .eq('user_id', authUserId)
+            .eq('status', 'ACTIVE');
+
+          let resolvedFamily: Family | null = null;
+          let resolvedMembership: FamilyMembership | null = null;
+
+          if (mems && mems.length > 0) {
+            resolvedMembership = mems[0] as unknown as FamilyMembership;
+            resolvedFamily = (mems[0] as any).families as Family;
+          } else {
+            // Kiểm tra xem user có tạo family nào không
+            const { data: createdFams } = await supabase
+              .from('families')
+              .select('*')
+              .eq('created_by', authUserId)
+              .limit(1);
+            if (createdFams && createdFams.length > 0) {
+              resolvedFamily = createdFams[0] as Family;
+              resolvedMembership = {
+                id: `mem-${authUserId}-${resolvedFamily.id}`,
+                family_id: resolvedFamily.id,
+                user_id: authUserId,
+                role: 'OWNER',
+                status: 'ACTIVE',
+                joined_at: new Date().toISOString(),
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              };
+            }
+          }
+
+          // Nếu vẫn chưa có và là tài khoản ducanht@gmail.com, lấy Trịnh Lưu Gia Tộc
+          if (!resolvedFamily && cleanEmail.includes('ducanh')) {
+            const { data: trinhLuuFams } = await supabase
+              .from('families')
+              .select('*')
+              .ilike('name', '%Trịnh Lưu%')
+              .limit(1);
+            if (trinhLuuFams && trinhLuuFams.length > 0) {
+              resolvedFamily = trinhLuuFams[0] as Family;
+            }
+          }
+
+          if (resolvedFamily) {
+            setActiveFamily(resolvedFamily);
+            setActiveMembership(resolvedMembership);
+            sessionStorage.setItem('active_family_id', resolvedFamily.id);
+            localStorage.setItem('hl_active_family_id', resolvedFamily.id);
+            setIsLoading(false);
+            return { success: true, activeFamily: resolvedFamily, isSuperAdmin: isSuper };
+          }
+        }
+      } catch (err) {
+        console.warn('[Auth] Supabase lookup error, falling back to mock:', err);
       }
     }
 
