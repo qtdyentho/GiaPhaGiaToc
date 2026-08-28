@@ -81,9 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return INITIAL_MEMBERSHIPS;
   });
 
-  const [platformRole, setPlatformRole] = useState<PlatformRole>(() => {
-    return localStorage.getItem('hl_platform_role') === 'SUPER_ADMIN' ? 'SUPER_ADMIN' : 'USER';
-  });
+  const [platformRole, setPlatformRole] = useState<PlatformRole>('USER');
 
   // Chỉ kích hoạt activeFamily khi thuộc về đúng tài khoản user đang đăng nhập hoặc có ClanPassSession
   const [activeFamily, setActiveFamily] = useState<Family | null>(() => {
@@ -1055,12 +1053,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    if (isSupabaseConfigured()) {
+      try {
+        await supabase.auth.signOut();
+      } catch (err) {
+        console.warn('Supabase signOut error:', err);
+      }
+    }
     setUser(null);
     setActiveFamily(null);
     setActiveMembership(null);
     setPlatformRole('USER');
-    sessionStorage.removeItem('active_family_id');
+    sessionStorage.clear();
     localStorage.removeItem('hl_auth_user');
+    localStorage.removeItem('hl_families');
+    localStorage.removeItem('hl_memberships');
     localStorage.removeItem('hl_active_family_id');
     localStorage.removeItem('hl_platform_role');
     localStorage.removeItem('hl_clan_pass_session');

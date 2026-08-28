@@ -1942,7 +1942,7 @@ export class DataImportService {
    */
   public static async rollbackBatch(batchId: string): Promise<{ success: boolean; message: string }> {
     try {
-      const savedBatchStr = localStorage.getItem(`hl_import_batch_${batchId}`);
+      const savedBatchStr = typeof localStorage !== 'undefined' ? localStorage.getItem(`hl_import_batch_${batchId}`) : null;
       let memberIds: string[] = [];
 
       if (savedBatchStr) {
@@ -1989,7 +1989,9 @@ export class DataImportService {
         }
       }
 
-      localStorage.removeItem(`hl_import_batch_${batchId}`);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(`hl_import_batch_${batchId}`);
+      }
 
       return {
         success: true,
