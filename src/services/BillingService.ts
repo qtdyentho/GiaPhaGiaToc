@@ -29,33 +29,30 @@ export class BillingService {
     };
   }
 
-  static async getActiveSubscription(familyId?: string): Promise<Subscription> {
+  static async getActiveSubscription(familyId?: string): Promise<Subscription | null> {
+    if (!familyId) return null;
     if (isSupabaseConfigured()) {
-      let query = supabase.from('subscriptions').select('*').eq('status', 'ACTIVE').limit(1);
-      if (familyId) query = query.eq('family_id', familyId);
-      const { data, error } = await query.single();
+      const { data, error } = await supabase.from('subscriptions').select('*').eq('status', 'ACTIVE').eq('family_id', familyId).maybeSingle();
       if (!error && data) return data as Subscription;
     }
-    return mockActiveSubscription;
+    return null;
   }
 
   static async getInvoices(familyId?: string): Promise<Invoice[]> {
+    if (!familyId) return [];
     if (isSupabaseConfigured()) {
-      let query = supabase.from('invoices').select('*').order('created_at', { ascending: false });
-      if (familyId) query = query.eq('family_id', familyId);
-      const { data, error } = await query;
-      if (!error && data && data.length > 0) return data as Invoice[];
+      const { data, error } = await supabase.from('invoices').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
+      if (!error && data) return data as Invoice[];
     }
-    return mockInvoices;
+    return [];
   }
 
   static async getUsageCounters(familyId?: string): Promise<UsageCounter[]> {
+    if (!familyId) return [];
     if (isSupabaseConfigured()) {
-      let query = supabase.from('usage_counters').select('*');
-      if (familyId) query = query.eq('family_id', familyId);
-      const { data, error } = await query;
-      if (!error && data && data.length > 0) return data as UsageCounter[];
+      const { data, error } = await supabase.from('usage_counters').select('*').eq('family_id', familyId);
+      if (!error && data) return data as UsageCounter[];
     }
-    return mockUsageCounters;
+    return [];
   }
 }

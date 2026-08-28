@@ -883,13 +883,25 @@ export class DataImportService {
   }
 
   /**
-   * Kiểm tra tính toàn vẹn (Validate)
+   * Kiểm tra tính toàn vẹn và hợp lệ sâu của cây gia phả (Validation Engine)
    */
   public static validateImportData(rows: RawImportMember[]): ValidationSummary {
     const validatedRows: ValidatedImportRow[] = [];
     const nameSet = new Set<string>();
+    const treeCodeOccurrences = new Map<string, number>();
     const batchId = `IMPORT-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const currentYear = new Date().getFullYear();
     let autoInferredCount = 0;
+
+    // 1. Thu thập danh sách toàn bộ treeCode hợp lệ để đối soát quan hệ cha con / vợ chồng
+    const allTreeCodes = new Set<string>();
+    rows.forEach((r) => {
+      if (r.treeCode && r.treeCode.trim()) {
+        const code = r.treeCode.trim();
+        allTreeCodes.add(code);
+        treeCodeOccurrences.set(code, (treeCodeOccurrences.get(code) || 0) + 1);
+      }
+    });
 
     rows.forEach((row, index) => {
       const errors: string[] = [];
@@ -899,37 +911,82 @@ export class DataImportService {
         autoInferredCount++;
       }
 
-      // 1. Kiểm tra họ tên
+      // 1. Kiểm tra họ và tên (Bắt buộc)
       if (!row.fullName || row.fullName.trim().length < 2) {
-        errors.push('Họ và tên không được để trống.');
+        errors.push('Họ và tên bị trống hoặc quá ngắn (< 2 ký tự). Vui lòng điền họ tên đầy đủ (VD: Nguyễn Văn Phúc hoặc Cụ Bà Trần Thị Mai).');
       } else if (nameSet.has(row.fullName.trim().toLowerCase())) {
-        warnings.push('Trùng họ tên với thành viên khác trong file (Cần kiểm tra chi phái / đời).');
+        warnings.push(`Cảnh báo: Trùng họ tên '${row.fullName.trim()}'. Vui lòng kiểm tra lại để đảm bảo phân biệt theo Đời hoặc Chi phái.`);
       }
-      nameSet.add(row.fullName.trim().toLowerCase());
+      if (row.fullName) {
+        nameSet.add(row.fullName.trim().toLowerCase());
+      }
 
-      // 2. Kiểm tra thế hệ
+      // 2. Kiểm tra thế hệ (Đời 1 - 30)
       if (!row.generationNumber || row.generationNumber < 1 || row.generationNumber > 30) {
-        errors.push('Thế hệ không hợp lệ (Phải từ 1 đến 30).');
+        errors.push(`Thế hệ (Đời) '${row.generationNumber || 'trống'}' không hợp lệ. Vui lòng nhập số nguyên từ 1 đến 30 (VD: 1 cho Thủy Tổ, 2 cho con, 3 cho cháu).`);
       }
 
       // 3. Kiểm tra chi phái
       if (!row.branchName || row.branchName.trim().length === 0) {
-        errors.push('Chi phái không được để trống.');
+        errors.push('Chi phái không được để trống. Vui lòng điền tên chi phái (VD: Chi Trưởng, Chi Hai, Toàn Tộc, hoặc Chi 1).');
       }
 
-      // 4. Kiểm tra ngày giỗ âm lịch
-      if (row.lifeStatus === 'DECEASED') {
+      // 4. Kiểm tra mã cây (treeCode) trùng lặp
+      if (row.treeCode && row.treeCode.trim()) {
+        const code = row.treeCode.trim();
+        if ((treeCodeOccurrences.get(code) || 0) > 1) {
+          errors.push(`Mã cây '${code}' bị trùng lặp ở ${treeCodeOccurrences.get(code)} dòng. Mỗi thành viên phải có một mã cây duy nhất (VD: 1, 1.1, 1-V1).`);
+        }
+      }
+
+      // 5. Kiểm tra mã cha (parentCode) có tồn tại trong file không
+      if (row.parentCode && row.parentCode.trim()) {
+        const pCode = row.parentCode.trim();
+        if (!allTreeCodes.has(pCode)) {
+          errors.push(`Mã cha '${pCode}' không tồn tại trong danh sách mã cây của file. Vui lòng kiểm tra lại mã cây của người cha hoặc bổ sung dòng người cha.`);
+        }
+      }
+
+      // 6. Kiểm tra mã mẹ (motherCode) có tồn tại trong file không
+      if (row.motherCode && row.motherCode.trim()) {
+        const mCode = row.motherCode.trim();
+        if (!allTreeCodes.has(mCode)) {
+          warnings.push(`Mã mẹ '${mCode}' chưa có dòng thông tin tương ứng trong file. Hệ thống vẫn lưu nhưng khuyến nghị bổ sung để cây gia phả đầy đủ.`);
+        }
+      }
+
+      // 7. Kiểm tra niên đại năm sinh & năm mất
+      if (row.birthYear) {
+        if (row.birthYear < 1000 || row.birthYear > currentYear) {
+          errors.push(`Năm sinh (${row.birthYear}) không hợp lý (phải từ năm 1000 đến ${currentYear}).`);
+        }
+      }
+
+      if (row.deathLunarYear) {
+        if (row.deathLunarYear < 1000 || row.deathLunarYear > currentYear + 1) {
+          errors.push(`Năm mất (${row.deathLunarYear}) không hợp lý (phải từ năm 1000 đến ${currentYear}).`);
+        }
+        if (row.birthYear && row.deathLunarYear < row.birthYear) {
+          errors.push(`Lỗi logic thời gian: Năm sinh (${row.birthYear}) không được lớn hơn năm mất (${row.deathLunarYear}).`);
+        }
+        if (row.birthYear && row.deathLunarYear - row.birthYear > 120) {
+          warnings.push(`Cảnh báo niên đại: Khoảng cách giữa năm sinh và năm mất là ${row.deathLunarYear - row.birthYear} năm (> 120 tuổi). Vui lòng kiểm tra lại.`);
+        }
+      }
+
+      // 8. Kiểm tra ngày giỗ âm lịch (nếu đã mất)
+      if (row.lifeStatus === 'DECEASED' || row.deathLunarDay || row.deathLunarMonth) {
         if (row.deathLunarMonth && (row.deathLunarMonth < 1 || row.deathLunarMonth > 12)) {
-          errors.push('Tháng mất âm lịch phải từ 1 đến 12.');
+          errors.push(`Tháng mất âm lịch '${row.deathLunarMonth}' không hợp lệ. Vui lòng nhập số từ 1 đến 12 (VD: 8 cho tháng Tám).`);
         }
         if (row.deathLunarDay && (row.deathLunarDay < 1 || row.deathLunarDay > 30)) {
-          errors.push('Ngày mất âm lịch phải từ 1 đến 30.');
+          errors.push(`Ngày mất âm lịch '${row.deathLunarDay}' không hợp lệ. Vui lòng nhập số từ 1 đến 30 (VD: 15 cho ngày rằm).`);
         }
       }
 
-      // 5. Kiểm tra quan hệ cha con (Chống vòng lặp)
-      if (row.parentName && row.parentName.trim().toLowerCase() === row.fullName.trim().toLowerCase()) {
-        errors.push('Tên cha không được trùng họ tên chính thành viên.');
+      // 9. Kiểm tra quan hệ cha con (Chống vòng lặp)
+      if (row.parentName && row.fullName && row.parentName.trim().toLowerCase() === row.fullName.trim().toLowerCase()) {
+        errors.push(`Lỗi logic gia phả: Tên cha '${row.parentName.trim()}' trùng với chính thành viên. Vui lòng kiểm tra lại.`);
       }
 
       validatedRows.push({

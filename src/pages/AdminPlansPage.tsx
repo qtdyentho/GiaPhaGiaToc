@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ShieldCheck,
   Plus,
@@ -15,17 +15,33 @@ import {
   HardDrive,
   UserCheck,
 } from 'lucide-react';
-import { mockPlans, mockPlanVersions, mockPlanFeatures } from '../services/mockData';
+import { BillingService } from '../services/BillingService';
 import { Plan, PlanVersion, PlanTier } from '../types/database';
 import { formatCurrency } from '../lib/utils';
 
 export const AdminPlansPage: React.FC = () => {
-  const [plans, setPlans] = useState<Plan[]>(mockPlans);
-  const [versions, setVersions] = useState<PlanVersion[]>(mockPlanVersions);
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [versions, setVersions] = useState<PlanVersion[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNewPlan, setIsNewPlan] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const { plans: livePlans, versions: liveVersions } = await BillingService.getPublicPlans();
+        setPlans(livePlans || []);
+        setVersions(liveVersions || []);
+      } catch (err) {
+        console.error('Lỗi tải gói cước:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
   // Form states
   const [planCode, setPlanCode] = useState<PlanTier>('GIA_TOC');

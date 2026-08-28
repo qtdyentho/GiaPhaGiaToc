@@ -1,11 +1,28 @@
-﻿import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
 import { formatCurrency } from '../lib/utils';
-import { mockPlans } from '../services/mockData';
+import { BillingService } from '../services/BillingService';
+import { Plan } from '../types/database';
 import { Link } from 'react-router-dom';
 
 export const PricingPage: React.FC = () => {
   const [isYearly, setIsYearly] = useState(true);
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadPlans() {
+      try {
+        const { plans: livePlans } = await BillingService.getPublicPlans();
+        setPlans(livePlans || []);
+      } catch (err) {
+        console.error('Lỗi khi tải bảng giá:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadPlans();
+  }, []);
 
   return (
     <div className="py-8 max-w-6xl mx-auto space-y-8 animate-fade-in font-sans">
@@ -48,7 +65,7 @@ export const PricingPage: React.FC = () => {
 
       {/* Pricing Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {mockPlans.map((plan) => {
+        {plans.map((plan) => {
           const isFeatured = plan.code === 'GIA_TOC';
           const price = isYearly
             ? plan.code === 'FREE'

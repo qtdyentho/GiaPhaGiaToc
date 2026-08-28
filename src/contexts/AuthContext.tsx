@@ -41,9 +41,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const INITIAL_FAMILIES: Family[] = [
-  mockFamily,
-];
+const INITIAL_FAMILIES: Family[] = [];
+const INITIAL_MEMBERSHIPS: FamilyMembership[] = [];
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<Profile | null>(() => {
@@ -79,7 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // ignore
       }
     }
-    return mockMemberships;
+    return INITIAL_MEMBERSHIPS;
   });
 
   const [platformRole, setPlatformRole] = useState<PlatformRole>(() => {

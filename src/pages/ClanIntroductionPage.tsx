@@ -90,6 +90,36 @@ export const ClanIntroductionPage: React.FC = () => {
     leadership_board: [],
   };
 
+  // Thống kê chi tiết phả đồ & quy mô dòng họ
+  const clanStats = React.useMemo(() => {
+    const total = members.length;
+    const dinh = members.filter((m) => m.gender === 'MALE').length;
+    const nu = members.filter((m) => m.gender === 'FEMALE').length;
+    const alive = members.filter((m) => m.life_status === 'ALIVE').length;
+    const deceased = members.filter((m) => m.life_status === 'DECEASED').length;
+    const gens = generations.length || (total > 0 ? Math.max(...members.map((m) => Number(m.generation_id?.replace(/\D/g, '') || 1)), 1) : 0);
+    const branchCount = branches.length || (total > 0 ? new Set(members.map((m) => m.branch_id).filter(Boolean)).size : 0);
+
+    const earliestBirthYear = members.reduce((minYr, m) => {
+      const y = m.birth_solar_date ? new Date(m.birth_solar_date).getFullYear() : (m as any).birth_year;
+      if (y && y > 1000 && y < minYr) return y;
+      return minYr;
+    }, 9999);
+
+    const foundingYearStr = earliestBirthYear !== 9999 ? `Năm ${earliestBirthYear}` : currentIntro.founding_year_era || 'Thời dựng họ';
+
+    return {
+      total,
+      dinh,
+      nu,
+      alive,
+      deceased,
+      generationsCount: gens,
+      branchesCount: branchCount,
+      foundingYear: foundingYearStr,
+    };
+  }, [members, generations, branches, currentIntro.founding_year_era]);
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12 font-sans">
       {/* ── 1. Hero Banner: Đại Tự & Cội Nguồn Dòng Tộc ── */}
@@ -105,7 +135,7 @@ export const ClanIntroductionPage: React.FC = () => {
                 <span>Di Sản & Cội Nguồn Dòng Tộc</span>
               </span>
               <span className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-bold backdrop-blur-md">
-                Niên hiệu: {currentIntro.founding_year_era || 'Cổ truyền'}
+                Niên hiệu: {clanStats.foundingYear}
               </span>
             </div>
 
@@ -117,21 +147,27 @@ export const ClanIntroductionPage: React.FC = () => {
               "{currentIntro.clan_motto}"
             </p>
 
-            {/* Quick Stats Banner */}
-            <div className="flex items-center gap-4 pt-2 text-xs text-amber-200/80 flex-wrap">
-              <div className="flex items-center gap-1.5">
-                <GitFork className="w-3.5 h-3.5 text-amber-400" />
-                <span><strong>{branches.length}</strong> Chi phái</span>
+            {/* Quick Stats Grid — 5 Thẻ Thống Kê Chuẩn */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-3">
+              <div className="p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
+                <div className="text-[10px] text-amber-300 font-bold uppercase">Khởi Thủy</div>
+                <div className="text-xs sm:text-sm font-extrabold text-white mt-0.5">{clanStats.foundingYear}</div>
               </div>
-              <span>•</span>
-              <div className="flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-emerald-400" />
-                <span><strong>{generations.length}</strong> Đời truyền nối</span>
+              <div className="p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
+                <div className="text-[10px] text-amber-300 font-bold uppercase">Thế Hệ (Đời)</div>
+                <div className="text-xs sm:text-sm font-extrabold text-white mt-0.5">{clanStats.generationsCount} Đời</div>
               </div>
-              <span>•</span>
-              <div className="flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
-                <span><strong>{members.length}</strong> Đinh & Nữ tử</span>
+              <div className="p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
+                <div className="text-[10px] text-amber-300 font-bold uppercase">Chi Phái</div>
+                <div className="text-xs sm:text-sm font-extrabold text-white mt-0.5">{clanStats.branchesCount} Chi/Cành</div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 text-center">
+                <div className="text-[10px] text-amber-300 font-bold uppercase">Đinh Số (Nam)</div>
+                <div className="text-xs sm:text-sm font-extrabold text-white mt-0.5">{clanStats.dinh} Đinh ({clanStats.nu} Nữ)</div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 text-center col-span-2 sm:col-span-1">
+                <div className="text-[10px] text-amber-300 font-bold uppercase">Hiện Diện</div>
+                <div className="text-xs sm:text-sm font-extrabold text-white mt-0.5">{clanStats.alive} sống • {clanStats.deceased} khuất</div>
               </div>
             </div>
           </div>

@@ -200,23 +200,21 @@ export class FundService {
   // 2. DANH MỤC THU & CHI (CATEGORIES)
   // ==========================================
   static async getIncomeCategories(familyId?: string): Promise<IncomeCategory[]> {
+    if (!familyId) return [];
     if (isSupabaseConfigured()) {
-      let query = supabase.from('income_categories').select('*');
-      if (familyId) query = query.eq('family_id', familyId);
-      const { data, error } = await query;
+      const { data, error } = await supabase.from('income_categories').select('*').eq('family_id', familyId);
       if (!error && data) return data as IncomeCategory[];
     }
-    return mockIncomeCategories;
+    return mockIncomeCategories.filter((c) => (c as any).family_id === familyId);
   }
 
   static async getExpenseCategories(familyId?: string): Promise<ExpenseCategory[]> {
+    if (!familyId) return [];
     if (isSupabaseConfigured()) {
-      let query = supabase.from('expense_categories').select('*');
-      if (familyId) query = query.eq('family_id', familyId);
-      const { data, error } = await query;
+      const { data, error } = await supabase.from('expense_categories').select('*').eq('family_id', familyId);
       if (!error && data) return data as ExpenseCategory[];
     }
-    return mockExpenseCategories;
+    return mockExpenseCategories.filter((c) => (c as any).family_id === familyId);
   }
 
   // ==========================================
@@ -685,7 +683,7 @@ export class FundService {
     if (!familyId) return [];
     if (isSupabaseConfigured()) {
       const { data, error } = await supabase.from('contributions').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
-      if (!error && data && data.length > 0) return data as Contribution[];
+      if (!error && data) return data as Contribution[];
     }
     return mockContributions.filter((c) => c.family_id === familyId);
   }

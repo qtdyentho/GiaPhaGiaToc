@@ -468,7 +468,16 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                                   <Pencil className="w-3 h-3" />
                                   Chỉnh sửa trực tiếp — Dòng {row.rowNumber}
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
+                                  <div>
+                                    <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase block mb-0.5">Mã Cây (treeCode)</label>
+                                    <input
+                                      placeholder="1, 1.1, 1-V1..."
+                                      className="w-full text-xs px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-mono focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                      value={editingFields.treeCode ?? ''}
+                                      onChange={(e) => setEditingFields((f) => ({ ...f, treeCode: e.target.value }))}
+                                    />
+                                  </div>
                                   <div>
                                     <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase block mb-0.5">Họ và Tên <span className="text-rose-500">*</span></label>
                                     <input
@@ -481,7 +490,7 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                                     <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase block mb-0.5">Giới Tính <span className="text-rose-500">*</span></label>
                                     <select
                                       className="w-full text-xs px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-400"
-                                      value={editingFields.gender ?? ''}
+                                      value={editingFields.gender ?? 'MALE'}
                                       onChange={(e) => setEditingFields((f) => ({ ...f, gender: e.target.value as any }))}
                                     >
                                       <option value="MALE">Nam</option>
@@ -507,21 +516,43 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                                     />
                                   </div>
                                   <div>
+                                    <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase block mb-0.5">Mã / Tên Cha</label>
+                                    <input
+                                      className="w-full text-xs px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                      value={editingFields.parentCode ?? editingFields.parentName ?? ''}
+                                      onChange={(e) => setEditingFields((f) => ({ ...f, parentCode: e.target.value, parentName: e.target.value }))}
+                                    />
+                                  </div>
+                                  <div>
                                     <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase block mb-0.5">Năm Sinh</label>
                                     <input
                                       type="number"
+                                      placeholder="VD: 1880"
                                       className="w-full text-xs px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-400"
                                       value={editingFields.birthYear ?? ''}
                                       onChange={(e) => setEditingFields((f) => ({ ...f, birthYear: Number(e.target.value) || undefined }))}
                                     />
                                   </div>
                                   <div>
-                                    <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase block mb-0.5">Tên Cha (hoặc Mã cây)</label>
-                                    <input
-                                      className="w-full text-xs px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-400"
-                                      value={editingFields.parentName ?? editingFields.parentCode ?? ''}
-                                      onChange={(e) => setEditingFields((f) => ({ ...f, parentName: e.target.value, parentCode: undefined }))}
-                                    />
+                                    <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase block mb-0.5">Ngày/Tháng Mất Âm</label>
+                                    <div className="grid grid-cols-2 gap-1">
+                                      <input
+                                        type="number"
+                                        min={1} max={30}
+                                        placeholder="Ngày (1-30)"
+                                        className="w-full text-xs px-2 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                        value={editingFields.deathLunarDay ?? ''}
+                                        onChange={(e) => setEditingFields((f) => ({ ...f, deathLunarDay: Number(e.target.value) || undefined }))}
+                                      />
+                                      <input
+                                        type="number"
+                                        min={1} max={12}
+                                        placeholder="Tháng (1-12)"
+                                        className="w-full text-xs px-2 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                        value={editingFields.deathLunarMonth ?? ''}
+                                        onChange={(e) => setEditingFields((f) => ({ ...f, deathLunarMonth: Number(e.target.value) || undefined }))}
+                                      />
+                                    </div>
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2 pt-1">
