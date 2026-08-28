@@ -160,6 +160,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  // Auto-sync active Supabase session & user families on mount
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    const syncSupabaseSession = async () => {
+      try {
+        const savedUserStr = localStorage.getItem('hl_auth_user');
+        if (!savedUserStr) return;
+        const savedUser: Profile = JSON.parse(savedUserStr);
+        if (!savedUser?.email) return;
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('email', savedUser.email)
+          .maybeSingle();
+
+        if (profile) {
+          setUser(profile);
+          const { data: mems } = await supabase
+            .from('family_memberships')
+            .select('*, families(*)')
+            .eq('user_id', profile.id)
+            .eq('status', 'ACTIVE');
+
+          if (mems && mems.length > 0) {
+            const fam = (mems[0] as any).families as Family;
+            if (fam) {
+              setActiveFamily(fam);
+              setActiveMembership(mems[0] as unknown as FamilyMembership);
+              setFamilies((prev) => [fam, ...prev.filter((f) => f.id !== fam.id)]);
+              setMemberships((prev) => [mems[0] as unknown as FamilyMembership, ...prev.filter((m) => m.id !== mems[0].id)]);
+              sessionStorage.setItem('active_family_id', fam.id);
+              localStorage.setItem('hl_active_family_id', fam.id);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[Auth] syncSupabaseSession error:', e);
+      }
+    };
+    syncSupabaseSession();
+  }, []);
+
   // Sync state changes to localStorage
   useEffect(() => {
     if (user) {
@@ -700,8 +743,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (resolvedFamily) {
             setActiveFamily(resolvedFamily);
             setActiveMembership(resolvedMembership);
+            setFamilies((prev) => [resolvedFamily!, ...prev.filter((f) => f.id !== resolvedFamily!.id)]);
+            if (resolvedMembership) {
+              setMemberships((prev) => [resolvedMembership!, ...prev.filter((m) => m.id !== resolvedMembership!.id)]);
+            }
             sessionStorage.setItem('active_family_id', resolvedFamily.id);
             localStorage.setItem('hl_active_family_id', resolvedFamily.id);
+            localStorage.setItem('hl_auth_user', JSON.stringify(profileData));
             setIsLoading(false);
             return { success: true, activeFamily: resolvedFamily, isSuperAdmin: isSuper };
           }
