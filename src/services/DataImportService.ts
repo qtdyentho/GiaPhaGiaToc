@@ -340,39 +340,62 @@ export class DataImportService {
     members.forEach((m) => {
       if (m.treeCode) {
         const code = m.treeCode.trim().toUpperCase();
-        // Kiểm tra xem có phải là Hôn Phối (ví dụ 1-V1, 1.1-V1, 1-HP1, 1-C1)
-        const spouseMatch = code.match(/^([0-9.]+)-(?:V|HP|C)([0-9]*)$/i);
+        // A. Kiểm tra xem có phải là Hôn Phối (ví dụ: 1-V1, 1.1-V1, D11.1-V1, C1-D11-01-V1, 1-HP1, 1-C1)
+        const spouseMatch = code.match(/^([A-Z0-9.]+)-(?:V|HP|C)([0-9]*)$/i);
         if (spouseMatch) {
           const rootCode = spouseMatch[1];
           const spouseIdx = spouseMatch[2] || '1';
           if (!m.spouseCode) m.spouseCode = rootCode;
           if (!m.relationType) m.relationType = spouseIdx === '1' ? 'Vợ Cả (Chính Thất)' : `Vợ Thứ ${spouseIdx} (Kế Thất)`;
-          
-          // Thế hệ bằng thế hệ của người phối ngẫu
-          const dotCount = (rootCode.match(/\./g) || []).length;
-          const inferredGen = dotCount + 1;
-          if (!m.generationNumber || m.generationNumber === 0) {
-            m.generationNumber = inferredGen;
-            m.isAutoInferredGen = true;
-            autoInferredCount++;
-          }
           if (m.gender === 'MALE' && (code.includes('-V') || code.includes('-HP'))) {
             m.gender = 'FEMALE';
           }
-        } else {
-          // Mã con đẻ/huyết thống (ví dụ: 1, 1.1, 1.1.2, 1.2.3.4)
-          const dotCount = (code.match(/\./g) || []).length;
-          const inferredGen = dotCount + 1;
-          if (!m.generationNumber || m.generationNumber === 0) {
-            m.generationNumber = inferredGen;
-            m.isAutoInferredGen = true;
-            autoInferredCount++;
+          
+          // Kiểm tra xem rootCode có chứa tiền tố đời dạng D11, Đ12, G13 không
+          const genPrefixMatch = rootCode.match(/^(?:D|Đ|G|F|GEN)?([0-9]{1,2})(?:\.|$)/i);
+          if (genPrefixMatch && (rootCode.startsWith('D') || rootCode.startsWith('Đ') || rootCode.startsWith('G') || rootCode.startsWith('F') || rootCode.startsWith('GEN'))) {
+            const inferredGen = parseInt(genPrefixMatch[1], 10);
+            if (!m.generationNumber || m.generationNumber === 0) {
+              m.generationNumber = inferredGen;
+              m.isAutoInferredGen = true;
+              autoInferredCount++;
+            }
+          } else {
+            // Thế hệ theo số dấu chấm của mã cây gốc
+            const dotCount = (rootCode.match(/\./g) || []).length;
+            const inferredGen = dotCount + 1;
+            if (!m.generationNumber || m.generationNumber === 0) {
+              m.generationNumber = inferredGen;
+              m.isAutoInferredGen = true;
+              autoInferredCount++;
+            }
           }
-          // Tự động suy ra mã cha nếu chưa có
-          if (!m.parentCode && code.includes('.')) {
-            const lastDotIndex = code.lastIndexOf('.');
-            const parentTreeCode = code.substring(0, lastDotIndex);
-            m.parentCode = parentTreeCode;
+        } else {
+          // B. Mã con đẻ/huyết thống:
+          // 1. Dạng tiền tố đời ngắn (VD: D11.1, D12.1, Đ12.2, F13.1)
+          const genPrefixMatch = code.match(/^(?:D|Đ|G|F|GEN)([0-9]{1,2})(?:\.|$)/i);
+          if (genPrefixMatch) {
+            const inferredGen = parseInt(genPrefixMatch[1], 10);
+            if (!m.generationNumber || m.generationNumber === 0) {
+              m.generationNumber = inferredGen;
+              m.isAutoInferredGen = true;
+              autoInferredCount++;
+            }
+          } else if (code.includes('.')) {
+            // 2. Dạng phân cấp dấu chấm truyền thống (VD: 1.1, 1.1.2)
+            const dotCount = (code.match(/\./g) || []).length;
+            const inferredGen = dotCount + 1;
+            if (!m.generationNumber || m.generationNumber === 0) {
+              m.generationNumber = inferredGen;
+              m.isAutoInferredGen = true;
+              autoInferredCount++;
+            }
+            // Tự động suy ra mã cha nếu chưa có
+            if (!m.parentCode) {
+              const lastDotIndex = code.lastIndexOf('.');
+              const parentTreeCode = code.substring(0, lastDotIndex);
+              m.parentCode = parentTreeCode;
+            }
           }
         }
       }
