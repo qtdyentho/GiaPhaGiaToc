@@ -496,22 +496,74 @@ export class DataImportService {
       treeCode: {
         field: 'treeCode',
         label: 'Mã Cây / STT Phân Cấp',
-        keywords: ['mã cây', 'stt phân cấp', 'mã phân cấp', 'mã số cây', 'mã thành viên', 'tree code', 'tree_code', 'code', 'id phân cấp', 'stt phan cap', 'ma cay'],
+        keywords: [
+          'mã cây (tree node code)',
+          'mã cây (tree code)',
+          'mã cây',
+          'tree node code',
+          'tree node',
+          'tree code',
+          'tree_code',
+          'mã số cây',
+          'mã phân cấp',
+          'stt phân cấp',
+          'mã thành viên',
+          'mã node',
+          'node code',
+          'code',
+          'id phân cấp',
+          'ma cay (tree node code)',
+          'ma cay',
+        ],
       },
       parentCode: {
         field: 'parentCode',
         label: 'Mã Cha',
-        keywords: ['mã cha', 'mã người cha', 'mã cha đẻ', 'parent code', 'parent_code', 'father code', 'father_code', 'ma cha'],
+        keywords: [
+          'mã cha (father code)',
+          'mã cha (parent code)',
+          'mã cha',
+          'father code',
+          'father_code',
+          'parent code',
+          'parent_code',
+          'mã người cha',
+          'mã cha đẻ',
+          'mã bố',
+          'ma cha (father code)',
+          'ma cha',
+        ],
       },
       motherCode: {
         field: 'motherCode',
         label: 'Mã Mẹ',
-        keywords: ['mã mẹ', 'mã người mẹ', 'mã mẹ đẻ', 'mother code', 'mother_code', 'ma me'],
+        keywords: [
+          'mã mẹ (mother code)',
+          'mã mẹ',
+          'mother code',
+          'mother_code',
+          'mã người mẹ',
+          'mã mẹ đẻ',
+          'ma me (mother code)',
+          'ma me',
+        ],
       },
       spouseCode: {
         field: 'spouseCode',
-        label: 'Mã Vợ/Chồng',
-        keywords: ['mã vợ/chồng', 'mã phối ngẫu', 'mã vợ', 'mã chồng', 'spouse code', 'spouse_code', 'ma vo/chong'],
+        label: 'Mã Phối Ngẫu / Vợ Chồng',
+        keywords: [
+          'mã phối ngẫu (spouse code)',
+          'mã phối ngẫu',
+          'mã vợ/chồng',
+          'mã vợ chồng',
+          'mã vợ',
+          'mã chồng',
+          'spouse code',
+          'spouse_code',
+          'ma phoi ngau (spouse code)',
+          'ma phoi ngau',
+          'ma vo/chong',
+        ],
       },
       relationType: {
         field: 'relationType',
@@ -1371,6 +1423,10 @@ export class DataImportService {
             const isDeceased = m.lifeStatus === 'DECEASED';
 
             const noteParts = [
+              m.treeCode ? `Mã cây: ${m.treeCode}` : '',
+              m.parentCode ? `Mã cha: ${m.parentCode}` : '',
+              m.motherCode ? `Mã mẹ: ${m.motherCode}` : '',
+              m.spouseCode ? `Mã phối ngẫu: ${m.spouseCode}` : '',
               m.courtesyName ? `Tên tự/hiệu: ${m.courtesyName}` : '',
               m.birthTime ? `Giờ sinh: ${m.birthTime}` : '',
               m.deathTime ? `Giờ mất: ${m.deathTime}` : '',
@@ -1484,13 +1540,8 @@ export class DataImportService {
                 family_id: targetFamilyUUID,
                 member_id: fatherId,
                 related_member_id: currentMemberId,
+                relationship: 'CHILD',
                 relationship_type: 'CHILD',
-              });
-              relationshipsToInsert.push({
-                family_id: targetFamilyUUID,
-                member_id: fatherId,
-                related_member_id: currentMemberId,
-                relationship_type: 'PARENT',
               });
             }
 
@@ -1502,13 +1553,8 @@ export class DataImportService {
                   family_id: targetFamilyUUID,
                   member_id: motherId,
                   related_member_id: currentMemberId,
+                  relationship: 'CHILD',
                   relationship_type: 'CHILD',
-                });
-                relationshipsToInsert.push({
-                  family_id: targetFamilyUUID,
-                  member_id: motherId,
-                  related_member_id: currentMemberId,
-                  relationship_type: 'PARENT',
                 });
               }
             }
@@ -1526,6 +1572,7 @@ export class DataImportService {
                 family_id: targetFamilyUUID,
                 member_id: currentMemberId,
                 related_member_id: spouseId,
+                relationship: 'SPOUSE',
                 relationship_type: 'SPOUSE',
               });
             }

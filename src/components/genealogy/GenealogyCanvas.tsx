@@ -321,6 +321,7 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
     }
 
     const genMap = new Map(generations.map((g) => [g.id, g.generation_number]));
+    const memberMap = new Map(members.map((m) => [m.id, m]));
 
     // 1. Tập hợp các ID vợ/chồng phụ thuộc để không chọn làm Root độc lập
     const spouseIds = new Set<string>();
@@ -339,13 +340,28 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
       });
 
     // 2. Xây dựng bản đồ Cha/Mẹ -> Con cái chuẩn xác hai chiều
-    // parentToChildrenMap: Parent ID -> Set<Child ID>
-    // childHasParentSet: Set<Child ID>
     const parentToChildrenMap = new Map<string, Set<string>>();
     const childHasParentSet = new Set<string>();
 
     const registerParentChild = (parentId: string, childId: string) => {
       if (!parentId || !childId || parentId === childId) return;
+
+      // Chống vòng lặp ngược: Con không thể là cha của chính cha mình
+      if (parentToChildrenMap.get(childId)?.has(parentId)) return;
+
+      // Kiểm tra thế hệ: Cha mẹ phải có số đời nhỏ hơn hoặc bằng con
+      const pGen = genMap.get(memberMap.get(parentId)?.generation_id || '') || 0;
+      const cGen = genMap.get(memberMap.get(childId)?.generation_id || '') || 0;
+      if (pGen > 0 && cGen > 0 && pGen > cGen) {
+        // Nếu bị đảo thứ tự đời (pGen > cGen): Đảo lại đúng chiều
+        if (!parentToChildrenMap.has(childId)) {
+          parentToChildrenMap.set(childId, new Set());
+        }
+        parentToChildrenMap.get(childId)!.add(parentId);
+        childHasParentSet.add(parentId);
+        return;
+      }
+
       if (!parentToChildrenMap.has(parentId)) {
         parentToChildrenMap.set(parentId, new Set());
       }
@@ -353,7 +369,7 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
       childHasParentSet.add(childId);
     };
 
-    // Nạp từ bảng relationships
+    // Nạp quan hệ từ bảng relationships
     relationships.forEach((r) => {
       const relType = r.relationship_type || r.relationship;
       if (relType === 'CHILD') {
@@ -372,10 +388,49 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
       if (m.parent_id) registerParentChild(m.parent_id, m.id);
     });
 
+    // Tự động phân giải cây từ ghi chú 'Mã cây: ...' và 'Mã cha: ...' (Phục hồi phân cấp từ Excel)
+    const treeCodeToMemberId = new Map<string, string>();
+    members.forEach((m) => {
+      if (m.bio) {
+        const treeMatch = m.bio.match(/Mã cây:\s*([^\s•|]+)/i);
+        if (treeMatch && treeMatch[1]) {
+          treeCodeToMemberId.set(treeMatch[1].trim().toUpperCase(), m.id);
+        }
+      }
+    });
+
+    members.forEach((m) => {
+      if (m.bio) {
+        const parentMatch = m.bio.match(/Mã cha:\s*([^\s•|]+)/i);
+        if (parentMatch && parentMatch[1]) {
+          const pCode = parentMatch[1].trim().toUpperCase();
+          const pId = treeCodeToMemberId.get(pCode);
+          if (pId) {
+            registerParentChild(pId, m.id);
+          }
+        }
+        const spouseMatch = m.bio.match(/Mã phối ngẫu:\s*([^\s•|]+)/i);
+        if (spouseMatch && spouseMatch[1]) {
+          const sCode = spouseMatch[1].trim().toUpperCase();
+          const sId = treeCodeToMemberId.get(sCode);
+          if (sId) {
+            if (m.gender === 'FEMALE') {
+              spouseIds.add(m.id);
+            } else {
+              const spouseMember = memberMap.get(sId);
+              if (spouseMember && spouseMember.gender === 'FEMALE') {
+                spouseIds.add(sId);
+              }
+            }
+          }
+        }
+      }
+    });
+
     // 3. Root Members: Không có cha mẹ trong cây và không phải là vợ phụ thuộc
     let roots = filteredMembers.filter((m) => !childHasParentSet.has(m.id) && !spouseIds.has(m.id));
 
-    // Fallback: Nếu không tìm thấy roots hoặc tất cả đều có liên kết, lấy những người ở đời nhỏ nhất (Đời 1)
+    // Fallback nếu không có root hoặc tất cả đều có liên kết
     if (roots.length === 0 && filteredMembers.length > 0) {
       const minGenNum = Math.min(
         ...filteredMembers.map((m) => genMap.get(m.generation_id || '') || 1)
@@ -385,7 +440,7 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
       );
     }
 
-    // Nếu vẫn rỗng (ví dụ toàn là nữ), lấy người đầu tiên của đời nhỏ nhất
+    // Nếu vẫn rỗng (ví dụ toàn bộ là nữ)
     if (roots.length === 0 && filteredMembers.length > 0) {
       const minGenNum = Math.min(
         ...filteredMembers.map((m) => genMap.get(m.generation_id || '') || 1)
@@ -393,6 +448,20 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
       roots = filteredMembers.filter(
         (m) => (genMap.get(m.generation_id || '') || 1) === minGenNum
       );
+    }
+
+    // Sắp xếp các roots theo thế hệ tăng dần (Đời 1 lên trước)
+    roots.sort((a, b) => {
+      const genA = genMap.get(a.generation_id || '') || 1;
+      const genB = genMap.get(b.generation_id || '') || 1;
+      return genA - genB;
+    });
+
+    // Nếu có nhiều roots nhưng có những roots thuộc đời cao hơn (ví dụ root đời 12 trong khi có root đời 1 hoặc đời 11),
+    // Lọc chỉ giữ những roots ở đời nhỏ nhất để các đời sau hiển thị đệ quy làm nhánh con!
+    if (roots.length > 1) {
+      const minRootGen = Math.min(...roots.map((r) => genMap.get(r.generation_id || '') || 1));
+      roots = roots.filter((r) => (genMap.get(r.generation_id || '') || 1) === minRootGen);
     }
 
     const visited = new Set<string>();
