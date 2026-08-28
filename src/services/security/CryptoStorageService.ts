@@ -175,8 +175,8 @@ export class CryptoStorageService {
       {
         id: 'usr-0000-0001',
         full_name: 'Nguyễn Văn Hoàng',
-        email: 'hoang.nguyen@giaphatoc.vn',
-        raw_email: 'hoang.nguyen@giaphatoc.vn',
+        email: 'hoang.nguyen@giaphaviet.vercel.app',
+        raw_email: 'hoang.nguyen@giaphaviet.vercel.app',
         phone: '0912345678',
         raw_phone: '0912345678',
         citizen_id: '001085001234',
@@ -192,8 +192,8 @@ export class CryptoStorageService {
       {
         id: 'usr-super-admin',
         full_name: 'Quản Trị Viên Nền Tảng',
-        email: 'admin@giaphagiatoc.vn',
-        raw_email: 'admin@giaphagiatoc.vn',
+        email: 'ducanht@gmail.com',
+        raw_email: 'ducanht@gmail.com',
         phone: '0988889999',
         raw_phone: '0988889999',
         citizen_id: '001090009999',

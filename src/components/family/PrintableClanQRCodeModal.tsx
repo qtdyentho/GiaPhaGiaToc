@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   X, Printer, Download, Copy, Check, QrCode, Sparkles, Landmark, 
   ShieldCheck, Palette, Layout, MessageSquare, ChevronDown, CheckCircle2,
@@ -126,7 +126,7 @@ export const PrintableClanQRCodeModal: React.FC<PrintableClanQRCodeModalProps> =
 
   if (!isOpen) return null;
 
-  const currentHost = typeof window !== 'undefined' ? window.location.origin : 'https://giaphagiatoc.vn';
+  const currentHost = typeof window !== 'undefined' ? window.location.origin : 'https://giaphaviet.vercel.app';
   const passUrl = `${currentHost}/c/${currentShortCode}`;
   
   // High-res QR code URL (using 600x600 for sharp rendering)

@@ -28,7 +28,7 @@ import {
 
 export const mockProfile: Profile = {
   id: 'usr-0000-0001',
-  email: 'truongtoc.nguyen@giapha.vn',
+  email: 'truongtoc.nguyen@giaphaviet.vercel.app',
   full_name: 'Nguyễn Văn Hoàng',
   phone: '0988123456',
   avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',

@@ -86,7 +86,7 @@ export const FamilySettingsPage: React.FC = () => {
   }, [currentFamily?.id, currentFamily?.name, getFamilyMemberships]);
 
   const handleCopyShortLink = () => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://giaphagiatoc.vn';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://giaphaviet.vercel.app';
     navigator.clipboard.writeText(`${origin}/c/${shortCode}`);
     setCopiedShortUrl(true);
     setTimeout(() => setCopiedShortUrl(false), 2000);
@@ -396,7 +396,7 @@ export const FamilySettingsPage: React.FC = () => {
 
               <div className="flex items-center gap-2">
                 <div className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono font-bold text-[#166534] dark:text-emerald-400 truncate">
-                  {typeof window !== 'undefined' ? window.location.origin : 'https://giaphagiatoc.vn'}/c/{shortCode}
+                  {typeof window !== 'undefined' ? window.location.origin : 'https://giaphaviet.vercel.app'}/c/{shortCode}
                 </div>
                 <button
                   type="button"

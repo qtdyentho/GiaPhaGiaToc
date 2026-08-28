@@ -38,7 +38,7 @@ export class CalendarExportService {
 
           if (sDay > 0 && sMonth > 0 && sYear > 0) {
             const dateStr = `${sYear}${String(sMonth).padStart(2, '0')}${String(sDay).padStart(2, '0')}`;
-            const uid = `memorial-${mem.id}-${yr}@giaphagiatoc.vn`;
+            const uid = `memorial-${mem.id}-${yr}@giaphaviet.vercel.app`;
 
             lines.push(
               'BEGIN:VEVENT',
@@ -62,7 +62,7 @@ export class CalendarExportService {
     events.forEach((evt) => {
       if (!evt.solar_date) return;
       const cleanDate = evt.solar_date.replace(/-/g, '');
-      const uid = `event-${evt.id}@giaphagiatoc.vn`;
+      const uid = `event-${evt.id}@giaphaviet.vercel.app`;
 
       lines.push(
         'BEGIN:VEVENT',

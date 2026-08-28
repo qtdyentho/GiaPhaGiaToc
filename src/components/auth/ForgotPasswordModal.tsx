@@ -31,7 +31,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(cleanEmail)) {
-      setError('Định dạng email không hợp lệ (VD: truongtoc@giapha.vn)');
+      setError('Định dạng email không hợp lệ (VD: truongtoc@giaphaviet.vercel.app)');
       return;
     }
 
@@ -148,7 +148,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="VD: truongtoc.nguyen@giapha.vn"
+                    placeholder="VD: truongtoc.nguyen@giaphaviet.vercel.app"
                     required
                     autoFocus
                     className="block w-full pl-9 pr-3 py-2.5 text-xs border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534] focus:border-[#166534] bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"

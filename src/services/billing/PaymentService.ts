@@ -33,7 +33,7 @@ export class PaymentService {
     account_name: 'QUAN TRI VIEN GIA PHA GIA TOC',
     qr_template: 'compact2',
     support_phone: '1900 6868',
-    support_email: 'billing@giaphagiatoc.vn',
+    support_email: 'billing@giaphaviet.vercel.app',
     default_invoice_validity_days: 7,
     is_active: true,
     updated_at: new Date().toISOString(),

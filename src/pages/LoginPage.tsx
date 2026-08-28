@@ -49,10 +49,11 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleQuickDemoLogin = async (demoEmail: string) => {
+  const handleQuickDemoLogin = async (demoEmail: string, demoPass?: string) => {
     setLoading(true);
     setEmail(demoEmail);
-    const result = await signIn(demoEmail, 'giapha2026');
+    if (demoPass) setPassword(demoPass);
+    const result = await signIn(demoEmail, demoPass || 'giatoctrinhluu');
     if (result.isSuperAdmin) {
       navigate('/admin/beta');
     } else {
@@ -88,7 +89,7 @@ export const LoginPage: React.FC = () => {
                 <input
                   type="email"
                   value={email}
-                  placeholder="name@example.com"
+                  placeholder="trinhluugiatoc@gmail.com"
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className="block w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534] focus:border-[#166534] bg-slate-50 focus:bg-white transition"
@@ -151,22 +152,22 @@ export const LoginPage: React.FC = () => {
           {/* Quick Demo Access Buttons */}
           <div className="mt-6 pt-4 border-t border-slate-100 space-y-2">
             <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">
-              Tài Khoản Thử Nghiệm Nhanh
+              Đăng Nhập Nhanh Trực Tiếp
             </div>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => handleQuickDemoLogin('truongtoc.nguyen@giapha.vn')}
-                className="px-3 py-1.5 bg-slate-50 hover:bg-emerald-50 border border-slate-200 text-slate-700 hover:text-[#166534] rounded-xl text-[11px] font-bold transition text-center cursor-pointer"
+                onClick={() => handleQuickDemoLogin('trinhluugiatoc@gmail.com', 'giatoctrinhluu')}
+                className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-[#166534] rounded-xl text-[11px] font-bold transition text-center cursor-pointer"
               >
-                Đại Tộc Nguyễn Văn
+                👑 Trịnh Lưu Gia Tộc
               </button>
               <button
                 type="button"
-                onClick={() => handleQuickDemoLogin('admin@giapha.vn')}
+                onClick={() => handleQuickDemoLogin('ducanht@gmail.com', 'Ho@ng!an1289')}
                 className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-800 rounded-xl text-[11px] font-bold transition text-center cursor-pointer"
               >
-                Quản Trị Hệ Thống
+                ⚡ Quản Trị Tối Cao
               </button>
             </div>
           </div>

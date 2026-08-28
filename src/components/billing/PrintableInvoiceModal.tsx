@@ -76,7 +76,7 @@ export const PrintableInvoiceModal: React.FC<PrintableInvoiceModalProps> = ({
                 <span>GIA PHẢ GIA TỘC</span>
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">Nền Tảng Quản Trị Gia Phả & Tài Chính Dòng Họ SaaS</p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-500">Cổng Dịch Vụ: https://giaphagiatoc.vn • Hotline: 1900 6868</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-500">Cổng Dịch Vụ: https://giaphaviet.vercel.app • Hotline: 1900 6868</p>
             </div>
 
             <div className="text-left sm:text-right space-y-1">

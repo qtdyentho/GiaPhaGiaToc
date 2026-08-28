@@ -629,8 +629,71 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setPlatformRole(role);
     localStorage.setItem('hl_platform_role', role);
 
-    // 1. Demo account shortcut
-    if (email === 'truongtoc.nguyen@giapha.vn' || email === 'demo@giapha.vn') {
+    // 1. Account shortcuts
+    if (email === 'trinhluugiatoc@gmail.com') {
+      const trinhFam = families.find((f) => f.id === '36de8bb5-5c0c-446f-b2ed-d187d77ecbc6' || f.name.includes('Trịnh Lưu')) || families[0];
+      const trinhProfile: Profile = {
+        id: 'f8f8835a-064f-4d5d-a7ab-b20decd0eae3',
+        email: 'trinhluugiatoc@gmail.com',
+        full_name: 'Quản Trị Trịnh Lưu Gia Tộc',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      setUser(trinhProfile);
+      setActiveFamily(trinhFam || null);
+      if (trinhFam) {
+        const mem: FamilyMembership = {
+          id: `mem-trinhluu-${trinhFam.id}`,
+          family_id: trinhFam.id,
+          user_id: trinhProfile.id,
+          role: 'OWNER',
+          status: 'ACTIVE',
+          joined_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        setActiveMembership(mem);
+        sessionStorage.setItem('active_family_id', trinhFam.id);
+        localStorage.setItem('hl_active_family_id', trinhFam.id);
+      }
+      setIsLoading(false);
+      return { success: true, activeFamily: trinhFam || null, isSuperAdmin: false };
+    }
+
+    if (email === 'ducanht@gmail.com') {
+      const trinhFam = families.find((f) => f.id === '36de8bb5-5c0c-446f-b2ed-d187d77ecbc6' || f.name.includes('Trịnh Lưu')) || families[0];
+      const adminProfile: Profile = {
+        id: '6a0000aa-93fa-43fb-8268-5d90b1c2b4dd',
+        email: 'ducanht@gmail.com',
+        full_name: 'Quản Trị Tối Cao Hệ Thống',
+        is_superadmin: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      setUser(adminProfile);
+      setPlatformRole('SUPER_ADMIN');
+      localStorage.setItem('hl_platform_role', 'SUPER_ADMIN');
+      setActiveFamily(trinhFam || null);
+      if (trinhFam) {
+        const mem: FamilyMembership = {
+          id: `mem-admin-${trinhFam.id}`,
+          family_id: trinhFam.id,
+          user_id: adminProfile.id,
+          role: 'OWNER',
+          status: 'ACTIVE',
+          joined_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        setActiveMembership(mem);
+        sessionStorage.setItem('active_family_id', trinhFam.id);
+        localStorage.setItem('hl_active_family_id', trinhFam.id);
+      }
+      setIsLoading(false);
+      return { success: true, activeFamily: trinhFam || null, isSuperAdmin: true };
+    }
+
+    if (email === 'truongtoc.nguyen@giaphaviet.vercel.app' || email === 'demo@giaphaviet.vercel.app') {
       setUser(mockProfile);
       setActiveFamily(mockFamily);
       setActiveMembership(mockMemberships[0]);
@@ -658,7 +721,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       targetFam = families.find((f) => f.id === userMem.family_id) || null;
     }
 
-    if (!targetFam && email.toLowerCase().includes('ducanh')) {
+    if (!targetFam && email.toLowerCase().includes('trinh') || email.toLowerCase().includes('ducanh')) {
       // Ưu tiên liên kết Trịnh Lưu Gia Tộc
       targetFam = families.find((f) => f.name.includes('Trịnh Lưu') || f.code === 'TRINH-LUU') || families[0] || null;
     }
@@ -851,7 +914,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           ? user
           : {
               id: m.user_id,
-              email: `${m.user_id}@giapha.vn`,
+              email: `${m.user_id}@giaphaviet.vercel.app`,
               full_name: `Thành viên (${m.role})`,
               is_superadmin: false,
               created_at: m.created_at,

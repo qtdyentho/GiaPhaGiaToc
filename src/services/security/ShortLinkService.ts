@@ -122,7 +122,7 @@ export class ShortLinkService {
    * Tạo URL rút gọn hoàn chỉnh
    */
   static buildShortUrl(shortCode: string): string {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://giaphagiatoc.vn';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://giaphaviet.vercel.app';
     return `${origin}/c/${shortCode}`;
   }
 

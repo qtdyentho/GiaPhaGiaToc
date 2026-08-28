@@ -219,7 +219,7 @@ export default function AdminBillingConfigPage() {
               value={config.support_email}
               onChange={(e) => setConfig({ ...config, support_email: e.target.value })}
               className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl focus:outline-none focus:border-heritage-green text-slate-900 font-medium"
-              placeholder="VD: billing@giaphagiatoc.vn"
+              placeholder="VD: billing@giaphaviet.vercel.app"
             />
           </div>
         </div>

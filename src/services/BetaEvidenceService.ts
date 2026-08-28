@@ -54,7 +54,7 @@ export class BetaEvidenceService {
       onboarding: {
         registeredAt: '2026-08-01T08:00:00Z',
         inviteCode: 'BETA-2026-GIATOC',
-        adminEmail: 'truongtoc.nguyen@giapha.vn',
+        adminEmail: 'truongtoc.nguyen@giaphaviet.vercel.app',
         importResult: 'SUCCESS',
         memberCount: 86,
         relationshipCount: 78,

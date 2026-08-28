@@ -64,7 +64,7 @@ export const InviteRegisterPage: React.FC = () => {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="thanhvien@giapha.vn"
+              placeholder="thanhvien@giaphaviet.vercel.app"
               className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:border-heritage-green text-sm"
             />
           </div>
