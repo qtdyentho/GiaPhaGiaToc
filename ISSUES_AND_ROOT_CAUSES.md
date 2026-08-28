@@ -1,4 +1,4 @@
-﻿# BẢNG THỐNG KÊ TOÀN BỘ LỖI & NGUYÊN NHÂN GỐC RỄ (ISSUES & ROOT CAUSES LOG)
+# BẢNG THỐNG KÊ TOÀN BỘ LỖI & NGUYÊN NHÂN GỐC RỄ (ISSUES & ROOT CAUSES LOG)
 ## Nền Tảng Quản Trị Gia Phả & Tài Chính Dòng Họ — GiaPhaGiaToc Enterprise SaaS
 
 > **Trí Nhớ Dự Án & Phiên Làm Việc (Agent Memory)**  
@@ -22,6 +22,7 @@
 | **ERR-010** | Manual Payment Idempotency | Rủi ro kích hoạt trùng lặp gói cước khi Super Admin bấm duyệt chuyển khoản 2 lần | **HIGH** | ✅ Đã khắc phục triệt để |
 | **ERR-011** | Data Import Schema Constraints | Lỗi không lưu được thành viên vào CSDL Supabase do lệch tên cột schema và enum quan hệ | **HIGH** | ✅ Đã khắc phục triệt để |
 | **ERR-012** | Subscription & Settings Isolation | Gói dịch vụ và Cài đặt hiển thị dữ liệu Mock ảo và không lưu cập nhật về CSDL Supabase | **HIGH** | ✅ Đã khắc phục triệt để |
+| **ERR-013** | Direct Supabase Excel Persistence | Thông báo nạp vào bộ nhớ do không phân giải UUID `familyId` dẫn đến bỏ qua nạp CSDL Supabase | **HIGH** | ✅ Đã khắc phục triệt để |
 
 ---
 
@@ -145,6 +146,21 @@
   - Viết lại `SubscriptionService.getSubscription` và `InvoiceService.getInvoices`: Khởi tạo đối tượng Trialing/Free độc lập cho dòng họ mới với giá trị 0đ, trả về `[]` hóa đơn nếu chưa phát sinh giao dịch.
   - Cập nhật `AuthContext.updateFamily`: Thực hiện cập nhật trực tiếp vào bảng `families` trên Supabase với các trường `name`, `description`, `ancestral_hall`, `cover_url`, `updated_at`.
 - **Biện pháp phòng ngừa**: Đã kiểm thử qua `npm test` (16 test suites PASS) và `npm run build` PASS 100%.
+
+---
+
+### 13. Lỗi Nạp Gia Phả Excel: Thông Báo "Nạp Vào Bộ Nhớ" & Bỏ Qua CSDL Supabase (Mã lỗi: `ERR-013`)
+- **Hiện tượng**: Khi người dùng tải file Excel 153 thành viên lên và bấm xác nhận nạp, hệ thống hiển thị thông báo *"Đã nạp thành công đợt IMPORT-... gồm 153 thành viên vào bộ nhớ"* thay vì lưu trực tiếp vào CSDL Supabase của dòng họ.
+- **Nguyên nhân gốc rễ**:
+  1. Trong `DataImportService.commitImport`, điều kiện kiểm tra `isSupabaseConfigured() && isUUID(familyId)` bị `false` khi `familyId` mang định dạng chuỗi cục bộ (VD: `fam-...`), khiến tiến trình bỏ qua nhánh gọi Supabase và nhảy vào fallback bộ nhớ.
+  2. `AuthContext.createFamily` trước đây sinh mã `fam-${Date.now()}` thay vì lưu trực tiếp bản ghi vào bảng `families` của Supabase để lấy UUID thực thể.
+  3. `GenealogyService.getFamilyTree` cũng kiểm tra `isUUID(familyId)` khắt khe dẫn đến không tải cây phả từ Supabase khi `familyId` chưa chuẩn UUID v4.
+- **Giải pháp xử lý triệt để**:
+  - Viết lại `DataImportService.commitImport`: Tự động phân giải và đối soát `targetFamilyUUID` từ bảng `families` trên Supabase. Đảm bảo toàn bộ 153 thành viên, thế hệ (`generations`), chi phái (`branches`), quan hệ cha con - vợ chồng (`member_relationships`) và ngày giỗ (`memorial_dates`) được nạp nguyên tử 100% vào CSDL Supabase của dòng họ.
+  - Cập nhật `AuthContext.createFamily`: Tự động insert dòng họ mới trực tiếp vào bảng `families`, `family_memberships` và 3 quỹ mặc định trên Supabase.
+  - Cập nhật `GenealogyService.getFamilyTree`: Tự động phân giải UUID dòng họ từ Supabase để luôn hiển thị chính xác cây gia phả và danh sách thành viên thực tế.
+  - Đổi thông điệp kết quả: Hiển thị minh bạch *"Đã nạp thành công X thành viên, liên kết Y quan hệ và Z ngày giỗ trực tiếp vào CSDL Supabase của dòng họ"*.
+- **Biện pháp phòng ngừa**: Đã bổ sung cơ chế UUID Smart Matching và xác minh qua toàn bộ 16 Test Suites (`npm test`) và `npm run build` PASS 100%.
 
 ---
 
