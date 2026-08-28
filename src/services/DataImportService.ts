@@ -10,6 +10,7 @@
 import * as XLSX from 'xlsx';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { mockMembers, mockGenerations, mockBranches } from './mockData';
+import { solarToLunar, lunarToSolar } from '../lib/lunar';
 
 export interface RawImportMember {
   treeCode?: string;             // 1. Mã Cây / STT Phân Cấp (1, 1-V1, 1.1, D11.1...)
@@ -511,6 +512,73 @@ export class DataImportService {
       }
       if (!m.branchName || m.branchName.trim() === '') {
         m.branchName = 'Chi Trưởng';
+      }
+    });
+
+    // 7. 🌟 Tự động quy đổi hai chiều Âm lịch <-> Dương lịch nếu người dùng chỉ nhập 1 trong 2 loại
+    members.forEach((m) => {
+      // a. Quy đổi Ngày Sinh: Dương -> Âm
+      if (m.birthSolarDate && !m.birthLunarDate) {
+        const parsed = DataImportService.parseFlexibleDate(m.birthSolarDate);
+        if (parsed.hasDate && parsed.day && parsed.month && parsed.year) {
+          try {
+            const lunar = solarToLunar(parsed.day, parsed.month, parsed.year);
+            if (lunar && lunar.day && lunar.month && lunar.year) {
+              m.birthLunarDay = lunar.day;
+              m.birthLunarMonth = lunar.month;
+              m.birthLunarYear = lunar.year;
+              m.birthLunarDate = `${String(lunar.day).padStart(2, '0')}/${String(lunar.month).padStart(2, '0')}/${lunar.year}`;
+            }
+          } catch (err) {
+            // Safe fallback
+          }
+        }
+      }
+      // b. Quy đổi Ngày Sinh: Âm -> Dương
+      else if (m.birthLunarDate && !m.birthSolarDate) {
+        const parsed = DataImportService.parseFlexibleDate(m.birthLunarDate);
+        if (parsed.hasDate && parsed.day && parsed.month && parsed.year) {
+          try {
+            const [sd, sm, sy] = lunarToSolar(parsed.day, parsed.month, parsed.year);
+            if (sd && sm && sy && sy > 0) {
+              m.birthSolarDate = `${String(sd).padStart(2, '0')}/${String(sm).padStart(2, '0')}/${sy}`;
+              if (!m.birthYear) m.birthYear = sy;
+            }
+          } catch (err) {
+            // Safe fallback
+          }
+        }
+      }
+
+      // c. Quy đổi Ngày Mất: Dương -> Âm (Ngày Giỗ)
+      if (m.deathSolarDate && (!m.deathLunarFull || !m.deathLunarDay)) {
+        const parsed = DataImportService.parseFlexibleDate(m.deathSolarDate);
+        if (parsed.hasDate && parsed.day && parsed.month && parsed.year) {
+          try {
+            const lunar = solarToLunar(parsed.day, parsed.month, parsed.year);
+            if (lunar && lunar.day && lunar.month && lunar.year) {
+              m.deathLunarDay = lunar.day;
+              m.deathLunarMonth = lunar.month;
+              m.deathLunarYear = lunar.year;
+              m.deathLunarFull = `${String(lunar.day).padStart(2, '0')}/${String(lunar.month).padStart(2, '0')}/${lunar.year}`;
+              m.lifeStatus = 'DECEASED';
+            }
+          } catch (err) {
+            // Safe fallback
+          }
+        }
+      }
+      // d. Quy đổi Ngày Mất: Âm (Ngày Giỗ) -> Dương
+      else if (m.deathLunarDay && m.deathLunarMonth && m.deathLunarYear && !m.deathSolarDate) {
+        try {
+          const [sd, sm, sy] = lunarToSolar(m.deathLunarDay, m.deathLunarMonth, m.deathLunarYear);
+          if (sd && sm && sy && sy > 0) {
+            m.deathSolarDate = `${String(sd).padStart(2, '0')}/${String(sm).padStart(2, '0')}/${sy}`;
+            m.lifeStatus = 'DECEASED';
+          }
+        } catch (err) {
+          // Safe fallback
+        }
       }
     });
 
