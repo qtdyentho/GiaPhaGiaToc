@@ -137,6 +137,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     {
       title: 'GÓI DỊCH VỤ & CÀI ĐẶT',
       items: [
+        { to: '/app/permissions', icon: ShieldCheck, label: 'Phân Quyền & Ban Trị Sự' },
         { to: '/app/billing', icon: CreditCard, label: UI_COPY.navigation.billing },
         { to: '/app/billing/usage', icon: ShieldCheck, label: UI_COPY.navigation.usage },
         { to: '/app/billing/invoices', icon: ReceiptText, label: UI_COPY.navigation.invoices },

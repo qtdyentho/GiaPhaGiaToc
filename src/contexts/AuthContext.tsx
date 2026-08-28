@@ -203,7 +203,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (profile) {
           setUser(profile);
-          const isSuper = Boolean(profile.is_superadmin || profile.email?.toLowerCase().includes('admin'));
+          const isSuper = Boolean(
+            profile.is_superadmin ||
+            profile.email?.toLowerCase().trim() === 'ducanht@gmail.com' ||
+            profile.email?.toLowerCase().trim() === 'admin@giaphaviet.vercel.app'
+          );
           setPlatformRole(isSuper ? 'SUPER_ADMIN' : 'USER');
 
           const { data: mems } = await supabase
@@ -796,7 +800,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const isSuper = Boolean(
             profileData.is_superadmin === true ||
             profileData.platform_role === 'SUPER_ADMIN' ||
-            cleanEmail.includes('admin')
+            cleanEmail === 'ducanht@gmail.com' ||
+            cleanEmail === 'admin@giaphaviet.vercel.app'
           );
           setUser(profileData);
           setPlatformRole(isSuper ? 'SUPER_ADMIN' : 'USER');
