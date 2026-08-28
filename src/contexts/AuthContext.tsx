@@ -748,7 +748,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (authErr || !authData?.user) {
           setIsLoading(false);
-          throw new Error(authErr?.message || 'Email hoặc mật khẩu không chính xác.');
+          let friendlyMsg = 'Email hoặc mật khẩu không chính xác.';
+          if (authErr?.message?.includes('Email not confirmed')) {
+            friendlyMsg = 'Email tài khoản chưa được xác nhận trên Supabase. Vui lòng vào Supabase Dashboard bấm Confirm User hoặc tắt mục "Confirm email" trong Authentication > Providers > Email.';
+          } else if (authErr?.message?.includes('Invalid login credentials')) {
+            friendlyMsg = 'Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại.';
+          } else if (authErr?.message) {
+            friendlyMsg = authErr.message;
+          }
+          throw new Error(friendlyMsg);
         }
 
         const authUserId = authData.user.id;
