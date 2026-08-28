@@ -607,8 +607,8 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                       <th className="p-2.5">Cha (Mã/Tên)</th>
                       <th className="p-2.5">Mẹ (Mã)</th>
                       <th className="p-2.5">Vợ / Chồng</th>
-                      <th className="p-2.5">Sinh (Năm/Giờ)</th>
-                      <th className="p-2.5">Mất (Ngày Âm/Giờ)</th>
+                      <th className="p-2.5">Sinh (Dương / Âm / Giờ)</th>
+                      <th className="p-2.5">Mất (Âm / Dương / Giờ)</th>
                       <th className="p-2.5">Nơi An Táng</th>
                       <th className="p-2.5 text-right">Kiểm Duyệt</th>
                     </tr>
@@ -665,12 +665,33 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                             <td className="p-2.5 text-slate-600 dark:text-slate-400">{row.data.motherCode || '—'}</td>
                             <td className="p-2.5 text-slate-600 dark:text-slate-400">{row.data.spouseCode || row.data.spouseName || '—'}</td>
                             <td className="p-2.5 text-slate-600 dark:text-slate-400">
-                              {row.data.birthYear ? `${row.data.birthYear}${row.data.birthTime ? ` (${row.data.birthTime})` : ''}` : '—'}
+                              {row.data.birthSolarDate || row.data.birthLunarDate || row.data.birthYear ? (
+                                <div className="space-y-0.5">
+                                  {row.data.birthSolarDate && <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200">DL: {row.data.birthSolarDate}</div>}
+                                  {row.data.birthLunarDate && <div className="text-[10px] text-amber-700 dark:text-amber-400">ÂL: {row.data.birthLunarDate}</div>}
+                                  {!row.data.birthSolarDate && !row.data.birthLunarDate && row.data.birthYear && <div>Năm: {row.data.birthYear}</div>}
+                                  {row.data.birthTime && <div className="text-[10px] text-slate-400">🕒 {row.data.birthTime}</div>}
+                                </div>
+                              ) : '—'}
                             </td>
                             <td className="p-2.5 text-slate-600 dark:text-slate-400">
-                              {row.data.deathLunarDay && row.data.deathLunarMonth 
-                                ? `${row.data.deathLunarDay}/${row.data.deathLunarMonth} Âm${row.data.deathTime ? ` (${row.data.deathTime})` : ''}` 
-                                : (row.data.lifeStatus === 'ALIVE' ? <span className="text-emerald-600 font-semibold">Còn sống</span> : '—')}
+                              {row.data.lifeStatus === 'ALIVE' ? (
+                                <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[11px]">Còn sống</span>
+                              ) : row.data.deathLunarDay || row.data.deathLunarFull || row.data.deathSolarDate || row.data.deathLunarYear ? (
+                                <div className="space-y-0.5">
+                                  {(row.data.deathLunarDay && row.data.deathLunarMonth) ? (
+                                    <div className="text-[11px] font-bold text-amber-800 dark:text-amber-400">
+                                      Giỗ ÂL: {row.data.deathLunarDay}/{row.data.deathLunarMonth}{row.data.deathLunarYear ? `/${row.data.deathLunarYear}` : ''}
+                                    </div>
+                                  ) : row.data.deathLunarFull ? (
+                                    <div className="text-[11px] font-bold text-amber-800 dark:text-amber-400">Giỗ ÂL: {row.data.deathLunarFull}</div>
+                                  ) : null}
+                                  {row.data.deathSolarDate && <div className="text-[10px] text-slate-500 dark:text-slate-400">DL: {row.data.deathSolarDate}</div>}
+                                  {row.data.deathTime && <div className="text-[10px] text-slate-400">🕒 {row.data.deathTime}</div>}
+                                </div>
+                              ) : (
+                                <span className="text-slate-400">Đã mất</span>
+                              )}
                             </td>
                             <td className="p-2.5 text-slate-600 dark:text-slate-400 truncate max-w-[120px]">{row.data.burialPlace || '—'}</td>
                             <td className="p-2.5 text-right">

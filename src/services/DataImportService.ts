@@ -12,10 +12,10 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { mockMembers, mockGenerations, mockBranches } from './mockData';
 
 export interface RawImportMember {
-  treeCode?: string;             // 1. Mã Cây / STT Phân Cấp (1, 1-V1, 1.1, 1.1.1, 1.2...)
-  parentCode?: string;           // 2. Mã Cha (1, 1.1, 1.2...)
-  motherCode?: string;           // 3. Mã Mẹ (1-V1, 1-V2, 1.1-V1...)
-  spouseCode?: string;           // 4. Mã Vợ / Chồng (1-V1, 1.1-V1...)
+  treeCode?: string;             // 1. Mã Cây / STT Phân Cấp (1, 1-V1, 1.1, D11.1...)
+  parentCode?: string;           // 2. Mã Cha
+  motherCode?: string;           // 3. Mã Mẹ
+  spouseCode?: string;           // 4. Mã Vợ / Chồng
   relationType?: string;         // 5. Quan Hệ Phân Cấp (Con Đẻ, Vợ Cả, Vợ Hai, Chồng...)
   fullName: string;              // 6. Họ và Tên (Bắt buộc)
   courtesyName?: string;         // 7. Tên Tự / Hiệu / Pháp Danh
@@ -26,13 +26,19 @@ export interface RawImportMember {
   lifeStatus: 'ALIVE' | 'DECEASED'; // 12. Trạng Thái (Còn sống / Đã mất)
   birthYear?: number;            // 13. Năm Sinh
   birthSolarDate?: string;       // 14. Ngày Sinh Dương Lịch (dd/mm/yyyy)
-  birthTime?: string;            // 15. Giờ Sinh (Ví dụ: Giờ Thìn (07h-09h) hoặc 08:30)
-  deathLunarDay?: number;        // 16. Ngày Mất Âm (1 - 30)
-  deathLunarMonth?: number;      // 17. Tháng Mất Âm (1 - 12)
-  deathLunarYear?: number;       // 18. Năm Mất
-  deathTime?: string;            // 19. Giờ Mất (Ví dụ: Giờ Ngọ (11h-13h) hoặc 12:15)
-  burialPlace?: string;          // 20. Nơi An Táng / Mộ Phần
-  bio?: string;                  // 21. Tiểu Sử / Sự Nghiệp / Ghi Chú
+  birthLunarDate?: string;       // 15. Ngày Sinh Âm Lịch (dd/mm/yyyy hoặc dd/mm)
+  birthLunarDay?: number;        // 16. Ngày Sinh Âm (1-30)
+  birthLunarMonth?: number;      // 17. Tháng Sinh Âm (1-12)
+  birthLunarYear?: number;       // 18. Năm Sinh Âm
+  birthTime?: string;            // 19. Giờ Sinh (Ví dụ: Giờ Thìn (07h-09h) hoặc 08:30)
+  deathSolarDate?: string;       // 20. Ngày Mất Dương Lịch (dd/mm/yyyy)
+  deathLunarFull?: string;       // 21. Ngày Mất Âm Lịch (dd/mm/yyyy - Ngày Giỗ)
+  deathLunarDay?: number;        // 22. Ngày Mất Âm (1 - 30)
+  deathLunarMonth?: number;      // 23. Tháng Mất Âm (1 - 12)
+  deathLunarYear?: number;       // 24. Năm Mất
+  deathTime?: string;            // 25. Giờ Mất (Ví dụ: Giờ Ngọ (11h-13h) hoặc 12:15)
+  burialPlace?: string;          // 26. Nơi An Táng / Mộ Phần
+  bio?: string;                  // 27. Tiểu Sử / Sự Nghiệp / Ghi Chú
   parentName?: string;           // Tên Cha (Hỗ trợ tương thích ngược)
   spouseName?: string;           // Tên Vợ / Chồng (Hỗ trợ tương thích ngược)
   isAutoInferredGen?: boolean;   // Đánh dấu thế hệ được hệ thống tự động suy luận
@@ -100,12 +106,12 @@ export const HIERARCHICAL_GENEALOGY_COLUMNS = [
   { field: 'branchName', label: 'Chi Phái', required: true, example: 'Chi Trưởng (Chi 1)' },
   { field: 'birthOrder', label: 'Thứ Tự Sinh', required: false, example: 'Trưởng Nam' },
   { field: 'lifeStatus', label: 'Trạng Thái', required: false, example: 'Đã mất' },
-  { field: 'birthYear', label: 'Năm Sinh', required: false, example: '1910' },
-  { field: 'birthTime', label: 'Giờ Sinh', required: false, example: 'Giờ Thìn (07h-09h)' },
-  { field: 'deathLunarDay', label: 'Ngày Mất Âm', required: false, example: '18' },
-  { field: 'deathLunarMonth', label: 'Tháng Mất Âm', required: false, example: '5' },
-  { field: 'deathLunarYear', label: 'Năm Mất', required: false, example: '1980' },
-  { field: 'deathTime', label: 'Giờ Mất', required: false, example: 'Giờ Ngọ (11h-13h)' },
+  { field: 'birthSolarDate', label: 'Ngày Sinh Dương Lịch', required: false, example: '21/10/1910' },
+  { field: 'birthLunarDate', label: 'Ngày Sinh Âm Lịch', required: false, example: '18/09/1910' },
+  { field: 'birthTime', label: 'Giờ Sinh (Can Chi / Giờ)', required: false, example: 'Giờ Thìn (07h-09h)' },
+  { field: 'deathLunarFull', label: 'Ngày Mất Âm Lịch (Ngày Giỗ)', required: false, example: '18/05/1980' },
+  { field: 'deathSolarDate', label: 'Ngày Mất Dương Lịch', required: false, example: '29/06/1980' },
+  { field: 'deathTime', label: 'Giờ Mất (Can Chi / Giờ)', required: false, example: 'Giờ Ngọ (11h-13h)' },
   { field: 'burialPlace', label: 'Nơi An Táng', required: false, example: 'Khu Lăng Mộ Chi Trưởng' },
   { field: 'bio', label: 'Tiểu Sử / Sự Nghiệp', required: false, example: 'Gìn giữ từ đường hương hỏa.' },
 ];
@@ -630,42 +636,93 @@ export class DataImportService {
       },
       birthSolarDate: {
         field: 'birthSolarDate',
-        label: 'Ngày Sinh (Ngày/Tháng/Năm)',
+        label: 'Ngày Sinh Dương Lịch (Ngày/Tháng/Năm)',
         keywords: [
-          'ngày sinh (ngày/tháng/năm)',
-          'ngày sinh (ngày tháng năm)',
+          'ngày sinh dương lịch (ngày/tháng/năm)',
+          'ngày sinh dương lịch (ngày tháng năm)',
           'ngày sinh dương lịch',
+          'ngày sinh (dương lịch)',
           'ngày sinh dương',
+          'ngày sinh dl',
+          'ngày tháng năm sinh (dương lịch)',
           'ngày tháng năm sinh',
           'ngày sinh',
-          'ngày sinh dl',
           'sinh nhật',
           'birth_solar_date',
+          'solar birth date',
           'birth_date',
           'date_of_birth',
           'dob',
           'ngay sinh duong lich',
+          'ngay sinh duong',
+          'ngay sinh dl',
           'ngay sinh',
         ],
+      },
+      birthLunarDate: {
+        field: 'birthLunarDate',
+        label: 'Ngày Sinh Âm Lịch (Ngày/Tháng/Năm)',
+        keywords: [
+          'ngày sinh âm lịch (ngày/tháng/năm)',
+          'ngày sinh âm lịch (ngày tháng năm)',
+          'ngày sinh âm lịch',
+          'ngày sinh (âm lịch)',
+          'ngày sinh âm',
+          'ngày sinh al',
+          'ngày tháng năm sinh (âm lịch)',
+          'ngày sinh al (ngày/tháng/năm)',
+          'birth_lunar_date',
+          'birth_lunar_full',
+          'lunar birth date',
+          'lunar_birth_date',
+          'ngay sinh am lich',
+          'ngay sinh am',
+          'ngay sinh al',
+        ],
+      },
+      birthLunarDay: {
+        field: 'birthLunarDay',
+        label: 'Ngày Sinh Âm (Số Ngày)',
+        keywords: ['ngày sinh âm (số ngày)', 'ngày sinh âm (ngày)', 'ngày sinh âm', 'số ngày sinh âm', 'birth_lunar_day', 'ngay sinh am (ngay)'],
+      },
+      birthLunarMonth: {
+        field: 'birthLunarMonth',
+        label: 'Tháng Sinh Âm (Số Tháng)',
+        keywords: ['tháng sinh âm (số tháng)', 'tháng sinh âm (tháng)', 'tháng sinh âm', 'số tháng sinh âm', 'birth_lunar_month', 'thang sinh am (thang)'],
       },
       birthYear: { 
         field: 'birthYear', 
         label: 'Năm Sinh', 
-        keywords: ['năm sinh', 'sinh năm', 'năm sinh dương', 'năm sinh dl', 'birth_year', 'dob year', 'nam sinh'] 
+        keywords: ['năm sinh', 'sinh năm', 'năm sinh dương', 'năm sinh dl', 'năm sinh âm', 'birth_year', 'dob year', 'nam sinh'] 
       },
       birthTime: {
         field: 'birthTime',
-        label: 'Giờ Sinh',
-        keywords: ['giờ sinh', 'khung giờ sinh', 'birth_time', 'birth time', 'thời gian sinh', 'gio sinh'],
+        label: 'Giờ Sinh (Can Chi / Giờ)',
+        keywords: [
+          'giờ sinh (can chi / giờ)',
+          'giờ sinh (can chi / giờ thực tế)',
+          'giờ sinh (can chi)',
+          'giờ sinh',
+          'khung giờ sinh',
+          'thời gian sinh',
+          'can chi giờ sinh',
+          'birth_time',
+          'birth time',
+          'gio sinh (can chi)',
+          'gio sinh',
+        ],
       },
       deathLunarFull: {
         field: 'deathLunarFull',
-        label: 'Ngày Mất Âm Lịch (Ngày/Tháng/Năm)',
+        label: 'Ngày Mất Âm Lịch (Ngày Giỗ - Ngày/Tháng/Năm)',
         keywords: [
           'ngày mất âm lịch (ngày/tháng/năm)',
           'ngày mất âm lịch (ngày tháng năm)',
+          'ngày mất âm lịch (ngày giỗ)',
           'ngày mất âm lịch',
           'ngày mất (âm lịch)',
+          'ngày mất âm',
+          'ngày mất al',
           'ngày giỗ (ngày/tháng/năm)',
           'ngày giỗ (ngày tháng năm)',
           'ngày giỗ âm lịch',
@@ -686,6 +743,25 @@ export class DataImportService {
           'death_lunar_full',
         ],
       },
+      deathSolarDate: {
+        field: 'deathSolarDate',
+        label: 'Ngày Mất Dương Lịch (Ngày/Tháng/Năm)',
+        keywords: [
+          'ngày mất dương lịch (ngày/tháng/năm)',
+          'ngày mất dương lịch (ngày tháng năm)',
+          'ngày mất dương lịch',
+          'ngày mất (dương lịch)',
+          'ngày mất dương',
+          'ngày mất dl',
+          'ngày qua đời (dương lịch)',
+          'death_solar_date',
+          'solar death date',
+          'death_solar',
+          'ngay mat duong lich',
+          'ngay mat duong',
+          'ngay mat dl',
+        ],
+      },
       deathLunarDay: { 
         field: 'deathLunarDay', 
         label: 'Ngày Mất Âm (Số Ngày)', 
@@ -703,8 +779,22 @@ export class DataImportService {
       },
       deathTime: {
         field: 'deathTime',
-        label: 'Giờ Mất',
-        keywords: ['giờ mất', 'giờ tạ thế', 'giờ lâm chung', 'death_time', 'death time', 'thời gian mất', 'gio mat'],
+        label: 'Giờ Mất (Can Chi / Giờ)',
+        keywords: [
+          'giờ mất (can chi / giờ)',
+          'giờ mất (can chi / giờ thực tế)',
+          'giờ mất (can chi)',
+          'giờ mất',
+          'giờ tạ thế',
+          'giờ lâm chung',
+          'khung giờ mất',
+          'thời gian mất',
+          'can chi giờ mất',
+          'death_time',
+          'death time',
+          'gio mat (can chi)',
+          'gio mat',
+        ],
       },
       burialPlace: { 
         field: 'burialPlace', 
@@ -848,6 +938,9 @@ export class DataImportService {
                   if (parsed.year !== undefined) {
                     memberObj.deathLunarYear = parsed.year;
                   }
+                  if (parsed.formattedDate) {
+                    memberObj.deathLunarFull = parsed.formattedDate;
+                  }
 
                   // Nếu chỉ có 1 số đơn thuần
                   if (parsed.day !== undefined && parsed.month === undefined && parsed.year === undefined) {
@@ -864,6 +957,16 @@ export class DataImportService {
 
                   memberObj.lifeStatus = 'DECEASED';
                 }
+              } else if (field === 'deathSolarDate') {
+                const parsed = DataImportService.parseFlexibleDate(val);
+                if (parsed.hasDate) {
+                  if (parsed.formattedDate) {
+                    memberObj.deathSolarDate = parsed.formattedDate;
+                  } else if (parsed.day !== undefined && parsed.month !== undefined) {
+                    memberObj.deathSolarDate = `${String(parsed.day).padStart(2, '0')}/${String(parsed.month).padStart(2, '0')}${parsed.year ? `/${parsed.year}` : ''}`;
+                  }
+                  memberObj.lifeStatus = 'DECEASED';
+                }
               } else if (field === 'birthSolarDate' || field === 'birthYear') {
                 const parsed = DataImportService.parseFlexibleDate(val);
                 if (parsed.hasDate) {
@@ -874,6 +977,24 @@ export class DataImportService {
                     memberObj.birthSolarDate = parsed.formattedDate;
                   } else if (parsed.day !== undefined && parsed.month !== undefined) {
                     memberObj.birthSolarDate = `${String(parsed.day).padStart(2, '0')}/${String(parsed.month).padStart(2, '0')}${parsed.year ? `/${parsed.year}` : ''}`;
+                  }
+                }
+              } else if (field === 'birthLunarDate' || field === 'birthLunarDay' || field === 'birthLunarMonth') {
+                const parsed = DataImportService.parseFlexibleDate(val);
+                if (parsed.hasDate) {
+                  if (parsed.day !== undefined && (parsed.month !== undefined || parsed.year !== undefined)) {
+                    memberObj.birthLunarDay = parsed.day;
+                  }
+                  if (parsed.month !== undefined) {
+                    memberObj.birthLunarMonth = parsed.month;
+                  }
+                  if (parsed.year !== undefined) {
+                    memberObj.birthLunarYear = parsed.year;
+                  }
+                  if (parsed.formattedDate) {
+                    memberObj.birthLunarDate = parsed.formattedDate;
+                  } else if (parsed.day !== undefined && parsed.month !== undefined) {
+                    memberObj.birthLunarDate = `${String(parsed.day).padStart(2, '0')}/${String(parsed.month).padStart(2, '0')}${parsed.year ? `/${parsed.year}` : ''}`;
                   }
                 }
               } else if (field === 'birthTime') {
@@ -933,11 +1054,13 @@ export class DataImportService {
         'Chi Phái': 'Toàn Tộc (Khởi Tổ)',
         'Thứ Tự Sinh': 'Thủy Tổ',
         'Trạng Thái': 'Đã mất',
-        'Năm Sinh': 1880,
+        'Ngày Sinh Dương Lịch': '15/10/1880',
+        'Ngày Sinh Âm Lịch': '12/09/1880',
         'Giờ Sinh': 'Giờ Thìn (07h-09h)',
         'Ngày Mất Âm': 15,
         'Tháng Mất Âm': 1,
         'Năm Mất': 1952,
+        'Ngày Mất Dương Lịch': '10/02/1952',
         'Giờ Mất': 'Giờ Ngọ (11h-13h)',
         'Nơi An Táng': 'Lăng Mộ Tổ Đồi Thông Xứ Đông',
         'Tiểu Sử / Sự Nghiệp': 'Cụ Thủy Tổ khai hoang lập nghiệp, mở mang bờ cõi dòng họ.',
@@ -955,11 +1078,13 @@ export class DataImportService {
         'Chi Phái': 'Toàn Tộc (Khởi Tổ)',
         'Thứ Tự Sinh': 'Chính Thất',
         'Trạng Thái': 'Đã mất',
-        'Năm Sinh': 1885,
+        'Ngày Sinh Dương Lịch': '20/08/1885',
+        'Ngày Sinh Âm Lịch': '11/07/1885',
         'Giờ Sinh': 'Giờ Mão (05h-07h)',
         'Ngày Mất Âm': 10,
         'Tháng Mất Âm': 8,
         'Năm Mất': 1958,
+        'Ngày Mất Dương Lịch': '22/09/1958',
         'Giờ Mất': 'Giờ Mùi (13h-15h)',
         'Nơi An Táng': 'Lăng Mộ Tổ Đồi Thông Xứ Đông',
         'Tiểu Sử / Sự Nghiệp': 'Bà Chính thất sinh hạ con trưởng (1.1) và con thứ hai (1.2).',
@@ -977,11 +1102,13 @@ export class DataImportService {
         'Chi Phái': 'Toàn Tộc (Khởi Tổ)',
         'Thứ Tự Sinh': 'Kế Thất',
         'Trạng Thái': 'Đã mất',
-        'Năm Sinh': 1890,
+        'Ngày Sinh Dương Lịch': '12/04/1890',
+        'Ngày Sinh Âm Lịch': '23/02/1890',
         'Giờ Sinh': 'Giờ Dần (03h-05h)',
         'Ngày Mất Âm': 20,
         'Tháng Mất Âm': 10,
         'Năm Mất': 1965,
+        'Ngày Mất Dương Lịch': '13/11/1965',
         'Giờ Mất': 'Giờ Thân (15h-17h)',
         'Nơi An Táng': 'Khu Nghĩa Trang Đồng Xứ Nam',
         'Tiểu Sử / Sự Nghiệp': 'Bà Kế thất sinh hạ con trai thứ ba (1.3 - Khởi Chi Ba).',
@@ -999,11 +1126,13 @@ export class DataImportService {
         'Chi Phái': 'Chi Trưởng (Chi 1)',
         'Thứ Tự Sinh': 'Trưởng Nam',
         'Trạng Thái': 'Đã mất',
-        'Năm Sinh': 1910,
+        'Ngày Sinh Dương Lịch': '21/10/1910',
+        'Ngày Sinh Âm Lịch': '18/09/1910',
         'Giờ Sinh': 'Giờ Tý (23h-01h)',
         'Ngày Mất Âm': 18,
         'Tháng Mất Âm': 5,
         'Năm Mất': 1980,
+        'Ngày Mất Dương Lịch': '29/06/1980',
         'Giờ Mất': 'Giờ Dậu (17h-19h)',
         'Nơi An Táng': 'Khu Lăng Mộ Chi Trưởng',
         'Tiểu Sử / Sự Nghiệp': 'Trưởng tộc đời 2, gìn giữ từ đường hương hỏa.',
@@ -1021,11 +1150,13 @@ export class DataImportService {
         'Chi Phái': 'Chi Trưởng (Chi 1)',
         'Thứ Tự Sinh': 'Chính Thất',
         'Trạng Thái': 'Đã mất',
-        'Năm Sinh': 1912,
+        'Ngày Sinh Dương Lịch': '05/03/1912',
+        'Ngày Sinh Âm Lịch': '17/01/1912',
         'Giờ Sinh': 'Giờ Tỵ (09h-11h)',
         'Ngày Mất Âm': 12,
         'Tháng Mất Âm': 3,
         'Năm Mất': 1986,
+        'Ngày Mất Dương Lịch': '20/04/1986',
         'Giờ Mất': 'Giờ Hợi (21h-23h)',
         'Nơi An Táng': 'Khu Lăng Mộ Chi Trưởng',
         'Tiểu Sử / Sự Nghiệp': 'Bà Dâu Trưởng hiền đức, phụng dưỡng cha mẹ chồng trọn đạo.',
@@ -1127,29 +1258,24 @@ export class DataImportService {
         'Ví Dụ Mẫu': '1 | 1-V1 | 1.1 | 1.1.1 | 1.2',
       },
       {
-        'Cột': 'Mã Cha',
-        'Ý Nghĩa & Quy Ước': 'Điền Mã Cây của người cha đẻ (Để trống nếu là Cụ Thủy Tổ khởi thủy hoặc Hôn phối).',
-        'Ví Dụ Mẫu': '1 | 1.1 | 1.2',
+        'Cột': 'Mã Cha / Mã Mẹ / Mã Phối Ngẫu',
+        'Ý Nghĩa & Quy Ước': 'Điền Mã Cây của Cha, Mẹ hoặc Vợ/Chồng để thiết lập cây phả hệ tự động.',
+        'Ví Dụ Mẫu': '1 | 1-V1 | 1.1 | D11.1',
       },
       {
-        'Cột': 'Mã Mẹ',
-        'Ý Nghĩa & Quy Ước': 'Điền Mã Cây của người mẹ sinh ra (Ví dụ con bà cả điền 1-V1, con bà hai điền 1-V2).',
-        'Ví Dụ Mẫu': '1-V1 | 1-V2 | 1.1-V1',
-      },
-      {
-        'Cột': 'Mã Phối Ngẫu',
-        'Ý Nghĩa & Quy Ước': 'Mã số của vợ/chồng liên kết.',
-        'Ví Dụ Mẫu': '1-V1 | 1.1 | 1.1-V1',
+        'Cột': 'Ngày Sinh Dương Lịch / Âm Lịch',
+        'Ý Nghĩa & Quy Ước': 'Định dạng ngày/tháng/năm (VD: 21/10/1910) hoặc năm (1910). Phân biệt rõ giữa ngày Dương và ngày Âm.',
+        'Ví Dụ Mẫu': '21/10/1910 (Dương) | 18/09/1910 (Âm)',
       },
       {
         'Cột': 'Giờ Sinh / Giờ Mất',
         'Ý Nghĩa & Quy Ước': 'Khung giờ sinh / giờ mất theo 12 con giáp (Giờ Tý, Sửu...) hoặc giờ đồng hồ (08:30).',
-        'Ví Dụ Mẫu': 'Giờ Thìn (07h-09h) | 08:30',
+        'Ví Dụ Mẫu': 'Giờ Thìn (07h-09h) | 08:30 | Giờ Ngọ (11h-13h)',
       },
       {
-        'Cột': 'Ngày Mất Âm / Tháng Mất Âm',
+        'Cột': 'Ngày Mất Âm Lịch (Ngày Giỗ)',
         'Ý Nghĩa & Quy Ước': 'Ngày và tháng giỗ Âm lịch hàng năm (Để trống nếu thành viên còn sống).',
-        'Ví Dụ Mẫu': '15 (Ngày) | 1 (Tháng)',
+        'Ví Dụ Mẫu': '15/01/1952 hoặc Ngày 15, Tháng 1',
       },
     ];
 
@@ -1167,11 +1293,13 @@ export class DataImportService {
       { wch: 20 }, // Chi Phái
       { wch: 20 }, // Thứ Tự Sinh
       { wch: 12 }, // Trạng Thái
-      { wch: 12 }, // Năm Sinh
+      { wch: 22 }, // Ngày Sinh Dương Lịch
+      { wch: 22 }, // Ngày Sinh Âm Lịch
       { wch: 20 }, // Giờ Sinh
       { wch: 14 }, // Ngày Mất Âm
       { wch: 14 }, // Tháng Mất Âm
       { wch: 12 }, // Năm Mất
+      { wch: 22 }, // Ngày Mất Dương Lịch
       { wch: 20 }, // Giờ Mất
       { wch: 30 }, // Nơi An Táng
       { wch: 35 }, // Tiểu Sử / Sự Nghiệp
@@ -1451,7 +1579,11 @@ export class DataImportService {
               m.motherCode ? `Mã mẹ: ${m.motherCode}` : '',
               m.spouseCode ? `Mã phối ngẫu: ${m.spouseCode}` : '',
               m.courtesyName ? `Tên tự/hiệu: ${m.courtesyName}` : '',
+              m.birthSolarDate ? `Ngày sinh dương: ${m.birthSolarDate}` : '',
+              m.birthLunarDate ? `Ngày sinh âm: ${m.birthLunarDate}` : '',
               m.birthTime ? `Giờ sinh: ${m.birthTime}` : '',
+              m.deathSolarDate ? `Ngày mất dương: ${m.deathSolarDate}` : '',
+              m.deathLunarFull ? `Ngày mất âm (giỗ): ${m.deathLunarFull}` : '',
               m.deathTime ? `Giờ mất: ${m.deathTime}` : '',
               m.birthOrder ? `Thứ tự: ${m.birthOrder}` : '',
               m.bio || '',
@@ -1605,6 +1737,7 @@ export class DataImportService {
               const noteText = [
                 `Lễ Giỗ: ${m.fullName}`,
                 m.deathTime ? `Giờ mất: ${m.deathTime}` : '',
+                m.deathSolarDate ? `Ngày mất dương: ${m.deathSolarDate}` : '',
                 m.burialPlace ? `Mộ phần: ${m.burialPlace}` : '',
               ].filter(Boolean).join(' • ');
 
