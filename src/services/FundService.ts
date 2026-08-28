@@ -782,10 +782,12 @@ export class FundService {
   // 9. BÁO CÁO TỔNG QUAN (SUMMARY)
   // ==========================================
   static async getSummary(familyId?: string) {
-    const funds = await this.getFunds(familyId);
-    const transactions = await this.getLedger(familyId);
-    const assessments = await this.getAssessments(familyId);
-    const expenses = await this.getExpenses(familyId);
+    const [funds, transactions, assessments, expenses] = await Promise.all([
+      this.getFunds(familyId),
+      this.getLedger(familyId),
+      this.getAssessments(familyId),
+      this.getExpenses(familyId),
+    ]);
 
     const totalBalance = funds.reduce((acc, f) => acc + (Number(f.current_balance) || 0), 0);
     const totalIncome = transactions

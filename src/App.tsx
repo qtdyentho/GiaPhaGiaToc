@@ -268,6 +268,14 @@ export const App: React.FC = () => {
                   }
                 />
                 <Route
+                  path="permissions"
+                  element={
+                    <RoleGuard allowedRoles={['OWNER', 'ADMIN']}>
+                      <PermissionsPage />
+                    </RoleGuard>
+                  }
+                />
+                <Route
                   path="audit"
                   element={
                     <RoleGuard allowedRoles={['OWNER', 'ADMIN']}>

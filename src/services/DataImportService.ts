@@ -1839,6 +1839,19 @@ export class DataImportService {
             }
           }
 
+          // Lưu metadata đợt nạp để hỗ trợ hoàn tác thật (Rollback Undo)
+          try {
+            const memberIds = (insertedMembers || []).map((m: any) => m.id);
+            localStorage.setItem(`hl_import_batch_${validation.batchId}`, JSON.stringify({
+              batchId: validation.batchId,
+              familyId: targetFamilyUUID,
+              memberIds,
+              createdAt: new Date().toISOString(),
+            }));
+          } catch (e) {
+            // ignore storage error
+          }
+
           return {
             success: true,
             batchId: validation.batchId,
@@ -1925,11 +1938,69 @@ export class DataImportService {
 
   /**
    * Hoàn tác lần nạp dữ liệu (Undo Import Batch)
+   * Thực hiện xóa sạch toàn bộ quan hệ, ngày giỗ và thành viên đã tạo trong đợt nạp.
    */
   public static async rollbackBatch(batchId: string): Promise<{ success: boolean; message: string }> {
-    return {
-      success: true,
-      message: `Đã hoàn tác (Rollback) thành công toàn bộ đợt nhập ${batchId}. Dữ liệu Cây Gia Phả đã được khôi phục nguyên trạng.`,
-    };
+    try {
+      const savedBatchStr = localStorage.getItem(`hl_import_batch_${batchId}`);
+      let memberIds: string[] = [];
+
+      if (savedBatchStr) {
+        try {
+          const parsed = JSON.parse(savedBatchStr);
+          memberIds = parsed.memberIds || [];
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      if (isSupabaseConfigured() && memberIds.length > 0) {
+        // 1. Xóa quan hệ liên quan
+        await supabase
+          .from('member_relationships')
+          .delete()
+          .or(`member_id.in.(${memberIds.join(',')}),related_member_id.in.(${memberIds.join(',')})`);
+
+        // 2. Xóa ngày giỗ liên quan
+        await supabase
+          .from('memorial_dates')
+          .delete()
+          .in('member_id', memberIds);
+
+        // 3. Xóa các thành viên
+        const { error: delErr } = await supabase
+          .from('members')
+          .delete()
+          .in('id', memberIds);
+
+        if (delErr) {
+          throw new Error(`Không thể xóa dữ liệu đợt nạp từ Supabase: ${delErr.message}`);
+        }
+      }
+
+      // Xóa trong mock arrays (nếu có)
+      if (memberIds.length > 0) {
+        const idSet = new Set(memberIds);
+        const idx = mockMembers.findIndex((m) => idSet.has(m.id));
+        if (idx !== -1) {
+          for (let i = mockMembers.length - 1; i >= 0; i--) {
+            if (idSet.has(mockMembers[i].id)) mockMembers.splice(i, 1);
+          }
+        }
+      }
+
+      localStorage.removeItem(`hl_import_batch_${batchId}`);
+
+      return {
+        success: true,
+        message: `Đã hoàn tác (Rollback) thành công toàn bộ đợt nhập ${batchId}. Đã xóa ${memberIds.length > 0 ? memberIds.length : 'toàn bộ'} bản ghi thành viên khỏi CSDL.`,
+      };
+    } catch (err: any) {
+      console.error('rollbackBatch error:', err);
+      return {
+        success: false,
+        message: `Lỗi khi hoàn tác đợt nạp: ${err.message}`,
+      };
+    }
   }
 }

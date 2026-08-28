@@ -38,42 +38,46 @@ export const DashboardPage: React.FC = () => {
   const [familyMemorials, setFamilyMemorials] = useState<MemorialDate[]>([]);
   const [familyTransactions, setFamilyTransactions] = useState<FinancialTransaction[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const currentFamily = activeFamily!; // safe: early return below guards all JSX usages
   const totalBalance = familyFunds.reduce((sum, f) => sum + Number(f.current_balance || 0), 0);
   const nextMemorial = familyMemorials[0] || null;
   const bannerImageUrl = currentFamily?.banner_url || ANCESTRAL_PRESETS[0].url;
 
-  useEffect(() => {
-    async function loadData() {
-      if (currentFamily?.id) {
-        setLoadingData(true);
-        try {
-          const [funds, treeData, mems, txs, config, link] = await Promise.all([
-            FundService.getFunds(currentFamily.id),
-            GenealogyService.getFamilyTree(currentFamily.id),
-            MemorialService.getUpcomingMemorials(currentFamily.id, 5),
-            FundService.getLedger(currentFamily.id),
-            ClanPassService.getFamilyPassConfig(currentFamily.id),
-            ShortLinkService.getShortLinkByFamily(currentFamily.id, currentFamily.name),
-          ]);
+  const loadData = async () => {
+    if (currentFamily?.id) {
+      setLoadingData(true);
+      setFetchError(null);
+      try {
+        const [funds, treeData, mems, txs, config, link] = await Promise.all([
+          FundService.getFunds(currentFamily.id),
+          GenealogyService.getFamilyTree(currentFamily.id),
+          MemorialService.getUpcomingMemorials(currentFamily.id, 5),
+          FundService.getLedger(currentFamily.id),
+          ClanPassService.getFamilyPassConfig(currentFamily.id),
+          ShortLinkService.getShortLinkByFamily(currentFamily.id, currentFamily.name),
+        ]);
 
-          setFamilyFunds(funds || []);
-          setFamilyMembers(treeData.members || []);
-          setFamilyGenerations(treeData.generations || []);
-          setFamilyBranches(treeData.branches || []);
-          setFamilyMemorials(mems || []);
-          setFamilyTransactions(txs || []);
+        setFamilyFunds(funds || []);
+        setFamilyMembers(treeData.members || []);
+        setFamilyGenerations(treeData.generations || []);
+        setFamilyBranches(treeData.branches || []);
+        setFamilyMemorials(mems || []);
+        setFamilyTransactions(txs || []);
 
-          if (config?.pass_token) setPassToken(config.pass_token);
-          if (link?.short_code) setShortCode(link.short_code);
-        } catch (err) {
-          console.error('Lỗi khi tải dữ liệu trang tổng quan:', err);
-        } finally {
-          setLoadingData(false);
-        }
+        if (config?.pass_token) setPassToken(config.pass_token);
+        if (link?.short_code) setShortCode(link.short_code);
+      } catch (err: any) {
+        console.error('Lỗi khi tải dữ liệu trang tổng quan:', err);
+        setFetchError(err?.message || 'Không thể kết nối máy chủ để tải dữ liệu. Vui lòng kiểm tra kết nối.');
+      } finally {
+        setLoadingData(false);
       }
     }
+  };
+
+  useEffect(() => {
     loadData();
   }, [currentFamily?.id]);
 
@@ -124,13 +128,13 @@ export const DashboardPage: React.FC = () => {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-            <Link to="/create-family" className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-[#166534] hover:bg-[#14532d] text-white font-bold text-sm shadow-md hover:shadow-lg transition flex items-center justify-center gap-2">
+            <Link to="/onboarding/create-family" className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-[#166534] hover:bg-[#14532d] text-white font-bold text-sm shadow-md hover:shadow-lg transition flex items-center justify-center gap-2">
               <Sparkles className="w-4 h-4" />
               <span>Khởi Tạo Dòng Họ Đầu Tiên</span>
             </Link>
-            <Link to="/invite-register" className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-amber-50 dark:bg-slate-800 hover:bg-amber-100 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-slate-700 font-bold text-sm transition flex items-center justify-center gap-2">
+            <Link to="/pricing" className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-amber-50 dark:bg-slate-800 hover:bg-amber-100 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-slate-700 font-bold text-sm transition flex items-center justify-center gap-2">
               <HeartHandshake className="w-4 h-4" />
-              <span>Nhập Mã Mời Gia Tộc</span>
+              <span>Xem Bảng Giá & Tính Năng</span>
             </Link>
           </div>
         </div>
@@ -140,6 +144,22 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <div className="space-y-6 font-sans animate-fade-in">
+      {fetchError && (
+        <div className="p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-red-700 dark:text-red-300 text-xs font-medium">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">⚠️</span>
+            <span>{fetchError}</span>
+          </div>
+          <button
+            onClick={loadData}
+            disabled={loadingData}
+            className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-50 flex items-center gap-1.5"
+          >
+            <span>{loadingData ? 'Đang tải lại...' : 'Thử lại'}</span>
+          </button>
+        </div>
+      )}
+
       {/* 🏛️ ANCESTRAL HERO BANNER: Không Gian Từ Đường & Phụng Tự Trang Trọng */}
       <div className="relative rounded-3xl overflow-hidden shadow-md border border-amber-900/20 bg-slate-900 group min-h-[260px] md:min-h-[300px] flex flex-col justify-between p-6 md:p-8 text-white">
         {/* Background Image of Ancestral Hall / Từ Đường */}

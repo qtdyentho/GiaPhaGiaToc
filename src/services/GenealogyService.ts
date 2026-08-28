@@ -92,8 +92,55 @@ export class GenealogyService {
   }
 
   static async getMembers(familyId?: string): Promise<Member[]> {
-    const tree = await this.getFamilyTree(familyId);
-    return tree.members;
+    if (!familyId) return [];
+
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      try {
+        const { data, error } = await supabase
+          .from('members')
+          .select('*')
+          .eq('family_id', familyId)
+          .order('full_name', { ascending: true });
+
+        if (!error && data) {
+          return data.map((dbRow: any) => {
+            const notesStr = dbRow.notes || dbRow.biography || '';
+            const extractNote = (prefix: string) => {
+              const match = notesStr.match(new RegExp(`${prefix}:\\s*([^•|]+)`, 'i'));
+              return match && match[1] ? match[1].trim() : undefined;
+            };
+
+            return {
+              id: dbRow.id,
+              family_id: dbRow.family_id,
+              generation_id: dbRow.generation_id,
+              branch_id: dbRow.branch_id,
+              first_name: dbRow.first_name || dbRow.full_name?.split(' ').pop() || '',
+              last_name: dbRow.last_name || dbRow.full_name?.split(' ').slice(0, -1).join(' ') || '',
+              full_name: dbRow.full_name || `${dbRow.last_name || ''} ${dbRow.first_name || ''}`.trim(),
+              gender: dbRow.gender || 'MALE',
+              life_status: dbRow.status || (dbRow.is_deceased ? 'DECEASED' : 'ALIVE'),
+              birth_solar_date: dbRow.date_of_birth || extractNote('Ngày sinh dương'),
+              birth_time: dbRow.birth_time || extractNote('Giờ sinh'),
+              courtesy_name: dbRow.courtesy_name || extractNote('Tên tự/hiệu'),
+              death_solar_date: dbRow.date_of_death_solar || extractNote('Ngày mất dương'),
+              death_lunar_day: dbRow.date_of_death_lunar_day,
+              death_lunar_month: dbRow.date_of_death_lunar_month,
+              death_lunar_year: dbRow.date_of_death_lunar_year,
+              burial_place: dbRow.burial_place,
+              bio: dbRow.biography || dbRow.notes,
+              notes: dbRow.notes,
+              created_at: dbRow.created_at,
+              updated_at: dbRow.updated_at,
+            };
+          });
+        }
+      } catch (err) {
+        console.warn('getMembers direct query error:', err);
+      }
+    }
+
+    return mockMembers.filter((m) => m.family_id === familyId);
   }
 
   static async getMemberById(id: string): Promise<Member | undefined> {

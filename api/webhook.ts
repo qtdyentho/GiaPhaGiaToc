@@ -27,16 +27,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const signature = req.headers['x-bank-signature'] as string;
   const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
 
-  // 1. Verify HMAC Signature
-  if (signature) {
-    const expectedSignature = crypto
-      .createHmac('sha256', webhookSecret)
-      .update(rawBody)
-      .digest('hex');
+  // 1. Mandatory HMAC Signature Verification
+  if (!signature) {
+    return res.status(401).json({ success: false, error: 'Missing required x-bank-signature header' });
+  }
 
-    if (signature !== expectedSignature) {
-      return res.status(401).json({ success: false, error: 'Invalid HMAC Signature' });
-    }
+  const expectedSignature = crypto
+    .createHmac('sha256', webhookSecret)
+    .update(rawBody)
+    .digest('hex');
+
+  const sigBuffer = Buffer.from(signature);
+  const expectedBuffer = Buffer.from(expectedSignature);
+
+  if (sigBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(sigBuffer, expectedBuffer)) {
+    return res.status(401).json({ success: false, error: 'Invalid HMAC Signature' });
   }
 
   const payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;

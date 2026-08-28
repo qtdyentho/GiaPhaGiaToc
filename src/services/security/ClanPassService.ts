@@ -143,11 +143,14 @@ export class ClanPassService {
 
         // 3. Nếu vẫn không thấy, tìm qua bảng families theo ID hoặc Code
         if (!pass) {
-          const { data: famData } = await supabase
-            .from('families')
-            .select('id, code')
-            .or(`code.ilike.${clean},id.eq.${isUUID(clean) ? clean : '00000000-0000-0000-0000-000000000000'}`)
-            .maybeSingle();
+          const sanitizedCode = clean.replace(/[^a-zA-Z0-9_-]/g, '');
+          let famQuery = supabase.from('families').select('id, code');
+          if (isUUID(clean)) {
+            famQuery = famQuery.eq('id', clean);
+          } else if (sanitizedCode) {
+            famQuery = famQuery.ilike('code', sanitizedCode);
+          }
+          const { data: famData } = await famQuery.maybeSingle();
 
           if (famData) {
             const { data: passFromFam } = await supabase
@@ -269,9 +272,9 @@ export class ClanPassService {
     // Local / In-memory Verification
     const pass = mockPasses.find((p) => p.family_id === passInfo.family_id) || mockPasses[0];
     
-    // Check if input PIN matches (check hash or default 1986 / 888888 for demo)
+    // Check if input PIN matches hash
     const expectedHash = pass.pin_hash;
-    const isMatch = computedHash === expectedHash || inputPin === '1986' || inputPin === '888888';
+    const isMatch = computedHash === expectedHash;
 
     if (isMatch) {
       pass.failed_attempts = 0;

@@ -10,18 +10,21 @@ export const RegisterPage: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const navigate = useNavigate();
   const { signUp } = useAuth();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMsg(null);
     try {
       await signUp(fullName, email, phone, password);
       // After registration, guide user to create their own family space
       navigate('/onboarding/create-family');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Lỗi khi đăng ký tài khoản:', err);
+      setErrorMsg(err?.message || 'Có lỗi xảy ra trong quá trình đăng ký. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -39,6 +42,12 @@ export const RegisterPage: React.FC = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-6 shadow-sm rounded-3xl sm:px-10 border border-slate-200">
+          {errorMsg && (
+            <div className="mb-4 p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-medium flex items-center gap-2">
+              <span className="text-base">⚠️</span>
+              <span>{errorMsg}</span>
+            </div>
+          )}
           <form className="space-y-4" onSubmit={handleRegister}>
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Họ Và Tên Người Quản Trị *</label>
