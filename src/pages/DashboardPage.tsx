@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Users, Landmark, Wallet, Calendar, ArrowUpRight, Sparkles, 
   ChevronRight, MapPin, Camera, Image, ShieldCheck, HeartHandshake,
-  BookOpen, Megaphone, QrCode, Flame
+  BookOpen, Megaphone, QrCode, Flame, GitFork, TreePine, Crown, Clock, Activity, ArrowRight
 } from 'lucide-react';
 import { LunarCalendarService } from '../services/LunarCalendarService';
 import { ShortLinkService } from '../services/security/ShortLinkService';
@@ -10,7 +10,7 @@ import { ClanPassService } from '../services/security/ClanPassService';
 import { GenealogyService } from '../services/GenealogyService';
 import { FundService } from '../services/FundService';
 import { MemorialService } from '../services/calendar/MemorialService';
-import { Fund, Member, MemorialDate, FinancialTransaction } from '../types/database';
+import { Fund, Member, MemorialDate, FinancialTransaction, Generation, Branch } from '../types/database';
 import { formatCurrency } from '../lib/utils';
 import { Link } from 'react-router-dom';
 import { UpcomingEventsWidget } from '../components/calendar/UpcomingEventsWidget';
@@ -25,13 +25,89 @@ export const DashboardPage: React.FC = () => {
   const { activeFamily, isFamilyAdmin, user } = useAuth();
   const todayInfo = LunarCalendarService.getTodayInfo();
   
+  // ——— ALL HOOKS MUST BE DECLARED BEFORE ANY EARLY RETURN ———
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [shortCode, setShortCode] = useState<string>('');
   const [passToken, setPassToken] = useState<string>('');
+  const [familyFunds, setFamilyFunds] = useState<Fund[]>([]);
+  const [familyMembers, setFamilyMembers] = useState<Member[]>([]);
+  const [familyGenerations, setFamilyGenerations] = useState<Generation[]>([]);
+  const [familyBranches, setFamilyBranches] = useState<Branch[]>([]);
+  const [familyMemorials, setFamilyMemorials] = useState<MemorialDate[]>([]);
+  const [familyTransactions, setFamilyTransactions] = useState<FinancialTransaction[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
 
-  // Nếu tài khoản chưa có dòng họ nào, hiển thị giao diện Onboarding khởi tạo dòng họ
+  const currentFamily = activeFamily!; // safe: early return below guards all JSX usages
+  const totalBalance = familyFunds.reduce((sum, f) => sum + Number(f.current_balance || 0), 0);
+  const nextMemorial = familyMemorials[0] || null;
+  const bannerImageUrl = currentFamily?.banner_url || ANCESTRAL_PRESETS[0].url;
+
+  useEffect(() => {
+    async function loadData() {
+      if (currentFamily?.id) {
+        setLoadingData(true);
+        try {
+          const [funds, treeData, mems, txs, config, link] = await Promise.all([
+            FundService.getFunds(currentFamily.id),
+            GenealogyService.getFamilyTree(currentFamily.id),
+            MemorialService.getUpcomingMemorials(currentFamily.id, 5),
+            FundService.getLedger(currentFamily.id),
+            ClanPassService.getFamilyPassConfig(currentFamily.id),
+            ShortLinkService.getShortLinkByFamily(currentFamily.id, currentFamily.name),
+          ]);
+
+          setFamilyFunds(funds || []);
+          setFamilyMembers(treeData.members || []);
+          setFamilyGenerations(treeData.generations || []);
+          setFamilyBranches(treeData.branches || []);
+          setFamilyMemorials(mems || []);
+          setFamilyTransactions(txs || []);
+
+          if (config?.pass_token) setPassToken(config.pass_token);
+          if (link?.short_code) setShortCode(link.short_code);
+        } catch (err) {
+          console.error('Lỗi khi tải dữ liệu trang tổng quan:', err);
+        } finally {
+          setLoadingData(false);
+        }
+      }
+    }
+    loadData();
+  }, [currentFamily?.id]);
+
+  // Thống kê chi tiết phả đồ & quy mô dòng họ
+  const clanStats = useMemo(() => {
+    const total = familyMembers.length;
+    const dinh = familyMembers.filter((m) => m.gender === 'MALE').length;
+    const nu = familyMembers.filter((m) => m.gender === 'FEMALE').length;
+    const alive = familyMembers.filter((m) => m.life_status === 'ALIVE').length;
+    const deceased = familyMembers.filter((m) => m.life_status === 'DECEASED').length;
+    const gens = familyGenerations.length || (total > 0 ? Math.max(...familyMembers.map((m) => Number(m.generation_id?.replace(/\D/g, '') || 1)), 1) : 0);
+    const branchCount = familyBranches.length || (total > 0 ? new Set(familyMembers.map((m) => m.branch_id).filter(Boolean)).size : 0);
+
+    const earliestBirthYear = familyMembers.reduce((minYr, m) => {
+      const y = m.birth_solar_date ? new Date(m.birth_solar_date).getFullYear() : (m as any).birth_year;
+      if (y && y > 1000 && y < minYr) return y;
+      return minYr;
+    }, 9999);
+
+    const foundingYearStr = earliestBirthYear !== 9999 ? `Năm ${earliestBirthYear}` : (currentFamily as any)?.founding_year || 'Thời dựng họ';
+
+    return {
+      total,
+      dinh,
+      nu,
+      alive,
+      deceased,
+      generationsCount: gens,
+      branchesCount: branchCount,
+      foundingYear: foundingYearStr,
+    };
+  }, [familyMembers, familyGenerations, familyBranches, currentFamily]);
+
+  // Early return AFTER all hooks — only show onboarding when no family
   if (!activeFamily) {
     return (
       <div className="space-y-6 font-sans animate-fade-in max-w-4xl mx-auto py-8">
@@ -47,19 +123,12 @@ export const DashboardPage: React.FC = () => {
               Tài khoản của bạn hiện chưa khởi tạo hoặc tham gia vào dòng họ nào. Hãy bắt đầu phụng sự tiên tổ bằng cách lập cây phả hệ đầu tiên.
             </p>
           </div>
-
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
-            <Link
-              to="/create-family"
-              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-[#166534] hover:bg-[#14532d] text-white font-bold text-sm shadow-md hover:shadow-lg transition flex items-center justify-center gap-2"
-            >
+            <Link to="/create-family" className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-[#166534] hover:bg-[#14532d] text-white font-bold text-sm shadow-md hover:shadow-lg transition flex items-center justify-center gap-2">
               <Sparkles className="w-4 h-4" />
               <span>Khởi Tạo Dòng Họ Đầu Tiên</span>
             </Link>
-            <Link
-              to="/invite-register"
-              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-amber-50 dark:bg-slate-800 hover:bg-amber-100 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-slate-700 font-bold text-sm transition flex items-center justify-center gap-2"
-            >
+            <Link to="/invite-register" className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-amber-50 dark:bg-slate-800 hover:bg-amber-100 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-slate-700 font-bold text-sm transition flex items-center justify-center gap-2">
               <HeartHandshake className="w-4 h-4" />
               <span>Nhập Mã Mời Gia Tộc</span>
             </Link>
@@ -68,49 +137,6 @@ export const DashboardPage: React.FC = () => {
       </div>
     );
   }
-
-  const currentFamily = activeFamily;
-
-  const [familyFunds, setFamilyFunds] = useState<Fund[]>([]);
-  const [familyMembers, setFamilyMembers] = useState<Member[]>([]);
-  const [familyMemorials, setFamilyMemorials] = useState<MemorialDate[]>([]);
-  const [familyTransactions, setFamilyTransactions] = useState<FinancialTransaction[]>([]);
-  const [loadingData, setLoadingData] = useState(true);
-
-  const totalBalance = familyFunds.reduce((sum, f) => sum + Number(f.current_balance || 0), 0);
-  const nextMemorial = familyMemorials[0] || null;
-  const bannerImageUrl = currentFamily.banner_url || ANCESTRAL_PRESETS[0].url;
-
-  useEffect(() => {
-    async function loadData() {
-      if (currentFamily?.id) {
-        setLoadingData(true);
-        try {
-          const [funds, members, mems, txs, config, link] = await Promise.all([
-            FundService.getFunds(currentFamily.id),
-            GenealogyService.getMembers(currentFamily.id),
-            MemorialService.getUpcomingMemorials(currentFamily.id, 5),
-            FundService.getLedger(currentFamily.id),
-            ClanPassService.getFamilyPassConfig(currentFamily.id),
-            ShortLinkService.getShortLinkByFamily(currentFamily.id, currentFamily.name),
-          ]);
-
-          setFamilyFunds(funds || []);
-          setFamilyMembers(members || []);
-          setFamilyMemorials(mems || []);
-          setFamilyTransactions(txs || []);
-
-          if (config?.pass_token) setPassToken(config.pass_token);
-          if (link?.short_code) setShortCode(link.short_code);
-        } catch (err) {
-          console.error('Lỗi khi tải dữ liệu trang tổng quan:', err);
-        } finally {
-          setLoadingData(false);
-        }
-      }
-    }
-    loadData();
-  }, [currentFamily?.id]);
 
   return (
     <div className="space-y-6 font-sans animate-fade-in">
@@ -228,6 +254,118 @@ export const DashboardPage: React.FC = () => {
             <div className="text-xs text-amber-300 font-semibold mt-0.5">
               Năm {todayInfo.canChiYear} (Âm Lịch)
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 🏛️ BẢNG THỐNG KÊ QUY MÔ & DI SẢN PHẢ HỆ DÒNG HỌ */}
+      <div className="bg-gradient-to-br from-amber-50/80 via-white to-emerald-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-emerald-950/20 p-5 sm:p-6 rounded-3xl border border-amber-200 dark:border-slate-800 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-amber-100 dark:border-slate-800 pb-3">
+          <div className="flex items-center space-x-2.5">
+            <div className="p-2 bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 rounded-xl">
+              <TreePine className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-extrabold text-slate-900 dark:text-white font-serif flex items-center gap-2">
+                <span>Quy Mô & Cội Nguồn Dòng Tộc</span>
+                <span className="text-[11px] font-sans font-bold px-2 py-0.5 bg-emerald-100 dark:bg-emerald-950/60 text-[#166534] dark:text-emerald-300 rounded-full border border-emerald-200 dark:border-emerald-800">
+                  {clanStats.foundingYear}
+                </span>
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Thống kê toàn diện trực hệ thế hệ, các chi cành, đinh số và sự tiếp nối dòng dõi muôn đời
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Link
+              to="/app/clan/intro"
+              className="px-3.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+              <span>Sử Ký & Cội Nguồn</span>
+            </Link>
+            <Link
+              to="/app/genealogy"
+              className="px-3.5 py-1.5 bg-[#166534] hover:bg-[#14532D] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
+            >
+              <GitFork className="w-3.5 h-3.5" />
+              <span>Xem Cây Phả Hệ</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* 5 Thống Kê Trọng Điểm */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {/* Box 1: Năm Khởi Thủy */}
+          <div className="p-3.5 bg-white dark:bg-slate-800/90 rounded-2xl border border-amber-200/80 dark:border-slate-700 shadow-2xs">
+            <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5 text-amber-600" />
+              <span>Khởi Thủy</span>
+            </div>
+            <div className="text-lg font-black text-amber-900 dark:text-amber-300 mt-1">
+              {clanStats.foundingYear}
+            </div>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Tiên tổ khai cơ lập nghiệp</div>
+          </div>
+
+          {/* Box 2: Thế Hệ / Đời */}
+          <div className="p-3.5 bg-white dark:bg-slate-800/90 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+            <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase flex items-center gap-1">
+              <Crown className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Số Thế Hệ</span>
+            </div>
+            <div className="text-lg font-black text-slate-900 dark:text-white mt-1">
+              {clanStats.generationsCount}{' '}
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 font-sans">Đời</span>
+            </div>
+            <div className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5">
+              Từ Đời 1 đến Đời {clanStats.generationsCount}
+            </div>
+          </div>
+
+          {/* Box 3: Số Chi Phái / Cành */}
+          <div className="p-3.5 bg-white dark:bg-slate-800/90 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+            <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase flex items-center gap-1">
+              <GitFork className="w-3.5 h-3.5 text-blue-600" />
+              <span>Chi Phái & Cành</span>
+            </div>
+            <div className="text-lg font-black text-slate-900 dark:text-white mt-1">
+              {clanStats.branchesCount}{' '}
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 font-sans">Chi Phái</span>
+            </div>
+            <div className="text-[11px] text-blue-700 dark:text-blue-400 mt-0.5">Phân nhánh huyết thống</div>
+          </div>
+
+          {/* Box 4: Đinh Số (Nam giới) */}
+          <div className="p-3.5 bg-white dark:bg-slate-800/90 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+            <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase flex items-center gap-1">
+              <Users className="w-3.5 h-3.5 text-[#166534] dark:text-emerald-400" />
+              <span>Đinh Số (Nam)</span>
+            </div>
+            <div className="text-lg font-black text-[#166534] dark:text-emerald-300 mt-1">
+              {clanStats.dinh}{' '}
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 font-sans">Đinh</span>
+            </div>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+              Cùng {clanStats.nu} Nữ / Dâu
+            </div>
+          </div>
+
+          {/* Box 5: Tình Trạng Hiện Tại */}
+          <div className="p-3.5 bg-white dark:bg-slate-800/90 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xs col-span-2 sm:col-span-1">
+            <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase flex items-center gap-1">
+              <Activity className="w-3.5 h-3.5 text-purple-600" />
+              <span>Hiện Diện</span>
+            </div>
+            <div className="text-lg font-black text-slate-900 dark:text-white mt-1">
+              {clanStats.alive}{' '}
+              <span className="text-xs font-semibold text-emerald-600 font-sans">Sống</span>
+              <span className="text-slate-400 mx-1">•</span>
+              <span className="text-sm font-bold text-amber-800 dark:text-amber-400">{clanStats.deceased} Khuất</span>
+            </div>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Tổng: {clanStats.total} Thành viên</div>
           </div>
         </div>
       </div>

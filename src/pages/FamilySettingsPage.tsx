@@ -1,7 +1,8 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Shield, MapPin, Building, Copy, Plus, UserCheck, Key, CheckCircle2,
-  Image, Camera, Sparkles, Landmark, Check, Scroll, QrCode, RefreshCw, Lock, Eye, EyeOff
+  Image, Camera, Sparkles, Landmark, Check, Scroll, QrCode, RefreshCw, Lock, Eye, EyeOff, Users, ArrowRight
 } from 'lucide-react';
 import { ROLE_LABELS } from '../lib/constants';
 import { useAuth } from '../contexts/AuthContext';
@@ -10,14 +11,16 @@ import { ClanCovenantModal } from '../components/family/ClanCovenantModal';
 import { PrintableClanQRCodeModal } from '../components/family/PrintableClanQRCodeModal';
 import { ClanPassService } from '../services/security/ClanPassService';
 import { ShortLinkService, ClanShortLink } from '../services/security/ShortLinkService';
+import { FamilyMembership, Profile } from '../types/database';
 
 export const FamilySettingsPage: React.FC = () => {
-  const { user, activeFamily, activeMembership, memberships, updateFamily } = useAuth();
+  const { user, activeFamily, activeMembership, memberships, updateFamily, getFamilyMemberships } = useAuth();
   const currentFamily = activeFamily;
   const [copied, setCopied] = useState(false);
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [isCovenantModalOpen, setIsCovenantModalOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [councilMembers, setCouncilMembers] = useState<Array<FamilyMembership & { profile?: Profile }>>([]);
 
   // Clan Access Pass & PIN states
   const [passToken, setPassToken] = useState<string>(() => currentFamily?.id ? `CP-FAM-${currentFamily.id.slice(0, 8).toUpperCase()}` : 'CP-FAM-CLAN');
@@ -53,25 +56,34 @@ export const FamilySettingsPage: React.FC = () => {
         setAncestralHallAddress(currentFamily.ancestral_hall_address || (currentFamily as any)?.ancestral_hall || '');
         setDescription(currentFamily.description || '');
 
-        const config = await ClanPassService.getFamilyPassConfig(currentFamily.id);
+        const [config, link, mems] = await Promise.all([
+          ClanPassService.getFamilyPassConfig(currentFamily.id),
+          ShortLinkService.getShortLinkByFamily(currentFamily.id, currentFamily.name),
+          getFamilyMemberships ? getFamilyMemberships(currentFamily.id) : Promise.resolve([]),
+        ]);
+
         if (config?.pass_token) {
           setPassToken(config.pass_token);
         }
 
-        let link = await ShortLinkService.getShortLinkByFamily(currentFamily.id, currentFamily.name);
-        if (!link) {
-          const res = await ShortLinkService.createOrUpdateShortLink(currentFamily.id, config.pass_token, undefined, currentFamily.name);
-          link = res.shortLink || null;
+        if (mems) {
+          setCouncilMembers(mems);
         }
-        if (link) {
-          setShortCode(link.short_code);
-          setCustomSlug(link.short_code);
-          setClicksCount(link.clicks_count || 0);
+
+        let activeLink = link;
+        if (!activeLink) {
+          const res = await ShortLinkService.createOrUpdateShortLink(currentFamily.id, config.pass_token, undefined, currentFamily.name);
+          activeLink = res.shortLink || null;
+        }
+        if (activeLink) {
+          setShortCode(activeLink.short_code);
+          setCustomSlug(activeLink.short_code);
+          setClicksCount(activeLink.clicks_count || 0);
         }
       }
     }
     loadPassAndShortLink();
-  }, [currentFamily?.id, currentFamily?.name]);
+  }, [currentFamily?.id, currentFamily?.name, getFamilyMemberships]);
 
   const handleCopyShortLink = () => {
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://giaphagiatoc.vn';
@@ -301,35 +313,59 @@ export const FamilySettingsPage: React.FC = () => {
             </h2>
 
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
-              {familyMemberships.length > 0 ? (
-                familyMemberships.map((m) => (
-                  <div key={m.id} className="py-3 flex items-center justify-between">
-                    <div>
-                      <div className="text-xs font-bold text-slate-900 dark:text-white">
-                        {user?.id === m.user_id ? user.full_name : 'Quản Trị Viên Gia Tộc'}
-                      </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                        {user?.id === m.user_id ? user.email : 'banquantri@giapha.vn'}
-                      </div>
-                    </div>
+              {(councilMembers.length > 0 ? councilMembers : (familyMemberships as Array<FamilyMembership & { profile?: Profile }>)).length > 0 ? (
+                (councilMembers.length > 0 ? councilMembers : (familyMemberships as Array<FamilyMembership & { profile?: Profile }>)).map((m) => {
+                  const isCurrentUser = user?.id === m.user_id;
+                  const memberName = m.profile?.full_name || (isCurrentUser ? user?.full_name : '') || 'Thành Viên Ban Quản Trị';
+                  const memberEmail = m.profile?.email || (isCurrentUser ? user?.email : '') || '';
 
-                    <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${ROLE_LABELS[m.role]?.color}`}>
-                      {ROLE_LABELS[m.role]?.label || m.role}
-                    </span>
-                  </div>
-                ))
+                  return (
+                    <div key={m.id} className="py-3 flex items-center justify-between">
+                      <div>
+                        <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                          <span>{memberName}</span>
+                          {isCurrentUser && (
+                            <span className="text-[10px] px-1.5 py-0.2 bg-emerald-50 dark:bg-emerald-950/60 text-[#166534] dark:text-emerald-300 rounded font-normal">
+                              Bạn
+                            </span>
+                          )}
+                        </div>
+                        {memberEmail && (
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                            {memberEmail}
+                          </div>
+                        )}
+                      </div>
+
+                      <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${ROLE_LABELS[m.role]?.color || 'bg-slate-100 text-slate-700 border-slate-200'}`}>
+                        {ROLE_LABELS[m.role]?.label || m.role}
+                      </span>
+                    </div>
+                  );
+                })
               ) : (
                 <div className="py-3 flex items-center justify-between">
                   <div>
                     <div className="text-xs font-bold text-slate-900 dark:text-white">{user?.full_name || 'Trưởng Tộc'}</div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400">{user?.email || 'truongtoc@giapha.vn'}</div>
+                    {user?.email && <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">{user.email}</div>}
                   </div>
 
-                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${ROLE_LABELS[currentAdminRole]?.color}`}>
+                  <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${ROLE_LABELS[currentAdminRole]?.color || 'bg-amber-50 text-amber-800 border-amber-200'}`}>
                     {ROLE_LABELS[currentAdminRole]?.label || 'Trưởng Tộc'}
                   </span>
                 </div>
               )}
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+              <Link
+                to="/app/settings/permissions"
+                className="w-full py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl flex items-center justify-center space-x-1.5 transition cursor-pointer"
+              >
+                <Users className="w-3.5 h-3.5 text-[#166534] dark:text-emerald-400" />
+                <span>Phân Quyền & Thêm Thành Viên Ban Quản Trị</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
           </div>
         </div>

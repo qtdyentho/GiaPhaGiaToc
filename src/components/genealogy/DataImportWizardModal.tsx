@@ -2,12 +2,13 @@ import React, { useState, useRef } from 'react';
 import { 
   Upload, FileSpreadsheet, CheckCircle2, AlertTriangle, XCircle, 
   ArrowRight, ArrowLeft, ShieldCheck, Download, Loader2, Sparkles, 
-  RotateCcw, FileText, Check, HelpCircle, Eye, Network
+  RotateCcw, FileText, Check, HelpCircle, Eye, Network, Pencil, Save, X, ChevronDown, ChevronUp, SkipForward
 } from 'lucide-react';
 import { 
   DataImportService, 
   RawImportMember, 
   ValidationSummary, 
+  ValidatedImportRow,
   ColumnMappingSuggestion, 
   STANDARD_GENEALOGY_COLUMNS,
   ParseResult
@@ -35,6 +36,12 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
   const [commitResult, setCommitResult] = useState<{ batchId: string; insertedCount: number; message: string } | null>(null);
   const [isUndoing, setIsUndoing] = useState(false);
   const [undoSuccess, setUndoSuccess] = useState(false);
+
+  // Inline row editing state
+  const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
+  const [editingFields, setEditingFields] = useState<Partial<RawImportMember>>({});
+  const [showErrorsOnly, setShowErrorsOnly] = useState(false);
+  const [errorAccordionOpen, setErrorAccordionOpen] = useState(true);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -103,6 +110,50 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
     } else {
       setParseError(result.error || result.message);
     }
+  };
+
+  // Partial import: skip error rows, commit only valid/warning rows
+  const handlePartialCommit = async () => {
+    if (!validation || !activeFamily?.id) return;
+    const validOnly = {
+      ...validation,
+      rows: validation.rows.filter((r) => r.status !== 'ERROR'),
+    };
+    setIsCommitting(true);
+    const result = await DataImportService.commitImport(activeFamily.id, validOnly);
+    setIsCommitting(false);
+    if (result.success) {
+      setCommitResult(result);
+      setStep(5);
+      onSuccess();
+    } else {
+      setParseError(result.error || result.message);
+    }
+  };
+
+  // Start editing a row inline
+  const handleStartEdit = (rowIndex: number, row: ValidatedImportRow) => {
+    setEditingRowIndex(rowIndex);
+    setEditingFields({ ...row.data });
+  };
+
+  // Save edited row and re-validate the whole dataset
+  const handleSaveEdit = () => {
+    if (editingRowIndex === null || !validation) return;
+    const updatedRows = validation.rows.map((r, idx) => {
+      if (idx !== editingRowIndex) return r;
+      return { ...r, data: { ...r.data, ...editingFields } };
+    });
+    const updatedMembers = updatedRows.map((r) => r.data);
+    const revalidated = DataImportService.validateImportData(updatedMembers);
+    setValidation(revalidated);
+    setEditingRowIndex(null);
+    setEditingFields({});
+  };
+
+  const handleCancelEdit = () => {
+    setEditingRowIndex(null);
+    setEditingFields({});
   };
 
   const handleUndoBatch = async () => {
@@ -360,8 +411,159 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                 </div>
               </div>
 
+              {/* Error Breakdown Accordion — chỉ hiện nếu có lỗi */}
+              {validation.errorRows > 0 && (
+                <div className="border border-rose-200 dark:border-rose-800 rounded-2xl overflow-hidden">
+                  <button
+                    onClick={() => setErrorAccordionOpen((v) => !v)}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-rose-50 dark:bg-rose-950/50 text-rose-800 dark:text-rose-300 font-bold text-xs cursor-pointer hover:bg-rose-100 dark:hover:bg-rose-950/70 transition"
+                  >
+                    <span className="flex items-center gap-2">
+                      <XCircle className="w-4 h-4" />
+                      <span>Chi tiết {validation.errorRows} dòng lỗi — Bấm để xem và sửa tay</span>
+                    </span>
+                    {errorAccordionOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
+                  {errorAccordionOpen && (
+                    <div className="divide-y divide-rose-100 dark:divide-rose-900/60 max-h-60 overflow-y-auto">
+                      {validation.rows
+                        .map((row, idx) => ({ row, idx }))
+                        .filter(({ row }) => row.status === 'ERROR')
+                        .map(({ row, idx }) => (
+                          <div key={idx} className="px-4 py-3 bg-white dark:bg-slate-900 space-y-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 space-y-1">
+                                <div className="text-[11px] font-bold text-rose-800 dark:text-rose-300 flex items-center gap-1.5">
+                                  <span className="px-1.5 py-0.5 bg-rose-100 dark:bg-rose-950/60 rounded text-[10px] font-mono">
+                                    Dòng {row.rowNumber}
+                                  </span>
+                                  <span className="text-slate-700 dark:text-slate-200">{row.data.fullName || '(Chưa có tên)'}</span>
+                                </div>
+                                {row.errors.map((err, ei) => (
+                                  <div key={ei} className="text-[11px] text-rose-700 dark:text-rose-400 flex items-start gap-1.5 pl-2">
+                                    <span className="text-rose-500 mt-0.5">✗</span>
+                                    <span>{err}</span>
+                                  </div>
+                                ))}
+                                {row.warnings.map((warn, wi) => (
+                                  <div key={wi} className="text-[11px] text-amber-700 dark:text-amber-400 flex items-start gap-1.5 pl-2">
+                                    <span className="text-amber-500 mt-0.5">⚠</span>
+                                    <span>{warn}</span>
+                                  </div>
+                                ))}
+                              </div>
+                              <button
+                                onClick={() => handleStartEdit(idx, row)}
+                                className="shrink-0 px-2.5 py-1.5 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-950 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-800 rounded-xl text-[11px] font-bold flex items-center gap-1 cursor-pointer transition"
+                              >
+                                <Pencil className="w-3 h-3" />
+                                Sửa
+                              </button>
+                            </div>
+
+                            {/* Inline row editor — mở khi user bấm Sửa */}
+                            {editingRowIndex === idx && (
+                              <div className="mt-2 p-3 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl space-y-2.5">
+                                <div className="text-[11px] font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+                                  <Pencil className="w-3 h-3" />
+                                  Chỉnh sửa trực tiếp — Dòng {row.rowNumber}
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                  <div>
+                                    <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase block mb-0.5">Họ và Tên <span className="text-rose-500">*</span></label>
+                                    <input
+                                      className="w-full text-xs px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                      value={editingFields.fullName ?? ''}
+                                      onChange={(e) => setEditingFields((f) => ({ ...f, fullName: e.target.value }))}
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase block mb-0.5">Giới Tính <span className="text-rose-500">*</span></label>
+                                    <select
+                                      className="w-full text-xs px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                      value={editingFields.gender ?? ''}
+                                      onChange={(e) => setEditingFields((f) => ({ ...f, gender: e.target.value as any }))}
+                                    >
+                                      <option value="MALE">Nam</option>
+                                      <option value="FEMALE">Nữ</option>
+                                    </select>
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase block mb-0.5">Đời (Thế Hệ) <span className="text-rose-500">*</span></label>
+                                    <input
+                                      type="number"
+                                      min={1} max={30}
+                                      className="w-full text-xs px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                      value={editingFields.generationNumber ?? ''}
+                                      onChange={(e) => setEditingFields((f) => ({ ...f, generationNumber: Number(e.target.value) }))}
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase block mb-0.5">Chi Phái <span className="text-rose-500">*</span></label>
+                                    <input
+                                      className="w-full text-xs px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                      value={editingFields.branchName ?? ''}
+                                      onChange={(e) => setEditingFields((f) => ({ ...f, branchName: e.target.value }))}
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase block mb-0.5">Năm Sinh</label>
+                                    <input
+                                      type="number"
+                                      className="w-full text-xs px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                      value={editingFields.birthYear ?? ''}
+                                      onChange={(e) => setEditingFields((f) => ({ ...f, birthYear: Number(e.target.value) || undefined }))}
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase block mb-0.5">Tên Cha (hoặc Mã cây)</label>
+                                    <input
+                                      className="w-full text-xs px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-400"
+                                      value={editingFields.parentName ?? editingFields.parentCode ?? ''}
+                                      onChange={(e) => setEditingFields((f) => ({ ...f, parentName: e.target.value, parentCode: undefined }))}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 pt-1">
+                                  <button
+                                    onClick={handleSaveEdit}
+                                    className="px-3 py-1.5 bg-[#166534] hover:bg-[#14532d] text-white font-bold text-[11px] rounded-lg flex items-center gap-1 cursor-pointer transition"
+                                  >
+                                    <Save className="w-3 h-3" />
+                                    Lưu & Tái Kiểm Tra
+                                  </button>
+                                  <button
+                                    onClick={handleCancelEdit}
+                                    className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-[11px] rounded-lg flex items-center gap-1 cursor-pointer transition"
+                                  >
+                                    <X className="w-3 h-3" />
+                                    Hủy
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Table filter toggle */}
+              <div className="flex items-center justify-between">
+                <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                  Xem trước dữ liệu ({validation.rows.length} dòng)
+                </div>
+                <button
+                  onClick={() => setShowErrorsOnly((v) => !v)}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition cursor-pointer ${showErrorsOnly ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800' : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}
+                >
+                  {showErrorsOnly ? '⚡ Chỉ dòng lỗi' : 'Tất cả dòng'}
+                </button>
+              </div>
+
               {/* Bảng Xem trước Cây Phả Hệ Phân Cấp & Dữ Liệu Chi Tiết */}
-              <div className="max-h-72 overflow-x-auto overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-2xl">
+              <div className="max-h-64 overflow-x-auto overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-2xl">
                 <table className="w-full text-left text-xs whitespace-nowrap">
                   <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase sticky top-0">
                     <tr>
@@ -381,100 +583,135 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {validation.rows.map((row) => (
-                      <tr key={row.rowNumber} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
-                        <td className="p-2.5">
-                          {row.data.treeCode ? (
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                              {row.data.treeCode}
-                            </span>
-                          ) : (
-                            <span className="text-slate-400">#{row.rowNumber}</span>
-                          )}
-                        </td>
-                        <td className="p-2.5 font-bold text-slate-900 dark:text-white">
-                          <div className="flex items-center gap-1.5">
-                            <span>{row.data.fullName}</span>
-                            {row.data.relationType && (
-                              <span className="text-[9px] px-1.5 py-0.2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded font-normal">
-                                {row.data.relationType}
+                    {validation.rows
+                      .filter((row) => !showErrorsOnly || row.status === 'ERROR')
+                      .map((row, displayIdx) => {
+                        const realIdx = validation.rows.indexOf(row);
+                        return (
+                          <tr
+                            key={row.rowNumber}
+                            className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 transition ${row.status === 'ERROR' ? 'bg-rose-50/40 dark:bg-rose-950/20' : row.status === 'WARNING' ? 'bg-amber-50/30 dark:bg-amber-950/10' : ''}`}
+                          >
+                            <td className="p-2.5">
+                              {row.data.treeCode ? (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                  {row.data.treeCode}
+                                </span>
+                              ) : (
+                                <span className="text-slate-400">#{row.rowNumber}</span>
+                              )}
+                            </td>
+                            <td className="p-2.5 font-bold text-slate-900 dark:text-white">
+                              <div className="flex items-center gap-1.5">
+                                <span>{row.data.fullName}</span>
+                                {row.data.relationType && (
+                                  <span className="text-[9px] px-1.5 py-0.2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded font-normal">
+                                    {row.data.relationType}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-2.5 text-slate-600 dark:text-slate-400">{row.data.courtesyName || '—'}</td>
+                            <td className="p-2.5">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${row.data.gender === 'MALE' ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300' : 'bg-pink-50 dark:bg-pink-950/60 text-pink-700 dark:text-pink-300'}`}>
+                                {row.data.gender === 'MALE' ? 'Nam' : 'Nữ'}
                               </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="p-2.5 text-slate-600 dark:text-slate-400">{row.data.courtesyName || '—'}</td>
-                        <td className="p-2.5">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${row.data.gender === 'MALE' ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300' : 'bg-pink-50 dark:bg-pink-950/60 text-pink-700 dark:text-pink-300'}`}>
-                            {row.data.gender === 'MALE' ? 'Nam' : 'Nữ'}
-                          </span>
-                        </td>
-                        <td className="p-2.5 font-semibold text-slate-800 dark:text-slate-200">
-                          <span className="inline-flex items-center gap-1">
-                            <span>Đời {row.data.generationNumber}</span>
-                            {row.data.isAutoInferredGen && (
-                              <span className="text-[9px] px-1.5 py-0.2 bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 rounded font-normal">
-                                ✨ Tự động
+                            </td>
+                            <td className="p-2.5 font-semibold text-slate-800 dark:text-slate-200">
+                              <span className="inline-flex items-center gap-1">
+                                <span>Đời {row.data.generationNumber}</span>
+                                {row.data.isAutoInferredGen && (
+                                  <span className="text-[9px] px-1.5 py-0.2 bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 rounded font-normal">
+                                    ✨ Tự động
+                                  </span>
+                                )}
                               </span>
-                            )}
-                          </span>
-                        </td>
-                        <td className="p-2.5">{row.data.branchName}</td>
-                        <td className="p-2.5 text-slate-600 dark:text-slate-400">
-                          {row.data.parentCode || row.data.parentName || '— (Khởi Tổ)'}
-                        </td>
-                        <td className="p-2.5 text-slate-600 dark:text-slate-400">{row.data.motherCode || '—'}</td>
-                        <td className="p-2.5 text-slate-600 dark:text-slate-400">{row.data.spouseCode || row.data.spouseName || '—'}</td>
-                        <td className="p-2.5 text-slate-600 dark:text-slate-400">
-                          {row.data.birthYear ? `${row.data.birthYear}${row.data.birthTime ? ` (${row.data.birthTime})` : ''}` : '—'}
-                        </td>
-                        <td className="p-2.5 text-slate-600 dark:text-slate-400">
-                          {row.data.deathLunarDay && row.data.deathLunarMonth 
-                            ? `${row.data.deathLunarDay}/${row.data.deathLunarMonth} Âm${row.data.deathTime ? ` (${row.data.deathTime})` : ''}` 
-                            : (row.data.lifeStatus === 'ALIVE' ? <span className="text-emerald-600 font-semibold">Còn sống</span> : '—')}
-                        </td>
-                        <td className="p-2.5 text-slate-600 dark:text-slate-400 truncate max-w-[120px]">{row.data.burialPlace || '—'}</td>
-                        <td className="p-2.5 text-right">
-                          {row.status === 'VALID' && (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
-                              HỢP LỆ
-                            </span>
-                          )}
-                          {row.status === 'WARNING' && (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300">
-                              CẢNH BÁO
-                            </span>
-                          )}
-                          {row.status === 'ERROR' && (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-300">
-                              LỖI
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                            </td>
+                            <td className="p-2.5">{row.data.branchName}</td>
+                            <td className="p-2.5 text-slate-600 dark:text-slate-400">
+                              {row.data.parentCode || row.data.parentName || '— (Khởi Tổ)'}
+                            </td>
+                            <td className="p-2.5 text-slate-600 dark:text-slate-400">{row.data.motherCode || '—'}</td>
+                            <td className="p-2.5 text-slate-600 dark:text-slate-400">{row.data.spouseCode || row.data.spouseName || '—'}</td>
+                            <td className="p-2.5 text-slate-600 dark:text-slate-400">
+                              {row.data.birthYear ? `${row.data.birthYear}${row.data.birthTime ? ` (${row.data.birthTime})` : ''}` : '—'}
+                            </td>
+                            <td className="p-2.5 text-slate-600 dark:text-slate-400">
+                              {row.data.deathLunarDay && row.data.deathLunarMonth 
+                                ? `${row.data.deathLunarDay}/${row.data.deathLunarMonth} Âm${row.data.deathTime ? ` (${row.data.deathTime})` : ''}` 
+                                : (row.data.lifeStatus === 'ALIVE' ? <span className="text-emerald-600 font-semibold">Còn sống</span> : '—')}
+                            </td>
+                            <td className="p-2.5 text-slate-600 dark:text-slate-400 truncate max-w-[120px]">{row.data.burialPlace || '—'}</td>
+                            <td className="p-2.5 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                {row.status === 'VALID' && (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
+                                    HỢP LỆ
+                                  </span>
+                                )}
+                                {row.status === 'WARNING' && (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300">
+                                    CẢNH BÁO
+                                  </span>
+                                )}
+                                {row.status === 'ERROR' && (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-300">
+                                    LỖI
+                                  </span>
+                                )}
+                                {row.status === 'ERROR' && editingRowIndex !== realIdx && (
+                                  <button
+                                    onClick={() => handleStartEdit(realIdx, row)}
+                                    className="p-1 hover:bg-amber-50 dark:hover:bg-amber-950/60 text-amber-700 dark:text-amber-400 rounded-lg cursor-pointer transition"
+                                    title="Sửa dòng này"
+                                  >
+                                    <Pencil className="w-3 h-3" />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>
 
-              <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button 
                   onClick={() => setStep(2)} 
-                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl transition cursor-pointer"
+                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl transition cursor-pointer text-xs"
                 >
                   ← Ghép Cột
                 </button>
-                <button
-                  disabled={!validation.canCommit || isCommitting}
-                  onClick={handleCommit}
-                  className={`px-6 py-2.5 font-bold rounded-xl inline-flex items-center space-x-2 shadow-md transition cursor-pointer ${
-                    validation.canCommit && !isCommitting
-                      ? 'bg-[#166534] hover:bg-[#14532d] text-white'
-                      : 'bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed'
-                  }`}
-                >
-                  {isCommitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                  <span>{isCommitting ? 'Đang Nạp Vào Supabase...' : `Xác Nhận & Nạp ${validation.validRows + validation.warningRows} Thành Viên`}</span>
-                </button>
+
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                  {/* Partial import button — chỉ hiện khi có lỗi nhưng có ít nhất 1 dòng hợp lệ */}
+                  {validation.errorRows > 0 && (validation.validRows + validation.warningRows) > 0 && (
+                    <button
+                      disabled={isCommitting}
+                      onClick={handlePartialCommit}
+                      className="px-4 py-2 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-950 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-800 font-bold rounded-xl inline-flex items-center gap-1.5 transition cursor-pointer text-xs shadow-sm"
+                    >
+                      {isCommitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <SkipForward className="w-3.5 h-3.5" />}
+                      <span>Bỏ Qua {validation.errorRows} Dòng Lỗi &amp; Nạp {validation.validRows + validation.warningRows} Dòng Hợp Lệ</span>
+                    </button>
+                  )}
+
+                  {/* Full commit button */}
+                  <button
+                    disabled={!validation.canCommit || isCommitting}
+                    onClick={handleCommit}
+                    className={`px-5 py-2 font-bold rounded-xl inline-flex items-center gap-1.5 shadow-md transition cursor-pointer text-xs ${
+                      validation.canCommit && !isCommitting
+                        ? 'bg-[#166534] hover:bg-[#14532d] text-white'
+                        : 'bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed'
+                    }`}
+                  >
+                    {isCommitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                    <span>{isCommitting ? 'Đang Nạp Vào Supabase...' : `Xác Nhận & Nạp ${validation.validRows + validation.warningRows} Thành Viên`}</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -512,17 +749,14 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                 </div>
               )}
 
-              <div className="pt-3">
-                <button 
-                  onClick={() => { onSuccess(); onClose(); }} 
-                  className="px-8 py-3 bg-[#166534] hover:bg-[#14532d] text-white text-xs font-bold rounded-xl transition shadow-md cursor-pointer"
-                >
-                  Hoàn Tất & Xem Cây Gia Phả
-                </button>
-              </div>
+              <button
+                onClick={onClose}
+                className="px-6 py-2.5 bg-[#166534] hover:bg-[#14532d] text-white font-bold rounded-xl shadow-md transition cursor-pointer mx-auto"
+              >
+                Đóng & Xem Danh Sách Thành Viên
+              </button>
             </div>
           )}
-
         </div>
       </div>
     </div>

@@ -996,8 +996,19 @@ export class DataImportService {
         }
 
         if (isUUID(targetFamilyUUID)) {
+          const validRows = validation.rows.filter((r) => r.status !== 'ERROR');
+          if (validRows.length === 0) {
+            return {
+              success: false,
+              batchId: validation.batchId,
+              insertedCount: 0,
+              message: 'Tất cả các dòng đều có lỗi dữ liệu. Vui lòng chỉnh sửa các dòng lỗi trước khi nạp.',
+              error: 'NO_VALID_ROWS',
+            };
+          }
+
           // 1. Đảm bảo các thế hệ (generations) tồn tại trong CSDL
-          const genNumbers = Array.from(new Set(validation.rows.map((r) => r.data.generationNumber).filter(Boolean)));
+          const genNumbers = Array.from(new Set(validRows.map((r) => r.data.generationNumber).filter(Boolean)));
           const { data: existingGens } = await supabase
             .from('generations')
             .select('*')
@@ -1032,7 +1043,7 @@ export class DataImportService {
           }
 
           // 2. Đảm bảo các chi phái (branches) tồn tại trong CSDL (với cột code bắt buộc)
-          const branchNames = Array.from(new Set(validation.rows.map((r) => r.data.branchName).filter(Boolean)));
+          const branchNames = Array.from(new Set(validRows.map((r) => r.data.branchName).filter(Boolean)));
           const { data: existingBranches } = await supabase
             .from('branches')
             .select('*')
@@ -1069,7 +1080,7 @@ export class DataImportService {
           }
 
           // 3. Chuẩn bị insert danh sách thành viên vào bảng members (Khớp 100% schema members)
-          const memberInsertPayload = validation.rows.map((r) => {
+          const memberInsertPayload = validRows.map((r) => {
             const m = r.data;
             const isDeceased = m.lifeStatus === 'DECEASED';
 
@@ -1124,7 +1135,7 @@ export class DataImportService {
 
           (insertedMembers || []).forEach((im: any, idx: number) => {
             const fullName = im.full_name.trim();
-            const rawRow = validation.rows[idx]?.data;
+            const rawRow = validRows[idx]?.data;
             const genNum = rawRow?.generationNumber || 1;
             nameToIdMap.set(fullName, im.id);
             normNameToIdMap.set(normalizeForMatch(fullName), { id: im.id, genNum });
@@ -1169,7 +1180,7 @@ export class DataImportService {
           const relationshipsToInsert: any[] = [];
           const memorialsToInsert: any[] = [];
 
-          validation.rows.forEach((r, idx) => {
+          validRows.forEach((r, idx) => {
             const m = r.data;
             const currentMemberId = insertedMembers?.[idx]?.id || nameToIdMap.get(m.fullName.trim()) || findMatchingMemberId(m.fullName);
             if (!currentMemberId) return;
@@ -1258,11 +1269,11 @@ export class DataImportService {
             try {
               await supabase.from('member_relationships').insert(relationshipsToInsert);
             } catch (relErr) {
-              console.warn('Lưu một số quan hệ bị trùng:', relErr);
+              console.warn('Cảnh báo khi lưu quan hệ:', relErr);
             }
           }
 
-          // Chèn memorial dates
+          // Chèn memorials với try-catch an toàn
           if (memorialsToInsert.length > 0) {
             try {
               await supabase.from('memorial_dates').insert(memorialsToInsert);
