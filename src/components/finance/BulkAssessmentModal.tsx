@@ -109,21 +109,21 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto font-sans">
-      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-amber-50 via-slate-50 to-white border-b border-slate-200 flex items-center justify-between">
+        <div className="px-6 py-4 bg-gradient-to-r from-amber-50 via-slate-50 to-white dark:from-slate-800 dark:via-slate-800/90 dark:to-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-800">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 flex items-center justify-center text-amber-800 dark:text-amber-300">
               <Layers className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">Lập Định Mức Thu Phí Thành Viên</h3>
-              <p className="text-xs text-slate-500">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Lập Định Mức Thu Phí Thành Viên</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {step === 1 ? 'Bước 1: Thiết lập tiêu chí & mức thu cơ bản' : 'Bước 2: Xem trước & Tùy chỉnh từng thành viên'}
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -131,7 +131,7 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
         {/* Form Body */}
         <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
           {error && (
-            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs">
               {error}
             </div>
           )}
@@ -140,7 +140,7 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
             /* STEP 1: CONFIG */
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   Tên đợt thu <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -148,18 +148,18 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="VD: Đóng góp thường niên 2026, Quỹ sửa chữa từ đường..."
-                  className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-none focus:border-heritage-green"
+                  className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:border-emerald-600"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">Quỹ thụ hưởng</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Quỹ thụ hưởng</label>
                   <select
                     value={fundId}
                     onChange={(e) => setFundId(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:border-heritage-green"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-xs focus:outline-none focus:border-emerald-600"
                   >
                     {funds.map((f) => (
                       <option key={f.id} value={f.id}>
@@ -170,11 +170,11 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">Danh mục nguồn thu</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Danh mục nguồn thu</label>
                   <select
                     value={categoryId}
                     onChange={(e) => setCategoryId(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:border-heritage-green"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-xs focus:outline-none focus:border-emerald-600"
                   >
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -187,17 +187,17 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
 
               {/* Phạm vi phân bổ */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
                   Phạm vi phân bổ
                 </label>
                 <div className="grid grid-cols-3 gap-3">
                   <button
                     type="button"
                     onClick={() => setTargetScope('ALL')}
-                    className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
+                    className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
                       targetScope === 'ALL'
-                        ? 'bg-amber-50 border-amber-500 text-amber-900 font-bold shadow-sm'
-                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                        ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-500 text-amber-900 dark:text-amber-200 font-bold shadow-sm'
+                        : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                     }`}
                   >
                     <Users className="w-4 h-4" />
@@ -207,10 +207,10 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setTargetScope('BRANCH')}
-                    className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
+                    className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
                       targetScope === 'BRANCH'
-                        ? 'bg-amber-50 border-amber-500 text-amber-900 font-bold shadow-sm'
-                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                        ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-500 text-amber-900 dark:text-amber-200 font-bold shadow-sm'
+                        : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                     }`}
                   >
                     <Layers className="w-4 h-4" />
@@ -220,10 +220,10 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setTargetScope('GENERATION')}
-                    className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
+                    className={`p-3 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
                       targetScope === 'GENERATION'
-                        ? 'bg-amber-50 border-amber-500 text-amber-900 font-bold shadow-sm'
-                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                        ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-500 text-amber-900 dark:text-amber-200 font-bold shadow-sm'
+                        : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                     }`}
                   >
                     <Calendar className="w-4 h-4" />
@@ -234,11 +234,11 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
 
               {targetScope === 'BRANCH' && (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">Chọn Chi Phái</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Chọn Chi Phái</label>
                   <select
                     value={selectedBranchId}
                     onChange={(e) => setSelectedBranchId(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:border-heritage-green"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-xs focus:outline-none focus:border-emerald-600"
                   >
                     {branches.map((b) => (
                       <option key={b.id} value={b.id}>
@@ -251,11 +251,11 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
 
               {targetScope === 'GENERATION' && (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">Chọn Thế Hệ (Đời)</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Chọn Thế Hệ (Đời)</label>
                   <select
                     value={selectedGenId}
                     onChange={(e) => setSelectedGenId(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:border-heritage-green"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-xs focus:outline-none focus:border-emerald-600"
                   >
                     {generations.map((g) => (
                       <option key={g.id} value={g.id}>
@@ -268,7 +268,7 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                     Mức thu mặc định (VNĐ) <span className="text-rose-500">*</span>
                   </label>
                   <input
@@ -278,24 +278,24 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
                     value={amountDue}
                     onChange={(e) => setAmountDue(e.target.value)}
                     placeholder="VD: 500000"
-                    className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-none focus:border-heritage-green"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-sm focus:outline-none focus:border-emerald-600"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">Hạn chót đóng góp</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Hạn chót đóng góp</label>
                   <input
                     type="date"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:border-heritage-green"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-xs focus:outline-none focus:border-emerald-600"
                   />
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+              <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
                 <span>
                   <strong>Quy tắc nghiệp vụ:</strong> Tạo nghĩa vụ thu (Assessment) <strong>KHÔNG</strong> làm tăng số dư quỹ ngay. Số dư quỹ chỉ tăng khi thành viên thực tế nộp tiền và được đối soát vào Sổ cái (Ledger).
                 </span>
@@ -304,14 +304,14 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
           ) : (
             /* STEP 2: PREVIEW & CUSTOMIZE */
             <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                 <div>
-                  <span className="text-xs text-slate-500">Số lượng thành viên áp dụng:</span>
-                  <p className="text-base font-bold text-slate-900">{eligibleMembers.length} thành viên</p>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Số lượng thành viên áp dụng:</span>
+                  <p className="text-base font-bold text-slate-900 dark:text-white">{eligibleMembers.length} thành viên</p>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs text-slate-500">Tổng dự thu:</span>
-                  <p className="text-base font-bold text-amber-700">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Tổng dự thu:</span>
+                  <p className="text-base font-bold text-amber-700 dark:text-amber-400">
                     {totalEstimatedAmount.toLocaleString()} ₫
                   </p>
                 </div>
@@ -323,17 +323,17 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
                   return (
                     <div
                       key={m.id}
-                      className="p-2.5 rounded-xl bg-white border border-slate-200 flex items-center justify-between gap-3 text-xs shadow-sm"
+                      className="p-2.5 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3 text-xs shadow-sm"
                     >
                       <div>
-                        <span className="font-semibold text-slate-900">{m.full_name}</span>
-                        <span className="text-slate-500 text-[11px] block">
+                        <span className="font-semibold text-slate-900 dark:text-white">{m.full_name}</span>
+                        <span className="text-slate-500 dark:text-slate-400 text-[11px] block">
                           {branches.find((b) => b.id === m.branch_id)?.name || 'Chi Trưởng'}
                         </span>
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="text-slate-500 text-[11px]">Mức thu:</span>
+                        <span className="text-slate-500 dark:text-slate-400 text-[11px]">Mức thu:</span>
                         <input
                           type="number"
                           step="10000"
@@ -342,29 +342,29 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
                             const val = Number(e.target.value);
                             setOverrides((prev) => ({ ...prev, [m.id]: val }));
                           }}
-                          className="w-28 px-2 py-1 bg-white border border-slate-300 rounded-lg text-slate-900 text-right focus:outline-none focus:border-heritage-green"
+                          className="w-28 px-2 py-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-right focus:outline-none focus:border-emerald-600"
                         />
-                        <span className="text-slate-500">₫</span>
+                        <span className="text-slate-500 dark:text-slate-400">₫</span>
                       </div>
                     </div>
                   );
                 })}
               </div>
 
-              <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span>Toàn bộ bản ghi sẽ được tạo nguyên tử trong một phiên giao dịch duy nhất.</span>
               </div>
             </div>
           )}
 
           {/* Footer Actions */}
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
             {step === 2 ? (
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 ← Quay lại Bước 1
               </button>
@@ -376,7 +376,7 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 Hủy
               </button>
@@ -385,7 +385,7 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
                 >
                   <span>Xem Trước ({eligibleMembers.length} người)</span>
                   <ArrowRight className="w-4 h-4" />
@@ -395,7 +395,7 @@ export const BulkAssessmentModal: React.FC<BulkAssessmentModalProps> = ({
                   type="button"
                   onClick={handleCommit}
                   disabled={loading}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl bg-[#166534] hover:bg-[#14532d] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
                 >
                   {loading ? (
                     <span>Đang khởi tạo...</span>

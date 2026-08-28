@@ -543,13 +543,13 @@ export const FamilyCalendarPage: React.FC = () => {
 
       {/* ══ 3. Upcoming Memorials Panel ══════════════════════════════════ */}
       {soonMemorials.length > 0 && (
-        <div className="bg-white border border-amber-200 rounded-2xl p-4 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800/60 rounded-2xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Bell className="w-4 h-4 text-amber-600" />
-              Ngày Giỗ Họ Sắp Diễn Ra <span className="text-slate-400 font-normal">(trong 90 ngày tới)</span>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Bell className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              Ngày Giỗ Họ Sắp Diễn Ra <span className="text-slate-400 dark:text-slate-400 font-normal">(trong 90 ngày tới)</span>
             </h2>
-            <span className="text-[10px] font-semibold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full border border-amber-200">
+            <span className="text-[10px] font-semibold bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
               {soonMemorials.length} mục
             </span>
           </div>
@@ -558,24 +558,24 @@ export const FamilyCalendarPage: React.FC = () => {
               <div
                 key={mem.id}
                 className={`p-3 rounded-xl border flex items-start justify-between gap-2 ${
-                  mem.daysRemaining === 0 ? 'bg-rose-50 border-rose-300'
-                  : mem.daysRemaining <= 7 ? 'bg-orange-50 border-orange-200'
-                  : 'bg-amber-50/60 border-amber-200/80'
+                  mem.daysRemaining === 0 ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800'
+                  : mem.daysRemaining <= 7 ? 'bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-800'
+                  : 'bg-amber-50/60 dark:bg-slate-800/80 border-amber-200/80 dark:border-slate-700'
                 }`}
               >
                 <div className="min-w-0">
-                  <div className="text-xs font-bold text-slate-900 truncate flex items-center gap-1">
+                  <div className="text-xs font-bold text-slate-900 dark:text-white truncate flex items-center gap-1">
                     <span>🕯️</span>
                     <span className="truncate">{mem.title}</span>
                   </div>
-                  <div className="text-[10px] text-amber-800 font-semibold mt-0.5">
+                  <div className="text-[10px] text-amber-800 dark:text-amber-300 font-semibold mt-0.5">
                     Ngày {mem.lunar_day}/{mem.lunar_month} Âm Lịch{mem.is_leap_month ? ' (Nhuận)' : ''}
                   </div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                     {mem.solarDate ? formatDate(mem.solarDate) : ''}
                   </div>
                   {(mem.branch_name || mem.generation_name) && (
-                    <div className="text-[9px] text-slate-400 mt-0.5">
+                    <div className="text-[9px] text-slate-400 dark:text-slate-500 mt-0.5">
                       {[mem.generation_name, mem.branch_name].filter(Boolean).join(' • ')}
                     </div>
                   )}
@@ -588,13 +588,13 @@ export const FamilyCalendarPage: React.FC = () => {
       )}
 
       {/* ══ 4. Toolbar ════════════════════════════════════════════════════ */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Left: Branch filter + type filter */}
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => { setFilterMode('ALL'); setSelectedBranchId(''); }}
             className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
-              filterMode === 'ALL' ? 'bg-[#2E1E6B] text-white shadow-sm' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+              filterMode === 'ALL' ? 'bg-[#2E1E6B] dark:bg-emerald-700 text-white shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
             }`}
           >
             Toàn dòng họ
@@ -605,7 +605,7 @@ export const FamilyCalendarPage: React.FC = () => {
               if (!selectedBranchId && branches.length > 0) setSelectedBranchId(branches[0].id);
             }}
             className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
-              filterMode === 'BRANCH' ? 'bg-[#2E1E6B] text-white shadow-sm' : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+              filterMode === 'BRANCH' ? 'bg-[#2E1E6B] dark:bg-emerald-700 text-white shadow-sm' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
             }`}
           >
             <TreePine className="w-3 h-3 inline mr-1" />
@@ -615,19 +615,19 @@ export const FamilyCalendarPage: React.FC = () => {
             <select
               value={selectedBranchId}
               onChange={(e) => setSelectedBranchId(e.target.value)}
-              className="px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-full text-xs text-slate-900 font-bold focus:outline-none focus:border-[#2E1E6B]"
+              className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-full text-xs text-slate-900 dark:text-white font-bold focus:outline-none focus:border-[#2E1E6B]"
             >
               {branches.map((b) => (
                 <option key={b.id} value={b.id}>{b.name}</option>
               ))}
             </select>
           )}
-          <div className="flex items-center space-x-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700">
+          <div className="flex items-center space-x-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200">
             <Filter className="w-3.5 h-3.5 text-slate-400" />
             <select
               value={selectedFilter}
               onChange={(e) => setSelectedFilter(e.target.value)}
-              className="bg-transparent focus:outline-none font-bold"
+              className="bg-transparent focus:outline-none font-bold text-slate-900 dark:text-white"
             >
               <option value="ALL">Tất cả</option>
               <option value="MEMORIAL">Chỉ ngày giỗ</option>
@@ -644,18 +644,18 @@ export const FamilyCalendarPage: React.FC = () => {
               <button
                 onClick={handlePrevMonth}
                 aria-label="Tháng trước"
-                className="p-2 hover:bg-slate-100 rounded-xl text-slate-600 border border-slate-200 transition cursor-pointer"
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
 
-              <div className="flex items-center gap-1 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-center shadow-2xs">
+              <div className="flex items-center gap-1 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-center shadow-2xs">
                 {/* Chọn Tháng trực tiếp (1 - 12) */}
                 <select
                   value={currentMonth}
                   onChange={(e) => setCurrentMonth(Number(e.target.value))}
                   aria-label="Chọn tháng"
-                  className="text-xs font-bold text-slate-900 bg-transparent border-none focus:outline-none cursor-pointer py-0.5"
+                  className="text-xs font-bold text-slate-900 dark:text-white bg-transparent border-none focus:outline-none cursor-pointer py-0.5"
                 >
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                     <option key={m} value={m}>
@@ -663,13 +663,13 @@ export const FamilyCalendarPage: React.FC = () => {
                     </option>
                   ))}
                 </select>
-                <span className="text-slate-300 font-bold">/</span>
+                <span className="text-slate-300 dark:text-slate-600 font-bold">/</span>
                 {/* Chọn Năm trực tiếp (1900 - 2050) */}
                 <select
                   value={currentYear}
                   onChange={(e) => setCurrentYear(Number(e.target.value))}
                   aria-label="Chọn năm"
-                  className="text-xs font-black text-slate-900 bg-transparent border-none focus:outline-none cursor-pointer py-0.5"
+                  className="text-xs font-black text-slate-900 dark:text-white bg-transparent border-none focus:outline-none cursor-pointer py-0.5"
                 >
                   {YEAR_OPTIONS.map((y) => (
                     <option key={y} value={y}>
@@ -682,7 +682,7 @@ export const FamilyCalendarPage: React.FC = () => {
               <button
                 onClick={handleNextMonth}
                 aria-label="Tháng sau"
-                className="p-2 hover:bg-slate-100 rounded-xl text-slate-600 border border-slate-200 transition cursor-pointer"
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition cursor-pointer"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -690,7 +690,7 @@ export const FamilyCalendarPage: React.FC = () => {
               {(currentYear !== todayInfo.solarYear || currentMonth !== todayInfo.solarMonth) && (
                 <button
                   onClick={handleToday}
-                  className="px-2.5 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 bg-emerald-50 border border-emerald-200 rounded-xl transition cursor-pointer"
+                  className="px-2.5 py-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl transition cursor-pointer"
                   title="Về tháng hiện tại"
                 >
                   Hôm nay
@@ -706,25 +706,25 @@ export const FamilyCalendarPage: React.FC = () => {
           )}
 
           {/* View mode toggle */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
             <button
               onClick={() => setViewMode('MONTH')}
               title="Lịch tháng"
-              className={`p-1.5 rounded-lg transition ${viewMode === 'MONTH' ? 'bg-white text-[#166534] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`p-1.5 rounded-lg transition ${viewMode === 'MONTH' ? 'bg-white dark:bg-slate-700 text-[#166534] dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
             >
               <Grid className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('LIST')}
               title="Danh sách tháng"
-              className={`p-1.5 rounded-lg transition ${viewMode === 'LIST' ? 'bg-white text-[#166534] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`p-1.5 rounded-lg transition ${viewMode === 'LIST' ? 'bg-white dark:bg-slate-700 text-[#166534] dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
             >
               <List className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('ANNUAL')}
               title="Lịch Vạn Niên (toàn năm theo Âm lịch)"
-              className={`p-1.5 rounded-lg transition ${viewMode === 'ANNUAL' ? 'bg-white text-[#166534] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`p-1.5 rounded-lg transition ${viewMode === 'ANNUAL' ? 'bg-white dark:bg-slate-700 text-[#166534] dark:text-emerald-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white'}`}
             >
               <Moon className="w-4 h-4" />
             </button>
@@ -734,9 +734,9 @@ export const FamilyCalendarPage: React.FC = () => {
 
       {/* ══ 5. Loading ════════════════════════════════════════════════════ */}
       {loading && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-12 flex items-center justify-center">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 flex items-center justify-center">
           <div className="flex flex-col items-center gap-3 text-slate-400">
-            <RefreshCw className="w-8 h-8 animate-spin text-emerald-600" />
+            <RefreshCw className="w-8 h-8 animate-spin text-emerald-600 dark:text-emerald-400" />
             <span className="text-sm font-semibold">Đang đồng bộ dữ liệu lịch giỗ...</span>
           </div>
         </div>
@@ -744,13 +744,13 @@ export const FamilyCalendarPage: React.FC = () => {
 
       {/* ══ 6. Month Grid View ═══════════════════════════════════════════ */}
       {!loading && viewMode === 'MONTH' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden p-4">
           <div className="grid grid-cols-7 gap-1.5 text-center mb-2">
             {['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật'].map((d, idx) => (
               <div
                 key={d}
                 className={`text-[10px] font-bold uppercase py-2 rounded-lg ${
-                  idx === 5 ? 'text-amber-700 bg-amber-50/50' : idx === 6 ? 'text-rose-700 bg-rose-50/50' : 'text-slate-500'
+                  idx === 5 ? 'text-amber-700 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/30' : idx === 6 ? 'text-rose-700 dark:text-rose-400 bg-rose-50/50 dark:bg-rose-950/30' : 'text-slate-500 dark:text-slate-400'
                 }`}
               >
                 {d}
@@ -766,45 +766,45 @@ export const FamilyCalendarPage: React.FC = () => {
                   key={idx}
                   onClick={() => setSelectedDay(day)}
                   className={`min-h-[96px] p-2 rounded-xl border transition-all flex flex-col justify-between cursor-pointer select-none ${
-                    !isCurMonth ? 'bg-slate-50/50 border-slate-100 opacity-40 hover:opacity-100'
-                    : day.isToday ? 'bg-emerald-50/50 border-[#166534] ring-2 ring-emerald-100'
-                    : hasM ? 'bg-amber-50/30 border-amber-200 hover:border-amber-400'
-                    : 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs'
+                    !isCurMonth ? 'bg-slate-50/50 dark:bg-slate-950/40 border-slate-100 dark:border-slate-800/80 opacity-40 hover:opacity-100'
+                    : day.isToday ? 'bg-emerald-50/50 dark:bg-emerald-950/40 border-[#166534] dark:border-emerald-600 ring-2 ring-emerald-100 dark:ring-emerald-900/50'
+                    : hasM ? 'bg-amber-50/30 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/60 hover:border-amber-400 dark:hover:border-amber-600'
+                    : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-xs'
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <span className={`text-xs font-black leading-none ${
                       day.isToday ? 'w-5 h-5 rounded-full bg-[#166534] text-white flex items-center justify-center'
-                      : isCurMonth ? 'text-slate-800' : 'text-slate-400'
+                      : isCurMonth ? 'text-slate-800 dark:text-white' : 'text-slate-400 dark:text-slate-500'
                     }`}>
                       {day.solarDay}
                     </span>
                     <span className={`text-[9px] font-semibold leading-none ${
                       day.lunarDay === 1 || day.lunarDay === 15
-                        ? 'text-rose-600 font-bold bg-rose-50 px-1 py-0.5 rounded'
-                        : 'text-slate-400'
+                        ? 'text-rose-600 dark:text-rose-400 font-bold bg-rose-50 dark:bg-rose-950/60 px-1 py-0.5 rounded'
+                        : 'text-slate-400 dark:text-slate-400'
                     }`}>
                       {day.lunarDay === 1 ? `Mùng 1/${day.lunarMonth}ÂL` : `${day.lunarDay} ÂL`}
                     </span>
                   </div>
                   <div className="space-y-0.5 my-1">
                     {day.memorials.slice(0, 2).map((m) => (
-                      <div key={m.id} className="text-[9px] font-semibold bg-amber-100 text-amber-900 border border-amber-200 px-1.5 py-0.5 rounded truncate flex items-center gap-1" title={m.title}>
-                        <Sparkles className="w-2 h-2 text-amber-700 shrink-0" />
+                      <div key={m.id} className="text-[9px] font-semibold bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-700 px-1.5 py-0.5 rounded truncate flex items-center gap-1" title={m.title}>
+                        <Sparkles className="w-2 h-2 text-amber-700 dark:text-amber-400 shrink-0" />
                         <span className="truncate">{m.title}</span>
                       </div>
                     ))}
                     {day.events.slice(0, 1).map((e) => (
-                      <div key={e.id} className="text-[9px] font-semibold bg-emerald-100 text-emerald-900 border border-emerald-200 px-1.5 py-0.5 rounded truncate flex items-center gap-1" title={e.title}>
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0" />
+                      <div key={e.id} className="text-[9px] font-semibold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-700 px-1.5 py-0.5 rounded truncate flex items-center gap-1" title={e.title}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0" />
                         <span className="truncate">{e.title}</span>
                       </div>
                     ))}
                     {day.memorials.length + day.events.length > 3 && (
-                      <div className="text-[9px] text-slate-500 font-bold pl-1">+{day.memorials.length + day.events.length - 3} khác</div>
+                      <div className="text-[9px] text-slate-500 dark:text-slate-400 font-bold pl-1">+{day.memorials.length + day.events.length - 3} khác</div>
                     )}
                   </div>
-                  <div className="flex items-center justify-between text-[9px] text-slate-400 truncate">
+                  <div className="flex items-center justify-between text-[9px] text-slate-400 dark:text-slate-500 truncate">
                     <span className="truncate">{day.tietKhi || day.canChiDay.split(' ')[0]}</span>
                     {day.gioHoangDao.length > 0 && <span className="text-amber-500">★</span>}
                   </div>
@@ -819,7 +819,7 @@ export const FamilyCalendarPage: React.FC = () => {
       {!loading && viewMode === 'LIST' && (
         <div className="space-y-2">
           {filteredMonthDays.filter((d) => d.memorials.length > 0 || d.events.length > 0).length === 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-sm text-slate-400">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center text-sm text-slate-400">
               Không có ngày giỗ hay sự kiện nào trong tháng {currentMonth}/{currentYear}
             </div>
           )}
@@ -827,41 +827,41 @@ export const FamilyCalendarPage: React.FC = () => {
             <div
               key={idx}
               onClick={() => setSelectedDay(day)}
-              className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer"
+              className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs hover:shadow-md transition flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer"
             >
               <div className="flex items-center space-x-4">
                 <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center shrink-0 border ${
-                  day.isToday ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-slate-50 border-slate-200'
+                  day.isToday ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
                 }`}>
                   <span className="text-xs font-bold">{day.solarDay}</span>
                   <span className="text-[9px] opacity-70">T{day.solarMonth}</span>
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-900">
+                  <div className="text-xs font-bold text-slate-900 dark:text-white">
                     Thứ {['Chủ Nhật','Hai','Ba','Tư','Năm','Sáu','Bảy'][day.dayOfWeek]}, ngày {day.solarDay}/{day.solarMonth}/{day.solarYear}
                   </div>
-                  <div className="text-[10px] text-amber-700 font-semibold mt-0.5">
+                  <div className="text-[10px] text-amber-700 dark:text-amber-300 font-semibold mt-0.5">
                     Ngày {day.lunarDay} {LUNAR_MONTH_NAMES[day.lunarMonth]}{day.isLeap ? ' (Nhuận)' : ''} • {day.canChiDay}
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">
+                  <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
                     Tiết khí: {day.tietKhi} • Giờ Hoàng Đạo: {day.gioHoangDao.slice(0, 3).join(', ')}
                   </div>
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {day.memorials.map((m) => (
-                  <span key={m.id} className="px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs font-bold flex items-center gap-1.5">
-                    <Sparkles className="w-3 h-3 text-amber-600 shrink-0" />
+                  <span key={m.id} className="px-2.5 py-1 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-300 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                    <Sparkles className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
                     {m.title}
                     {((m as any).generation_name || (m as any).branch_name) && (
-                      <span className="text-[10px] text-amber-700 bg-amber-100/80 px-1 rounded border border-amber-300/50">
+                      <span className="text-[10px] text-amber-700 dark:text-amber-300 bg-amber-100/80 dark:bg-amber-900/60 px-1 rounded border border-amber-300/50 dark:border-amber-700">
                         {[(m as any).generation_name, (m as any).branch_name].filter(Boolean).join(' • ')}
                       </span>
                     )}
                   </span>
                 ))}
                 {day.events.map((e) => (
-                  <span key={e.id} className="px-2.5 py-1 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl text-xs font-bold">
+                  <span key={e.id} className="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-300 rounded-xl text-xs font-bold">
                     {e.title}
                   </span>
                 ))}

@@ -70,19 +70,19 @@ export const ExpenseApprovalModal: React.FC<ExpenseApprovalModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto font-sans">
-      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-amber-50 via-slate-50 to-white border-b border-slate-200 flex items-center justify-between">
+        <div className="px-6 py-4 bg-gradient-to-r from-amber-50 via-slate-50 to-white dark:from-slate-800 dark:via-slate-800/90 dark:to-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-800">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 flex items-center justify-center text-amber-800 dark:text-amber-300">
               <UserCheck className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">Thẩm Định & Phê Duyệt Chi Quỹ</h3>
-              <p className="text-xs text-slate-500">Mã phiếu: {expense.id.slice(0, 8)}</p>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Thẩm Định & Phê Duyệt Chi Quỹ</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Mã phiếu: {expense.id.slice(0, 8)}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -90,66 +90,66 @@ export const ExpenseApprovalModal: React.FC<ExpenseApprovalModalProps> = ({
         {/* Content */}
         <div className="p-6 space-y-4">
           {error && (
-            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs">
               {error}
             </div>
           )}
 
           {/* Expense Info Card */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3">
             <div className="flex items-start justify-between">
               <div>
-                <span className="text-xs text-slate-500">Khoản chi:</span>
-                <h4 className="text-sm font-bold text-slate-900">{expense.title}</h4>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Khoản chi:</span>
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white">{expense.title}</h4>
               </div>
               <div className="text-right">
-                <span className="text-xs text-slate-500">Số tiền:</span>
-                <p className="text-base font-bold text-rose-600">
+                <span className="text-xs text-slate-500 dark:text-slate-400">Số tiền:</span>
+                <p className="text-base font-bold text-rose-600 dark:text-rose-400">
                   {Number(expense.amount).toLocaleString()} ₫
                 </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-200">
+            <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-200 dark:border-slate-700">
               <div>
-                <span className="text-slate-500">Quỹ thanh toán:</span>
-                <p className="font-semibold text-slate-900">{fund?.name || 'Quỹ'}</p>
+                <span className="text-slate-500 dark:text-slate-400">Quỹ thanh toán:</span>
+                <p className="font-semibold text-slate-900 dark:text-white">{fund?.name || 'Quỹ'}</p>
               </div>
               <div>
-                <span className="text-slate-500">Người nhận:</span>
-                <p className="font-semibold text-slate-900">{expense.recipient_name || 'Nhà cung cấp'}</p>
+                <span className="text-slate-500 dark:text-slate-400">Người nhận:</span>
+                <p className="font-semibold text-slate-900 dark:text-white">{expense.recipient_name || 'Nhà cung cấp'}</p>
               </div>
               <div>
-                <span className="text-slate-500">Ngày dự kiến chi:</span>
-                <p className="text-slate-700">{expense.expense_date}</p>
+                <span className="text-slate-500 dark:text-slate-400">Ngày dự kiến chi:</span>
+                <p className="text-slate-700 dark:text-slate-300">{expense.expense_date}</p>
               </div>
               <div>
-                <span className="text-slate-500">Hình thức:</span>
-                <p className="text-slate-700">{expense.payment_method}</p>
+                <span className="text-slate-500 dark:text-slate-400">Hình thức:</span>
+                <p className="text-slate-700 dark:text-slate-300">{expense.payment_method}</p>
               </div>
             </div>
 
             {expense.description && (
-              <div className="pt-2 border-t border-slate-200 text-xs">
-                <span className="text-slate-500">Diễn giải:</span>
-                <p className="text-slate-700 italic">{expense.description}</p>
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-700 text-xs">
+                <span className="text-slate-500 dark:text-slate-400">Diễn giải:</span>
+                <p className="text-slate-700 dark:text-slate-300 italic">{expense.description}</p>
               </div>
             )}
           </div>
 
           {/* Fund Impact Preview */}
-          <div className="p-3.5 rounded-xl bg-amber-50/50 border border-amber-200 space-y-1.5 text-xs">
+          <div className="p-3.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 space-y-1.5 text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-slate-500">Số dư quỹ hiện tại:</span>
-              <span className="text-slate-900">
+              <span className="text-slate-500 dark:text-slate-400">Số dư quỹ hiện tại:</span>
+              <span className="text-slate-900 dark:text-white">
                 {Number(fund?.current_balance || 0).toLocaleString()} ₫
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-500">Số dư sau khi duyệt:</span>
+              <span className="text-slate-500 dark:text-slate-400">Số dư sau khi duyệt:</span>
               <span
                 className={`font-bold ${
-                  isBalanceSufficient ? 'text-emerald-700' : 'text-rose-600'
+                  isBalanceSufficient ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                 }`}
               >
                 {(Number(fund?.current_balance || 0) - Number(expense.amount || 0)).toLocaleString()} ₫
@@ -158,7 +158,7 @@ export const ExpenseApprovalModal: React.FC<ExpenseApprovalModalProps> = ({
           </div>
 
           {!isBalanceSufficient && (
-            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
               <ShieldAlert className="w-4 h-4 shrink-0" />
               <span>Số dư quỹ không đủ để thực hiện phê duyệt khoản chi này.</span>
             </div>
@@ -166,24 +166,24 @@ export const ExpenseApprovalModal: React.FC<ExpenseApprovalModalProps> = ({
 
           {rejectMode && (
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-rose-700">Lý do từ chối phê duyệt *</label>
+              <label className="block text-xs font-semibold text-rose-700 dark:text-rose-300">Lý do từ chối phê duyệt *</label>
               <textarea
                 rows={2}
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
                 placeholder="Ghi rõ lý do để người lập phiếu chỉnh sửa..."
-                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:border-rose-500"
+                className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 text-xs focus:outline-none focus:border-rose-500"
                 required
               />
             </div>
           )}
 
           {/* Footer Actions */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
             >
               Đóng
             </button>
@@ -194,7 +194,7 @@ export const ExpenseApprovalModal: React.FC<ExpenseApprovalModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setRejectMode(true)}
-                    className="px-4 py-2 rounded-xl border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                    className="px-4 py-2 rounded-xl border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/60 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <XCircle className="w-4 h-4" />
                     <span>Từ Chối</span>
@@ -204,7 +204,7 @@ export const ExpenseApprovalModal: React.FC<ExpenseApprovalModalProps> = ({
                     type="button"
                     onClick={handleApprove}
                     disabled={loading || !isBalanceSufficient}
-                    className="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm disabled:opacity-50 transition-all"
+                    className="px-5 py-2 rounded-xl bg-[#166534] hover:bg-[#14532d] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm disabled:opacity-50 transition-all cursor-pointer"
                   >
                     {loading ? (
                       <span>Đang duyệt...</span>
@@ -221,7 +221,7 @@ export const ExpenseApprovalModal: React.FC<ExpenseApprovalModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setRejectMode(false)}
-                    className="px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900"
+                    className="px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer"
                   >
                     Hủy từ chối
                   </button>
@@ -229,7 +229,7 @@ export const ExpenseApprovalModal: React.FC<ExpenseApprovalModalProps> = ({
                     type="button"
                     onClick={handleReject}
                     disabled={loading}
-                    className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold"
+                    className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer"
                   >
                     Xác Nhận Từ Chối
                   </button>

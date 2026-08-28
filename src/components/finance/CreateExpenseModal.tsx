@@ -82,21 +82,21 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto font-sans">
-      <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-fade-in">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-fade-in">
         {/* Header */}
-        <div className="px-6 py-4.5 bg-gradient-to-r from-rose-50 via-white to-rose-50/30 border-b border-slate-200 flex items-center justify-between">
+        <div className="px-6 py-4.5 bg-gradient-to-r from-rose-50 via-white to-rose-50/30 dark:from-slate-800 dark:via-slate-800/90 dark:to-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-rose-100/70 border border-rose-300 flex items-center justify-center text-rose-800 shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-rose-100/70 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-700 flex items-center justify-center text-rose-800 dark:text-rose-300 shadow-xs">
               <Receipt className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">Lập Phiếu Chi & Xuất Quỹ Trực Tiếp</h3>
-              <p className="text-xs text-slate-500">Thủ quỹ & Kế toán ghi sổ • Mọi thành viên cùng giám sát</p>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Lập Phiếu Chi & Xuất Quỹ Trực Tiếp</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Thủ quỹ & Kế toán ghi sổ • Mọi thành viên cùng giám sát</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -105,13 +105,13 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
         {/* Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
           {error && (
-            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">
+            <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-xs font-semibold">
               {error}
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
               Nội dung khoản chi <span className="text-rose-500">*</span>
             </label>
             <input
@@ -119,18 +119,18 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="VD: Mua lễ vật Giỗ Tổ, Sửa chữa mái từ đường..."
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-1 focus:ring-rose-600 focus:bg-white"
+              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-1 focus:ring-rose-600 focus:bg-white dark:focus:bg-slate-800"
               required
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">Quỹ chi trả</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Quỹ chi trả</label>
               <select
                 value={fundId}
                 onChange={(e) => setFundId(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-rose-600"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white text-xs font-bold focus:outline-none focus:ring-1 focus:ring-rose-600"
               >
                 {funds.map((f) => (
                   <option key={f.id} value={f.id}>
@@ -141,11 +141,11 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">Danh mục chi</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Danh mục chi</label>
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-rose-600"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white text-xs font-bold focus:outline-none focus:ring-1 focus:ring-rose-600"
               >
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -158,7 +158,7 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                 Số tiền chi (VNĐ) <span className="text-rose-500">*</span>
               </label>
               <input
@@ -168,45 +168,45 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="VD: 5000000"
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-rose-600 focus:bg-white"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-rose-600 focus:bg-white dark:focus:bg-slate-800"
                 required
               />
               {isInsufficient && (
-                <span className="text-[11px] text-rose-600 font-bold flex items-center gap-1 mt-1">
+                <span className="text-[11px] text-rose-600 dark:text-rose-400 font-bold flex items-center gap-1 mt-1">
                   <AlertTriangle className="w-3 h-3" /> Vượt quá số dư quỹ hiện tại!
                 </span>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">Người nhận / Đơn vị</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Người nhận / Đơn vị</label>
               <input
                 type="text"
                 value={recipientName}
                 onChange={(e) => setRecipientName(e.target.value)}
                 placeholder="VD: Nhà xe, Thợ nề, Cửa hàng hoa..."
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-rose-600 focus:bg-white"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 text-xs focus:outline-none focus:ring-1 focus:ring-rose-600 focus:bg-white dark:focus:bg-slate-800"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">Ngày dự kiến chi</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Ngày dự kiến chi</label>
               <input
                 type="date"
                 value={expenseDate}
                 onChange={(e) => setExpenseDate(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-rose-600 focus:bg-white"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-rose-600 focus:bg-white dark:focus:bg-slate-800"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">Hình thức chi</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Hình thức chi</label>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-rose-600"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-800 dark:text-white text-xs font-bold focus:outline-none focus:ring-1 focus:ring-rose-600"
               >
                 <option value="BANK_TRANSFER">Chuyển Khoản Ngân Hàng</option>
                 <option value="CASH">Tiền Mặt</option>
@@ -216,40 +216,40 @@ export const CreateExpenseModal: React.FC<CreateExpenseModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">Ảnh chụp / Link hóa đơn, chứng từ (Minh bạch)</label>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Ảnh chụp / Link hóa đơn, chứng từ (Minh bạch)</label>
             <input
               type="url"
               value={receiptUrl}
               onChange={(e) => setReceiptUrl(e.target.value)}
               placeholder="https://... hoặc link ảnh hóa đơn / phiếu thu chi"
-              className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-rose-600 focus:bg-white"
+              className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 text-xs focus:outline-none focus:ring-1 focus:ring-rose-600 focus:bg-white dark:focus:bg-slate-800"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">Diễn giải chi tiết</label>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Diễn giải chi tiết</label>
             <textarea
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Ghi chú thêm về nội dung chi, bên thụ hưởng hoặc số lượng hàng hóa..."
-              className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-rose-600 focus:bg-white"
+              className="w-full px-3.5 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 text-xs focus:outline-none focus:ring-1 focus:ring-rose-600 focus:bg-white dark:focus:bg-slate-800"
             />
           </div>
 
           {/* Footer Actions */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             >
               Hủy
             </button>
             <button
               type="submit"
               disabled={loading || Boolean(isInsufficient)}
-              className="px-5 py-2.5 rounded-xl bg-rose-700 hover:bg-rose-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all disabled:opacity-50"
+              className="px-5 py-2.5 rounded-xl bg-rose-700 hover:bg-rose-800 dark:bg-rose-800 dark:hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
             >
               {loading ? (
                 <span>Đang xử lý...</span>

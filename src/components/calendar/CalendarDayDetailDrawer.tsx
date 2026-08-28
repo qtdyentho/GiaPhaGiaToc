@@ -22,18 +22,18 @@ export const CalendarDayDetailDrawer: React.FC<CalendarDayDetailDrawerProps> = (
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 backdrop-blur-xs animate-fade-in">
-      <div className="bg-white w-full max-w-md h-full shadow-2xl border-l border-slate-200 flex flex-col justify-between overflow-hidden animate-slide-in">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-md h-full shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col justify-between overflow-hidden animate-slide-in">
         {/* Header */}
-        <div className="p-5 border-b border-slate-100 bg-gradient-to-br from-heritage-green/10 via-amber-500/5 to-transparent flex items-start justify-between">
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-br from-emerald-500/10 via-amber-500/5 to-transparent dark:from-emerald-950/40 dark:via-amber-950/20 flex items-start justify-between">
           <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-heritage-green bg-emerald-100/80 px-2.5 py-0.5 rounded-full">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#166534] dark:text-emerald-400 bg-emerald-100/80 dark:bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-700">
               {DAY_NAMES[dayInfo.dayOfWeek]}
             </span>
-            <h2 className="text-xl font-bold text-slate-900 mt-1">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-1">
               Ngày {dayInfo.solarDay} Tháng {dayInfo.solarMonth} Năm {dayInfo.solarYear}
             </h2>
-            <div className="text-xs text-amber-900 font-semibold mt-0.5 flex items-center space-x-1.5">
-              <Moon className="w-3.5 h-3.5 text-amber-600" />
+            <div className="text-xs text-amber-900 dark:text-amber-300 font-semibold mt-0.5 flex items-center space-x-1.5">
+              <Moon className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span>
                 Ngày {dayInfo.lunarDay} Tháng {dayInfo.lunarMonth} {dayInfo.isLeap ? '(Nhuận)' : ''} Năm {dayInfo.canChiYear}
               </span>
@@ -42,7 +42,7 @@ export const CalendarDayDetailDrawer: React.FC<CalendarDayDetailDrawerProps> = (
 
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-600 transition"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -51,41 +51,41 @@ export const CalendarDayDetailDrawer: React.FC<CalendarDayDetailDrawerProps> = (
         {/* Content Body */}
         <div className="p-5 space-y-5 overflow-y-auto flex-1">
           {/* Astronomical & Can Chi Badge Box */}
-          <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 space-y-2.5 text-xs">
-            <div className="font-bold text-amber-950 flex items-center space-x-1.5 border-b border-amber-200/60 pb-2">
-              <Sparkles className="w-4 h-4 text-heritage-gold" />
+          <div className="bg-amber-50/70 dark:bg-slate-800/80 border border-amber-200/80 dark:border-slate-700 rounded-2xl p-4 space-y-2.5 text-xs">
+            <div className="font-bold text-amber-950 dark:text-amber-200 flex items-center space-x-1.5 border-b border-amber-200/60 dark:border-slate-700 pb-2">
+              <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
               <span>Thiên Văn & Can Chi Ngày</span>
             </div>
 
             <div className="grid grid-cols-2 gap-2 text-[11px]">
               <div>
-                <span className="text-slate-500">Can Chi Ngày:</span>{' '}
-                <strong className="text-slate-800">{dayInfo.canChiDay}</strong>
+                <span className="text-slate-500 dark:text-slate-400">Can Chi Ngày:</span>{' '}
+                <strong className="text-slate-800 dark:text-white">{dayInfo.canChiDay}</strong>
               </div>
               <div>
-                <span className="text-slate-500">Can Chi Tháng:</span>{' '}
-                <strong className="text-slate-800">{dayInfo.canChiMonth}</strong>
+                <span className="text-slate-500 dark:text-slate-400">Can Chi Tháng:</span>{' '}
+                <strong className="text-slate-800 dark:text-white">{dayInfo.canChiMonth}</strong>
               </div>
               <div>
-                <span className="text-slate-500">Tiết Khí:</span>{' '}
-                <strong className="text-heritage-green">{dayInfo.tietKhi}</strong>
+                <span className="text-slate-500 dark:text-slate-400">Tiết Khí:</span>{' '}
+                <strong className="text-[#166534] dark:text-emerald-400">{dayInfo.tietKhi}</strong>
               </div>
               <div>
-                <span className="text-slate-500">Tháng Âm:</span>{' '}
-                <strong className="text-slate-800">
+                <span className="text-slate-500 dark:text-slate-400">Tháng Âm:</span>{' '}
+                <strong className="text-slate-800 dark:text-white">
                   {dayInfo.daysInLunarMonth === 30 ? 'Tháng Đủ (30 ngày)' : 'Tháng Thiếu (29 ngày)'}
                 </strong>
               </div>
             </div>
 
             {/* Giờ Hoàng Đạo */}
-            <div className="pt-2 border-t border-amber-200/60">
-              <span className="text-[10px] text-slate-500 font-bold block mb-1">GIỜ HOÀNG ĐẠO TỐT TRONG NGÀY:</span>
+            <div className="pt-2 border-t border-amber-200/60 dark:border-slate-700">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold block mb-1">GIỜ HOÀNG ĐẠO TỐT TRONG NGÀY:</span>
               <div className="flex flex-wrap gap-1">
                 {dayInfo.gioHoangDao.map((g, i) => (
                   <span
                     key={i}
-                    className="text-[10px] bg-white border border-amber-300 text-amber-900 px-1.5 py-0.5 rounded font-medium"
+                    className="text-[10px] bg-white dark:bg-slate-900 border border-amber-300 dark:border-slate-700 text-amber-900 dark:text-amber-300 px-1.5 py-0.5 rounded font-medium"
                   >
                     {g}
                   </span>
@@ -96,23 +96,23 @@ export const CalendarDayDetailDrawer: React.FC<CalendarDayDetailDrawerProps> = (
 
           {/* Memorials on this day */}
           <div className="space-y-2.5">
-            <h3 className="text-xs font-bold text-slate-900 flex items-center justify-between">
+            <h3 className="text-xs font-bold text-slate-900 dark:text-white flex items-center justify-between">
               <span className="flex items-center space-x-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                 <span>Ngày Giỗ Trong Ngày ({dayInfo.memorials.length})</span>
               </span>
             </h3>
 
             {dayInfo.memorials.length === 0 ? (
-              <div className="p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-center text-xs text-slate-400">
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700 rounded-xl text-center text-xs text-slate-400 dark:text-slate-500">
                 Không có ngày giỗ họ tộc vào ngày này
               </div>
             ) : (
               dayInfo.memorials.map((mem) => (
-                <div key={mem.id} className="p-3.5 bg-amber-50/90 border border-amber-200 rounded-2xl space-y-1.5 shadow-2xs">
+                <div key={mem.id} className="p-3.5 bg-amber-50/90 dark:bg-slate-800/90 border border-amber-200 dark:border-slate-700 rounded-2xl space-y-1.5 shadow-2xs">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="text-xs font-bold text-amber-950">{mem.title}</div>
-                    <span className="text-[10px] px-2 py-0.5 bg-amber-200/60 text-amber-900 font-bold rounded-full shrink-0 border border-amber-300/60">
+                    <div className="text-xs font-bold text-amber-950 dark:text-amber-200">{mem.title}</div>
+                    <span className="text-[10px] px-2 py-0.5 bg-amber-200/60 dark:bg-amber-950/80 text-amber-900 dark:text-amber-300 font-bold rounded-full shrink-0 border border-amber-300/60 dark:border-amber-700">
                       {mem.lunar_day}/{mem.lunar_month} Âm lịch
                     </span>
                   </div>
@@ -120,17 +120,17 @@ export const CalendarDayDetailDrawer: React.FC<CalendarDayDetailDrawerProps> = (
                   {/* Chi Cành & Thế Hệ Badges */}
                   <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
                     {mem.generation_name && (
-                      <span className="text-[10px] bg-amber-100/80 text-amber-900 border border-amber-300/80 px-2 py-0.5 rounded-md font-bold">
+                      <span className="text-[10px] bg-amber-100/80 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 border border-amber-300/80 dark:border-amber-700 px-2 py-0.5 rounded-md font-bold">
                         {mem.generation_name}
                       </span>
                     )}
                     {mem.branch_name && (
-                      <span className="text-[10px] bg-emerald-100/80 text-[#166534] border border-emerald-300/80 px-2 py-0.5 rounded-md font-bold">
+                      <span className="text-[10px] bg-emerald-100/80 dark:bg-emerald-950/60 text-[#166534] dark:text-emerald-300 border border-emerald-300/80 dark:border-emerald-700 px-2 py-0.5 rounded-md font-bold">
                         {mem.branch_name}
                       </span>
                     )}
                     {mem.burial_place && (
-                      <span className="text-[10px] text-slate-600 bg-white/80 border border-slate-200 px-2 py-0.5 rounded-md flex items-center gap-1 font-medium">
+                      <span className="text-[10px] text-slate-600 dark:text-slate-300 bg-white/80 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-md flex items-center gap-1 font-medium">
                         <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
                         <span className="truncate max-w-[150px]">{mem.burial_place}</span>
                       </span>
@@ -138,7 +138,7 @@ export const CalendarDayDetailDrawer: React.FC<CalendarDayDetailDrawerProps> = (
                   </div>
 
                   {mem.notes && (
-                    <p className="text-[10px] text-slate-600 bg-white/90 p-2 rounded-xl mt-1 border border-amber-200/60 leading-relaxed">
+                    <p className="text-[10px] text-slate-600 dark:text-slate-300 bg-white/90 dark:bg-slate-900/80 p-2 rounded-xl mt-1 border border-amber-200/60 dark:border-slate-700 leading-relaxed">
                       {mem.notes}
                     </p>
                   )}
@@ -149,29 +149,29 @@ export const CalendarDayDetailDrawer: React.FC<CalendarDayDetailDrawerProps> = (
 
           {/* Events on this day */}
           <div className="space-y-2.5">
-            <h3 className="text-xs font-bold text-slate-900 flex items-center justify-between">
+            <h3 className="text-xs font-bold text-slate-900 dark:text-white flex items-center justify-between">
               <span className="flex items-center space-x-1.5">
-                <CalendarIcon className="w-3.5 h-3.5 text-heritage-green" />
+                <CalendarIcon className="w-3.5 h-3.5 text-[#166534] dark:text-emerald-400" />
                 <span>Sự Kiện Gia Tộc ({dayInfo.events.length})</span>
               </span>
             </h3>
 
             {dayInfo.events.length === 0 ? (
-              <div className="p-3.5 bg-slate-50 border border-slate-100 rounded-xl text-center text-xs text-slate-400">
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700 rounded-xl text-center text-xs text-slate-400 dark:text-slate-500">
                 Chưa có sự kiện nào được xếp lịch vào ngày này
               </div>
             ) : (
               dayInfo.events.map((evt) => (
-                <div key={evt.id} className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-                  <div className="text-xs font-bold text-slate-900">{evt.title}</div>
+                <div key={evt.id} className="p-3.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl space-y-1">
+                  <div className="text-xs font-bold text-slate-900 dark:text-white">{evt.title}</div>
                   {evt.location && (
-                    <div className="text-[11px] text-slate-600 flex items-center space-x-1">
+                    <div className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center space-x-1">
                       <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
                       <span className="truncate">{evt.location}</span>
                     </div>
                   )}
                   {evt.estimated_budget > 0 && (
-                    <div className="text-[10px] font-bold text-emerald-700">
+                    <div className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
                       Dự toán: {new Intl.NumberFormat('vi-VN').format(evt.estimated_budget)} đ
                     </div>
                   )}
@@ -182,17 +182,17 @@ export const CalendarDayDetailDrawer: React.FC<CalendarDayDetailDrawerProps> = (
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 border-t border-slate-100 bg-slate-50 flex items-center space-x-2">
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex items-center space-x-2">
           <button
             onClick={() => onAddMemorial(dayInfo)}
-            className="flex-1 flex items-center justify-center space-x-1.5 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-xl transition shadow-xs"
+            className="flex-1 flex items-center justify-center space-x-1.5 px-3 py-2 bg-amber-600 hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-600 text-white text-xs font-semibold rounded-xl transition shadow-xs cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Thêm Ngày Giỗ</span>
           </button>
           <button
             onClick={() => onAddEvent(dayInfo)}
-            className="flex-1 flex items-center justify-center space-x-1.5 px-3 py-2 bg-heritage-green hover:bg-heritage-green-light text-white text-xs font-semibold rounded-xl transition shadow-xs"
+            className="flex-1 flex items-center justify-center space-x-1.5 px-3 py-2 bg-[#166534] hover:bg-[#14532d] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-semibold rounded-xl transition shadow-xs cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Thêm Sự Kiện</span>

@@ -23,18 +23,18 @@ export const ClanCovenantCard: React.FC<ClanCovenantCardProps> = ({ family }) =>
   const displayedArticles = isExpanded ? articles : articles.slice(0, 4);
 
   return (
-    <div className="relative bg-gradient-to-br from-amber-50/90 via-white to-amber-100/40 border-2 border-amber-300/80 rounded-3xl p-6 md:p-8 shadow-xs overflow-hidden">
+    <div className="relative bg-gradient-to-br from-amber-50/90 via-white to-amber-100/40 dark:from-slate-900 dark:via-slate-900 dark:to-amber-950/30 border-2 border-amber-300/80 dark:border-amber-700/60 rounded-3xl p-6 md:p-8 shadow-xs overflow-hidden">
       {/* Delicate Archival Watermark Pattern */}
-      <div className="absolute right-0 top-0 bottom-0 w-1/3 opacity-5 bg-[radial-gradient(#C49A3A_2px,transparent_2px)] [background-size:16px_16px] pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-1/3 opacity-5 dark:opacity-10 bg-[radial-gradient(#C49A3A_2px,transparent_2px)] [background-size:16px_16px] pointer-events-none" />
 
       {/* Card Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-amber-200/80 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-amber-200/80 dark:border-amber-800/60 pb-5">
         <div className="space-y-1">
-          <div className="inline-flex items-center space-x-2 bg-amber-500/15 text-amber-900 text-xs font-bold px-3 py-1 rounded-full border border-amber-400/40">
-            <Scroll className="w-3.5 h-3.5 text-amber-700" />
+          <div className="inline-flex items-center space-x-2 bg-amber-500/15 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 text-xs font-bold px-3 py-1 rounded-full border border-amber-400/40 dark:border-amber-700">
+            <Scroll className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
             <span>Tộc Ước & Gia Phong Dòng Họ</span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 font-serif tracking-tight text-amber-950">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-amber-950 dark:text-amber-100 font-serif tracking-tight">
             {title}
           </h2>
         </div>
@@ -44,18 +44,18 @@ export const ClanCovenantCard: React.FC<ClanCovenantCardProps> = ({ family }) =>
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center space-x-1.5 px-4 py-2 bg-white hover:bg-amber-50 text-amber-900 text-xs font-bold rounded-xl border border-amber-300 shadow-xs hover:shadow-sm transition self-start sm:self-auto shrink-0"
+            className="inline-flex items-center space-x-1.5 px-4 py-2 bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-slate-700 text-amber-900 dark:text-amber-200 text-xs font-bold rounded-xl border border-amber-300 dark:border-amber-700 shadow-xs hover:shadow-sm transition self-start sm:self-auto shrink-0"
           >
-            <Edit3 className="w-3.5 h-3.5 text-amber-700" />
+            <Edit3 className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
             <span>Chỉnh Sửa Hương Ước</span>
           </button>
         )}
       </div>
 
       {/* Preamble / Lời Tựa Răn Dạy */}
-      <div className="mt-5 relative bg-amber-100/50 border-l-4 border-amber-600 rounded-r-2xl p-4 sm:p-5">
-        <Quote className="w-6 h-6 text-amber-500/40 absolute right-3 top-3 pointer-events-none" />
-        <div className="text-xs sm:text-sm text-amber-950 font-serif italic leading-relaxed">
+      <div className="mt-5 relative bg-amber-100/50 dark:bg-amber-950/40 border-l-4 border-amber-600 dark:border-amber-500 rounded-r-2xl p-4 sm:p-5">
+        <Quote className="w-6 h-6 text-amber-500/40 dark:text-amber-400/30 absolute right-3 top-3 pointer-events-none" />
+        <div className="text-xs sm:text-sm text-amber-950 dark:text-amber-200 font-serif italic leading-relaxed">
           "{preamble}"
         </div>
       </div>
@@ -72,16 +72,16 @@ export const ClanCovenantCard: React.FC<ClanCovenantCardProps> = ({ family }) =>
           return (
             <div
               key={idx}
-              className="p-4 rounded-2xl bg-white/90 border border-amber-200/80 shadow-2xs hover:shadow-xs hover:border-amber-400 transition space-y-1.5 flex gap-3.5 items-start"
+              className="p-4 rounded-2xl bg-white/90 dark:bg-slate-800/90 border border-amber-200/80 dark:border-slate-700 shadow-2xs hover:shadow-xs hover:border-amber-400 dark:hover:border-amber-600 transition space-y-1.5 flex gap-3.5 items-start"
             >
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 dark:from-amber-600 dark:to-amber-700 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs mt-0.5">
                 {idx + 1}
               </div>
               <div className="space-y-1 flex-1 min-w-0">
-                <div className="text-xs font-bold text-slate-900 flex items-center gap-1.5 font-serif">
+                <div className="text-xs font-bold text-slate-900 dark:text-amber-200 flex items-center gap-1.5 font-serif">
                   <span>{articleTitle}</span>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                   {articleBody}
                 </p>
               </div>
@@ -96,15 +96,15 @@ export const ClanCovenantCard: React.FC<ClanCovenantCardProps> = ({ family }) =>
           <button
             type="button"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="inline-flex items-center space-x-1.5 text-xs font-bold text-amber-900 hover:text-amber-950 bg-white/80 hover:bg-white px-4 py-2 rounded-full border border-amber-300 shadow-2xs transition"
+            className="inline-flex items-center space-x-1.5 text-xs font-bold text-amber-900 dark:text-amber-200 hover:text-amber-950 dark:hover:text-white bg-white/80 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-700 px-4 py-2 rounded-full border border-amber-300 dark:border-amber-700 shadow-2xs transition"
           >
             <span>
               {isExpanded ? 'Thu gọn quy ước' : `Xem toàn văn tất cả ${articles.length} điều quy ước`}
             </span>
             {isExpanded ? (
-              <ChevronUp className="w-4 h-4 text-amber-700" />
+              <ChevronUp className="w-4 h-4 text-amber-700 dark:text-amber-400" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-amber-700" />
+              <ChevronDown className="w-4 h-4 text-amber-700 dark:text-amber-400" />
             )}
           </button>
         </div>

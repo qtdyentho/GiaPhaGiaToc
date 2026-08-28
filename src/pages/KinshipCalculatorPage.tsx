@@ -161,16 +161,16 @@ export const KinshipCalculatorPage: React.FC = () => {
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-11 gap-4 items-center">
           {/* Member A Selector */}
-          <div className="md:col-span-5 p-5 rounded-2xl bg-emerald-50/50 border border-emerald-200 space-y-3">
+          <div className="md:col-span-5 p-5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#166534] uppercase tracking-wider flex items-center gap-1.5">
+              <label className="text-xs font-bold text-[#166534] dark:text-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
                 <span className="w-5 h-5 rounded-full bg-[#166534] text-white flex items-center justify-center text-[10px]">
                   A
                 </span>
                 <span>Người Xưng (Tôi / Người A)</span>
               </label>
               {memberA?.generation_index && (
-                <span className="text-[11px] font-bold bg-white text-[#166534] px-2.5 py-0.5 rounded-full border border-emerald-300">
+                <span className="text-[11px] font-bold bg-white dark:bg-slate-800 text-[#166534] dark:text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-700">
                   Đời thứ {memberA.generation_index}
                 </span>
               )}
@@ -179,7 +179,7 @@ export const KinshipCalculatorPage: React.FC = () => {
             <select
               value={memberAId}
               onChange={(e) => setMemberAId(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-xs font-bold bg-white border border-emerald-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#166534]"
+              className="w-full px-3.5 py-2.5 text-xs font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-emerald-300 dark:border-emerald-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#166534]"
             >
               {familyMembers.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -189,8 +189,8 @@ export const KinshipCalculatorPage: React.FC = () => {
             </select>
 
             {memberA && (
-              <div className="p-3 bg-white rounded-xl border border-emerald-200/80 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-100 text-[#166534] font-bold flex items-center justify-center shrink-0 border border-emerald-300 text-sm">
+              <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-emerald-200/80 dark:border-slate-700 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-[#166534] dark:text-emerald-300 font-bold flex items-center justify-center shrink-0 border border-emerald-300 dark:border-emerald-700 text-sm">
                   {memberA.avatar_url ? (
                     <img
                       src={memberA.avatar_url}
@@ -202,15 +202,15 @@ export const KinshipCalculatorPage: React.FC = () => {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs font-bold text-slate-900 truncate">
+                  <div className="text-xs font-bold text-slate-900 dark:text-white truncate">
                     {memberA.full_name}
                   </div>
                   {memberA.courtesy_name && (
-                    <div className="text-[11px] text-amber-800 font-serif italic">
+                    <div className="text-[11px] text-amber-800 dark:text-amber-300 font-serif italic">
                       📜 {memberA.courtesy_name}
                     </div>
                   )}
-                  <div className="text-[11px] text-slate-500">
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
                     {memberA.branch_code ? `Chi/Nhánh: ${memberA.branch_code}` : 'Thành viên trực hệ'} • {memberA.is_direct_lineage ? 'Dòng Trưởng (Đích tôn)' : 'Dòng Thứ'}
                   </div>
                 </div>
@@ -224,23 +224,23 @@ export const KinshipCalculatorPage: React.FC = () => {
               type="button"
               onClick={handleSwap}
               title="Đảo vị trí Người A và Người B"
-              className="p-3.5 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 shadow-xs hover:shadow-sm transition hover:scale-105"
+              className="p-3.5 rounded-2xl bg-amber-50 dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-slate-700 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-slate-700 shadow-xs hover:shadow-sm transition hover:scale-105"
             >
-              <ArrowRightLeft className="w-5 h-5 text-amber-700" />
+              <ArrowRightLeft className="w-5 h-5 text-amber-700 dark:text-amber-400" />
             </button>
           </div>
 
           {/* Member B Selector */}
-          <div className="md:col-span-5 p-5 rounded-2xl bg-amber-50/50 border border-amber-200 space-y-3">
+          <div className="md:col-span-5 p-5 rounded-2xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
+              <label className="text-xs font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
                 <span className="w-5 h-5 rounded-full bg-amber-800 text-white flex items-center justify-center text-[10px]">
                   B
                 </span>
                 <span>Người Được Gọi (Người B)</span>
               </label>
               {memberB?.generation_index && (
-                <span className="text-[11px] font-bold bg-white text-amber-900 px-2.5 py-0.5 rounded-full border border-amber-300">
+                <span className="text-[11px] font-bold bg-white dark:bg-slate-800 text-amber-900 dark:text-amber-300 px-2.5 py-0.5 rounded-full border border-amber-300 dark:border-amber-700">
                   Đời thứ {memberB.generation_index}
                 </span>
               )}
@@ -249,7 +249,7 @@ export const KinshipCalculatorPage: React.FC = () => {
             <select
               value={memberBId}
               onChange={(e) => setMemberBId(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-xs font-bold bg-white border border-amber-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-700"
+              className="w-full px-3.5 py-2.5 text-xs font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-amber-300 dark:border-amber-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-700"
             >
               {familyMembers.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -259,8 +259,8 @@ export const KinshipCalculatorPage: React.FC = () => {
             </select>
 
             {memberB && (
-              <div className="p-3 bg-white rounded-xl border border-amber-200/80 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-900 font-bold flex items-center justify-center shrink-0 border border-amber-300 text-sm">
+              <div className="p-3 bg-white dark:bg-slate-800 rounded-xl border border-amber-200/80 dark:border-slate-700 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-900 dark:text-amber-300 font-bold flex items-center justify-center shrink-0 border border-amber-300 dark:border-amber-700 text-sm">
                   {memberB.avatar_url ? (
                     <img
                       src={memberB.avatar_url}
@@ -272,15 +272,15 @@ export const KinshipCalculatorPage: React.FC = () => {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs font-bold text-slate-900 truncate">
+                  <div className="text-xs font-bold text-slate-900 dark:text-white truncate">
                     {memberB.full_name}
                   </div>
                   {memberB.courtesy_name && (
-                    <div className="text-[11px] text-amber-800 font-serif italic">
+                    <div className="text-[11px] text-amber-800 dark:text-amber-300 font-serif italic">
                       📜 {memberB.courtesy_name}
                     </div>
                   )}
-                  <div className="text-[11px] text-slate-500">
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
                     {memberB.branch_code ? `Chi/Nhánh: ${memberB.branch_code}` : 'Thành viên trực hệ'} • {memberB.is_direct_lineage ? 'Dòng Trưởng (Đích tôn)' : 'Dòng Thứ'}
                   </div>
                 </div>
@@ -292,18 +292,18 @@ export const KinshipCalculatorPage: React.FC = () => {
 
       {/* Kinship Calculation Results Card */}
       {kinshipResult && (
-        <div className="bg-gradient-to-br from-amber-50/90 via-white to-amber-100/40 border-2 border-amber-300 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 relative overflow-hidden">
+        <div className="bg-gradient-to-br from-amber-50/90 via-white to-amber-100/40 dark:from-slate-900 dark:via-slate-900 dark:to-amber-950/30 border-2 border-amber-300 dark:border-amber-700/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6 relative overflow-hidden">
           {/* Watermark */}
-          <div className="absolute right-0 top-0 bottom-0 w-1/3 opacity-5 bg-[radial-gradient(#C49A3A_2px,transparent_2px)] [background-size:16px_16px] pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-1/3 opacity-5 dark:opacity-10 bg-[radial-gradient(#C49A3A_2px,transparent_2px)] [background-size:16px_16px] pointer-events-none" />
 
           {/* Top Result Banner */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-amber-200/80 pb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-amber-200/80 dark:border-amber-800/60 pb-6">
             <div className="space-y-1.5">
-              <div className="inline-flex items-center space-x-1.5 bg-amber-500/20 text-amber-950 text-xs font-extrabold px-3 py-1 rounded-full border border-amber-400">
-                <Award className="w-3.5 h-3.5 text-amber-700" />
+              <div className="inline-flex items-center space-x-1.5 bg-amber-500/20 dark:bg-amber-950/60 text-amber-950 dark:text-amber-200 text-xs font-extrabold px-3 py-1 rounded-full border border-amber-400 dark:border-amber-700">
+                <Award className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
                 <span>KẾT QUẢ DANH XƯNG CHUẨN XÁC</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-amber-950 dark:text-amber-200 font-serif tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-black text-amber-950 dark:text-amber-100 font-serif tracking-tight">
                 {memberA?.first_name} gọi {memberB?.first_name} là «{' '}
                 <span className="text-[#166534] dark:text-emerald-400 underline decoration-amber-400">
                   {getDialectLabel(kinshipResult.term_a_calls_b)}
@@ -312,23 +312,23 @@ export const KinshipCalculatorPage: React.FC = () => {
               </h2>
               <p className="text-xs text-slate-600 dark:text-slate-300">
                 Ngược lại, {memberB?.first_name} gọi {memberA?.first_name} là «{' '}
-                <strong>{getDialectLabel(kinshipResult.term_b_calls_a)}</strong> »
+                <strong className="text-slate-800 dark:text-white">{getDialectLabel(kinshipResult.term_b_calls_a)}</strong> »
               </p>
             </div>
 
             {/* Seniority Badge */}
-            <div className="p-3.5 rounded-2xl bg-white border border-amber-300 shadow-2xs text-center shrink-0">
-              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+            <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 shadow-2xs text-center shrink-0">
+              <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Thứ Bậc Gia Tộc
               </div>
-              <div className="text-xs font-black text-amber-950 mt-0.5">
+              <div className="text-xs font-black text-amber-950 dark:text-amber-200 mt-0.5">
                 {kinshipResult.seniority === 'B_IS_SENIOR'
                   ? 'B ở Vế Trên (Bậc Anh / Bác)'
                   : kinshipResult.seniority === 'A_IS_SENIOR'
                   ? 'A ở Vế Trên (Bậc Anh / Bác)'
                   : 'Ngang Hàng / Đồng Thế Hệ'}
               </div>
-              <div className="text-[11px] text-emerald-800 font-semibold mt-0.5">
+              <div className="text-[11px] text-emerald-800 dark:text-emerald-400 font-semibold mt-0.5">
                 Khoảng cách thế hệ: ΔG = {kinshipResult.generation_distance} đời
               </div>
             </div>
@@ -337,52 +337,52 @@ export const KinshipCalculatorPage: React.FC = () => {
           {/* 3 Detail Blocks Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Block 1: LCA Tổ Tiên Chung */}
-            <div className="p-4 rounded-2xl bg-white/90 border border-amber-200 space-y-1.5">
-              <div className="text-[11px] font-bold text-amber-900 uppercase flex items-center gap-1.5">
-                <Landmark className="w-4 h-4 text-amber-700" />
+            <div className="p-4 rounded-2xl bg-white/90 dark:bg-slate-800/90 border border-amber-200 dark:border-slate-700 space-y-1.5">
+              <div className="text-[11px] font-bold text-amber-900 dark:text-amber-300 uppercase flex items-center gap-1.5">
+                <Landmark className="w-4 h-4 text-amber-700 dark:text-amber-400" />
                 <span>Tổ Tiên Chung Gần Nhất (LCA)</span>
               </div>
-              <div className="text-xs font-bold text-slate-900 font-serif">
+              <div className="text-xs font-bold text-slate-900 dark:text-white font-serif">
                 {kinshipResult.lca_name}
               </div>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Gốc gác chung kết nối huyết thống giữa 2 cành nhánh gia đình.
               </p>
             </div>
 
             {/* Block 2: Căn cứ vai vế */}
-            <div className="p-4 rounded-2xl bg-white/90 border border-amber-200 space-y-1.5">
-              <div className="text-[11px] font-bold text-[#166534] uppercase flex items-center gap-1.5">
-                <GitMerge className="w-4 h-4 text-[#166534]" />
+            <div className="p-4 rounded-2xl bg-white/90 dark:bg-slate-800/90 border border-amber-200 dark:border-slate-700 space-y-1.5">
+              <div className="text-[11px] font-bold text-[#166534] dark:text-emerald-400 uppercase flex items-center gap-1.5">
+                <GitMerge className="w-4 h-4 text-[#166534] dark:text-emerald-400" />
                 <span>Quy Tắc Nhánh Cành</span>
               </div>
-              <div className="text-xs font-bold text-slate-900">
+              <div className="text-xs font-bold text-slate-900 dark:text-white">
                 {memberA?.branch_code || 'Chi 1'} ↔ {memberB?.branch_code || 'Chi 2'}
               </div>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Phân định rõ rệt giữa cành Trưởng (Đích tôn) và cành Thứ.
               </p>
             </div>
 
             {/* Block 3: Gợi ý xưng hô */}
-            <div className="p-4 rounded-2xl bg-white/90 border border-amber-200 space-y-1.5">
-              <div className="text-[11px] font-bold text-rose-900 uppercase flex items-center gap-1.5">
-                <Heart className="w-4 h-4 text-rose-700" />
+            <div className="p-4 rounded-2xl bg-white/90 dark:bg-slate-800/90 border border-amber-200 dark:border-slate-700 space-y-1.5">
+              <div className="text-[11px] font-bold text-rose-900 dark:text-rose-300 uppercase flex items-center gap-1.5">
+                <Heart className="w-4 h-4 text-rose-700 dark:text-rose-400" />
                 <span>Giao Tiếp Ngày Giỗ Tết</span>
               </div>
-              <div className="text-xs font-bold text-slate-900">
+              <div className="text-xs font-bold text-slate-900 dark:text-white">
                 {kinshipResult.greeting_guide || 'Xưng hô lễ phép, tôn ti trật tự'}
               </div>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Giữ trọn đạo hiếu và gia phong trong mọi cuộc gặp gỡ gia tộc.
               </p>
             </div>
           </div>
 
           {/* Lineage Explanation Box */}
-          <div className="p-5 rounded-2xl bg-amber-100/60 border-l-4 border-amber-600 text-xs sm:text-sm text-amber-950 font-serif leading-relaxed space-y-2">
-            <div className="font-bold flex items-center gap-1.5 text-amber-900">
-              <BookOpen className="w-4 h-4 text-amber-700" />
+          <div className="p-5 rounded-2xl bg-amber-100/60 dark:bg-amber-950/40 border-l-4 border-amber-600 dark:border-amber-500 text-xs sm:text-sm text-amber-950 dark:text-amber-200 font-serif leading-relaxed space-y-2">
+            <div className="font-bold flex items-center gap-1.5 text-amber-900 dark:text-amber-300">
+              <BookOpen className="w-4 h-4 text-amber-700 dark:text-amber-400" />
               <span>Căn Cứ Văn Hóa & Tộc Ước Dòng Họ:</span>
             </div>
             <p className="italic">
@@ -393,104 +393,104 @@ export const KinshipCalculatorPage: React.FC = () => {
       )}
 
       {/* Clan Kinship Quick Reference Matrix (Bảng Tra Cứu Nhanh 5 Đời) */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
-        <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-          <BookOpen className="w-4 h-4 text-[#166534]" />
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+        <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+          <BookOpen className="w-4 h-4 text-[#166534] dark:text-emerald-400" />
           <span>Bảng Tra Cứu Nhanh Thứ Bậc 5 Đời Theo Phong Tục Gia Tộc Việt Nam</span>
         </h3>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left border border-slate-200 rounded-xl overflow-hidden">
-            <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+          <table className="w-full text-xs text-left border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <thead className="bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th className="p-3 border-r border-slate-200">Khoảng Cách Đời</th>
-                <th className="p-3 border-r border-slate-200">Bậc Tiền Bối (Vế Trên)</th>
-                <th className="p-3 border-r border-slate-200">Bậc Hậu Bối (Vế Dưới)</th>
+                <th className="p-3 border-r border-slate-200 dark:border-slate-700">Khoảng Cách Đời</th>
+                <th className="p-3 border-r border-slate-200 dark:border-slate-700">Bậc Tiền Bối (Vế Trên)</th>
+                <th className="p-3 border-r border-slate-200 dark:border-slate-700">Bậc Hậu Bối (Vế Dưới)</th>
                 <th className="p-3">Nguyên Tắc Xưng Hô Truyền Thống</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 text-slate-700">
-              <tr className="hover:bg-slate-50">
-                <td className="p-3 font-bold text-amber-900 border-r border-slate-200">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+              <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                <td className="p-3 font-bold text-amber-900 dark:text-amber-300 border-r border-slate-200 dark:border-slate-700">
                   Đồng thế hệ (ΔG = 0)
                 </td>
-                <td className="p-3 font-semibold text-[#166534] border-r border-slate-200">
+                <td className="p-3 font-semibold text-[#166534] dark:text-emerald-400 border-r border-slate-200 dark:border-slate-700">
                   Anh họ / Chị họ (Con Bác)
                 </td>
-                <td className="p-3 font-semibold border-r border-slate-200">
+                <td className="p-3 font-semibold text-slate-800 dark:text-slate-200 border-r border-slate-200 dark:border-slate-700">
                   Em họ (Con Chú)
                 </td>
-                <td className="p-3 text-[11px] text-slate-600">
+                <td className="p-3 text-[11px] text-slate-600 dark:text-slate-400">
                   Dù nhiều tuổi hơn ngoài đời nhưng sinh ra ở nhánh con Chú thì vẫn gọi nhánh con Bác là Anh/Chị.
                 </td>
               </tr>
-              <tr className="hover:bg-slate-50">
-                <td className="p-3 font-bold text-amber-900 border-r border-slate-200">
+              <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                <td className="p-3 font-bold text-amber-900 dark:text-amber-300 border-r border-slate-200 dark:border-slate-700">
                   Lệch 1 đời (ΔG = 1)
                 </td>
-                <td className="p-3 font-semibold text-[#166534] border-r border-slate-200">
+                <td className="p-3 font-semibold text-[#166534] dark:text-emerald-400 border-r border-slate-200 dark:border-slate-700">
                   Bác họ / Chú họ / Cô / Cậu / Dì
                 </td>
-                <td className="p-3 font-semibold border-r border-slate-200">
+                <td className="p-3 font-semibold text-slate-800 dark:text-slate-200 border-r border-slate-200 dark:border-slate-700">
                   Cháu
                 </td>
-                <td className="p-3 text-[11px] text-slate-600">
+                <td className="p-3 text-[11px] text-slate-600 dark:text-slate-400">
                   Anh của Bố gọi là Bác, em trai của Bố gọi là Chú, chị/em gái của Bố gọi là Cô.
                 </td>
               </tr>
-              <tr className="hover:bg-slate-50">
-                <td className="p-3 font-bold text-amber-900 border-r border-slate-200">
+              <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                <td className="p-3 font-bold text-amber-900 dark:text-amber-300 border-r border-slate-200 dark:border-slate-700">
                   Lệch 2 đời (ΔG = 2)
                 </td>
-                <td className="p-3 font-semibold text-[#166534] border-r border-slate-200">
+                <td className="p-3 font-semibold text-[#166534] dark:text-emerald-400 border-r border-slate-200 dark:border-slate-700">
                   Ông Trưởng / Ông Chú / Bà Cô
                 </td>
-                <td className="p-3 font-semibold border-r border-slate-200">
+                <td className="p-3 font-semibold text-slate-800 dark:text-slate-200 border-r border-slate-200 dark:border-slate-700">
                   Cháu nội tộc
                 </td>
-                <td className="p-3 text-[11px] text-slate-600">
+                <td className="p-3 text-[11px] text-slate-600 dark:text-slate-400">
                   Ngang hàng với Ông/Bà nội. Thêm hậu tố Trưởng/Thứ/Chú theo đúng thứ bậc của đời trước.
                 </td>
               </tr>
-              <tr className="hover:bg-slate-50">
-                <td className="p-3 font-bold text-amber-900 border-r border-slate-200">
+              <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                <td className="p-3 font-bold text-amber-900 dark:text-amber-300 border-r border-slate-200 dark:border-slate-700">
                   Lệch 3 đời (ΔG = 3)
                 </td>
-                <td className="p-3 font-semibold text-[#166534] border-r border-slate-200">
+                <td className="p-3 font-semibold text-[#166534] dark:text-emerald-400 border-r border-slate-200 dark:border-slate-700">
                   Cụ / Cố nội tộc
                 </td>
-                <td className="p-3 font-semibold border-r border-slate-200">
+                <td className="p-3 font-semibold text-slate-800 dark:text-slate-200 border-r border-slate-200 dark:border-slate-700">
                   Chắt
                 </td>
-                <td className="p-3 text-[11px] text-slate-600">
+                <td className="p-3 text-[11px] text-slate-600 dark:text-slate-400">
                   Bậc Cụ sinh ra Ông/Bà. Con cháu xưng Chắt.
                 </td>
               </tr>
-              <tr className="hover:bg-slate-50">
-                <td className="p-3 font-bold text-amber-900 border-r border-slate-200">
+              <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                <td className="p-3 font-bold text-amber-900 dark:text-amber-300 border-r border-slate-200 dark:border-slate-700">
                   Lệch 4 đời (ΔG = 4)
                 </td>
-                <td className="p-3 font-semibold text-[#166534] border-r border-slate-200">
+                <td className="p-3 font-semibold text-[#166534] dark:text-emerald-400 border-r border-slate-200 dark:border-slate-700">
                   Cụ Kỵ
                 </td>
-                <td className="p-3 font-semibold border-r border-slate-200">
+                <td className="p-3 font-semibold text-slate-800 dark:text-slate-200 border-r border-slate-200 dark:border-slate-700">
                   Chút
                 </td>
-                <td className="p-3 text-[11px] text-slate-600">
+                <td className="p-3 text-[11px] text-slate-600 dark:text-slate-400">
                   Bậc Kỵ sinh ra Cụ. Con cháu đời sau xưng Chút.
                 </td>
               </tr>
-              <tr className="hover:bg-slate-50">
-                <td className="p-3 font-bold text-amber-900 border-r border-slate-200">
+              <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                <td className="p-3 font-bold text-amber-900 dark:text-amber-300 border-r border-slate-200 dark:border-slate-700">
                   Lệch 5 đời trở lên (ΔG ≥ 5)
                 </td>
-                <td className="p-3 font-semibold text-[#166534] border-r border-slate-200">
+                <td className="p-3 font-semibold text-[#166534] dark:text-emerald-400 border-r border-slate-200 dark:border-slate-700">
                   Tiên Tổ Tiền Nhân
                 </td>
-                <td className="p-3 font-semibold border-r border-slate-200">
+                <td className="p-3 font-semibold text-slate-800 dark:text-slate-200 border-r border-slate-200 dark:border-slate-700">
                   Chít / Hậu duệ
                 </td>
-                <td className="p-3 text-[11px] text-slate-600">
+                <td className="p-3 text-[11px] text-slate-600 dark:text-slate-400">
                   Các bậc Thủy Tổ, Cao Tằng Tổ Khảo lập làng dựng họ muôn đời phụng thờ.
                 </td>
               </tr>

@@ -98,7 +98,7 @@ export const AnnualFinancialReportModal: React.FC<AnnualFinancialReportModalProp
               <h2 className="text-base font-bold text-slate-900 dark:text-white font-serif">
                 Báo Cáo Tài Chính Tổng Kết Năm {reportYear}
               </h2>
-              <p className="text-xs text-slate-500">Chuẩn in ấn A4 phục vụ ngày Họp Họ & Giỗ Tổ</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Chuẩn in ấn A4 phục vụ ngày Họp Họ & Giỗ Tổ</p>
             </div>
           </div>
 
@@ -136,7 +136,7 @@ export const AnnualFinancialReportModal: React.FC<AnnualFinancialReportModalProp
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 transition"
+              className="p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -250,7 +250,7 @@ export const AnnualFinancialReportModal: React.FC<AnnualFinancialReportModalProp
                     <td className="p-2 border border-slate-300 dark:border-slate-700 font-mono text-[11px]">{t.transaction_code}</td>
                     <td className="p-2 border border-slate-300 dark:border-slate-700 whitespace-nowrap">{t.transaction_date}</td>
                     <td className="p-2 border border-slate-300 dark:border-slate-700">
-                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${t.transaction_type === 'INCOME' ? 'bg-emerald-100 text-emerald-900' : 'bg-rose-100 text-rose-900'}`}>
+                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${t.transaction_type === 'INCOME' ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-300' : 'bg-rose-100 dark:bg-rose-950/60 text-rose-900 dark:text-rose-300'}`}>
                         {t.transaction_type === 'INCOME' ? 'THU' : 'CHI'}
                       </span>
                     </td>
@@ -268,16 +268,16 @@ export const AnnualFinancialReportModal: React.FC<AnnualFinancialReportModalProp
           {/* Section 3: Chữ Ký Ban Quản Trị Dòng Họ */}
           <div className="pt-8 grid grid-cols-3 gap-4 text-center text-xs font-serif">
             <div className="space-y-16">
-              <div className="font-bold uppercase">THỦ QUỸ GIA TỘC</div>
-              <div className="text-slate-500 italic">(Ký, ghi rõ họ tên)</div>
+              <div className="font-bold uppercase text-slate-900 dark:text-slate-100">THỦ QUỸ GIA TỘC</div>
+              <div className="text-slate-500 dark:text-slate-400 italic">(Ký, ghi rõ họ tên)</div>
             </div>
             <div className="space-y-16">
-              <div className="font-bold uppercase">BAN KIỂM SOÁT</div>
-              <div className="text-slate-500 italic">(Ký, ghi rõ họ tên)</div>
+              <div className="font-bold uppercase text-slate-900 dark:text-slate-100">BAN KIỂM SOÁT</div>
+              <div className="text-slate-500 dark:text-slate-400 italic">(Ký, ghi rõ họ tên)</div>
             </div>
             <div className="space-y-16">
-              <div className="font-bold uppercase">TRƯỞNG TỘC / CHỦ TỌA</div>
-              <div className="text-slate-500 italic">(Ký, đóng dấu họ tộc nếu có)</div>
+              <div className="font-bold uppercase text-slate-900 dark:text-slate-100">TRƯỞNG TỘC / CHỦ TỌA</div>
+              <div className="text-slate-500 dark:text-slate-400 italic">(Ký, đóng dấu họ tộc nếu có)</div>
             </div>
           </div>
         </div>

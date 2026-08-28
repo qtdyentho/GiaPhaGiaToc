@@ -186,66 +186,66 @@ export const FinanceDashboardPage: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Link
           to="/app/finance/ledger"
-          className="p-4 rounded-xl bg-white border border-slate-200 hover:border-[#166534] hover:shadow-sm transition flex items-center justify-between group"
+          className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-[#166534] dark:hover:border-emerald-600 hover:shadow-sm transition flex items-center justify-between group"
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-emerald-50 text-[#166534] group-hover:bg-[#166534] group-hover:text-white transition">
+            <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-[#166534] dark:text-emerald-400 group-hover:bg-[#166534] group-hover:text-white transition">
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs font-bold text-slate-800">Sổ Quỹ Gia Tộc</div>
-              <div className="text-[11px] text-slate-500">Thu chi minh bạch & lịch sử ghi sổ</div>
+              <div className="text-xs font-bold text-slate-800 dark:text-white">Sổ Quỹ Gia Tộc</div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">Thu chi minh bạch & lịch sử ghi sổ</div>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#166534] transition" />
+          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#166534] dark:group-hover:text-emerald-400 transition" />
         </Link>
 
         <Link
           to="/app/finance/income"
-          className="p-4 rounded-xl bg-white border border-slate-200 hover:border-[#166534] hover:shadow-sm transition flex items-center justify-between group"
+          className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-[#166534] dark:hover:border-emerald-600 hover:shadow-sm transition flex items-center justify-between group"
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-emerald-50 text-[#166534] group-hover:bg-[#166534] group-hover:text-white transition">
+            <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-[#166534] dark:text-emerald-400 group-hover:bg-[#166534] group-hover:text-white transition">
               <Receipt className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs font-bold text-slate-800">Đóng Góp Thường Niên</div>
-              <div className="text-[11px] text-slate-500">Định mức hương khói & việc họ</div>
+              <div className="text-xs font-bold text-slate-800 dark:text-white">Đóng Góp Thường Niên</div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">Định mức hương khói & việc họ</div>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#166534] transition" />
+          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#166534] dark:group-hover:text-emerald-400 transition" />
         </Link>
 
         <Link
           to="/app/finance/expenses"
-          className="p-4 rounded-xl bg-white border border-slate-200 hover:border-[#166534] hover:shadow-sm transition flex items-center justify-between group"
+          className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-[#166534] dark:hover:border-emerald-600 hover:shadow-sm transition flex items-center justify-between group"
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-emerald-50 text-[#166534] group-hover:bg-[#166534] group-hover:text-white transition">
+            <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-[#166534] dark:text-emerald-400 group-hover:bg-[#166534] group-hover:text-white transition">
               <ArrowUpRight className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs font-bold text-slate-800">Khoản Chi & Duyệt Chi</div>
-              <div className="text-[11px] text-slate-500">Trưởng tộc & Thủ quỹ xét duyệt</div>
+              <div className="text-xs font-bold text-slate-800 dark:text-white">Khoản Chi & Duyệt Chi</div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">Trưởng tộc & Thủ quỹ xét duyệt</div>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#166534] transition" />
+          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#166534] dark:group-hover:text-emerald-400 transition" />
         </Link>
 
         <Link
           to="/app/finance/honor-roll"
-          className="p-4 rounded-xl bg-white border border-slate-200 hover:border-[#166534] hover:shadow-sm transition flex items-center justify-between group"
+          className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-[#166534] dark:hover:border-emerald-600 hover:shadow-sm transition flex items-center justify-between group"
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-50 text-amber-800 group-hover:bg-amber-800 group-hover:text-white transition">
+            <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 group-hover:bg-amber-800 group-hover:text-white transition">
               <Trophy className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs font-bold text-slate-800">Bảng Vàng Danh Dự</div>
-              <div className="text-[11px] text-slate-500">Vinh danh công đức dòng họ</div>
+              <div className="text-xs font-bold text-slate-800 dark:text-white">Bảng Vàng Danh Dự</div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400">Vinh danh công đức dòng họ</div>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#166534] transition" />
+          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#166534] dark:group-hover:text-emerald-400 transition" />
         </Link>
       </div>
 
@@ -253,7 +253,7 @@ export const FinanceDashboardPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Cols: Funds List with Clickable Interaction */}
         <div className="lg:col-span-2 space-y-4">
-          <Card className="p-0 overflow-hidden shadow-sm">
+          <Card className="p-0 overflow-hidden shadow-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
             <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div>
                 <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -329,24 +329,24 @@ export const FinanceDashboardPage: React.FC = () => {
                 <div
                   key={fund.id}
                   onClick={() => setSelectedFundDetail(fund)}
-                  className="p-4 sm:p-5 hover:bg-emerald-50/40 hover:border-emerald-200/60 transition-all flex items-center justify-between gap-4 cursor-pointer group"
+                  className="p-4 sm:p-5 hover:bg-emerald-50/40 dark:hover:bg-slate-800/60 hover:border-emerald-200/60 dark:hover:border-slate-700 transition-all flex items-center justify-between gap-4 cursor-pointer group"
                 >
                   <div className="flex items-center gap-3.5">
-                    <div className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center font-bold text-[#166534] shrink-0 text-base group-hover:bg-[#166534] group-hover:text-white transition-colors shadow-xs">
+                    <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center font-bold text-[#166534] dark:text-emerald-400 shrink-0 text-base group-hover:bg-[#166534] group-hover:text-white transition-colors shadow-xs">
                       {fund.name.charAt(0)}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-bold text-slate-900 group-hover:text-[#166534] transition-colors">
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#166534] dark:group-hover:text-emerald-400 transition-colors">
                           {fund.name}
                         </h3>
-                        <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-[#166534] group-hover:translate-x-0.5 transition-all" />
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 group-hover:text-[#166534] dark:group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
                       </div>
-                      <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">{fund.description || 'Quỹ chuyên dùng của dòng họ'}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">{fund.description || 'Quỹ chuyên dùng của dòng họ'}</p>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="text-sm sm:text-base font-bold text-slate-900">{formatCurrency(fund.current_balance)}</div>
+                    <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">{formatCurrency(fund.current_balance)}</div>
                     <Badge variant={fund.current_balance > 0 ? 'success' : 'neutral'} size="sm">
                       {fund.current_balance > 0 ? 'Có số dư' : 'Số dư 0đ'}
                     </Badge>
@@ -359,26 +359,26 @@ export const FinanceDashboardPage: React.FC = () => {
 
         {/* Right 1 Col: Recent Transactions */}
         <div className="space-y-4">
-          <Card className="p-0 overflow-hidden shadow-sm">
-            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-[#1E3A5F]" />
+          <Card className="p-0 overflow-hidden shadow-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-[#1E3A5F] dark:text-emerald-400" />
                 <span>Bút Toán Gần Đây</span>
               </h2>
-              <Link to="/app/finance/ledger" className="text-xs font-bold text-[#166534] hover:underline">
+              <Link to="/app/finance/ledger" className="text-xs font-bold text-[#166534] dark:text-emerald-400 hover:underline">
                 Xem tất cả
               </Link>
             </div>
 
-            <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-[400px] overflow-y-auto">
               {summary.recentTransactions.map((tx) => (
-                <div key={tx.id} className="p-3.5 hover:bg-slate-50/80 transition text-xs flex items-center justify-between gap-2">
+                <div key={tx.id} className="p-3.5 hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition text-xs flex items-center justify-between gap-2">
                   <div>
-                    <p className="font-semibold text-slate-900 line-clamp-1">{tx.description}</p>
+                    <p className="font-semibold text-slate-900 dark:text-white line-clamp-1">{tx.description}</p>
                     <p className="text-[10px] text-slate-400 mt-0.5">{formatDate(tx.transaction_date)} • {tx.transaction_type}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className={`font-bold ${tx.amount >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                    <p className={`font-bold ${tx.amount >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}`}>
                       {tx.amount >= 0 ? '+' : ''}{formatCurrency(tx.amount)}
                     </p>
                     <Badge variant="neutral" size="sm">{tx.status}</Badge>

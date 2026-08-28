@@ -99,9 +99,9 @@ export const ClanCovenantModal: React.FC<ClanCovenantModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl max-w-3xl w-full overflow-hidden shadow-2xl border border-slate-200 animate-scale-in">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 animate-scale-in">
         {/* Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-[#166534] to-[#14532D] text-white flex items-center justify-between">
+        <div className="px-6 py-4 bg-gradient-to-r from-[#166534] to-[#14532D] dark:from-emerald-950 dark:to-slate-900 text-white flex items-center justify-between border-b dark:border-slate-800">
           <div className="flex items-center space-x-2.5">
             <div className="p-2 bg-amber-400/20 rounded-xl border border-amber-300/30 text-amber-300">
               <Scroll className="w-5 h-5" />
@@ -110,7 +110,7 @@ export const ClanCovenantModal: React.FC<ClanCovenantModalProps> = ({
               <h3 className="text-base font-bold text-white">
                 Chỉnh Sửa Hương Ước & Quy Ước Dòng Họ
               </h3>
-              <p className="text-xs text-emerald-100">
+              <p className="text-xs text-emerald-100 dark:text-emerald-300/80">
                 Ghi nhận quy chế gia phong răn dạy con cháu muôn đời lưu truyền
               </p>
             </div>
@@ -126,9 +126,9 @@ export const ClanCovenantModal: React.FC<ClanCovenantModalProps> = ({
         {/* Content Form */}
         <form onSubmit={handleSave} className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
           {/* Action to reset default */}
-          <div className="flex items-center justify-between p-3.5 bg-amber-50/70 border border-amber-200 rounded-2xl">
-            <div className="flex items-center space-x-2 text-amber-900 text-xs">
-              <Sparkles className="w-4 h-4 text-amber-700 shrink-0" />
+          <div className="flex items-center justify-between p-3.5 bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl">
+            <div className="flex items-center space-x-2 text-amber-900 dark:text-amber-200 text-xs">
+              <Sparkles className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
               <span>
                 Bạn có thể tự do biên soạn hoặc dùng bộ mẫu Hương ước truyền thống chuẩn mực.
               </span>
@@ -136,7 +136,7 @@ export const ClanCovenantModal: React.FC<ClanCovenantModalProps> = ({
             <button
               type="button"
               onClick={handleResetDefault}
-              className="px-3 py-1 bg-white hover:bg-amber-100 text-amber-900 text-xs font-bold rounded-lg border border-amber-300 transition flex items-center gap-1 shrink-0"
+              className="px-3 py-1 bg-white dark:bg-slate-800 hover:bg-amber-100 dark:hover:bg-slate-700 text-amber-900 dark:text-amber-200 text-xs font-bold rounded-lg border border-amber-300 dark:border-amber-700 transition flex items-center gap-1 shrink-0"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Dùng Mẫu Chuẩn</span>
@@ -145,7 +145,7 @@ export const ClanCovenantModal: React.FC<ClanCovenantModalProps> = ({
 
           {/* Title */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase mb-1">
               Tiêu Đề Bản Quy Ước
             </label>
             <input
@@ -154,13 +154,13 @@ export const ClanCovenantModal: React.FC<ClanCovenantModalProps> = ({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Ví dụ: Hương Ước & Tộc Quy Đại Tộc Nguyễn Văn"
               required
-              className="w-full px-3.5 py-2.5 text-xs font-semibold border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534]"
+              className="w-full px-3.5 py-2.5 text-xs font-semibold bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#166534]"
             />
           </div>
 
           {/* Preamble / Lời Tựa */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 uppercase mb-1">
               Lời Tựa / Lời Mở Đầu Răn Dạy (Preamble)
             </label>
             <textarea
@@ -169,20 +169,20 @@ export const ClanCovenantModal: React.FC<ClanCovenantModalProps> = ({
               onChange={(e) => setPreamble(e.target.value)}
               placeholder="Lời răn dạy cội nguồn, kính hiếu tiên tổ..."
               required
-              className="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534] leading-relaxed"
+              className="w-full px-3.5 py-2 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#166534] leading-relaxed"
             />
           </div>
 
           {/* Articles List */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-700 uppercase">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase">
                 Các Điều Khoản Quy Ước ({articles.length} điều)
               </label>
               <button
                 type="button"
                 onClick={handleAddArticle}
-                className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-[#166534] text-xs font-bold rounded-xl border border-emerald-200 flex items-center gap-1 transition"
+                className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900 text-[#166534] dark:text-emerald-300 text-xs font-bold rounded-xl border border-emerald-200 dark:border-emerald-800 flex items-center gap-1 transition"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Thêm Điều Khoản</span>
@@ -193,9 +193,9 @@ export const ClanCovenantModal: React.FC<ClanCovenantModalProps> = ({
               {articles.map((article, idx) => (
                 <div
                   key={idx}
-                  className="flex items-start gap-2.5 p-3 rounded-2xl bg-slate-50 border border-slate-200"
+                  className="flex items-start gap-2.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700"
                 >
-                  <div className="w-7 h-7 rounded-xl bg-emerald-100 text-[#166534] font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 border border-emerald-200">
+                  <div className="w-7 h-7 rounded-xl bg-emerald-100 dark:bg-emerald-900 text-[#166534] dark:text-emerald-300 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 border border-emerald-200 dark:border-emerald-700">
                     {idx + 1}
                   </div>
                   <textarea
@@ -204,13 +204,13 @@ export const ClanCovenantModal: React.FC<ClanCovenantModalProps> = ({
                     onChange={(e) => handleUpdateArticle(idx, e.target.value)}
                     required
                     placeholder={`Nội dung điều ${idx + 1}...`}
-                    className="flex-1 px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534]"
+                    className="flex-1 px-3 py-1.5 text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#166534]"
                   />
                   {articles.length > 1 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveArticle(idx)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-lg transition"
                       title="Xóa điều khoản này"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -222,10 +222,10 @@ export const ClanCovenantModal: React.FC<ClanCovenantModalProps> = ({
           </div>
 
           {/* Modal Footer Buttons inside Form */}
-          <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
-            <p className="text-xs text-slate-500">
+          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               {saveSuccess ? (
-                <span className="text-emerald-700 font-bold flex items-center gap-1">
+                <span className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-1">
                   <Check className="w-4 h-4" /> Đã cập nhật Hương ước dòng họ thành công!
                 </span>
               ) : (
@@ -236,7 +236,7 @@ export const ClanCovenantModal: React.FC<ClanCovenantModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl transition"
+                className="px-4 py-2 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-xl transition"
               >
                 Đóng
               </button>
