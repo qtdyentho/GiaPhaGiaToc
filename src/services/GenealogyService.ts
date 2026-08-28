@@ -34,31 +34,39 @@ export class GenealogyService {
           ]);
 
         if (!membersRes.error && membersRes.data) {
-          const mappedMembers: Member[] = (membersRes.data || []).map((dbRow: any) => ({
-            id: dbRow.id,
-            family_id: dbRow.family_id,
-            generation_id: dbRow.generation_id,
-            branch_id: dbRow.branch_id,
-            first_name: dbRow.first_name || dbRow.full_name?.split(' ').pop() || '',
-            last_name: dbRow.last_name || dbRow.full_name?.split(' ').slice(0, -1).join(' ') || '',
-            full_name: dbRow.full_name || `${dbRow.last_name || ''} ${dbRow.first_name || ''}`.trim(),
-            gender: dbRow.gender || 'MALE',
-            life_status: dbRow.status || (dbRow.is_deceased ? 'DECEASED' : 'ALIVE'),
-            birth_solar_date: dbRow.date_of_birth,
-            birth_time: dbRow.birth_time,
-            courtesy_name: dbRow.courtesy_name,
-            death_solar_date: dbRow.date_of_death_solar,
-            death_lunar_day: dbRow.date_of_death_lunar_day,
-            death_lunar_month: dbRow.date_of_death_lunar_month,
-            death_lunar_year: dbRow.date_of_death_lunar_year,
-            death_time: dbRow.death_time,
-            religious_name: dbRow.religious_name,
-            burial_place: dbRow.burial_place,
-            bio: dbRow.biography || dbRow.notes,
-            avatar_url: dbRow.avatar_url,
-            created_at: dbRow.created_at,
-            updated_at: dbRow.updated_at,
-          }));
+          const mappedMembers: Member[] = (membersRes.data || []).map((dbRow: any) => {
+            const notesStr = dbRow.notes || dbRow.biography || '';
+            const extractNote = (prefix: string) => {
+              const match = notesStr.match(new RegExp(`${prefix}:\\s*([^•|]+)`, 'i'));
+              return match && match[1] ? match[1].trim() : undefined;
+            };
+
+            return {
+              id: dbRow.id,
+              family_id: dbRow.family_id,
+              generation_id: dbRow.generation_id,
+              branch_id: dbRow.branch_id,
+              first_name: dbRow.first_name || dbRow.full_name?.split(' ').pop() || '',
+              last_name: dbRow.last_name || dbRow.full_name?.split(' ').slice(0, -1).join(' ') || '',
+              full_name: dbRow.full_name || `${dbRow.last_name || ''} ${dbRow.first_name || ''}`.trim(),
+              gender: dbRow.gender || 'MALE',
+              life_status: dbRow.status || (dbRow.is_deceased ? 'DECEASED' : 'ALIVE'),
+              birth_solar_date: dbRow.date_of_birth || extractNote('Ngày sinh dương'),
+              birth_time: dbRow.birth_time || extractNote('Giờ sinh'),
+              courtesy_name: dbRow.courtesy_name || extractNote('Tên tự/hiệu'),
+              death_solar_date: dbRow.date_of_death_solar || extractNote('Ngày mất dương'),
+              death_lunar_day: dbRow.date_of_death_lunar_day,
+              death_lunar_month: dbRow.date_of_death_lunar_month,
+              death_lunar_year: dbRow.date_of_death_lunar_year,
+              death_time: dbRow.death_time || extractNote('Giờ mất'),
+              religious_name: dbRow.religious_name,
+              burial_place: dbRow.burial_place || extractNote('Mộ phần'),
+              bio: dbRow.biography || dbRow.notes,
+              avatar_url: dbRow.avatar_url,
+              created_at: dbRow.created_at,
+              updated_at: dbRow.updated_at,
+            };
+          });
 
           return {
             members: mappedMembers,
@@ -93,6 +101,12 @@ export class GenealogyService {
       try {
         const { data, error } = await supabase.from('members').select('*').eq('id', id).single();
         if (!error && data) {
+          const notesStr = data.notes || data.biography || '';
+          const extractNote = (prefix: string) => {
+            const match = notesStr.match(new RegExp(`${prefix}:\\s*([^•|]+)`, 'i'));
+            return match && match[1] ? match[1].trim() : undefined;
+          };
+
           return {
             id: data.id,
             family_id: data.family_id,
@@ -103,16 +117,16 @@ export class GenealogyService {
             full_name: data.full_name,
             gender: data.gender || 'MALE',
             life_status: data.status || (data.is_deceased ? 'DECEASED' : 'ALIVE'),
-            birth_solar_date: data.date_of_birth,
-            birth_time: data.birth_time,
-            courtesy_name: data.courtesy_name,
-            death_solar_date: data.date_of_death_solar,
+            birth_solar_date: data.date_of_birth || extractNote('Ngày sinh dương'),
+            birth_time: data.birth_time || extractNote('Giờ sinh'),
+            courtesy_name: data.courtesy_name || extractNote('Tên tự/hiệu'),
+            death_solar_date: data.date_of_death_solar || extractNote('Ngày mất dương'),
             death_lunar_day: data.date_of_death_lunar_day,
             death_lunar_month: data.date_of_death_lunar_month,
             death_lunar_year: data.date_of_death_lunar_year,
-            death_time: data.death_time,
+            death_time: data.death_time || extractNote('Giờ mất'),
             religious_name: data.religious_name,
-            burial_place: data.burial_place,
+            burial_place: data.burial_place || extractNote('Mộ phần'),
             bio: data.biography || data.notes,
             avatar_url: data.avatar_url,
             created_at: data.created_at,
