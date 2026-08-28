@@ -152,6 +152,7 @@ export interface Branch {
   parent_branch_id?: string;
   name: string;
   code?: string;
+  description?: string;
   order_index: number;
   created_at: string;
 }

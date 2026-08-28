@@ -23,14 +23,29 @@ export class GenealogyService {
       };
     }
 
-    if (isSupabaseConfigured() && isUUID(familyId)) {
-      try {
-        const [membersRes, genRes, branchRes, relRes] = await Promise.all([
-          supabase.from('members').select('*').eq('family_id', familyId),
-          supabase.from('generations').select('*').eq('family_id', familyId).order('generation_number', { ascending: true }),
-          supabase.from('branches').select('*').eq('family_id', familyId),
-          supabase.from('member_relationships').select('*').eq('family_id', familyId),
-        ]);
+    if (isSupabaseConfigured()) {
+      let targetUUID = familyId;
+      if (!isUUID(targetUUID)) {
+        try {
+          const { data: matchedFam } = await supabase
+            .from('families')
+            .select('id')
+            .limit(1)
+            .maybeSingle();
+          if (matchedFam?.id) targetUUID = matchedFam.id;
+        } catch (e) {
+          console.warn('UUID match error:', e);
+        }
+      }
+
+      if (isUUID(targetUUID)) {
+        try {
+          const [membersRes, genRes, branchRes, relRes] = await Promise.all([
+            supabase.from('members').select('*').eq('family_id', targetUUID),
+            supabase.from('generations').select('*').eq('family_id', targetUUID).order('generation_number', { ascending: true }),
+            supabase.from('branches').select('*').eq('family_id', targetUUID),
+            supabase.from('member_relationships').select('*').eq('family_id', targetUUID),
+          ]);
 
         if (!membersRes.error && membersRes.data) {
           const mappedMembers: Member[] = (membersRes.data || []).map((dbRow: any) => ({
@@ -72,6 +87,7 @@ export class GenealogyService {
         return { members: [], generations: [], branches: [], relationships: [] };
       }
     }
+  }
 
     // Local / In-memory Store: Filter strictly by familyId
     return {

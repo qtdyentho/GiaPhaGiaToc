@@ -260,6 +260,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const createFamily = async (data: CreateFamilyData): Promise<Family> => {
     setIsLoading(true);
     const currentUserId = user?.id || 'usr-0000-0001';
+    const isUUID = (str?: string | null): boolean =>
+      Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
 
     // 🔒 Enforce strictly 1 owned family per user account
     const existingOwnedFamily = families.find(
@@ -271,11 +273,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error(`Mỗi tài khoản người dùng chỉ được khởi tạo và quản lý duy nhất 1 dòng họ (Hiện đang quản lý: ${existingOwnedFamily.name}).`);
     }
 
-    const newFamilyId = `fam-${Date.now()}`;
-    const newFam: Family = {
+    let newFamilyId = `fam-${Date.now()}`;
+    let newFam: Family = {
       id: newFamilyId,
       name: data.name,
-      code: data.code,
+      code: data.code || `GP${Math.floor(1000 + Math.random() * 9000)}`,
       slug: data.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
       description: data.description || `Dòng họ ${data.name} tại ${data.originProvince}`,
       origin_province: data.originProvince,
@@ -287,11 +289,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updated_at: new Date().toISOString(),
     };
 
-    // Create OWNER membership
-    const newMem: FamilyMembership = {
+    let newMem: FamilyMembership = {
       id: `mem-${newFamilyId}`,
       family_id: newFamilyId,
-      user_id: user?.id || 'usr-0000-0001',
+      user_id: currentUserId,
       role: 'OWNER',
       status: 'ACTIVE',
       joined_at: new Date().toISOString(),
@@ -299,7 +300,101 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updated_at: new Date().toISOString(),
     };
 
-    // Seed default initial funds for this new family (Clean 0 balance)
+    // ── Supabase Insertion (Production/Staging) ─────────────────
+    if (isSupabaseConfigured()) {
+      try {
+        const originStr = [data.originCommune, data.originDistrict, data.originProvince].filter(Boolean).join(', ');
+        const { data: dbFam, error: famErr } = await supabase
+          .from('families')
+          .insert([{
+            name: data.name,
+            surname: data.name.split(' ').pop() || data.name,
+            description: data.description || `Dòng họ ${data.name} tại ${data.originProvince}`,
+            origin: originStr || data.originProvince,
+            ancestral_home: data.originProvince,
+            ancestral_hall: data.ancestralHallAddress,
+            created_by: isUUID(currentUserId) ? currentUserId : null,
+          }])
+          .select()
+          .single();
+
+        if (!famErr && dbFam) {
+          newFamilyId = dbFam.id;
+          newFam = {
+            id: dbFam.id,
+            name: dbFam.name,
+            code: data.code || dbFam.id.slice(0, 8).toUpperCase(),
+            slug: data.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+            description: dbFam.description || '',
+            origin_province: data.originProvince,
+            origin_district: data.originDistrict,
+            origin_commune: data.originCommune,
+            ancestral_hall_address: dbFam.ancestral_hall || '',
+            created_by: dbFam.created_by,
+            created_at: dbFam.created_at,
+            updated_at: dbFam.updated_at,
+          };
+
+          if (isUUID(currentUserId)) {
+            const { data: dbMem } = await supabase
+              .from('family_memberships')
+              .insert([{
+                family_id: dbFam.id,
+                user_id: currentUserId,
+                role: 'OWNER',
+                status: 'ACTIVE',
+              }])
+              .select()
+              .single();
+
+            if (dbMem) {
+              newMem = {
+                id: dbMem.id,
+                family_id: dbFam.id,
+                user_id: currentUserId,
+                role: 'OWNER',
+                status: 'ACTIVE',
+                joined_at: dbMem.joined_at,
+                created_at: dbMem.created_at,
+                updated_at: dbMem.updated_at,
+              };
+            }
+          }
+
+          // Seed default funds in Supabase
+          await supabase.from('funds').insert([
+            {
+              family_id: dbFam.id,
+              name: 'Quỹ Hoạt Động Thường Niên',
+              description: 'Chi phí hương khói, giỗ chạp, hội họp dòng họ',
+              opening_balance: 0,
+              current_balance: 0,
+              status: 'ACTIVE',
+            },
+            {
+              family_id: dbFam.id,
+              name: 'Quỹ Khuyến Học & Khuyến Tài',
+              description: 'Khen thưởng con cháu đỗ đạt và thành tích xuất sắc',
+              opening_balance: 0,
+              current_balance: 0,
+              status: 'ACTIVE',
+            },
+            {
+              family_id: dbFam.id,
+              name: 'Quỹ Tu Bổ & Xây Dựng Từ Đường',
+              description: 'Bảo tồn, trùng tu và mở rộng nhà thờ họ',
+              opening_balance: 0,
+              current_balance: 0,
+              status: 'ACTIVE',
+            },
+          ]);
+        }
+      } catch (err) {
+        console.error('Lỗi khi tạo dòng họ trên Supabase:', err);
+      }
+    }
+
+    // Seed default initial funds for in-memory fallback
     const initialFunds: Fund[] = [
       {
         id: `fund-${newFamilyId}-1`,
@@ -337,7 +432,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     ];
     mockFunds.push(...initialFunds);
 
-    // If founder name is given, seed Generation 1 and Founder member for this family
+    // If founder name is given, seed Generation 1 and Founder member
     if (data.founderName) {
       const genId = `gen-${newFamilyId}-1`;
       mockGenerations.push({
