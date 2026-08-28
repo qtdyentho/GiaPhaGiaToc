@@ -25,7 +25,7 @@ interface GenealogyCanvasProps {
   generations: Generation[];
   branches: Branch[];
   relationships: MemberRelationship[];
-  onAddRelation: (targetMember: Member, defaultType: 'CHILD' | 'SPOUSE' | 'PARENT') => void;
+  onAddRelation?: (targetMember: Member, defaultType: 'CHILD' | 'SPOUSE' | 'PARENT') => void;
   onSelectMember: (member: Member) => void;
   selectedMemberId?: string | null;
   selectedBranchId?: string;

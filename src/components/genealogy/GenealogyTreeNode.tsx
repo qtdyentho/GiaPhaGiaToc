@@ -18,7 +18,7 @@ interface GenealogyTreeNodeProps {
   allMembers: Member[];
   selectedMemberId?: string | null;
   onSelectMember: (member: Member) => void;
-  onAddRelation: (targetMember: Member, defaultType: 'CHILD' | 'SPOUSE' | 'PARENT') => void;
+  onAddRelation?: (targetMember: Member, defaultType: 'CHILD' | 'SPOUSE' | 'PARENT') => void;
 }
 
 export const GenealogyTreeNode: React.FC<GenealogyTreeNodeProps> = ({
@@ -198,35 +198,37 @@ export const GenealogyTreeNode: React.FC<GenealogyTreeNodeProps> = ({
         })}
 
         {/* Nút Thao Tác Thêm Nhanh (Thêm Con / Thêm Vợ) */}
-        <div className="flex flex-col gap-1.5 pl-1 border-l border-slate-100 dark:border-slate-700">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddRelation(m, 'CHILD');
-            }}
-            title="Thêm Con Trai / Con Gái"
-            className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950 hover:bg-emerald-100 text-[#166534] dark:text-emerald-300 text-[10px] font-bold transition flex items-center gap-1 cursor-pointer border border-emerald-200 dark:border-emerald-800"
-          >
-            <Plus className="w-3 h-3" />
-            <span className="hidden group-hover:inline">Thêm Con</span>
-          </button>
+        {onAddRelation && (
+          <div className="flex flex-col gap-1.5 pl-1 border-l border-slate-100 dark:border-slate-700">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddRelation(m, 'CHILD');
+              }}
+              title="Thêm Con Trai / Con Gái"
+              className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950 hover:bg-emerald-100 text-[#166534] dark:text-emerald-300 text-[10px] font-bold transition flex items-center gap-1 cursor-pointer border border-emerald-200 dark:border-emerald-800"
+            >
+              <Plus className="w-3 h-3" />
+              <span className="hidden group-hover:inline">Thêm Con</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddRelation(m, 'SPOUSE');
-            }}
-            title={spouses.length === 0 ? 'Thêm Vợ (Chính Thất)' : 'Thêm Kế Thất / Thứ Thiếp'}
-            className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950 hover:bg-rose-100 text-rose-800 dark:text-rose-300 text-[10px] font-bold transition flex items-center gap-1 cursor-pointer border border-rose-200 dark:border-rose-800"
-          >
-            <Heart className="w-3 h-3" />
-            <span className="hidden group-hover:inline">
-              {spouses.length === 0 ? 'Thêm Vợ' : '+ Thêm Thứ Thất'}
-            </span>
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddRelation(m, 'SPOUSE');
+              }}
+              title={spouses.length === 0 ? 'Thêm Vợ (Chính Thất)' : 'Thêm Kế Thất / Thứ Thiếp'}
+              className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950 hover:bg-rose-100 text-rose-800 dark:text-rose-300 text-[10px] font-bold transition flex items-center gap-1 cursor-pointer border border-rose-200 dark:border-rose-800"
+            >
+              <Heart className="w-3 h-3" />
+              <span className="hidden group-hover:inline">
+                {spouses.length === 0 ? 'Thêm Vợ' : '+ Thêm Thứ Thất'}
+              </span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 🌿 DÂY NỐI PHẢ HỆ VÀ CÁC CHI NHÁNH CON (CHILDREN BRANCHING CONNECTOR) */}

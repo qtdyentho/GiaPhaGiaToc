@@ -30,7 +30,7 @@ import { filterLineageTree } from '../utils/lineageHierarchy';
 import { useAuth } from '../contexts/AuthContext';
 
 export const GenealogyTreePage: React.FC = () => {
-  const { activeFamily } = useAuth();
+  const { activeFamily, isFamilyAdmin } = useAuth();
   const [treeData, setTreeData] = useState<FamilyTreeData>({
     members: [],
     generations: [],
@@ -259,22 +259,26 @@ export const GenealogyTreePage: React.FC = () => {
 
         {/* Right Actions: Export Print Button & Add Member */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <button
-            onClick={() => setIsImportModalOpen(true)}
-            className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold transition cursor-pointer shrink-0"
-          >
-            <UploadCloud className="w-3.5 h-3.5 text-slate-500" />
-            <span>Nhập File</span>
-          </button>
+          {isFamilyAdmin && (
+            <>
+              <button
+                onClick={() => setIsImportModalOpen(true)}
+                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold transition cursor-pointer shrink-0"
+              >
+                <UploadCloud className="w-3.5 h-3.5 text-slate-500" />
+                <span>Nhập File</span>
+              </button>
 
-          <button
-            onClick={handleOpenAddNewRoot}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-bold transition cursor-pointer border border-slate-300 dark:border-slate-700 shrink-0"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span className="hidden xs:inline">Thêm Thành Viên</span>
-            <span className="xs:hidden">Thêm</span>
-          </button>
+              <button
+                onClick={handleOpenAddNewRoot}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-bold transition cursor-pointer border border-slate-300 dark:border-slate-700 shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span className="hidden xs:inline">Thêm Thành Viên</span>
+                <span className="xs:hidden">Thêm</span>
+              </button>
+            </>
+          )}
 
           <Link
             to="/app/kinship"
@@ -309,7 +313,7 @@ export const GenealogyTreePage: React.FC = () => {
             generations={treeData.generations}
             branches={treeData.branches}
             relationships={treeData.relationships}
-            onAddRelation={handleOpenAddRelation}
+            onAddRelation={isFamilyAdmin ? handleOpenAddRelation : undefined}
             onSelectMember={handleSelectMember}
             selectedMemberId={selectedMember?.id}
             selectedBranchId={selectedChiId}

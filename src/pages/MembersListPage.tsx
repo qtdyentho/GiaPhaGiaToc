@@ -24,7 +24,7 @@ import { AddMemberRelationModal } from '../components/genealogy/AddMemberRelatio
 import { useAuth } from '../contexts/AuthContext';
 
 export const MembersListPage: React.FC = () => {
-  const { activeFamily } = useAuth();
+  const { activeFamily, isFamilyAdmin } = useAuth();
   const [search, setSearch] = useState('');
   const [selectedBranchFilter, setSelectedBranchFilter] = useState('ALL');
   const [selectedGenFilter, setSelectedGenFilter] = useState('ALL');
@@ -44,8 +44,8 @@ export const MembersListPage: React.FC = () => {
 
   // Modals for Detail & Edit
   const [detailMember, setDetailMember] = useState<Member | null>(null);
-  const [editMember, setEditMember] = useState<Member | null>(null);
-  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState<boolean>(false);
   const [editForm, setEditForm] = useState<{
     full_name: string;
     gender: 'MALE' | 'FEMALE' | 'OTHER';
@@ -143,57 +143,67 @@ export const MembersListPage: React.FC = () => {
     });
   }, [familyMembers, search, selectedGenFilter, selectedBranchFilter, selectedStatusFilter, selectedGenderFilter]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredMembers.length / pageSize));
-  const paginatedMembers = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredMembers.slice(start, start + pageSize);
-  }, [filteredMembers, currentPage, pageSize]);
+  // Pagination calculation
+  const totalItems = filteredMembers.length;
+  const totalPages = pageSize === -1 ? 1 : Math.ceil(totalItems / pageSize) || 1;
+  const validCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
 
+  const paginatedMembers = useMemo(() => {
+    if (pageSize === -1) return filteredMembers;
+    const startIndex = (validCurrentPage - 1) * pageSize;
+    return filteredMembers.slice(startIndex, startIndex + pageSize);
+  }, [filteredMembers, validCurrentPage, pageSize]);
+
+  // Helpers for display
   const getGenerationName = (genId?: string) => {
-    const gen = familyGenerations.find((g) => g.id === genId);
-    return gen?.name || 'Đời 1';
+    if (!genId) return 'Chưa phân đời';
+    const found = familyGenerations.find((g) => g.id === genId);
+    if (found) return `Đời ${found.generation_number}`;
+    const num = genId.replace(/\D/g, '');
+    return num ? `Đời ${num}` : 'Chưa phân đời';
   };
 
   const getBranchName = (branchId?: string) => {
-    const branch = familyBranches.find((b) => b.id === branchId);
-    return branch?.name || 'Tiền nhân Khởi tổ';
+    if (!branchId) return 'Toàn tộc / Thủy Tổ';
+    const found = familyBranches.find((b) => b.id === branchId);
+    return found ? found.name : 'Chi Phái';
   };
 
-  const formatLifeSpan = (m: any) => {
-    const birth = m.birth_year || (m.birth_solar_date ? m.birth_solar_date.slice(0, 4) : undefined);
-    const death = m.death_year || (m.death_solar_date ? m.death_solar_date.slice(0, 4) : undefined);
-
-    if (birth && death) return `${birth} — ${death}`;
-    if (birth) return `Sinh ${birth}`;
-    if (death) return `Mất ${death}`;
-    return 'Chưa rõ';
+  const formatLifeSpan = (m: Member) => {
+    const bYear = m.birth_solar_date ? new Date(m.birth_solar_date).getFullYear() : (m as any).birth_year || '';
+    const dYear = m.death_solar_date ? new Date(m.death_solar_date).getFullYear() : (m as any).death_year || '';
+    if (!bYear && !dYear) return '—';
+    if (bYear && !dYear) return `${bYear} – nay`;
+    if (!bYear && dYear) return `? – ${dYear}`;
+    return `${bYear} – ${dYear}`;
   };
 
-  const handleOpenEdit = (m: Member) => {
-    setEditMember(m);
+  const handleOpenEdit = (member: Member) => {
+    setEditingMember(member);
     setEditForm({
-      full_name: m.full_name || '',
-      gender: m.gender || 'MALE',
-      life_status: m.life_status || 'ALIVE',
-      birth_solar_date: m.birth_solar_date ? m.birth_solar_date.slice(0, 10) : '',
-      death_solar_date: m.death_solar_date ? m.death_solar_date.slice(0, 10) : '',
-      death_lunar_day: m.death_lunar_day ? String(m.death_lunar_day) : '',
-      death_lunar_month: m.death_lunar_month ? String(m.death_lunar_month) : '',
-      death_lunar_year: m.death_lunar_year ? String(m.death_lunar_year) : '',
-      burial_place: m.burial_place || '',
-      courtesy_name: m.courtesy_name || '',
-      religious_name: m.religious_name || '',
-      bio: m.bio || '',
+      full_name: member.full_name || '',
+      gender: member.gender || 'MALE',
+      life_status: member.life_status || 'ALIVE',
+      birth_solar_date: member.birth_solar_date ? member.birth_solar_date.slice(0, 10) : '',
+      death_solar_date: member.death_solar_date ? member.death_solar_date.slice(0, 10) : '',
+      death_lunar_day: member.death_lunar_day ? String(member.death_lunar_day) : '',
+      death_lunar_month: member.death_lunar_month ? String(member.death_lunar_month) : '',
+      death_lunar_year: member.death_lunar_year ? String(member.death_lunar_year) : '',
+      burial_place: member.burial_place || '',
+      courtesy_name: member.courtesy_name || '',
+      religious_name: member.religious_name || '',
+      bio: member.bio || '',
     });
   };
 
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editMember) return;
+    if (!editingMember) return;
+
     setIsSavingEdit(true);
     try {
-      const updates: Partial<Member> = {
-        full_name: editForm.full_name.trim(),
+      await GenealogyService.updateMember(editingMember.id, {
+        full_name: editForm.full_name,
         gender: editForm.gender,
         life_status: editForm.life_status,
         birth_solar_date: editForm.birth_solar_date || undefined,
@@ -201,48 +211,55 @@ export const MembersListPage: React.FC = () => {
         death_lunar_day: editForm.death_lunar_day ? parseInt(editForm.death_lunar_day, 10) : undefined,
         death_lunar_month: editForm.death_lunar_month ? parseInt(editForm.death_lunar_month, 10) : undefined,
         death_lunar_year: editForm.death_lunar_year ? parseInt(editForm.death_lunar_year, 10) : undefined,
-        burial_place: editForm.burial_place.trim() || undefined,
-        courtesy_name: editForm.courtesy_name.trim() || undefined,
-        religious_name: editForm.religious_name.trim() || undefined,
-        bio: editForm.bio.trim() || undefined,
-      };
+        burial_place: editForm.burial_place || undefined,
+        courtesy_name: editForm.courtesy_name || undefined,
+        religious_name: editForm.religious_name || undefined,
+        bio: editForm.bio || undefined,
+      });
 
-      const res = await GenealogyService.updateMember(editMember.id, updates);
-      if (res.success) {
-        setEditMember(null);
-        if (detailMember && detailMember.id === editMember.id) {
-          setDetailMember({ ...detailMember, ...updates });
-        }
-        await loadData();
-      } else {
-        alert(`Không thể cập nhật thành viên: ${res.error || 'Lỗi không xác định'}`);
-      }
-    } catch (err: any) {
-      alert(`Lỗi khi lưu: ${err.message}`);
+      setEditingMember(null);
+      loadData();
+    } catch (err) {
+      console.error('Lỗi khi cập nhật thành viên:', err);
+      alert('Không thể lưu thông tin thành viên. Vui lòng thử lại.');
     } finally {
       setIsSavingEdit(false);
     }
   };
 
   const exportCSV = () => {
-    const headers = ['Họ và Tên', 'Giới Tính', 'Thế Hệ', 'Chi Phái', 'Trạng Thái', 'Năm Sinh', 'Năm Mất', 'Ngày Giỗ Âm', 'Nơi An Táng', 'Ghi Chú/Tiểu Sử'];
+    const headers = [
+      'Họ Và Tên',
+      'Giới Tính',
+      'Thế Hệ',
+      'Chi Phái',
+      'Trạng Thái',
+      'Năm Sinh',
+      'Năm Mất',
+      'Ngày Giỗ Âm Lịch',
+      'Nơi An Táng',
+      'Tên Tự/Hiệu',
+      'Tiểu Sử',
+    ];
     const rows = filteredMembers.map((m) => [
-      `"${m.full_name.replace(/"/g, '""')}"`,
+      `"${m.full_name || ''}"`,
       m.gender === 'MALE' ? 'Nam' : 'Nữ',
       getGenerationName(m.generation_id),
-      getBranchName(m.branch_id),
+      `"${getBranchName(m.branch_id)}"`,
       m.life_status === 'ALIVE' ? 'Còn sống' : 'Đã mất',
-      m.birth_solar_date || '',
-      m.death_solar_date || '',
-      m.death_lunar_day && m.death_lunar_month ? `${m.death_lunar_day}/${m.death_lunar_month}` : '',
-      `"${(m.burial_place || '').replace(/"/g, '""')}"`,
+      m.birth_solar_date ? new Date(m.birth_solar_date).getFullYear() : (m as any).birth_year || '',
+      m.death_solar_date ? new Date(m.death_solar_date).getFullYear() : (m as any).death_year || '',
+      m.death_lunar_day && m.death_lunar_month ? `${m.death_lunar_day}/${m.death_lunar_month} ÂL` : '',
+      `"${m.burial_place || ''}"`,
+      `"${m.courtesy_name || ''}"`,
       `"${(m.bio || '').replace(/"/g, '""')}"`,
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `danh_sach_thanh_vien_${activeFamily?.code || 'gia_toc'}_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `danh_sach_thanh_vien_${activeFamily?.slug || 'dong_ho'}_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -265,17 +282,19 @@ export const MembersListPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in font-sans">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Page Header Banner */}
+      <div className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2 flex-wrap">
-            <span>Danh Sách Thành Viên Dòng Họ</span>
-            <span className="text-xs px-2.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 text-[#166534] dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-full font-bold">
-              {activeFamily?.name || 'Trịnh Lưu Gia Tộc'}
+          <div className="flex items-center space-x-2">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+              Danh Sách Thành Viên Dòng Họ
+            </h1>
+            <span className="text-xs bg-emerald-100 dark:bg-emerald-950/60 text-[#166534] dark:text-emerald-300 font-bold px-2.5 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">
+              {activeFamily?.name || 'Gia Tộc'}
             </span>
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Quản lý {familyMembers.length} thành viên thuộc 17 thế hệ và 4 chi phái ({activeFamily?.origin_province || 'Thanh Hoá'})
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Tổng số: <strong className="text-slate-800 dark:text-slate-200">{familyMembers.length}</strong> thành viên • Đang lọc hiển thị: <strong className="text-emerald-700 dark:text-emerald-400">{filteredMembers.length}</strong> người
           </p>
         </div>
         <div className="flex items-center space-x-2 flex-wrap gap-y-2">
@@ -301,20 +320,24 @@ export const MembersListPage: React.FC = () => {
             <FileSpreadsheet className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             <span>Xuất CSV</span>
           </button>
-          <button
-            onClick={() => setIsImportModalOpen(true)}
-            className="flex items-center space-x-1.5 px-3 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl transition shadow-2xs cursor-pointer"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span>Nạp Excel</span>
-          </button>
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center space-x-1.5 px-3.5 py-2 bg-[#166534] hover:bg-[#14532d] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Thêm Thành Viên</span>
-          </button>
+          {isFamilyAdmin && (
+            <>
+              <button
+                onClick={() => setIsImportModalOpen(true)}
+                className="flex items-center space-x-1.5 px-3 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-xl transition shadow-2xs cursor-pointer"
+              >
+                <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <span>Nạp Excel</span>
+              </button>
+              <button
+                onClick={() => setIsAddModalOpen(true)}
+                className="flex items-center space-x-1.5 px-3.5 py-2 bg-[#166534] hover:bg-[#14532d] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Thêm Thành Viên</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -513,13 +536,15 @@ export const MembersListPage: React.FC = () => {
                         >
                           <Eye className="w-3.5 h-3.5" />
                         </button>
-                        <button
-                          onClick={() => handleOpenEdit(member)}
-                          className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/60 hover:text-amber-700 dark:hover:text-amber-300 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-semibold transition"
-                          title="Chỉnh sửa thông tin"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
+                        {isFamilyAdmin && (
+                          <button
+                            onClick={() => handleOpenEdit(member)}
+                            className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-amber-950/60 hover:text-amber-700 dark:hover:text-amber-300 text-slate-700 dark:text-slate-300 rounded-lg text-xs font-semibold transition"
+                            title="Chỉnh sửa thông tin"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                         <Link
                           to={`/app/genealogy?member=${member.id}`}
                           className="px-2 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 hover:text-[#166534] dark:hover:text-emerald-300 text-slate-700 dark:text-slate-300 rounded-lg text-[11px] font-bold transition"
@@ -711,24 +736,26 @@ export const MembersListPage: React.FC = () => {
                 <Users className="w-4 h-4 text-emerald-600" />
                 <span>Định Vị Trên Cây</span>
               </Link>
-              <button
-                onClick={() => {
-                  const m = detailMember;
-                  setDetailMember(null);
-                  handleOpenEdit(m);
-                }}
-                className="px-4 py-2 bg-[#166534] hover:bg-[#14532d] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white rounded-xl font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer"
-              >
-                <Edit3 className="w-4 h-4" />
-                <span>Chỉnh Sửa Thông Tin</span>
-              </button>
+              {isFamilyAdmin && (
+                <button
+                  onClick={() => {
+                    const m = detailMember;
+                    setDetailMember(null);
+                    handleOpenEdit(m);
+                  }}
+                  className="px-4 py-2 bg-[#166534] hover:bg-[#14532d] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white rounded-xl font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  <span>Chỉnh Sửa Thông Tin</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
       )}
 
       {/* Member Edit Modal */}
-      {editMember && (
+      {editingMember && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-lg w-full overflow-hidden animate-scale-up">
             <div className="p-5 bg-gradient-to-r from-amber-500/10 to-transparent dark:from-amber-950/40 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
@@ -737,7 +764,7 @@ export const MembersListPage: React.FC = () => {
                 <span>Chỉnh Sửa Thành Viên</span>
               </h2>
               <button
-                onClick={() => setEditMember(null)}
+                onClick={() => setEditingMember(null)}
                 className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
               >
                 <X className="w-5 h-5" />
@@ -878,7 +905,7 @@ export const MembersListPage: React.FC = () => {
               <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end space-x-2">
                 <button
                   type="button"
-                  onClick={() => setEditMember(null)}
+                  onClick={() => setEditingMember(null)}
                   className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold transition cursor-pointer"
                 >
                   Hủy Bỏ

@@ -33,6 +33,10 @@ interface AuthContextType {
   createFamily: (data: CreateFamilyData) => Promise<Family>;
   updateFamily: (familyId: string, updates: Partial<Family>) => Promise<Family>;
   signOut: () => Promise<void>;
+  getFamilyMemberships: (familyId: string) => Promise<Array<FamilyMembership & { profile?: Profile }>>;
+  addFamilyMemberRole: (email: string, fullName: string, role: MembershipRole, password?: string) => Promise<{ success: boolean; error?: string }>;
+  updateFamilyMemberRole: (membershipId: string, newRole: MembershipRole) => Promise<{ success: boolean; error?: string }>;
+  removeFamilyMemberRole: (membershipId: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -763,6 +767,213 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return _mockSignIn(cleanEmail);
   };
 
+  const getFamilyMemberships = async (
+    familyId: string
+  ): Promise<Array<FamilyMembership & { profile?: Profile }>> => {
+    if (!familyId) return [];
+    const isUUID = (str?: string | null): boolean =>
+      Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      try {
+        const { data, error } = await supabase
+          .from('family_memberships')
+          .select('*, profiles(*)')
+          .eq('family_id', familyId)
+          .order('joined_at', { ascending: false });
+
+        if (!error && data) {
+          return data.map((item: any) => ({
+            id: item.id,
+            family_id: item.family_id,
+            user_id: item.user_id,
+            role: item.role as MembershipRole,
+            status: item.status,
+            joined_at: item.joined_at,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            profile: item.profiles as Profile,
+          }));
+        }
+      } catch (err) {
+        console.warn('Lỗi khi tải family memberships từ Supabase:', err);
+      }
+    }
+
+    // Local / In-memory fallback
+    const familyMems = memberships.filter((m) => m.family_id === familyId);
+    return familyMems.map((m) => ({
+      ...m,
+      profile:
+        m.user_id === user?.id
+          ? user
+          : {
+              id: m.user_id,
+              email: `${m.user_id}@giapha.vn`,
+              full_name: `Thành viên (${m.role})`,
+              is_superadmin: false,
+              created_at: m.created_at,
+              updated_at: m.updated_at,
+            },
+    }));
+  };
+
+  const addFamilyMemberRole = async (
+    email: string,
+    fullName: string,
+    targetRole: MembershipRole,
+    password = 'giapha2026'
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (!activeFamily?.id) {
+      return { success: false, error: 'Không tìm thấy dòng họ hiện tại.' };
+    }
+    const cleanEmail = email.trim().toLowerCase();
+    const isUUID = (str?: string | null): boolean =>
+      Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+
+    if (isSupabaseConfigured() && isUUID(activeFamily.id)) {
+      try {
+        // 1. Kiểm tra xem profile đã tồn tại chưa
+        let { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('email', cleanEmail)
+          .maybeSingle();
+
+        let targetUserId = profile?.id;
+
+        if (!targetUserId) {
+          // Thử tạo auth user qua Supabase auth
+          try {
+            const { data: signUpData } = await supabase.auth.signUp({
+              email: cleanEmail,
+              password: password || 'giapha2026',
+              options: {
+                data: {
+                  full_name: fullName.trim() || cleanEmail.split('@')[0],
+                },
+              },
+            });
+            if (signUpData?.user?.id) {
+              targetUserId = signUpData.user.id;
+            }
+          } catch (signupErr) {
+            console.warn('[Auth] Supabase signUp note:', signupErr);
+          }
+
+          if (!targetUserId) {
+            // Tìm lại profile nếu vừa được tạo bởi trigger
+            const { data: refetchedProf } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('email', cleanEmail)
+              .maybeSingle();
+            targetUserId = refetchedProf?.id;
+          }
+
+          if (targetUserId) {
+            await supabase.from('profiles').upsert({
+              id: targetUserId,
+              email: cleanEmail,
+              full_name: fullName.trim() || cleanEmail.split('@')[0],
+              phone: '0987654321',
+              is_superadmin: false,
+              updated_at: new Date().toISOString(),
+            });
+          }
+        }
+
+        // 2. Thêm hoặc cập nhật membership
+        const { data: existingMem } = await supabase
+          .from('family_memberships')
+          .select('id')
+          .eq('family_id', activeFamily.id)
+          .eq('user_id', targetUserId)
+          .maybeSingle();
+
+        if (existingMem) {
+          await supabase
+            .from('family_memberships')
+            .update({
+              role: targetRole,
+              status: 'ACTIVE',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', existingMem.id);
+        } else {
+          await supabase.from('family_memberships').insert({
+            family_id: activeFamily.id,
+            user_id: targetUserId,
+            role: targetRole,
+            status: 'ACTIVE',
+            joined_at: new Date().toISOString(),
+          });
+        }
+
+        return { success: true };
+      } catch (err: any) {
+        console.error('Lỗi khi thêm vai trò trên Supabase:', err);
+        return { success: false, error: err.message || 'Lỗi khi lưu phân quyền.' };
+      }
+    }
+
+    // Local / In-memory fallback
+    const newUserId = `mock-usr-${Date.now()}`;
+    const newMem: FamilyMembership = {
+      id: `mem-${activeFamily.id}-${Date.now()}`,
+      family_id: activeFamily.id,
+      user_id: newUserId,
+      role: targetRole,
+      status: 'ACTIVE',
+      joined_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    setMemberships((prev) => [...prev, newMem]);
+    return { success: true };
+  };
+
+  const updateFamilyMemberRole = async (
+    membershipId: string,
+    newRole: MembershipRole
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (isSupabaseConfigured()) {
+      try {
+        const { error } = await supabase
+          .from('family_memberships')
+          .update({ role: newRole, updated_at: new Date().toISOString() })
+          .eq('id', membershipId);
+        if (error) throw error;
+      } catch (err: any) {
+        return { success: false, error: err.message };
+      }
+    }
+
+    setMemberships((prev) =>
+      prev.map((m) => (m.id === membershipId ? { ...m, role: newRole } : m))
+    );
+    return { success: true };
+  };
+
+  const removeFamilyMemberRole = async (
+    membershipId: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (isSupabaseConfigured()) {
+      try {
+        const { error } = await supabase
+          .from('family_memberships')
+          .delete()
+          .eq('id', membershipId);
+        if (error) throw error;
+      } catch (err: any) {
+        return { success: false, error: err.message };
+      }
+    }
+
+    setMemberships((prev) => prev.filter((m) => m.id !== membershipId));
+    return { success: true };
+  };
+
   const signOut = async () => {
     setUser(null);
     setActiveFamily(null);
@@ -804,6 +1015,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         createFamily,
         updateFamily,
         signOut,
+        getFamilyMemberships,
+        addFamilyMemberRole,
+        updateFamilyMemberRole,
+        removeFamilyMemberRole,
       }}
     >
       {children}
