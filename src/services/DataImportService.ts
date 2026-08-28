@@ -160,6 +160,163 @@ export class DataImportService {
   }
 
   /**
+   * Bộ phân tích ngày tháng linh hoạt và thông minh (Smart Flexible Date Parser)
+   * Hỗ trợ mọi định dạng:
+   * - DD/MM/YYYY, D/M/YYYY (21/10/1851, 25/8/1887)
+   * - DD-MM-YYYY, DD.MM.YYYY, YYYY-MM-DD, YYYY/MM/DD
+   * - DD/MM, D/M (21/10, 25/8 - chỉ ngày và tháng giỗ)
+   * - Chuỗi văn bản tiếng Việt: "Ngày 21 tháng 10 năm 1851", "21 thg 10 1851"
+   * - Số năm đơn thuần: 1880
+   * - Số ngày hoặc tháng đơn thuần: 15, 8
+   * - Excel Serial Date Number (vd: 44195) hoặc JS Date object
+   */
+  public static parseFlexibleDate(val: any): {
+    day?: number;
+    month?: number;
+    year?: number;
+    formattedDate?: string;
+    hasDate: boolean;
+  } {
+    if (val === undefined || val === null || val === '') {
+      return { hasDate: false };
+    }
+
+    // 1. Nếu là JavaScript Date object
+    if (val instanceof Date && !isNaN(val.getTime())) {
+      const day = val.getDate();
+      const month = val.getMonth() + 1;
+      const year = val.getFullYear();
+      return {
+        day,
+        month,
+        year: year > 1000 ? year : undefined,
+        formattedDate: `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`,
+        hasDate: true,
+      };
+    }
+
+    // 2. Nếu là số Excel serial date (ví dụ từ 10000 đến 100000)
+    if (typeof val === 'number') {
+      if (val >= 1000 && val <= 2100) {
+        // Năm đơn thuần (VD: 1851, 1920)
+        return { year: Math.floor(val), hasDate: true };
+      }
+      if (val >= 1 && val <= 31) {
+        // Ngày hoặc tháng đơn thuần
+        return { day: Math.floor(val), hasDate: true };
+      }
+      if (val > 10000 && val < 100000) {
+        // Excel date serial
+        try {
+          const date = new Date(Math.round((val - 25569) * 86400 * 1000));
+          if (!isNaN(date.getTime())) {
+            const day = date.getUTCDate();
+            const month = date.getUTCMonth() + 1;
+            const year = date.getUTCFullYear();
+            return {
+              day,
+              month,
+              year: year > 1000 ? year : undefined,
+              formattedDate: `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`,
+              hasDate: true,
+            };
+          }
+        } catch (e) {}
+      }
+    }
+
+    const str = String(val).trim();
+    if (!str) return { hasDate: false };
+
+    // 3. Chuỗi dạng DD/MM/YYYY, D/M/YYYY, DD-MM-YYYY, DD.MM.YYYY
+    const dmyFullMatch = str.match(/^(\d{1,2})[\/\-. ](\d{1,2})[\/\-. ](\d{4})$/);
+    if (dmyFullMatch) {
+      const d = parseInt(dmyFullMatch[1], 10);
+      const m = parseInt(dmyFullMatch[2], 10);
+      const y = parseInt(dmyFullMatch[3], 10);
+      if (d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 1000 && y <= 2100) {
+        return {
+          day: d,
+          month: m,
+          year: y,
+          formattedDate: `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`,
+          hasDate: true,
+        };
+      }
+    }
+
+    // 4. Chuỗi dạng YYYY-MM-DD, YYYY/MM/DD (ISO Format)
+    const ymdFullMatch = str.match(/^(\d{4})[\/\-. ](\d{1,2})[\/\-. ](\d{1,2})$/);
+    if (ymdFullMatch) {
+      const y = parseInt(ymdFullMatch[1], 10);
+      const m = parseInt(ymdFullMatch[2], 10);
+      const d = parseInt(ymdFullMatch[3], 10);
+      if (d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 1000 && y <= 2100) {
+        return {
+          day: d,
+          month: m,
+          year: y,
+          formattedDate: `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`,
+          hasDate: true,
+        };
+      }
+    }
+
+    // 5. Chuỗi dạng Ngày DD tháng MM năm YYYY (Văn bản tiếng Việt)
+    const vnTextMatch = str.match(/(?:ngày\s*)?(\d{1,2})(?:[\s/tháng\.\-]+)(\d{1,2})(?:[\s/năm\.\-]+)(\d{4})/i);
+    if (vnTextMatch) {
+      const d = parseInt(vnTextMatch[1], 10);
+      const m = parseInt(vnTextMatch[2], 10);
+      const y = parseInt(vnTextMatch[3], 10);
+      if (d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 1000 && y <= 2100) {
+        return {
+          day: d,
+          month: m,
+          year: y,
+          formattedDate: `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`,
+          hasDate: true,
+        };
+      }
+    }
+
+    // 6. Chuỗi dạng DD/MM hoặc D/M (chỉ có ngày và tháng giỗ)
+    const dmShortMatch = str.match(/^(\d{1,2})[\/\-. ](\d{1,2})$/);
+    if (dmShortMatch) {
+      const d = parseInt(dmShortMatch[1], 10);
+      const m = parseInt(dmShortMatch[2], 10);
+      if (d >= 1 && d <= 31 && m >= 1 && m <= 12) {
+        return {
+          day: d,
+          month: m,
+          formattedDate: `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}`,
+          hasDate: true,
+        };
+      }
+    }
+
+    // 7. Số năm 4 chữ số đơn thuần trong chuỗi (VD: "1851", "Năm 1887")
+    const yearOnlyMatch = str.match(/\b(1[0-9]{3}|20[0-9]{2})\b/);
+    if (yearOnlyMatch) {
+      const y = parseInt(yearOnlyMatch[1], 10);
+      return {
+        year: y,
+        hasDate: true,
+      };
+    }
+
+    // 8. Số ngày/tháng 1 hoặc 2 chữ số (VD: "15", "8", "28")
+    const numOnly = parseInt(str.replace(/[^0-9]/g, ''), 10);
+    if (!isNaN(numOnly) && numOnly > 0 && numOnly <= 31) {
+      return {
+        day: numOnly,
+        hasDate: true,
+      };
+    }
+
+    return { hasDate: false };
+  }
+
+  /**
    * Thuật toán tự động nhận diện & suy luận thế hệ + quan hệ phả hệ (Hỗ trợ Mã Cây Phân Cấp & BFS)
    */
   public static autoInferGenerationsAndBranches(rawMembers: RawImportMember[]): {
@@ -396,30 +553,78 @@ export class DataImportService {
         label: 'Trạng Thái', 
         keywords: ['trạng thái', 'tình trạng', 'còn sống / đã mất', 'sống / mất', 'status', 'life_status', 'trang thai'] 
       },
+      birthSolarDate: {
+        field: 'birthSolarDate',
+        label: 'Ngày Sinh (Ngày/Tháng/Năm)',
+        keywords: [
+          'ngày sinh (ngày/tháng/năm)',
+          'ngày sinh (ngày tháng năm)',
+          'ngày sinh dương lịch',
+          'ngày sinh dương',
+          'ngày tháng năm sinh',
+          'ngày sinh',
+          'ngày sinh dl',
+          'sinh nhật',
+          'birth_solar_date',
+          'birth_date',
+          'date_of_birth',
+          'dob',
+          'ngay sinh duong lich',
+          'ngay sinh',
+        ],
+      },
       birthYear: { 
         field: 'birthYear', 
         label: 'Năm Sinh', 
-        keywords: ['năm sinh', 'sinh năm', 'ngày sinh', 'năm sinh dương', 'birth_year', 'dob', 'năm sinh dl', 'nam sinh'] 
+        keywords: ['năm sinh', 'sinh năm', 'năm sinh dương', 'năm sinh dl', 'birth_year', 'dob year', 'nam sinh'] 
       },
       birthTime: {
         field: 'birthTime',
         label: 'Giờ Sinh',
         keywords: ['giờ sinh', 'khung giờ sinh', 'birth_time', 'birth time', 'thời gian sinh', 'gio sinh'],
       },
+      deathLunarFull: {
+        field: 'deathLunarFull',
+        label: 'Ngày Mất Âm Lịch (Ngày/Tháng/Năm)',
+        keywords: [
+          'ngày mất âm lịch (ngày/tháng/năm)',
+          'ngày mất âm lịch (ngày tháng năm)',
+          'ngày mất âm lịch',
+          'ngày mất (âm lịch)',
+          'ngày giỗ (ngày/tháng/năm)',
+          'ngày giỗ (ngày tháng năm)',
+          'ngày giỗ âm lịch',
+          'ngày giỗ âm',
+          'ngày giỗ',
+          'ngày mất',
+          'ngày qua đời',
+          'ngày tạ thế',
+          'ngày lâm chung',
+          'ngay mat am lich (ngay/thang/nam)',
+          'ngay mat am lich (ngay thang nam)',
+          'ngay mat am lich',
+          'ngay mat am',
+          'ngay mat',
+          'ngay gio',
+          'death_lunar_date',
+          'death_date',
+          'death_lunar_full',
+        ],
+      },
       deathLunarDay: { 
         field: 'deathLunarDay', 
-        label: 'Ngày Mất Âm', 
-        keywords: ['ngày mất âm', 'ngày mất (âm lịch)', 'ngày mất âm lịch', 'ngày giỗ âm', 'ngày âm', 'ngày giỗ', 'death_day', 'death_lunar_day', 'ngay mat am'] 
+        label: 'Ngày Mất Âm (Số Ngày)', 
+        keywords: ['ngày mất âm (số ngày)', 'ngày mất âm (ngày)', 'ngày mất âm', 'ngày mất (ngày)', 'ngày giỗ (ngày)', 'số ngày mất', 'death_lunar_day', 'death_day', 'ngay mat am (ngay)'] 
       },
       deathLunarMonth: { 
         field: 'deathLunarMonth', 
-        label: 'Tháng Mất Âm', 
-        keywords: ['tháng mất âm', 'tháng mất (âm lịch)', 'tháng mất âm lịch', 'tháng giỗ âm', 'tháng âm', 'tháng giỗ', 'death_month', 'death_lunar_month', 'thang mat am'] 
+        label: 'Tháng Mất Âm (Số Tháng)', 
+        keywords: ['tháng mất âm (số tháng)', 'tháng mất âm (tháng)', 'tháng mất âm', 'tháng giỗ (tháng)', 'tháng giỗ âm', 'tháng giỗ', 'số tháng mất', 'death_lunar_month', 'death_month', 'thang mat am (thang)'] 
       },
       deathLunarYear: { 
         field: 'deathLunarYear', 
         label: 'Năm Mất', 
-        keywords: ['năm mất', 'năm mất âm', 'năm mất dương', 'năm qua đời', 'năm tạ thế', 'death_year', 'nam mat'] 
+        keywords: ['năm mất', 'năm mất âm', 'năm mất dương', 'năm qua đời', 'năm tạ thế', 'death_year', 'death_lunar_year', 'nam mat'] 
       },
       deathTime: {
         field: 'deathTime',
@@ -491,7 +696,7 @@ export class DataImportService {
             throw new Error('Tệp Excel không chứa trang tính (worksheet) nào hợp lệ.');
           }
 
-          const rawRows: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+          const rawRows: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: false });
           if (rawRows.length === 0) {
             throw new Error('Tệp Excel trống, không có dòng dữ liệu nào.');
           }
@@ -551,29 +756,53 @@ export class DataImportService {
               } else if (field === 'lifeStatus') {
                 const sLower = strVal.toLowerCase();
                 memberObj.lifeStatus = (sLower.includes('mất') || sLower.includes('chết') || sLower.includes('deceased') || sLower.includes('khuất') || sLower.includes('mat')) ? 'DECEASED' : 'ALIVE';
-              } else if (field === 'birthYear') {
-                const yr = parseInt(strVal.replace(/[^0-9]/g, ''), 10);
-                if (!isNaN(yr)) memberObj.birthYear = yr;
+              } else if (
+                field === 'deathLunarFull' ||
+                field === 'deathLunarDay' ||
+                field === 'deathLunarMonth' ||
+                field === 'deathLunarYear'
+              ) {
+                const parsed = DataImportService.parseFlexibleDate(val);
+                if (parsed.hasDate) {
+                  if (parsed.day !== undefined && (parsed.month !== undefined || parsed.year !== undefined)) {
+                    memberObj.deathLunarDay = parsed.day;
+                  }
+                  if (parsed.month !== undefined) {
+                    memberObj.deathLunarMonth = parsed.month;
+                  }
+                  if (parsed.year !== undefined) {
+                    memberObj.deathLunarYear = parsed.year;
+                  }
+
+                  // Nếu chỉ có 1 số đơn thuần
+                  if (parsed.day !== undefined && parsed.month === undefined && parsed.year === undefined) {
+                    if (field === 'deathLunarDay' || field === 'deathLunarFull') {
+                      memberObj.deathLunarDay = parsed.day;
+                    } else if (field === 'deathLunarMonth') {
+                      memberObj.deathLunarMonth = parsed.day;
+                    } else if (field === 'deathLunarYear') {
+                      memberObj.deathLunarYear = parsed.day;
+                    }
+                  } else if (parsed.year !== undefined && parsed.day === undefined && parsed.month === undefined) {
+                    memberObj.deathLunarYear = parsed.year;
+                  }
+
+                  memberObj.lifeStatus = 'DECEASED';
+                }
+              } else if (field === 'birthSolarDate' || field === 'birthYear') {
+                const parsed = DataImportService.parseFlexibleDate(val);
+                if (parsed.hasDate) {
+                  if (parsed.year !== undefined) {
+                    memberObj.birthYear = parsed.year;
+                  }
+                  if (parsed.formattedDate) {
+                    memberObj.birthSolarDate = parsed.formattedDate;
+                  } else if (parsed.day !== undefined && parsed.month !== undefined) {
+                    memberObj.birthSolarDate = `${String(parsed.day).padStart(2, '0')}/${String(parsed.month).padStart(2, '0')}${parsed.year ? `/${parsed.year}` : ''}`;
+                  }
+                }
               } else if (field === 'birthTime') {
                 memberObj.birthTime = strVal;
-              } else if (field === 'deathLunarDay') {
-                const day = parseInt(strVal.replace(/[^0-9]/g, ''), 10);
-                if (!isNaN(day)) {
-                  memberObj.deathLunarDay = day;
-                  memberObj.lifeStatus = 'DECEASED';
-                }
-              } else if (field === 'deathLunarMonth') {
-                const mon = parseInt(strVal.replace(/[^0-9]/g, ''), 10);
-                if (!isNaN(mon)) {
-                  memberObj.deathLunarMonth = mon;
-                  memberObj.lifeStatus = 'DECEASED';
-                }
-              } else if (field === 'deathLunarYear') {
-                const dYr = parseInt(strVal.replace(/[^0-9]/g, ''), 10);
-                if (!isNaN(dYr)) {
-                  memberObj.deathLunarYear = dYr;
-                  memberObj.lifeStatus = 'DECEASED';
-                }
               } else if (field === 'deathTime') {
                 memberObj.deathTime = strVal;
                 memberObj.lifeStatus = 'DECEASED';
