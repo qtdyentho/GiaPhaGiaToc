@@ -250,21 +250,23 @@ export const GenealogyTreeNode: React.FC<GenealogyTreeNodeProps> = ({
           </div>
 
           {/* Khung chứa các con: Căn giữa hoàn hảo so với cha mẹ */}
-          <div className="flex items-start justify-center gap-12 relative pt-6">
-            {/* Đường dây nhánh ngang (Horizontal Connector Bar) */}
-            {children.length > 1 && (
-              <div
-                className="absolute top-0 h-[2px] bg-emerald-600/70 dark:bg-emerald-400/70"
-                style={{
-                  left: 'calc(140px)',
-                  right: 'calc(140px)',
-                }}
-              />
-            )}
-
-            {/* Render từng con cháu đệ quy */}
+          <div className="flex items-start justify-center relative pt-6">
+            {/* Render từng con cháu đệ quy với thanh nối liền mạch chuẩn xác */}
             {children.map((childNode, cIdx) => (
-              <div key={childNode.id} className="flex flex-col items-center relative">
+              <div key={childNode.id} className="flex flex-col items-center relative px-6">
+                {/* Đường dây nhánh ngang (Horizontal Connector Segment) */}
+                {children.length > 1 && (
+                  <div
+                    className={`absolute top-0 h-[2px] bg-emerald-600/70 dark:bg-emerald-400/70 ${
+                      cIdx === 0
+                        ? 'left-1/2 right-0'
+                        : cIdx === children.length - 1
+                        ? 'left-0 right-1/2'
+                        : 'left-0 right-0'
+                    }`}
+                  />
+                )}
+
                 {/* Đường đứng nối từ thanh ngang xuống đỉnh của người con */}
                 <div className="w-[2px] h-6 bg-emerald-600/70 dark:bg-emerald-400/70 absolute -top-6 left-1/2 -translate-x-1/2" />
 
