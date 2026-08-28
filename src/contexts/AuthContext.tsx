@@ -169,19 +169,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!isSupabaseConfigured()) return;
     const syncSupabaseSession = async () => {
       try {
-        const savedUserStr = localStorage.getItem('hl_auth_user');
-        if (!savedUserStr) return;
-        const savedUser: Profile = JSON.parse(savedUserStr);
-        if (!savedUser?.email) return;
+        let userEmail: string | null = null;
+        let userId: string | null = null;
 
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('email', savedUser.email)
-          .maybeSingle();
+        // 1. Check local storage
+        const savedUserStr = localStorage.getItem('hl_auth_user');
+        if (savedUserStr) {
+          try {
+            const savedUser: Profile = JSON.parse(savedUserStr);
+            userEmail = savedUser.email;
+            userId = savedUser.id;
+          } catch {}
+        }
+
+        // 2. If no local storage, check active Supabase Auth session
+        if (!userEmail) {
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (sessionData?.session?.user) {
+            userEmail = sessionData.session.user.email || null;
+            userId = sessionData.session.user.id || null;
+          }
+        }
+
+        if (!userEmail && !userId) return;
+
+        // 3. Fetch profile from Supabase
+        let profileQuery = supabase.from('profiles').select('*');
+        if (userId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
+          profileQuery = profileQuery.eq('id', userId);
+        } else if (userEmail) {
+          profileQuery = profileQuery.eq('email', userEmail.toLowerCase().trim());
+        }
+        const { data: profile } = await profileQuery.maybeSingle();
 
         if (profile) {
           setUser(profile);
+          const isSuper = Boolean(profile.is_superadmin || profile.email?.toLowerCase().includes('admin'));
+          setPlatformRole(isSuper ? 'SUPER_ADMIN' : 'USER');
+
           const { data: mems } = await supabase
             .from('family_memberships')
             .select('*, families(*)')
@@ -189,12 +214,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .eq('status', 'ACTIVE');
 
           if (mems && mems.length > 0) {
-            const fam = (mems[0] as any).families as Family;
-            if (fam) {
+            const famList = mems.map((m: any) => m.families).filter(Boolean) as Family[];
+            const savedActiveId = sessionStorage.getItem('active_family_id') || localStorage.getItem('hl_active_family_id');
+            const targetFam = (savedActiveId ? famList.find((f) => f.id === savedActiveId) : null) || famList[0];
+            const targetMem = mems.find((m) => (m as any).family_id === targetFam.id) || mems[0];
+
+            if (targetFam) {
+              setActiveFamily(targetFam);
+              setActiveMembership(targetMem as unknown as FamilyMembership);
+              setFamilies((prev) => [...famList, ...prev.filter((f) => !famList.some((nf) => nf.id === f.id))]);
+              setMemberships((prev) => [targetMem as unknown as FamilyMembership, ...prev.filter((m) => m.id !== targetMem.id)]);
+              sessionStorage.setItem('active_family_id', targetFam.id);
+              localStorage.setItem('hl_active_family_id', targetFam.id);
+            }
+          } else {
+            // Check if user created any family
+            const { data: createdFams } = await supabase
+              .from('families')
+              .select('*')
+              .eq('created_by', profile.id);
+
+            if (createdFams && createdFams.length > 0) {
+              const fam = createdFams[0] as Family;
               setActiveFamily(fam);
-              setActiveMembership(mems[0] as unknown as FamilyMembership);
               setFamilies((prev) => [fam, ...prev.filter((f) => f.id !== fam.id)]);
-              setMemberships((prev) => [mems[0] as unknown as FamilyMembership, ...prev.filter((m) => m.id !== mems[0].id)]);
               sessionStorage.setItem('active_family_id', fam.id);
               localStorage.setItem('hl_active_family_id', fam.id);
             }

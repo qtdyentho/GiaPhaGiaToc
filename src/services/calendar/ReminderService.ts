@@ -23,30 +23,7 @@ export interface ClanNotification {
 }
 
 // In-Memory Fallback Notification Store
-export const mockNotifications: ClanNotification[] = [
-  {
-    id: 'notif-001',
-    family_id: 'fam-0000-0001',
-    title: 'Nhắc Lễ: Giỗ Cụ Thủy Tổ (Đời 1)',
-    content: 'Còn 7 ngày nữa đến ngày giỗ Cụ Thủy Tổ (15/01 Âm lịch - 03/03/2026 Dương lịch).',
-    type: 'MEMORIAL_REMINDER',
-    reference_id: 'mem-0000-0001',
-    reference_type: 'MEMORIAL',
-    is_read: false,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'notif-002',
-    family_id: 'fam-0000-0001',
-    title: 'Sắp diễn ra: Họp Hội Đồng Gia Tộc Đầu Xuân',
-    content: 'Cuộc họp sẽ diễn ra vào lúc 08:00 ngày 25/02/2026 tại Nhà thờ tổ họ.',
-    type: 'EVENT_REMINDER',
-    reference_id: 'evt-0000-0001',
-    reference_type: 'EVENT',
-    is_read: false,
-    created_at: new Date(Date.now() - 3600000).toISOString(),
-  },
-];
+export const mockNotifications: ClanNotification[] = [];
 
 export const mockReminderConfigs: EventReminderConfig[] = [
   { id: 'rc-1', family_id: 'fam-0000-0001', days_before: 30, channel: 'IN_APP', enabled: true },

@@ -12,18 +12,29 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { mockMembers, mockGenerations, mockBranches } from './mockData';
 
 export interface RawImportMember {
-  fullName: string;              // 1. Họ và Tên (Bắt buộc)
-  gender: 'MALE' | 'FEMALE';     // 2. Giới Tính (Nam / Nữ) (Bắt buộc)
-  generationNumber: number;      // 3. Thế Hệ (Đời 1, 2, 3...) (Bắt buộc / Tự động suy luận)
-  branchName: string;            // 4. Chi Phái (Chi Trưởng, Chi Hai...) (Bắt buộc / Tự động kế thừa)
-  parentName?: string;           // 5. Tên Cha (Dùng nối Cây Phả Hệ)
-  spouseName?: string;           // 6. Vợ / Chồng
-  lifeStatus: 'ALIVE' | 'DECEASED'; // 7. Trạng Thái (Còn sống / Đã mất)
-  birthYear?: number;            // 8. Năm Sinh
-  deathLunarDay?: number;        // 9. Ngày Mất Âm (1 - 30)
-  deathLunarMonth?: number;      // 10. Tháng Mất Âm (1 - 12)
-  deathLunarYear?: number;       // 11. Năm Mất
-  burialPlace?: string;          // 12. Nơi An Táng / Mộ Phần
+  treeCode?: string;             // 1. Mã Cây / STT Phân Cấp (1, 1-V1, 1.1, 1.1.1, 1.2...)
+  parentCode?: string;           // 2. Mã Cha (1, 1.1, 1.2...)
+  motherCode?: string;           // 3. Mã Mẹ (1-V1, 1-V2, 1.1-V1...)
+  spouseCode?: string;           // 4. Mã Vợ / Chồng (1-V1, 1.1-V1...)
+  relationType?: string;         // 5. Quan Hệ Phân Cấp (Con Đẻ, Vợ Cả, Vợ Hai, Chồng...)
+  fullName: string;              // 6. Họ và Tên (Bắt buộc)
+  courtesyName?: string;         // 7. Tên Tự / Hiệu / Pháp Danh
+  gender: 'MALE' | 'FEMALE';     // 8. Giới Tính (Nam / Nữ) (Bắt buộc)
+  generationNumber: number;      // 9. Thế Hệ (Đời 1, 2, 3...)
+  branchName: string;            // 10. Chi Phái (Chi Trưởng, Chi Hai...)
+  birthOrder?: string;           // 11. Thứ Tự Sinh (Trưởng Nam, Thứ Nam 2...)
+  lifeStatus: 'ALIVE' | 'DECEASED'; // 12. Trạng Thái (Còn sống / Đã mất)
+  birthYear?: number;            // 13. Năm Sinh
+  birthSolarDate?: string;       // 14. Ngày Sinh Dương Lịch (dd/mm/yyyy)
+  birthTime?: string;            // 15. Giờ Sinh (Ví dụ: Giờ Thìn (07h-09h) hoặc 08:30)
+  deathLunarDay?: number;        // 16. Ngày Mất Âm (1 - 30)
+  deathLunarMonth?: number;      // 17. Tháng Mất Âm (1 - 12)
+  deathLunarYear?: number;       // 18. Năm Mất
+  deathTime?: string;            // 19. Giờ Mất (Ví dụ: Giờ Ngọ (11h-13h) hoặc 12:15)
+  burialPlace?: string;          // 20. Nơi An Táng / Mộ Phần
+  bio?: string;                  // 21. Tiểu Sử / Sự Nghiệp / Ghi Chú
+  parentName?: string;           // Tên Cha (Hỗ trợ tương thích ngược)
+  spouseName?: string;           // Tên Vợ / Chồng (Hỗ trợ tương thích ngược)
   isAutoInferredGen?: boolean;   // Đánh dấu thế hệ được hệ thống tự động suy luận
 }
 
@@ -76,6 +87,29 @@ export const STANDARD_GENEALOGY_COLUMNS = [
   { field: 'burialPlace', label: 'Nơi An Táng', required: false, example: 'Lăng Mộ Tổ' },
 ];
 
+export const HIERARCHICAL_GENEALOGY_COLUMNS = [
+  { field: 'treeCode', label: 'Mã Cây / STT Phân Cấp', required: false, example: '1.1.1' },
+  { field: 'parentCode', label: 'Mã Cha', required: false, example: '1.1' },
+  { field: 'motherCode', label: 'Mã Mẹ', required: false, example: '1.1-V1' },
+  { field: 'spouseCode', label: 'Mã Vợ/Chồng', required: false, example: '1.1-V1' },
+  { field: 'relationType', label: 'Quan Hệ Phân Cấp', required: false, example: 'Con Đẻ (Trưởng Nam)' },
+  { field: 'fullName', label: 'Họ và Tên', required: true, example: 'Cụ Nguyễn Phúc Khang' },
+  { field: 'courtesyName', label: 'Tên Tự / Hiệu / Bí Danh', required: false, example: 'Thuần Đức Tiên Sinh' },
+  { field: 'gender', label: 'Giới Tính', required: true, example: 'Nam' },
+  { field: 'generationNumber', label: 'Thế Hệ (Đời)', required: true, example: '2' },
+  { field: 'branchName', label: 'Chi Phái', required: true, example: 'Chi Trưởng (Chi 1)' },
+  { field: 'birthOrder', label: 'Thứ Tự Sinh', required: false, example: 'Trưởng Nam' },
+  { field: 'lifeStatus', label: 'Trạng Thái', required: false, example: 'Đã mất' },
+  { field: 'birthYear', label: 'Năm Sinh', required: false, example: '1910' },
+  { field: 'birthTime', label: 'Giờ Sinh', required: false, example: 'Giờ Thìn (07h-09h)' },
+  { field: 'deathLunarDay', label: 'Ngày Mất Âm', required: false, example: '18' },
+  { field: 'deathLunarMonth', label: 'Tháng Mất Âm', required: false, example: '5' },
+  { field: 'deathLunarYear', label: 'Năm Mất', required: false, example: '1980' },
+  { field: 'deathTime', label: 'Giờ Mất', required: false, example: 'Giờ Ngọ (11h-13h)' },
+  { field: 'burialPlace', label: 'Nơi An Táng', required: false, example: 'Khu Lăng Mộ Chi Trưởng' },
+  { field: 'bio', label: 'Tiểu Sử / Sự Nghiệp', required: false, example: 'Gìn giữ từ đường hương hỏa.' },
+];
+
 function slugifyVietnamese(str: string): string {
   return str
     .toLowerCase()
@@ -126,7 +160,7 @@ export class DataImportService {
   }
 
   /**
-   * Thuật toán tự động nhận diện & suy luận thế hệ + chi phái (Topological BFS Propagation)
+   * Thuật toán tự động nhận diện & suy luận thế hệ + quan hệ phả hệ (Hỗ trợ Mã Cây Phân Cấp & BFS)
    */
   public static autoInferGenerationsAndBranches(rawMembers: RawImportMember[]): {
     members: RawImportMember[];
@@ -135,16 +169,89 @@ export class DataImportService {
     const members = rawMembers.map((m) => ({ ...m }));
     let autoInferredCount = 0;
 
-    // 1. Tạo Map tra cứu tên chuẩn hóa
+    // 1. Tạo Map tra cứu theo Mã Cây (TreeCode Map) và Tên chuẩn hóa (Name Map)
     const norm = (s?: string) => (s || '').toLowerCase().trim().replace(/\s+/g, ' ');
-    const memberMap = new Map<string, RawImportMember>();
+    const memberByName = new Map<string, RawImportMember>();
+    const memberByTreeCode = new Map<string, RawImportMember>();
+
     members.forEach((m) => {
-      if (m.fullName) memberMap.set(norm(m.fullName), m);
+      if (m.fullName) memberByName.set(norm(m.fullName), m);
+      if (m.treeCode) memberByTreeCode.set(m.treeCode.trim().toUpperCase(), m);
     });
 
-    // 2. Xác định các gốc (Root / Thủy Tổ)
+    // 2. Xử lý ưu tiên theo Mã Cây Phân Cấp (TreeCode)
     members.forEach((m) => {
-      const parent = m.parentName ? memberMap.get(norm(m.parentName)) : null;
+      if (m.treeCode) {
+        const code = m.treeCode.trim().toUpperCase();
+        // Kiểm tra xem có phải là Hôn Phối (ví dụ 1-V1, 1.1-V1, 1-HP1, 1-C1)
+        const spouseMatch = code.match(/^([0-9.]+)-(?:V|HP|C)([0-9]*)$/i);
+        if (spouseMatch) {
+          const rootCode = spouseMatch[1];
+          const spouseIdx = spouseMatch[2] || '1';
+          if (!m.spouseCode) m.spouseCode = rootCode;
+          if (!m.relationType) m.relationType = spouseIdx === '1' ? 'Vợ Cả (Chính Thất)' : `Vợ Thứ ${spouseIdx} (Kế Thất)`;
+          
+          // Thế hệ bằng thế hệ của người phối ngẫu
+          const dotCount = (rootCode.match(/\./g) || []).length;
+          const inferredGen = dotCount + 1;
+          if (!m.generationNumber || m.generationNumber === 0) {
+            m.generationNumber = inferredGen;
+            m.isAutoInferredGen = true;
+            autoInferredCount++;
+          }
+          if (m.gender === 'MALE' && (code.includes('-V') || code.includes('-HP'))) {
+            m.gender = 'FEMALE';
+          }
+        } else {
+          // Mã con đẻ/huyết thống (ví dụ: 1, 1.1, 1.1.2, 1.2.3.4)
+          const dotCount = (code.match(/\./g) || []).length;
+          const inferredGen = dotCount + 1;
+          if (!m.generationNumber || m.generationNumber === 0) {
+            m.generationNumber = inferredGen;
+            m.isAutoInferredGen = true;
+            autoInferredCount++;
+          }
+          // Tự động suy ra mã cha nếu chưa có
+          if (!m.parentCode && code.includes('.')) {
+            const lastDotIndex = code.lastIndexOf('.');
+            const parentTreeCode = code.substring(0, lastDotIndex);
+            m.parentCode = parentTreeCode;
+          }
+        }
+      }
+    });
+
+    // 3. Lan truyền từ Mã Cha (parentCode) và Mã Mẹ (motherCode)
+    members.forEach((m) => {
+      if (m.parentCode) {
+        const parent = memberByTreeCode.get(m.parentCode.trim().toUpperCase());
+        if (parent) {
+          if (!m.parentName) m.parentName = parent.fullName;
+          if (!m.branchName || m.branchName.trim() === '' || m.branchName === 'Chi Trưởng') {
+            if (parent.branchName && parent.branchName !== 'Chi Trưởng') {
+              m.branchName = parent.branchName;
+            }
+          }
+        }
+      }
+      if (m.motherCode) {
+        const mother = memberByTreeCode.get(m.motherCode.trim().toUpperCase());
+        if (mother && !m.spouseName) {
+          // Ghi nhận mẹ
+        }
+      }
+      if (m.spouseCode) {
+        const spouse = memberByTreeCode.get(m.spouseCode.trim().toUpperCase());
+        if (spouse) {
+          if (!m.spouseName) m.spouseName = spouse.fullName;
+          if (!m.branchName && spouse.branchName) m.branchName = spouse.branchName;
+        }
+      }
+    });
+
+    // 4. Xác định các gốc (Root / Thủy Tổ) nếu không dùng treeCode
+    members.forEach((m) => {
+      const parent = m.parentName ? memberByName.get(norm(m.parentName)) : null;
       if (!m.parentName || !parent) {
         if (!m.generationNumber || m.generationNumber === 0) {
           m.generationNumber = 1;
@@ -157,7 +264,7 @@ export class DataImportService {
       }
     });
 
-    // 3. Lan truyền thế hệ đệ quy (BFS Queue) từ Cha sang Con & Vợ/Chồng
+    // 5. Lan truyền thế hệ đệ quy (BFS Queue) từ Cha sang Con & Vợ/Chồng theo tên
     let changed = true;
     let iterations = 0;
     while (changed && iterations < 30) {
@@ -167,7 +274,7 @@ export class DataImportService {
       for (const m of members) {
         // Lan truyền từ Cha -> Con
         if (m.parentName) {
-          const parent = memberMap.get(norm(m.parentName));
+          const parent = memberByName.get(norm(m.parentName));
           if (parent && parent.generationNumber > 0) {
             const expectedGen = parent.generationNumber + 1;
             if (!m.generationNumber || m.generationNumber === 0 || m.generationNumber !== expectedGen) {
@@ -187,7 +294,7 @@ export class DataImportService {
 
         // Lan truyền giữa Vợ & Chồng (Cùng thế hệ)
         if (m.spouseName) {
-          const spouse = memberMap.get(norm(m.spouseName));
+          const spouse = memberByName.get(norm(m.spouseName));
           if (spouse) {
             if (m.generationNumber > 0 && (!spouse.generationNumber || spouse.generationNumber === 0)) {
               spouse.generationNumber = m.generationNumber;
@@ -209,7 +316,7 @@ export class DataImportService {
       }
     }
 
-    // 4. Quét dự phòng cuối cùng cho các thành viên chưa có đời
+    // 6. Quét dự phòng cuối cùng cho các thành viên chưa có đời
     members.forEach((m) => {
       if (!m.generationNumber || m.generationNumber < 1) {
         m.generationNumber = 1;
@@ -225,74 +332,124 @@ export class DataImportService {
   }
 
   /**
-   * Tự động nhận diện cột (Auto-Mapping 12 Cột Tiêu Chuẩn)
+   * Tự động nhận diện cột (Auto-Mapping Hệ Thống Cột Phả Hệ Phân Cấp)
    */
   public static autoMapHeaders(headers: string[]): ColumnMappingSuggestion[] {
     const rules: Record<string, { field: string; label: string; keywords: string[] }> = {
+      treeCode: {
+        field: 'treeCode',
+        label: 'Mã Cây / STT Phân Cấp',
+        keywords: ['mã cây', 'stt phân cấp', 'mã phân cấp', 'mã số cây', 'mã thành viên', 'tree code', 'tree_code', 'code', 'id phân cấp', 'stt phan cap', 'ma cay'],
+      },
+      parentCode: {
+        field: 'parentCode',
+        label: 'Mã Cha',
+        keywords: ['mã cha', 'mã người cha', 'mã cha đẻ', 'parent code', 'parent_code', 'father code', 'father_code', 'ma cha'],
+      },
+      motherCode: {
+        field: 'motherCode',
+        label: 'Mã Mẹ',
+        keywords: ['mã mẹ', 'mã người mẹ', 'mã mẹ đẻ', 'mother code', 'mother_code', 'ma me'],
+      },
+      spouseCode: {
+        field: 'spouseCode',
+        label: 'Mã Vợ/Chồng',
+        keywords: ['mã vợ/chồng', 'mã phối ngẫu', 'mã vợ', 'mã chồng', 'spouse code', 'spouse_code', 'ma vo/chong'],
+      },
+      relationType: {
+        field: 'relationType',
+        label: 'Quan Hệ Phân Cấp',
+        keywords: ['quan hệ', 'quan hệ phân cấp', 'vai vế', 'vai trò', 'hôn phối/con đẻ', 'relation type', 'relation_type', 'huyết thống', 'quan he'],
+      },
       fullName: { 
         field: 'fullName', 
         label: 'Họ và Tên', 
-        keywords: ['họ tên', 'họ và tên', 'họ và tên đầy đủ', 'tên', 'full_name', 'name', 'thành viên', 'danh tính'] 
+        keywords: ['họ tên', 'họ và tên', 'họ và tên đầy đủ', 'tên', 'full_name', 'name', 'thành viên', 'danh tính', 'ho va ten'] 
+      },
+      courtesyName: {
+        field: 'courtesyName',
+        label: 'Tên Tự / Hiệu / Bí Danh',
+        keywords: ['tên tự', 'tên hiệu', 'bí danh', 'pháp danh', 'tên tự / hiệu', 'tên chữ', 'courtesy_name', 'courtesy name', 'ten tu / hieu', 'ten tu', 'ten hieu'],
       },
       gender: { 
         field: 'gender', 
         label: 'Giới Tính', 
-        keywords: ['giới tính', 'nam/nữ', 'nam nữ', 'gender', 'sex', 'phái'] 
+        keywords: ['giới tính', 'nam/nữ', 'nam nữ', 'gender', 'sex', 'phái', 'gioi tinh'] 
       },
       generationNumber: { 
         field: 'generationNumber', 
         label: 'Thế Hệ (Đời)', 
-        keywords: ['đời', 'thế hệ', 'thế hệ (đời)', 'đời thứ', 'generation', 'gen', 'bậc'] 
+        keywords: ['đời', 'thế hệ', 'thế hệ (đời)', 'đời thứ', 'generation', 'gen', 'bậc', 'the he (doi)', 'the he', 'doi thu'] 
       },
       branchName: { 
         field: 'branchName', 
         label: 'Chi Phái', 
-        keywords: ['chi', 'chi họ', 'chi phái', 'phái', 'nhánh', 'ngành', 'phân chi', 'branch'] 
+        keywords: ['chi', 'chi họ', 'chi phái', 'phái', 'nhánh', 'ngành', 'phân chi', 'branch', 'chi phai'] 
       },
-      parentName: { 
-        field: 'parentName', 
-        label: 'Tên Cha', 
-        keywords: ['tên cha', 'cha', 'thân phụ', 'bố', 'tên bố', 'cha đẻ', 'father', 'parent'] 
-      },
-      spouseName: { 
-        field: 'spouseName', 
-        label: 'Vợ / Chồng', 
-        keywords: ['vợ / chồng', 'vợ', 'chồng', 'phu thê', 'chính thất', 'phối ngẫu', 'spouse', 'vợ chồng'] 
+      birthOrder: {
+        field: 'birthOrder',
+        label: 'Thứ Tự Sinh',
+        keywords: ['thứ tự sinh', 'thứ bậc', 'con thứ', 'vai thứ', 'thứ tự', 'birth_order', 'birth order', 'thu tu sinh'],
       },
       lifeStatus: { 
         field: 'lifeStatus', 
         label: 'Trạng Thái', 
-        keywords: ['trạng thái', 'tình trạng', 'còn sống / đã mất', 'sống / mất', 'status', 'life_status'] 
+        keywords: ['trạng thái', 'tình trạng', 'còn sống / đã mất', 'sống / mất', 'status', 'life_status', 'trang thai'] 
       },
       birthYear: { 
         field: 'birthYear', 
         label: 'Năm Sinh', 
-        keywords: ['năm sinh', 'sinh năm', 'ngày sinh', 'năm sinh dương', 'birth_year', 'dob', 'năm sinh dl'] 
+        keywords: ['năm sinh', 'sinh năm', 'ngày sinh', 'năm sinh dương', 'birth_year', 'dob', 'năm sinh dl', 'nam sinh'] 
+      },
+      birthTime: {
+        field: 'birthTime',
+        label: 'Giờ Sinh',
+        keywords: ['giờ sinh', 'khung giờ sinh', 'birth_time', 'birth time', 'thời gian sinh', 'gio sinh'],
       },
       deathLunarDay: { 
         field: 'deathLunarDay', 
         label: 'Ngày Mất Âm', 
-        keywords: ['ngày mất âm', 'ngày mất (âm lịch)', 'ngày mất âm lịch', 'ngày giỗ âm', 'ngày âm', 'ngày giỗ', 'death_day', 'death_lunar_day'] 
+        keywords: ['ngày mất âm', 'ngày mất (âm lịch)', 'ngày mất âm lịch', 'ngày giỗ âm', 'ngày âm', 'ngày giỗ', 'death_day', 'death_lunar_day', 'ngay mat am'] 
       },
       deathLunarMonth: { 
         field: 'deathLunarMonth', 
         label: 'Tháng Mất Âm', 
-        keywords: ['tháng mất âm', 'tháng mất (âm lịch)', 'tháng mất âm lịch', 'tháng giỗ âm', 'tháng âm', 'tháng giỗ', 'death_month', 'death_lunar_month'] 
+        keywords: ['tháng mất âm', 'tháng mất (âm lịch)', 'tháng mất âm lịch', 'tháng giỗ âm', 'tháng âm', 'tháng giỗ', 'death_month', 'death_lunar_month', 'thang mat am'] 
       },
       deathLunarYear: { 
         field: 'deathLunarYear', 
         label: 'Năm Mất', 
-        keywords: ['năm mất', 'năm mất âm', 'năm mất dương', 'năm qua đời', 'năm tạ thế', 'death_year'] 
+        keywords: ['năm mất', 'năm mất âm', 'năm mất dương', 'năm qua đời', 'năm tạ thế', 'death_year', 'nam mat'] 
+      },
+      deathTime: {
+        field: 'deathTime',
+        label: 'Giờ Mất',
+        keywords: ['giờ mất', 'giờ tạ thế', 'giờ lâm chung', 'death_time', 'death time', 'thời gian mất', 'gio mat'],
       },
       burialPlace: { 
         field: 'burialPlace', 
         label: 'Nơi An Táng', 
-        keywords: ['nơi an táng', 'mộ phần', 'vị trí mộ', 'an táng', 'lăng mộ', 'nghĩa trang', 'quê quán an táng', 'burial_place'] 
+        keywords: ['nơi an táng', 'mộ phần', 'vị trí mộ', 'an táng', 'lăng mộ', 'nghĩa trang', 'quê quán an táng', 'burial_place', 'noi an tang', 'mo phan'] 
+      },
+      bio: {
+        field: 'bio',
+        label: 'Tiểu Sử / Sự Nghiệp',
+        keywords: ['tiểu sử', 'sự nghiệp', 'ghi chú', 'tiểu sử / sự nghiệp', 'ghi chú thêm', 'bio', 'biography', 'notes', 'tieu su'],
+      },
+      parentName: { 
+        field: 'parentName', 
+        label: 'Tên Cha (Cũ)', 
+        keywords: ['tên cha', 'cha', 'thân phụ', 'bố', 'tên bố', 'cha đẻ', 'father', 'parent', 'ten cha'] 
+      },
+      spouseName: { 
+        field: 'spouseName', 
+        label: 'Vợ / Chồng (Cũ)', 
+        keywords: ['vợ / chồng', 'vợ', 'chồng', 'phu thê', 'chính thất', 'phối ngẫu', 'spouse', 'vợ chồng', 'vo / chong'] 
       },
     };
 
     return headers.map((header) => {
-      const lower = header.toLowerCase().trim().replace(/[\-_]/g, ' ');
+      const lower = header.toLowerCase().trim().replace(/[\-_/]/g, ' ');
       let bestMatch: { field: string; label: string } | null = null;
       let highestConf = 0;
 
@@ -364,25 +521,41 @@ export class DataImportService {
               const strVal = String(val).trim();
               if (!field || strVal === '') return;
 
-              if (field === 'fullName') {
+              if (field === 'treeCode') {
+                memberObj.treeCode = strVal;
+              } else if (field === 'parentCode') {
+                memberObj.parentCode = strVal;
+              } else if (field === 'motherCode') {
+                memberObj.motherCode = strVal;
+              } else if (field === 'spouseCode') {
+                memberObj.spouseCode = strVal;
+              } else if (field === 'relationType') {
+                memberObj.relationType = strVal;
+              } else if (field === 'fullName') {
                 memberObj.fullName = strVal;
+              } else if (field === 'courtesyName') {
+                memberObj.courtesyName = strVal;
               } else if (field === 'gender') {
                 const gLower = strVal.toLowerCase();
-                memberObj.gender = (gLower === 'nữ' || gLower === 'female' || gLower === 'f' || gLower === 'gái') ? 'FEMALE' : 'MALE';
+                memberObj.gender = (gLower === 'nữ' || gLower === 'female' || gLower === 'f' || gLower === 'gái' || gLower === 'nu') ? 'FEMALE' : 'MALE';
               } else if (field === 'generationNumber') {
                 memberObj.generationNumber = DataImportService.parseGenerationText(strVal);
               } else if (field === 'branchName') {
                 memberObj.branchName = strVal;
+              } else if (field === 'birthOrder') {
+                memberObj.birthOrder = strVal;
               } else if (field === 'parentName') {
                 memberObj.parentName = strVal;
               } else if (field === 'spouseName') {
                 memberObj.spouseName = strVal;
               } else if (field === 'lifeStatus') {
                 const sLower = strVal.toLowerCase();
-                memberObj.lifeStatus = (sLower.includes('mất') || sLower.includes('chết') || sLower.includes('deceased') || sLower.includes('khuất')) ? 'DECEASED' : 'ALIVE';
+                memberObj.lifeStatus = (sLower.includes('mất') || sLower.includes('chết') || sLower.includes('deceased') || sLower.includes('khuất') || sLower.includes('mat')) ? 'DECEASED' : 'ALIVE';
               } else if (field === 'birthYear') {
                 const yr = parseInt(strVal.replace(/[^0-9]/g, ''), 10);
                 if (!isNaN(yr)) memberObj.birthYear = yr;
+              } else if (field === 'birthTime') {
+                memberObj.birthTime = strVal;
               } else if (field === 'deathLunarDay') {
                 const day = parseInt(strVal.replace(/[^0-9]/g, ''), 10);
                 if (!isNaN(day)) {
@@ -401,12 +574,17 @@ export class DataImportService {
                   memberObj.deathLunarYear = dYr;
                   memberObj.lifeStatus = 'DECEASED';
                 }
+              } else if (field === 'deathTime') {
+                memberObj.deathTime = strVal;
+                memberObj.lifeStatus = 'DECEASED';
               } else if (field === 'burialPlace') {
                 memberObj.burialPlace = strVal;
+              } else if (field === 'bio') {
+                memberObj.bio = strVal;
               }
             });
 
-            if (memberObj.deathLunarDay || memberObj.deathLunarMonth || memberObj.deathLunarYear || memberObj.burialPlace) {
+            if (memberObj.deathLunarDay || memberObj.deathLunarMonth || memberObj.deathLunarYear || memberObj.deathTime || memberObj.burialPlace) {
               memberObj.lifeStatus = 'DECEASED';
             }
 
@@ -434,130 +612,274 @@ export class DataImportService {
   }
 
   /**
-   * Tạo và tải về File Excel Mẫu 12 Cột Chuẩn
+   * Tạo và tải về File Excel Mẫu Cây Phả Hệ Phân Cấp Chuẩn (Đầy đủ Vợ Chồng, Con Cái, Giờ Sinh, Giờ Mất)
    */
   public static downloadStandardTemplateExcel(): void {
     const sampleRows = [
       {
-        'Họ và Tên': 'Cụ Nguyễn Văn Phúc',
+        'Mã Cây / STT Phân Cấp': '1',
+        'Mã Cha': '',
+        'Mã Mẹ': '',
+        'Mã Phối Ngẫu': '1-V1, 1-V2',
+        'Quan Hệ Phân Cấp': 'Thủy Tổ Khởi Tộc',
+        'Họ và Tên': 'Cụ Nguyễn Phúc Khởi Tổ',
+        'Tên Tự / Hiệu / Bí Danh': 'Thuần Đức Tiên Sinh (Tự Phúc An)',
         'Giới Tính': 'Nam',
         'Thế Hệ (Đời)': 1,
-        'Chi Phái': 'Chi Trưởng',
-        'Tên Cha': '',
-        'Vợ / Chồng': 'Cụ Bà Trần Thị Mai',
+        'Chi Phái': 'Toàn Tộc (Khởi Tổ)',
+        'Thứ Tự Sinh': 'Thủy Tổ',
         'Trạng Thái': 'Đã mất',
         'Năm Sinh': 1880,
+        'Giờ Sinh': 'Giờ Thìn (07h-09h)',
         'Ngày Mất Âm': 15,
         'Tháng Mất Âm': 1,
         'Năm Mất': 1952,
-        'Nơi An Táng': 'Lăng Mộ Tổ Đồi Thông',
+        'Giờ Mất': 'Giờ Ngọ (11h-13h)',
+        'Nơi An Táng': 'Lăng Mộ Tổ Đồi Thông Xứ Đông',
+        'Tiểu Sử / Sự Nghiệp': 'Cụ Thủy Tổ khai hoang lập nghiệp, mở mang bờ cõi dòng họ.',
       },
       {
+        'Mã Cây / STT Phân Cấp': '1-V1',
+        'Mã Cha': '',
+        'Mã Mẹ': '',
+        'Mã Phối Ngẫu': '1',
+        'Quan Hệ Phân Cấp': 'Vợ Cả (Chính Thất)',
         'Họ và Tên': 'Cụ Bà Trần Thị Mai',
+        'Tên Tự / Hiệu / Bí Danh': 'Từ Mẫu Mai Hoa',
         'Giới Tính': 'Nữ',
         'Thế Hệ (Đời)': 1,
-        'Chi Phái': 'Chi Trưởng',
-        'Tên Cha': '',
-        'Vợ / Chồng': 'Cụ Nguyễn Văn Phúc',
+        'Chi Phái': 'Toàn Tộc (Khởi Tổ)',
+        'Thứ Tự Sinh': 'Chính Thất',
         'Trạng Thái': 'Đã mất',
         'Năm Sinh': 1885,
+        'Giờ Sinh': 'Giờ Mão (05h-07h)',
         'Ngày Mất Âm': 10,
         'Tháng Mất Âm': 8,
         'Năm Mất': 1958,
-        'Nơi An Táng': 'Lăng Mộ Tổ Đồi Thông',
+        'Giờ Mất': 'Giờ Mùi (13h-15h)',
+        'Nơi An Táng': 'Lăng Mộ Tổ Đồi Thông Xứ Đông',
+        'Tiểu Sử / Sự Nghiệp': 'Bà Chính thất sinh hạ con trưởng (1.1) và con thứ hai (1.2).',
       },
       {
-        'Họ và Tên': 'Cụ Nguyễn Văn Khang',
+        'Mã Cây / STT Phân Cấp': '1-V2',
+        'Mã Cha': '',
+        'Mã Mẹ': '',
+        'Mã Phối Ngẫu': '1',
+        'Quan Hệ Phân Cấp': 'Vợ Hai (Kế Thất)',
+        'Họ và Tên': 'Cụ Bà Lê Thị Lan',
+        'Tên Tự / Hiệu / Bí Danh': 'Hiền Thục Phu Nhân',
+        'Giới Tính': 'Nữ',
+        'Thế Hệ (Đời)': 1,
+        'Chi Phái': 'Toàn Tộc (Khởi Tổ)',
+        'Thứ Tự Sinh': 'Kế Thất',
+        'Trạng Thái': 'Đã mất',
+        'Năm Sinh': 1890,
+        'Giờ Sinh': 'Giờ Dần (03h-05h)',
+        'Ngày Mất Âm': 20,
+        'Tháng Mất Âm': 10,
+        'Năm Mất': 1965,
+        'Giờ Mất': 'Giờ Thân (15h-17h)',
+        'Nơi An Táng': 'Khu Nghĩa Trang Đồng Xứ Nam',
+        'Tiểu Sử / Sự Nghiệp': 'Bà Kế thất sinh hạ con trai thứ ba (1.3 - Khởi Chi Ba).',
+      },
+      {
+        'Mã Cây / STT Phân Cấp': '1.1',
+        'Mã Cha': '1',
+        'Mã Mẹ': '1-V1',
+        'Mã Phối Ngẫu': '1.1-V1',
+        'Quan Hệ Phân Cấp': 'Con Đẻ (Trưởng Nam)',
+        'Họ và Tên': 'Cụ Nguyễn Phúc Khang',
+        'Tên Tự / Hiệu / Bí Danh': 'Đại Trưởng Huynh',
         'Giới Tính': 'Nam',
         'Thế Hệ (Đời)': 2,
-        'Chi Phái': 'Chi Trưởng',
-        'Tên Cha': 'Cụ Nguyễn Văn Phúc',
-        'Vợ / Chồng': 'Cụ Bà Lê Thị Lan',
+        'Chi Phái': 'Chi Trưởng (Chi 1)',
+        'Thứ Tự Sinh': 'Trưởng Nam',
         'Trạng Thái': 'Đã mất',
         'Năm Sinh': 1910,
+        'Giờ Sinh': 'Giờ Tý (23h-01h)',
         'Ngày Mất Âm': 18,
         'Tháng Mất Âm': 5,
         'Năm Mất': 1980,
-        'Nơi An Táng': 'Khu Mộ Chi Trưởng',
+        'Giờ Mất': 'Giờ Dậu (17h-19h)',
+        'Nơi An Táng': 'Khu Lăng Mộ Chi Trưởng',
+        'Tiểu Sử / Sự Nghiệp': 'Trưởng tộc đời 2, gìn giữ từ đường hương hỏa.',
       },
       {
-        'Họ và Tên': 'Cụ Nguyễn Văn Ninh',
+        'Mã Cây / STT Phân Cấp': '1.1-V1',
+        'Mã Cha': '',
+        'Mã Mẹ': '',
+        'Mã Phối Ngẫu': '1.1',
+        'Quan Hệ Phân Cấp': 'Vợ Cả (Dâu Trưởng)',
+        'Họ và Tên': 'Cụ Bà Phạm Thị Đào',
+        'Tên Tự / Hiệu / Bí Danh': 'Trưởng Dâu Hiền Thục',
+        'Giới Tính': 'Nữ',
+        'Thế Hệ (Đời)': 2,
+        'Chi Phái': 'Chi Trưởng (Chi 1)',
+        'Thứ Tự Sinh': 'Chính Thất',
+        'Trạng Thái': 'Đã mất',
+        'Năm Sinh': 1912,
+        'Giờ Sinh': 'Giờ Tỵ (09h-11h)',
+        'Ngày Mất Âm': 12,
+        'Tháng Mất Âm': 3,
+        'Năm Mất': 1986,
+        'Giờ Mất': 'Giờ Hợi (21h-23h)',
+        'Nơi An Táng': 'Khu Lăng Mộ Chi Trưởng',
+        'Tiểu Sử / Sự Nghiệp': 'Bà Dâu Trưởng hiền đức, phụng dưỡng cha mẹ chồng trọn đạo.',
+      },
+      {
+        'Mã Cây / STT Phân Cấp': '1.1.1',
+        'Mã Cha': '1.1',
+        'Mã Mẹ': '1.1-V1',
+        'Mã Phối Ngẫu': '',
+        'Quan Hệ Phân Cấp': 'Con Đẻ (Cháu Đích Tôn)',
+        'Họ và Tên': 'Nguyễn Phúc An',
+        'Tên Tự / Hiệu / Bí Danh': 'Đích Tôn An Bình',
+        'Giới Tính': 'Nam',
+        'Thế Hệ (Đời)': 3,
+        'Chi Phái': 'Chi Trưởng (Chi 1)',
+        'Thứ Tự Sinh': 'Trưởng Nam (Đích Tôn)',
+        'Trạng Thái': 'Còn sống',
+        'Năm Sinh': 1950,
+        'Giờ Sinh': 'Giờ Thìn (07h-09h)',
+        'Ngày Mất Âm': '',
+        'Tháng Mất Âm': '',
+        'Năm Mất': '',
+        'Giờ Mất': '',
+        'Nơi An Táng': '',
+        'Tiểu Sử / Sự Nghiệp': 'Hiện là Trưởng tộc đời 3, đương nhiệm phụng tự từ đường họ.',
+      },
+      {
+        'Mã Cây / STT Phân Cấp': '1.1.2',
+        'Mã Cha': '1.1',
+        'Mã Mẹ': '1.1-V1',
+        'Mã Phối Ngẫu': '',
+        'Quan Hệ Phân Cấp': 'Con Đẻ (Thứ Nam)',
+        'Họ và Tên': 'Nguyễn Phúc Bình',
+        'Tên Tự / Hiệu / Bí Danh': 'Bình An Cư Sĩ',
+        'Giới Tính': 'Nam',
+        'Thế Hệ (Đời)': 3,
+        'Chi Phái': 'Chi Trưởng (Chi 1)',
+        'Thứ Tự Sinh': 'Thứ Nam 2',
+        'Trạng Thái': 'Còn sống',
+        'Năm Sinh': 1955,
+        'Giờ Sinh': 'Giờ Mão (05h-07h)',
+        'Ngày Mất Âm': '',
+        'Tháng Mất Âm': '',
+        'Năm Mất': '',
+        'Giờ Mất': '',
+        'Nơi An Táng': '',
+        'Tiểu Sử / Sự Nghiệp': 'Kỹ sư cầu đường, đóng góp tôn tạo từ đường dòng họ.',
+      },
+      {
+        'Mã Cây / STT Phân Cấp': '1.2',
+        'Mã Cha': '1',
+        'Mã Mẹ': '1-V1',
+        'Mã Phối Ngẫu': '',
+        'Quan Hệ Phân Cấp': 'Con Đẻ (Thứ Nam - Khởi Chi 2)',
+        'Họ và Tên': 'Cụ Nguyễn Phúc Ninh',
+        'Tên Tự / Hiệu / Bí Danh': 'Ninh Vương Công',
         'Giới Tính': 'Nam',
         'Thế Hệ (Đời)': 2,
-        'Chi Phái': 'Chi Hai',
-        'Tên Cha': 'Cụ Nguyễn Văn Phúc',
-        'Vợ / Chồng': 'Cụ Bà Phạm Thị Đào',
+        'Chi Phái': 'Chi Hai (Chi 2)',
+        'Thứ Tự Sinh': 'Thứ Nam 2',
         'Trạng Thái': 'Đã mất',
         'Năm Sinh': 1915,
+        'Giờ Sinh': 'Giờ Mùi (13h-15h)',
         'Ngày Mất Âm': 22,
         'Tháng Mất Âm': 11,
         'Năm Mất': 1985,
-        'Nơi An Táng': 'Nghĩa Trang Xã',
+        'Giờ Mất': 'Giờ Dậu (17h-19h)',
+        'Nơi An Táng': 'Nghĩa Trang Chi Hai',
+        'Tiểu Sử / Sự Nghiệp': 'Cụ Khởi lập Chi Hai, đỗ đạt cử nhân mở trường dạy học.',
       },
       {
-        'Họ và Tên': 'Cụ Nguyễn Văn Thịnh',
+        'Mã Cây / STT Phân Cấp': '1.3',
+        'Mã Cha': '1',
+        'Mã Mẹ': '1-V2',
+        'Mã Phối Ngẫu': '',
+        'Quan Hệ Phân Cấp': 'Con Đẻ (Thứ Nam - Khởi Chi 3)',
+        'Họ và Tên': 'Cụ Nguyễn Phúc Thịnh',
+        'Tên Tự / Hiệu / Bí Danh': 'Thịnh Phát Tiên Sinh',
         'Giới Tính': 'Nam',
         'Thế Hệ (Đời)': 2,
-        'Chi Phái': 'Chi Ba',
-        'Tên Cha': 'Cụ Nguyễn Văn Phúc',
-        'Vợ / Chồng': 'Cụ Bà Vũ Thị Huệ',
+        'Chi Phái': 'Chi Ba (Chi 3)',
+        'Thứ Tự Sinh': 'Thứ Nam 3 (Con Bà Hai)',
         'Trạng Thái': 'Đã mất',
         'Năm Sinh': 1920,
+        'Giờ Sinh': 'Giờ Thân (15h-17h)',
         'Ngày Mất Âm': 5,
         'Tháng Mất Âm': 4,
         'Năm Mất': 1990,
-        'Nơi An Táng': 'Nghĩa Trang Xã',
+        'Giờ Mất': 'Giờ Ngọ (11h-13h)',
+        'Nơi An Táng': 'Nghĩa Trang Chi Ba',
+        'Tiểu Sử / Sự Nghiệp': 'Cụ Khởi lập Chi Ba dòng họ.',
+      },
+    ];
+
+    const guideRows = [
+      {
+        'Cột': 'Mã Cây / STT Phân Cấp',
+        'Ý Nghĩa & Quy Ước': 'Mã số định danh phả hệ: 1 (Cụ Tổ), 1-V1 (Vợ cả), 1-V2 (Vợ hai), 1.1 (Con trưởng), 1.1.1 (Cháu đích tôn), 1.2 (Con thứ)...',
+        'Ví Dụ Mẫu': '1 | 1-V1 | 1.1 | 1.1.1 | 1.2',
       },
       {
-        'Họ và Tên': 'Nguyễn Văn Hoàng',
-        'Giới Tính': 'Nam',
-        'Thế Hệ (Đời)': 3,
-        'Chi Phái': 'Chi Trưởng',
-        'Tên Cha': 'Cụ Nguyễn Văn Khang',
-        'Vợ / Chồng': 'Hoàng Thị Thu',
-        'Trạng Thái': 'Còn sống',
-        'Năm Sinh': 1975,
-        'Ngày Mất Âm': '',
-        'Tháng Mất Âm': '',
-        'Năm Mất': '',
-        'Nơi An Táng': '',
+        'Cột': 'Mã Cha',
+        'Ý Nghĩa & Quy Ước': 'Điền Mã Cây của người cha đẻ (Để trống nếu là Cụ Thủy Tổ khởi thủy hoặc Hôn phối).',
+        'Ví Dụ Mẫu': '1 | 1.1 | 1.2',
       },
       {
-        'Họ và Tên': 'Nguyễn Văn Minh',
-        'Giới Tính': 'Nam',
-        'Thế Hệ (Đời)': 4,
-        'Chi Phái': 'Chi Trưởng',
-        'Tên Cha': 'Nguyễn Văn Hoàng',
-        'Vợ / Chồng': '',
-        'Trạng Thái': 'Còn sống',
-        'Năm Sinh': 2005,
-        'Ngày Mất Âm': '',
-        'Tháng Mất Âm': '',
-        'Năm Mất': '',
-        'Nơi An Táng': '',
+        'Cột': 'Mã Mẹ',
+        'Ý Nghĩa & Quy Ước': 'Điền Mã Cây của người mẹ sinh ra (Ví dụ con bà cả điền 1-V1, con bà hai điền 1-V2).',
+        'Ví Dụ Mẫu': '1-V1 | 1-V2 | 1.1-V1',
+      },
+      {
+        'Cột': 'Mã Phối Ngẫu',
+        'Ý Nghĩa & Quy Ước': 'Mã số của vợ/chồng liên kết.',
+        'Ví Dụ Mẫu': '1-V1 | 1.1 | 1.1-V1',
+      },
+      {
+        'Cột': 'Giờ Sinh / Giờ Mất',
+        'Ý Nghĩa & Quy Ước': 'Khung giờ sinh / giờ mất theo 12 con giáp (Giờ Tý, Sửu...) hoặc giờ đồng hồ (08:30).',
+        'Ví Dụ Mẫu': 'Giờ Thìn (07h-09h) | 08:30',
+      },
+      {
+        'Cột': 'Ngày Mất Âm / Tháng Mất Âm',
+        'Ý Nghĩa & Quy Ước': 'Ngày và tháng giỗ Âm lịch hàng năm (Để trống nếu thành viên còn sống).',
+        'Ví Dụ Mẫu': '15 (Ngày) | 1 (Tháng)',
       },
     ];
 
     const worksheet = XLSX.utils.json_to_sheet(sampleRows);
-
     worksheet['!cols'] = [
-      { wch: 24 }, // Họ và Tên
-      { wch: 12 }, // Giới Tính
-      { wch: 15 }, // Thế Hệ (Đời)
-      { wch: 15 }, // Chi Phái
-      { wch: 24 }, // Tên Cha
-      { wch: 24 }, // Vợ / Chồng
-      { wch: 14 }, // Trạng Thái
+      { wch: 22 }, // Mã Cây
+      { wch: 10 }, // Mã Cha
+      { wch: 10 }, // Mã Mẹ
+      { wch: 14 }, // Mã Phối Ngẫu
+      { wch: 24 }, // Quan Hệ Phân Cấp
+      { wch: 26 }, // Họ và Tên
+      { wch: 28 }, // Tên Tự / Hiệu
+      { wch: 10 }, // Giới Tính
+      { wch: 14 }, // Thế Hệ (Đời)
+      { wch: 20 }, // Chi Phái
+      { wch: 20 }, // Thứ Tự Sinh
+      { wch: 12 }, // Trạng Thái
       { wch: 12 }, // Năm Sinh
+      { wch: 20 }, // Giờ Sinh
       { wch: 14 }, // Ngày Mất Âm
       { wch: 14 }, // Tháng Mất Âm
       { wch: 12 }, // Năm Mất
-      { wch: 26 }, // Nơi An Táng
+      { wch: 20 }, // Giờ Mất
+      { wch: 30 }, // Nơi An Táng
+      { wch: 35 }, // Tiểu Sử / Sự Nghiệp
     ];
 
+    const guideSheet = XLSX.utils.json_to_sheet(guideRows);
+    guideSheet['!cols'] = [{ wch: 25 }, { wch: 65 }, { wch: 30 }];
+
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'GiaPhaChuan12Cot');
-    XLSX.writeFile(workbook, 'Mau_Nhap_Gia_Pha_12_Cot_Chuan.xlsx');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'GiaPhaPhanCapChuan');
+    XLSX.utils.book_append_sheet(workbook, guideSheet, 'HuongDanQuyUoc');
+    XLSX.writeFile(workbook, 'Mau_Nhap_Gia_Pha_Phan_Cap_Chuan_2026.xlsx');
   }
 
   /**
@@ -751,6 +1073,14 @@ export class DataImportService {
             const m = r.data;
             const isDeceased = m.lifeStatus === 'DECEASED';
 
+            const noteParts = [
+              m.courtesyName ? `Tên tự/hiệu: ${m.courtesyName}` : '',
+              m.birthTime ? `Giờ sinh: ${m.birthTime}` : '',
+              m.deathTime ? `Giờ mất: ${m.deathTime}` : '',
+              m.birthOrder ? `Thứ tự: ${m.birthOrder}` : '',
+              m.bio || '',
+            ].filter(Boolean);
+
             return {
               family_id: targetFamilyUUID,
               generation_id: genMap.get(m.generationNumber) || null,
@@ -759,12 +1089,12 @@ export class DataImportService {
               gender: m.gender,
               status: m.lifeStatus,
               is_deceased: isDeceased,
-              date_of_birth: m.birthYear ? `${m.birthYear}-01-01` : null,
+              date_of_birth: m.birthSolarDate || (m.birthYear ? `${m.birthYear}-01-01` : null),
               date_of_death_lunar_day: m.deathLunarDay || null,
               date_of_death_lunar_month: m.deathLunarMonth || null,
               date_of_death_lunar_year: m.deathLunarYear || null,
               burial_place: m.burialPlace || null,
-              notes: m.birthYear ? `Năm sinh: ${m.birthYear}` : null,
+              notes: noteParts.length > 0 ? noteParts.join(' • ') : (m.birthYear ? `Năm sinh: ${m.birthYear}` : null),
             };
           });
 
@@ -790,12 +1120,17 @@ export class DataImportService {
 
           const nameToIdMap = new Map<string, string>();
           const normNameToIdMap = new Map<string, { id: string; genNum: number }>();
+          const treeCodeToIdMap = new Map<string, string>();
 
           (insertedMembers || []).forEach((im: any, idx: number) => {
             const fullName = im.full_name.trim();
-            const genNum = validation.rows[idx]?.data?.generationNumber || 1;
+            const rawRow = validation.rows[idx]?.data;
+            const genNum = rawRow?.generationNumber || 1;
             nameToIdMap.set(fullName, im.id);
             normNameToIdMap.set(normalizeForMatch(fullName), { id: im.id, genNum });
+            if (rawRow?.treeCode) {
+              treeCodeToIdMap.set(rawRow.treeCode.trim().toUpperCase(), im.id);
+            }
           });
 
           const findMatchingMemberId = (queryName: string, childGen?: number, excludeId?: string): string | null => {
@@ -834,45 +1169,78 @@ export class DataImportService {
           const relationshipsToInsert: any[] = [];
           const memorialsToInsert: any[] = [];
 
-          validation.rows.forEach((r) => {
+          validation.rows.forEach((r, idx) => {
             const m = r.data;
-            const currentMemberId = nameToIdMap.get(m.fullName.trim()) || findMatchingMemberId(m.fullName);
+            const currentMemberId = insertedMembers?.[idx]?.id || nameToIdMap.get(m.fullName.trim()) || findMatchingMemberId(m.fullName);
             if (!currentMemberId) return;
 
-            // Quan hệ Cha - Con (relationship_type: 'CHILD' và 'PARENT')
-            if (m.parentName) {
-              const fatherId = findMatchingMemberId(m.parentName, m.generationNumber, currentMemberId);
-              if (fatherId && fatherId !== currentMemberId) {
+            // Quan hệ Cha - Con (Ưu tiên theo parentCode sau đó theo parentName)
+            let fatherId: string | null = null;
+            if (m.parentCode && treeCodeToIdMap.has(m.parentCode.trim().toUpperCase())) {
+              fatherId = treeCodeToIdMap.get(m.parentCode.trim().toUpperCase())!;
+            } else if (m.parentName) {
+              fatherId = findMatchingMemberId(m.parentName, m.generationNumber, currentMemberId);
+            }
+
+            if (fatherId && fatherId !== currentMemberId) {
+              relationshipsToInsert.push({
+                family_id: targetFamilyUUID,
+                member_id: fatherId,
+                related_member_id: currentMemberId,
+                relationship_type: 'CHILD',
+              });
+              relationshipsToInsert.push({
+                family_id: targetFamilyUUID,
+                member_id: fatherId,
+                related_member_id: currentMemberId,
+                relationship_type: 'PARENT',
+              });
+            }
+
+            // Quan hệ Mẹ - Con (Ưu tiên theo motherCode)
+            if (m.motherCode && treeCodeToIdMap.has(m.motherCode.trim().toUpperCase())) {
+              const motherId = treeCodeToIdMap.get(m.motherCode.trim().toUpperCase())!;
+              if (motherId && motherId !== currentMemberId) {
                 relationshipsToInsert.push({
                   family_id: targetFamilyUUID,
-                  member_id: fatherId,
+                  member_id: motherId,
                   related_member_id: currentMemberId,
                   relationship_type: 'CHILD',
                 });
                 relationshipsToInsert.push({
                   family_id: targetFamilyUUID,
-                  member_id: fatherId,
+                  member_id: motherId,
                   related_member_id: currentMemberId,
                   relationship_type: 'PARENT',
                 });
               }
             }
 
-            // Quan hệ Vợ - Chồng (relationship_type: 'SPOUSE')
-            if (m.spouseName) {
-              const spouseId = findMatchingMemberId(m.spouseName, m.generationNumber, currentMemberId);
-              if (spouseId && spouseId !== currentMemberId) {
-                relationshipsToInsert.push({
-                  family_id: targetFamilyUUID,
-                  member_id: currentMemberId,
-                  related_member_id: spouseId,
-                  relationship_type: 'SPOUSE',
-                });
-              }
+            // Quan hệ Vợ - Chồng (Ưu tiên theo spouseCode sau đó theo spouseName)
+            let spouseId: string | null = null;
+            if (m.spouseCode && treeCodeToIdMap.has(m.spouseCode.trim().toUpperCase())) {
+              spouseId = treeCodeToIdMap.get(m.spouseCode.trim().toUpperCase())!;
+            } else if (m.spouseName) {
+              spouseId = findMatchingMemberId(m.spouseName, m.generationNumber, currentMemberId);
+            }
+
+            if (spouseId && spouseId !== currentMemberId) {
+              relationshipsToInsert.push({
+                family_id: targetFamilyUUID,
+                member_id: currentMemberId,
+                related_member_id: spouseId,
+                relationship_type: 'SPOUSE',
+              });
             }
 
             // Tạo bản ghi Lễ Giỗ trong memorial_dates (Khớp schema memorial_dates)
             if (m.lifeStatus === 'DECEASED' && m.deathLunarDay && m.deathLunarMonth) {
+              const noteText = [
+                `Lễ Giỗ: ${m.fullName}`,
+                m.deathTime ? `Giờ mất: ${m.deathTime}` : '',
+                m.burialPlace ? `Mộ phần: ${m.burialPlace}` : '',
+              ].filter(Boolean).join(' • ');
+
               memorialsToInsert.push({
                 family_id: targetFamilyUUID,
                 member_id: currentMemberId,
@@ -880,7 +1248,7 @@ export class DataImportService {
                 lunar_month: m.deathLunarMonth,
                 lunar_year: m.deathLunarYear || null,
                 recurrence: 'YEARLY_LUNAR',
-                notes: m.burialPlace ? `Lễ Giỗ: ${m.fullName} • Mộ phần: ${m.burialPlace}` : `Lễ Giỗ: ${m.fullName}`,
+                notes: noteText,
               });
             }
           });

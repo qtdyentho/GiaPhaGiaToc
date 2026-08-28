@@ -21,43 +21,31 @@ const STORAGE_KEY = 'hl_clan_broadcasts';
 // Generate default upcoming event: 5 days, 8 hours, 30 minutes from now
 const defaultEventDate = new Date(Date.now() + 5 * 24 * 3600 * 1000 + 8 * 3600 * 1000 + 30 * 60 * 1000).toISOString();
 
-export const INITIAL_BROADCASTS: BroadcastNotification[] = [
-  {
-    id: 'bc-001',
-    family_id: 'fam-0000-0001',
-    title: 'Đại Lễ Tế Tổ & Khánh Thành Tu Bổ Từ Đường',
-    message:
-      'Kính mời toàn thể con cháu nội ngoại tề tựu đông đủ về Nhà thờ tổ dòng họ để dâng hương kính cáo tiên tổ và tham dự đại lễ khánh thành nhà thờ họ.',
-    event_title: 'Đại Lễ Tế Tổ Thu Tế 2026',
-    event_date: defaultEventDate,
-    location: 'Nhà Thờ Tổ Đại Tộc Nguyễn Văn (Số 18 Ngõ 42, Định Công, Hoàng Mai, Hà Nội)',
-    author_name: 'Nguyễn Văn Hoàng',
-    author_role: 'Trưởng Tộc',
-    created_at: new Date().toISOString(),
-    is_active: true,
-    link_url: '/app/events',
-  },
-];
+export const INITIAL_BROADCASTS: BroadcastNotification[] = [];
 
 type BroadcastListener = (broadcast: BroadcastNotification | null) => void;
 
 class BroadcastServiceClass {
   private listeners: BroadcastListener[] = [];
 
-  getBroadcasts(familyId: string = 'fam-0000-0001'): BroadcastNotification[] {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const list: BroadcastNotification[] = JSON.parse(saved);
-        return list.filter((b) => b.family_id === familyId);
-      } catch (e) {
-        // fallback
+  getBroadcasts(familyId?: string): BroadcastNotification[] {
+    if (!familyId) return [];
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const list: BroadcastNotification[] = JSON.parse(saved);
+          return list.filter((b) => b.family_id === familyId);
+        } catch (e) {
+          return [];
+        }
       }
     }
     return INITIAL_BROADCASTS.filter((b) => b.family_id === familyId);
   }
 
-  getActiveBroadcast(familyId: string = 'fam-0000-0001'): BroadcastNotification | null {
+  getActiveBroadcast(familyId?: string): BroadcastNotification | null {
+    if (!familyId) return null;
     const list = this.getBroadcasts(familyId);
     const active = list.find((b) => b.is_active);
     return active || null;
@@ -73,14 +61,19 @@ class BroadcastServiceClass {
       is_active: true,
     };
 
-    const saved = localStorage.getItem(STORAGE_KEY);
-    let all: BroadcastNotification[] = saved ? JSON.parse(saved) : INITIAL_BROADCASTS;
+    let all: BroadcastNotification[] = [];
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      all = saved ? JSON.parse(saved) : INITIAL_BROADCASTS;
+    }
 
     // Deactivate previous broadcasts for this family
     all = all.map((b) => (b.family_id === data.family_id ? { ...b, is_active: false } : b));
     all.unshift(newBroadcast);
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    }
     this.notify(newBroadcast);
 
     if (isSupabaseConfigured()) {

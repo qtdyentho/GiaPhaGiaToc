@@ -23,30 +23,7 @@ interface ClanGuestbookModalProps {
 }
 
 // In-memory fallback guestbook records
-const defaultMockGuestbook: ClanGuestbookEntry[] = [
-  {
-    id: 'gb-1',
-    family_id: 'fam-0000-0001',
-    author_name: 'Nguyễn Văn Hùng',
-    branch_name: 'Chi Trưởng',
-    location: 'Hà Nội',
-    message: 'Kính cẩn thắp nén tâm hương bái tạ tiên tổ. Kính chúc toàn thể bà con họ tộc luôn đoàn kết, thịnh vượng, con cháu hiếu học thành đạt!',
-    incense_count: 3,
-    is_public: true,
-    created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
-  },
-  {
-    id: 'gb-2',
-    family_id: 'fam-0000-0001',
-    author_name: 'Nguyễn Thị Mai',
-    branch_name: 'Chi Hai',
-    location: 'TP. Hồ Chí Minh',
-    message: 'Con cháu phương xa luôn hướng về nguồn cội nhà thờ tổ. Cầu mong tiên tổ phù hộ độ trì cho gia đình bình an, vạn sự như ý.',
-    incense_count: 1,
-    is_public: true,
-    created_at: new Date(Date.now() - 3600000 * 24).toISOString(),
-  },
-];
+const defaultMockGuestbook: ClanGuestbookEntry[] = [];
 
 export const ClanGuestbookModal: React.FC<ClanGuestbookModalProps> = ({
   familyId,

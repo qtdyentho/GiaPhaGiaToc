@@ -33,12 +33,14 @@ export const LoginPage: React.FC = () => {
       const result = await signIn(cleanEmail, password);
       const redirectUrl = searchParams.get('redirect');
 
-      if (result.isSuperAdmin) {
-        navigate('/admin/beta');
+      if (redirectUrl) {
+        navigate(redirectUrl);
       } else if (result.activeFamily) {
-        navigate(redirectUrl || '/app/dashboard');
+        navigate('/app/dashboard');
+      } else if (result.isSuperAdmin) {
+        navigate('/admin/beta');
       } else {
-        navigate('/onboarding/create-family');
+        navigate('/create-family');
       }
     } catch (err: any) {
       setError(err?.message || 'Email hoặc mật khẩu không chính xác');

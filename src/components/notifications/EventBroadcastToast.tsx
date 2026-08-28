@@ -34,24 +34,34 @@ export const EventBroadcastToast: React.FC = () => {
 
   // Listen to broadcast changes
   useEffect(() => {
+    if (!familyId) {
+      setBroadcast(null);
+      setIsVisible(false);
+      return;
+    }
+
     const unsub = BroadcastService.subscribe((newBroadcast) => {
-      setBroadcast(newBroadcast);
-      if (newBroadcast) {
+      if (newBroadcast && newBroadcast.family_id === familyId) {
+        setBroadcast(newBroadcast);
         setIsVisible(true);
         setProgress(100);
       } else {
+        setBroadcast(null);
         setIsVisible(false);
       }
     });
 
     // Check if initial broadcast exists and hasn't been closed in this session
     const active = BroadcastService.getActiveBroadcast(familyId);
-    if (active) {
+    if (active && active.family_id === familyId) {
       const isDismissed = sessionStorage.getItem(`dismissed_bc_${active.id}`);
       if (!isDismissed) {
         setBroadcast(active);
         setIsVisible(true);
       }
+    } else {
+      setBroadcast(null);
+      setIsVisible(false);
     }
 
     return () => unsub();

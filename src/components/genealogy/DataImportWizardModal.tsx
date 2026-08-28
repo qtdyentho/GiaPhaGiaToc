@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Upload, FileSpreadsheet, CheckCircle2, AlertTriangle, XCircle, 
   ArrowRight, ArrowLeft, ShieldCheck, Download, Loader2, Sparkles, 
@@ -136,15 +136,15 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                 <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <span>Nhập Gia Phả Từ File Excel</span>
                   <span className="text-[11px] font-bold px-2 py-0.5 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 rounded-full">
-                    Chuẩn 12 Cột
+                    Cây Phân Cấp & 12-18 Cột
                   </span>
                   <span className="text-[11px] font-bold px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 text-[#166534] dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-full flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-amber-500" />
-                    <span>Tự Động Nhận Diện Đời</span>
+                    <span>Tự Động Nối Cây Phả Hệ</span>
                   </span>
                 </h1>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Tự động phân tích phả đồ, tạo thế hệ cha con và đồng bộ 100% Cây Gia Phả & Danh Sách Thành Viên
+                  Tự động phân tích cây nhị phân/đa phân, nhận diện vợ chồng, con cái, giờ sinh, giờ mất và đồng bộ 100% Cây Gia Phả
                 </p>
               </div>
             </div>
@@ -360,30 +360,49 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                 </div>
               </div>
 
-              {/* Bảng Xem trước 12 cột dữ liệu */}
-              <div className="max-h-64 overflow-x-auto overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-2xl">
+              {/* Bảng Xem trước Cây Phả Hệ Phân Cấp & Dữ Liệu Chi Tiết */}
+              <div className="max-h-72 overflow-x-auto overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-2xl">
                 <table className="w-full text-left text-xs whitespace-nowrap">
                   <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase sticky top-0">
                     <tr>
-                      <th className="p-2.5">#</th>
+                      <th className="p-2.5">Mã Cây</th>
                       <th className="p-2.5">Họ và Tên</th>
+                      <th className="p-2.5">Tên Tự / Hiệu</th>
                       <th className="p-2.5">Giới Tính</th>
                       <th className="p-2.5">Đời (Thế Hệ)</th>
                       <th className="p-2.5">Chi Phái</th>
-                      <th className="p-2.5">Tên Cha</th>
+                      <th className="p-2.5">Cha (Mã/Tên)</th>
+                      <th className="p-2.5">Mẹ (Mã)</th>
                       <th className="p-2.5">Vợ / Chồng</th>
-                      <th className="p-2.5">Trạng Thái</th>
-                      <th className="p-2.5">Năm Sinh</th>
-                      <th className="p-2.5">Ngày Mất Âm</th>
+                      <th className="p-2.5">Sinh (Năm/Giờ)</th>
+                      <th className="p-2.5">Mất (Ngày Âm/Giờ)</th>
                       <th className="p-2.5">Nơi An Táng</th>
-                      <th className="p-2.5 text-right">Trạng Thái</th>
+                      <th className="p-2.5 text-right">Kiểm Duyệt</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {validation.rows.map((row) => (
                       <tr key={row.rowNumber} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
-                        <td className="p-2.5 text-slate-400">{row.rowNumber}</td>
-                        <td className="p-2.5 font-bold text-slate-900 dark:text-white">{row.data.fullName}</td>
+                        <td className="p-2.5">
+                          {row.data.treeCode ? (
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                              {row.data.treeCode}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">#{row.rowNumber}</span>
+                          )}
+                        </td>
+                        <td className="p-2.5 font-bold text-slate-900 dark:text-white">
+                          <div className="flex items-center gap-1.5">
+                            <span>{row.data.fullName}</span>
+                            {row.data.relationType && (
+                              <span className="text-[9px] px-1.5 py-0.2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded font-normal">
+                                {row.data.relationType}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-2.5 text-slate-600 dark:text-slate-400">{row.data.courtesyName || '—'}</td>
                         <td className="p-2.5">
                           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${row.data.gender === 'MALE' ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300' : 'bg-pink-50 dark:bg-pink-950/60 text-pink-700 dark:text-pink-300'}`}>
                             {row.data.gender === 'MALE' ? 'Nam' : 'Nữ'}
@@ -400,16 +419,18 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                           </span>
                         </td>
                         <td className="p-2.5">{row.data.branchName}</td>
-                        <td className="p-2.5 text-slate-600 dark:text-slate-400">{row.data.parentName || '— (Khởi Tổ)'}</td>
-                        <td className="p-2.5 text-slate-600 dark:text-slate-400">{row.data.spouseName || '—'}</td>
-                        <td className="p-2.5">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${row.data.lifeStatus === 'ALIVE' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-[#166534] dark:text-emerald-300' : 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'}`}>
-                            {row.data.lifeStatus === 'ALIVE' ? 'Còn sống' : 'Đã mất'}
-                          </span>
-                        </td>
-                        <td className="p-2.5 text-slate-600 dark:text-slate-400">{row.data.birthYear || '—'}</td>
                         <td className="p-2.5 text-slate-600 dark:text-slate-400">
-                          {row.data.deathLunarDay && row.data.deathLunarMonth ? `${row.data.deathLunarDay}/${row.data.deathLunarMonth} Âm` : '—'}
+                          {row.data.parentCode || row.data.parentName || '— (Khởi Tổ)'}
+                        </td>
+                        <td className="p-2.5 text-slate-600 dark:text-slate-400">{row.data.motherCode || '—'}</td>
+                        <td className="p-2.5 text-slate-600 dark:text-slate-400">{row.data.spouseCode || row.data.spouseName || '—'}</td>
+                        <td className="p-2.5 text-slate-600 dark:text-slate-400">
+                          {row.data.birthYear ? `${row.data.birthYear}${row.data.birthTime ? ` (${row.data.birthTime})` : ''}` : '—'}
+                        </td>
+                        <td className="p-2.5 text-slate-600 dark:text-slate-400">
+                          {row.data.deathLunarDay && row.data.deathLunarMonth 
+                            ? `${row.data.deathLunarDay}/${row.data.deathLunarMonth} Âm${row.data.deathTime ? ` (${row.data.deathTime})` : ''}` 
+                            : (row.data.lifeStatus === 'ALIVE' ? <span className="text-emerald-600 font-semibold">Còn sống</span> : '—')}
                         </td>
                         <td className="p-2.5 text-slate-600 dark:text-slate-400 truncate max-w-[120px]">{row.data.burialPlace || '—'}</td>
                         <td className="p-2.5 text-right">
