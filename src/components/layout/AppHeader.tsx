@@ -24,6 +24,7 @@ import {
   Building,
   Plus,
   Landmark,
+  RotateCw,
 } from 'lucide-react';
 import { LunarCalendarService } from '../../services/LunarCalendarService';
 import { ShortLinkService } from '../../services/security/ShortLinkService';
@@ -609,7 +610,24 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   )}
                 </div>
 
-                <div className="p-1">
+                <div className="p-1 border-t border-slate-100 dark:border-slate-800 space-y-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsProfileMenuOpen(false);
+                      if (typeof (window as any).clearAppCacheAndReload === 'function') {
+                        (window as any).clearAppCacheAndReload();
+                      } else {
+                        window.location.reload();
+                      }
+                    }}
+                    className="w-full px-3.5 py-2 text-left text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/80 rounded-xl text-xs font-semibold flex items-center gap-2 transition cursor-pointer"
+                    title="Xóa bộ nhớ đệm và tải lại mã nguồn mới nhất"
+                  >
+                    <RotateCw className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>Làm Mới & Xóa Cache</span>
+                  </button>
+
                   <button
                     onClick={handleSignOut}
                     className="w-full px-3.5 py-2 text-left text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer"

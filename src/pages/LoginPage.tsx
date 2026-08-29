@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
-import { Lock, Mail, ArrowRight, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, ArrowRight, Sparkles, Eye, EyeOff, RotateCw } from 'lucide-react';
 import { BRAND } from '../lib/constants';
 import { useAuth } from '../contexts/AuthContext';
 import { ForgotPasswordModal } from '../components/auth/ForgotPasswordModal';
@@ -148,11 +148,28 @@ export const LoginPage: React.FC = () => {
             </div>
           </form>
 
-          <div className="mt-6 pt-4 border-t border-slate-100 text-center text-xs text-slate-500">
-            Chưa có tài khoản gia tộc?{' '}
-            <Link to="/register" className="font-bold text-[#1E3A5F] hover:underline">
-              Đăng ký dòng họ mới
-            </Link>
+          <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col items-center gap-2.5 text-center text-xs text-slate-500">
+            <div>
+              Chưa có tài khoản gia tộc?{' '}
+              <Link to="/register" className="font-bold text-[#1E3A5F] hover:underline">
+                Đăng ký dòng họ mới
+              </Link>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof (window as any).clearAppCacheAndReload === 'function') {
+                  (window as any).clearAppCacheAndReload();
+                } else {
+                  window.location.reload();
+                }
+              }}
+              className="inline-flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-slate-700 transition cursor-pointer"
+              title="Xóa bộ nhớ đệm trình duyệt và nạp bản cập nhật mới nhất"
+            >
+              <RotateCw className="w-3 h-3" />
+              <span>Xóa bộ nhớ đệm & Tải mã nguồn mới nhất</span>
+            </button>
           </div>
         </div>
       </div>
