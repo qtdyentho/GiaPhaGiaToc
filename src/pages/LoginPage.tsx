@@ -19,7 +19,8 @@ export const LoginPage: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanEmail = email.trim();
-    if (!cleanEmail || !password.trim()) {
+    const cleanPassword = password.trim();
+    if (!cleanEmail || !cleanPassword) {
       setError('Vui lòng nhập đầy đủ email và mật khẩu');
       return;
     }
@@ -31,7 +32,7 @@ export const LoginPage: React.FC = () => {
     setError(null);
     setLoading(true);
     try {
-      const result = await signIn(cleanEmail, password);
+      const result = await signIn(cleanEmail, cleanPassword);
       const redirectUrl = searchParams.get('redirect');
 
       if (redirectUrl) {
@@ -44,6 +45,7 @@ export const LoginPage: React.FC = () => {
         navigate('/create-family');
       }
     } catch (err: any) {
+      console.error('[LoginPage] Login failed:', err);
       setError(err?.message || 'Email hoặc mật khẩu không chính xác');
     } finally {
       setLoading(false);

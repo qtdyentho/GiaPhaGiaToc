@@ -735,7 +735,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // ── PATH A: Supabase Auth & Profile Lookup ─────────────────────────
     if (isSupabaseConfigured()) {
       try {
-        if (!password) {
+        const cleanPassword = password ? password.trim() : '';
+        if (!cleanPassword) {
           setIsLoading(false);
           throw new Error('Vui lòng nhập mật khẩu để đăng nhập.');
         }
@@ -743,10 +744,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Bắt buộc xác thực mật khẩu qua Supabase Auth
         const { data: authData, error: authErr } = await supabase.auth.signInWithPassword({
           email: cleanEmail,
-          password,
+          password: cleanPassword,
         });
 
         if (authErr || !authData?.user) {
+          console.error('[AuthContext] signIn error:', authErr);
           setIsLoading(false);
           let friendlyMsg = 'Email hoặc mật khẩu không chính xác.';
           if (authErr?.message?.includes('Email not confirmed')) {
