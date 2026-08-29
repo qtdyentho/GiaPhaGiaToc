@@ -1662,14 +1662,21 @@ export class DataImportService {
               generation_id: genMap.get(m.generationNumber) || null,
               branch_id: branchMap.get(m.branchName) || null,
               full_name: m.fullName.trim(),
-              gender: m.gender,
-              status: m.lifeStatus,
+              courtesy_name: m.courtesyName || null,
+              gender: m.gender === 'FEMALE' ? 'FEMALE' : 'MALE',
+              status: isDeceased ? 'DECEASED' : 'ALIVE',
               is_deceased: isDeceased,
               date_of_birth: m.birthSolarDate || (m.birthYear ? `${m.birthYear}-01-01` : null),
+              birth_time: m.birthTime || null,
+              date_of_death_solar: m.deathSolarDate || null,
               date_of_death_lunar_day: m.deathLunarDay || null,
               date_of_death_lunar_month: m.deathLunarMonth || null,
               date_of_death_lunar_year: m.deathLunarYear || null,
+              death_time: m.deathTime || null,
               burial_place: m.burialPlace || null,
+              biography: m.bio || null,
+              child_lineage_type: m.relationType?.includes('Nuôi') ? 'ADOPTED' : 'BIOLOGICAL',
+              birth_order_in_family: m.birthOrder ? 1 : 1,
               notes: noteParts.length > 0 ? noteParts.join(' • ') : (m.birthYear ? `Năm sinh: ${m.birthYear}` : null),
             };
           });
@@ -1741,7 +1748,7 @@ export class DataImportService {
             return null;
           };
 
-          // 4. Thiết lập quan hệ cha - con & vợ - chồng (Dùng quan hệ PARENT, CHILD & SPOUSE chuẩn enum)
+          // 4. Thiết lập quan hệ cha - con & vợ - chồng (Dùng quan hệ PARENT & SPOUSE chuẩn enum Supabase)
           const relationshipsToInsert: any[] = [];
           const memorialsToInsert: any[] = [];
 
@@ -1750,7 +1757,7 @@ export class DataImportService {
             const currentMemberId = insertedMembers?.[idx]?.id || nameToIdMap.get(m.fullName.trim()) || findMatchingMemberId(m.fullName);
             if (!currentMemberId) return;
 
-            // Quan hệ Cha - Con (Ưu tiên theo parentCode sau đó theo parentName)
+            // Quan hệ Cha -> Con (PARENT: member_id là cha, related_member_id là con)
             let fatherId: string | null = null;
             if (m.parentCode && treeCodeToIdMap.has(m.parentCode.trim().toUpperCase())) {
               fatherId = treeCodeToIdMap.get(m.parentCode.trim().toUpperCase())!;
@@ -1763,12 +1770,11 @@ export class DataImportService {
                 family_id: targetFamilyUUID,
                 member_id: fatherId,
                 related_member_id: currentMemberId,
-                relationship: 'CHILD',
-                relationship_type: 'CHILD',
+                relationship_type: 'PARENT',
               });
             }
 
-            // Quan hệ Mẹ - Con (Ưu tiên theo motherCode)
+            // Quan hệ Mẹ -> Con (PARENT: member_id là mẹ, related_member_id là con)
             if (m.motherCode && treeCodeToIdMap.has(m.motherCode.trim().toUpperCase())) {
               const motherId = treeCodeToIdMap.get(m.motherCode.trim().toUpperCase())!;
               if (motherId && motherId !== currentMemberId) {
@@ -1776,13 +1782,12 @@ export class DataImportService {
                   family_id: targetFamilyUUID,
                   member_id: motherId,
                   related_member_id: currentMemberId,
-                  relationship: 'CHILD',
-                  relationship_type: 'CHILD',
+                  relationship_type: 'PARENT',
                 });
               }
             }
 
-            // Quan hệ Vợ - Chồng (Ưu tiên theo spouseCode sau đó theo spouseName)
+            // Quan hệ Vợ - Chồng (SPOUSE)
             let spouseId: string | null = null;
             if (m.spouseCode && treeCodeToIdMap.has(m.spouseCode.trim().toUpperCase())) {
               spouseId = treeCodeToIdMap.get(m.spouseCode.trim().toUpperCase())!;
@@ -1795,7 +1800,6 @@ export class DataImportService {
                 family_id: targetFamilyUUID,
                 member_id: currentMemberId,
                 related_member_id: spouseId,
-                relationship: 'SPOUSE',
                 relationship_type: 'SPOUSE',
               });
             }
