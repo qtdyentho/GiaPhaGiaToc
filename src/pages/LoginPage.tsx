@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
-import { Lock, Mail, ArrowRight, Sparkles } from 'lucide-react';
+import { Lock, Mail, ArrowRight, Sparkles, Eye, EyeOff } from 'lucide-react';
 import { BRAND } from '../lib/constants';
 import { useAuth } from '../contexts/AuthContext';
 import { ForgotPasswordModal } from '../components/auth/ForgotPasswordModal';
@@ -8,6 +8,7 @@ import { ForgotPasswordModal } from '../components/auth/ForgotPasswordModal';
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
@@ -91,13 +92,22 @@ export const LoginPage: React.FC = () => {
                   <Lock className="h-4 w-4 text-slate-400" />
                 </div>
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   placeholder="••••••••"
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="block w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534] focus:border-[#166534] bg-slate-50 focus:bg-white transition"
+                  className="block w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#166534] focus:border-[#166534] bg-slate-50 focus:bg-white transition"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
 
