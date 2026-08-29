@@ -4,6 +4,9 @@ import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { LunarCalendarService } from './LunarCalendarService';
 import { getDaysInLunarMonth, getLeapMonth } from '../../lib/lunar';
 
+const isUUID = (str?: string | null): boolean =>
+  Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+
 export class MemorialService {
   /**
    * Lấy danh sách ngày giỗ theo gia tộc kèm thông tin chi cành và thế hệ
@@ -11,7 +14,7 @@ export class MemorialService {
   static async getMemorials(familyId?: string): Promise<MemorialDate[]> {
     if (!familyId) return [];
 
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && isUUID(familyId)) {
       try {
         const { data, error } = await supabase
           .from('memorial_dates')
@@ -50,12 +53,10 @@ export class MemorialService {
           });
         }
         if (error) {
-          console.error('Lỗi khi truy vấn ngày giỗ:', error);
+          console.warn('Lỗi khi truy vấn ngày giỗ:', error.message);
         }
-        return [];
       } catch (err) {
-        console.error('MemorialService getMemorials error:', err);
-        return [];
+        console.warn('MemorialService getMemorials error:', err);
       }
     }
 

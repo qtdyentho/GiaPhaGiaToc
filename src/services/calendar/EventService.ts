@@ -13,6 +13,9 @@ export interface EventBudgetSummary {
   transactions: FinancialTransaction[];
 }
 
+const isUUID = (str?: string | null): boolean =>
+  Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+
 export class EventService {
   /**
    * Lấy danh sách sự kiện họ tộc có hỗ trợ bộ lọc
@@ -29,7 +32,7 @@ export class EventService {
   ): Promise<Event[]> {
     if (!familyId) return [];
 
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && isUUID(familyId)) {
       try {
         let query = supabase
           .from('events')
@@ -54,12 +57,10 @@ export class EventService {
           return list;
         }
         if (error) {
-          console.error('Lỗi khi truy vấn events:', error);
+          console.warn('Lỗi khi truy vấn events:', error.message);
         }
-        return [];
       } catch (err) {
-        console.error('EventService getEvents error:', err);
-        return [];
+        console.warn('EventService getEvents error:', err);
       }
     }
 
@@ -80,7 +81,7 @@ export class EventService {
    */
   static async getEventById(id: string, familyId?: string): Promise<Event | null> {
     if (!familyId) return null;
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && isUUID(familyId) && isUUID(id)) {
       try {
         const { data, error } = await supabase
           .from('events')
@@ -89,9 +90,8 @@ export class EventService {
           .eq('family_id', familyId)
           .single();
         if (!error && data) return data as Event;
-        return null;
       } catch (err) {
-        return null;
+        console.warn('getEventById error:', err);
       }
     }
 
@@ -148,57 +148,53 @@ export class EventService {
         }
       }
 
-      const newRecord: Event = {
-        id: `evt-${Date.now()}`,
+      const eventPayload = {
         family_id: data.family_id,
         title: data.title,
-        description: data.description || '',
-        event_type: data.event_type || 'OTHER',
-        scope: data.scope || 'FAMILY',
+        description: data.description,
+        event_type: data.event_type || 'GIO_HO',
+        scope: data.scope || 'ALL',
         solar_date: solarDate || new Date().toISOString().split('T')[0],
-        solar_time: '08:00',
-        lunar_day: lunarDay,
-        lunar_month: lunarMonth,
+        lunar_day: lunarDay || 1,
+        lunar_month: lunarMonth || 1,
         lunar_year: lunarYear,
         is_leap_month: isLeap,
-        location: data.location || '',
+        location: data.location,
         estimated_budget: data.estimated_budget || 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        branch_id: data.branch_id || null,
+        generation_id: data.generation_id || null,
+        member_id: data.member_id || null,
+        fund_id: data.fund_id || null,
       };
 
-      if (isSupabaseConfigured()) {
-        const { data: dbData, error } = await supabase
-          .from('events')
-          .insert({
-            family_id: data.family_id,
-            title: data.title,
-            description: data.description,
-            event_type: data.event_type,
-            scope: data.scope,
-            solar_date: newRecord.solar_date,
-            lunar_day: newRecord.lunar_day,
-            lunar_month: newRecord.lunar_month,
-            lunar_year: newRecord.lunar_year,
-            is_leap_month: newRecord.is_leap_month,
-            location: data.location,
-            estimated_budget: data.estimated_budget,
-            branch_id: data.branch_id,
-            generation_id: data.generation_id,
-            member_id: data.member_id,
-          })
-          .select()
-          .single();
+      if (isSupabaseConfigured() && isUUID(data.family_id)) {
+        try {
+          const { data: inserted, error } = await supabase
+            .from('events')
+            .insert([eventPayload])
+            .select()
+            .single();
 
-        if (!error && dbData) {
-          return { success: true, event: dbData as Event };
+          if (!error && inserted) {
+            return { success: true, event: inserted as Event };
+          }
+          if (error) return { success: false, error: error.message };
+        } catch (dbErr: any) {
+          console.warn('createEvent Supabase error:', dbErr);
         }
       }
 
-      mockEvents.push(newRecord);
-      return { success: true, event: newRecord };
+      // In-Memory Fallback
+      const newEvt: Event = {
+        id: `evt-${Date.now()}`,
+        ...eventPayload,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      mockEvents.unshift(newEvt);
+      return { success: true, event: newEvt };
     } catch (err: any) {
-      return { success: false, error: err.message || 'Lỗi khi tạo sự kiện' };
+      return { success: false, error: err.message };
     }
   }
 
@@ -208,31 +204,34 @@ export class EventService {
   static async updateEvent(
     id: string,
     familyId: string,
-    data: Partial<Event>
+    updates: Partial<Event>
   ): Promise<{ success: boolean; event?: Event; error?: string }> {
-    if (isSupabaseConfigured()) {
-      const { data: dbData, error } = await supabase
-        .from('events')
-        .update({
-          ...data,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .eq('family_id', familyId)
-        .select()
-        .single();
+    if (isSupabaseConfigured() && isUUID(familyId) && isUUID(id)) {
+      try {
+        const { data, error } = await supabase
+          .from('events')
+          .update({
+            ...updates,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', id)
+          .eq('family_id', familyId)
+          .select()
+          .single();
 
-      if (!error && dbData) {
-        return { success: true, event: dbData as Event };
+        if (!error && data) return { success: true, event: data as Event };
+        if (error) return { success: false, error: error.message };
+      } catch (err: any) {
+        console.warn('updateEvent Supabase error:', err);
       }
     }
 
     const idx = mockEvents.findIndex((e) => e.id === id && e.family_id === familyId);
     if (idx !== -1) {
-      mockEvents[idx] = {
-        ...mockEvents[idx],
-        ...data,
-        updated_at: new Date().toISOString(),
+      mockEvents[idx] = { 
+        ...mockEvents[idx], 
+        ...updates, 
+        updated_at: new Date().toISOString() 
       };
       return { success: true, event: mockEvents[idx] };
     }
@@ -244,14 +243,19 @@ export class EventService {
    * Xóa sự kiện
    */
   static async deleteEvent(id: string, familyId: string): Promise<{ success: boolean; error?: string }> {
-    if (isSupabaseConfigured()) {
-      const { error } = await supabase
-        .from('events')
-        .delete()
-        .eq('id', id)
-        .eq('family_id', familyId);
+    if (isSupabaseConfigured() && isUUID(familyId) && isUUID(id)) {
+      try {
+        const { error } = await supabase
+          .from('events')
+          .delete()
+          .eq('id', id)
+          .eq('family_id', familyId);
 
-      if (error) return { success: false, error: error.message };
+        if (!error) return { success: true };
+        if (error) return { success: false, error: error.message };
+      } catch (err: any) {
+        console.warn('deleteEvent Supabase error:', err);
+      }
     }
 
     const idx = mockEvents.findIndex((e) => e.id === id && e.family_id === familyId);
@@ -295,15 +299,19 @@ export class EventService {
     const estimatedBudget = event?.estimated_budget || 0;
 
     let eventTx: FinancialTransaction[] = [];
-    if (isSupabaseConfigured()) {
-      const { data } = await supabase
-        .from('financial_transactions')
-        .select('*')
-        .eq('family_id', familyId)
-        .eq('event_id', eventId)
-        .eq('status', 'POSTED');
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      try {
+        const { data } = await supabase
+          .from('financial_transactions')
+          .select('*')
+          .eq('family_id', familyId)
+          .eq('event_id', eventId)
+          .eq('status', 'POSTED');
 
-      if (data) eventTx = data as FinancialTransaction[];
+        if (data) eventTx = data as FinancialTransaction[];
+      } catch (err) {
+        console.warn('getEventBudgetSummary error:', err);
+      }
     } else {
       eventTx = mockTransactions.filter(
         (t) => t.family_id === familyId && t.event_id === eventId && t.status === 'POSTED'

@@ -2,21 +2,32 @@ import { Family, FamilyMembership } from '../types/database';
 import { mockFamily, mockMemberships } from './mockData';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
+const isUUID = (str?: string | null): boolean =>
+  Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+
 export class FamilyService {
   static async getActiveFamily(familyId?: string): Promise<Family | null> {
     if (!familyId) return null;
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('families').select('*').eq('id', familyId).single();
-      if (!error && data) return data as Family;
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      try {
+        const { data, error } = await supabase.from('families').select('*').eq('id', familyId).single();
+        if (!error && data) return data as Family;
+      } catch (err) {
+        console.warn('getActiveFamily Supabase error:', err);
+      }
     }
     return mockFamily.id === familyId ? mockFamily : null;
   }
 
   static async getFamilyMemberships(familyId?: string): Promise<FamilyMembership[]> {
     if (!familyId) return [];
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('family_memberships').select('*').eq('family_id', familyId);
-      if (!error && data) return data as FamilyMembership[];
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      try {
+        const { data, error } = await supabase.from('family_memberships').select('*').eq('family_id', familyId);
+        if (!error && data) return data as FamilyMembership[];
+      } catch (err) {
+        console.warn('getFamilyMemberships Supabase error:', err);
+      }
     }
     return mockMemberships.filter((m) => m.family_id === familyId);
   }
@@ -30,9 +41,13 @@ export class FamilyService {
       created_by: userId,
     };
 
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('families').insert([payload]).select().single();
-      if (!error && data) return data as Family;
+    if (isSupabaseConfigured() && userId && isUUID(userId)) {
+      try {
+        const { data, error } = await supabase.from('families').insert([payload]).select().single();
+        if (!error && data) return data as Family;
+      } catch (err) {
+        console.warn('createFamily Supabase error:', err);
+      }
     }
 
     return {
@@ -61,33 +76,37 @@ export class FamilyService {
       };
     }
 
-    if (isSupabaseConfigured()) {
-      const [
-        { data: family },
-        { count: membersCount },
-        { count: generationsCount },
-        { count: branchesCount },
-        { count: upcomingEventsCount },
-        { data: funds }
-      ] = await Promise.all([
-        supabase.from('families').select('*').eq('id', familyId).single(),
-        supabase.from('members').select('*', { count: 'exact', head: true }).eq('family_id', familyId),
-        supabase.from('generations').select('*', { count: 'exact', head: true }).eq('family_id', familyId),
-        supabase.from('branches').select('*', { count: 'exact', head: true }).eq('family_id', familyId),
-        supabase.from('events').select('*', { count: 'exact', head: true }).eq('family_id', familyId),
-        supabase.from('funds').select('current_balance').eq('family_id', familyId),
-      ]);
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      try {
+        const [
+          { data: family },
+          { count: membersCount },
+          { count: generationsCount },
+          { count: branchesCount },
+          { count: upcomingEventsCount },
+          { data: funds }
+        ] = await Promise.all([
+          supabase.from('families').select('*').eq('id', familyId).single(),
+          supabase.from('members').select('*', { count: 'exact', head: true }).eq('family_id', familyId),
+          supabase.from('generations').select('*', { count: 'exact', head: true }).eq('family_id', familyId),
+          supabase.from('branches').select('*', { count: 'exact', head: true }).eq('family_id', familyId),
+          supabase.from('events').select('*', { count: 'exact', head: true }).eq('family_id', familyId),
+          supabase.from('funds').select('current_balance').eq('family_id', familyId),
+        ]);
 
-      const totalFundBalance = funds ? funds.reduce((acc, f) => acc + (f.current_balance || 0), 0) : 0;
+        const totalFundBalance = funds ? funds.reduce((acc, f) => acc + (f.current_balance || 0), 0) : 0;
 
-      return {
-        family: (family as Family) || null,
-        membersCount: membersCount || 0,
-        generationsCount: generationsCount || 0,
-        branchesCount: branchesCount || 0,
-        upcomingEventsCount: upcomingEventsCount || 0,
-        totalFundBalance,
-      };
+        return {
+          family: (family as Family) || null,
+          membersCount: membersCount || 0,
+          generationsCount: generationsCount || 0,
+          branchesCount: branchesCount || 0,
+          upcomingEventsCount: upcomingEventsCount || 0,
+          totalFundBalance,
+        };
+      } catch (err) {
+        console.warn('getDashboardData Supabase error:', err);
+      }
     }
 
     const isCurrentMock = mockFamily.id === familyId;

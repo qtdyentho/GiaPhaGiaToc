@@ -155,15 +155,22 @@ export const mockSponsorships: Sponsorship[] = [
   },
 ];
 
+const isUUID = (str?: string | null): boolean =>
+  Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+
 export class FundService {
   // ==========================================
   // 1. QUẢN LÝ QUỸ (FUNDS)
   // ==========================================
   static async getFunds(familyId?: string): Promise<Fund[]> {
     if (!familyId) return [];
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('funds').select('*').eq('family_id', familyId).order('created_at', { ascending: true });
-      if (!error && data) return data as Fund[];
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      try {
+        const { data, error } = await supabase.from('funds').select('*').eq('family_id', familyId).order('created_at', { ascending: true });
+        if (!error && data) return data as Fund[];
+      } catch (err) {
+        console.warn('FundService.getFunds error:', err);
+      }
     }
     return mockFunds.filter((f) => f.family_id === familyId);
   }
@@ -178,12 +185,14 @@ export class FundService {
       status: fund.status || 'ACTIVE',
     };
 
-
-
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('funds').insert([payload]).select().single();
-      if (error) return { success: false, error: error.message };
-      return { success: true, fund: data as Fund };
+    if (isSupabaseConfigured() && isUUID(payload.family_id)) {
+      try {
+        const { data, error } = await supabase.from('funds').insert([payload]).select().single();
+        if (!error && data) return { success: true, fund: data as Fund };
+        if (error) return { success: false, error: error.message };
+      } catch (err: any) {
+        console.warn('FundService.createFund error:', err);
+      }
     }
 
     const newFund: Fund = {
@@ -201,18 +210,26 @@ export class FundService {
   // ==========================================
   static async getIncomeCategories(familyId?: string): Promise<IncomeCategory[]> {
     if (!familyId) return [];
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('income_categories').select('*').eq('family_id', familyId);
-      if (!error && data) return data as IncomeCategory[];
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      try {
+        const { data, error } = await supabase.from('income_categories').select('*').eq('family_id', familyId);
+        if (!error && data) return data as IncomeCategory[];
+      } catch (err) {
+        console.warn('getIncomeCategories error:', err);
+      }
     }
     return mockIncomeCategories.filter((c) => (c as any).family_id === familyId);
   }
 
   static async getExpenseCategories(familyId?: string): Promise<ExpenseCategory[]> {
     if (!familyId) return [];
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('expense_categories').select('*').eq('family_id', familyId);
-      if (!error && data) return data as ExpenseCategory[];
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      try {
+        const { data, error } = await supabase.from('expense_categories').select('*').eq('family_id', familyId);
+        if (!error && data) return data as ExpenseCategory[];
+      } catch (err) {
+        console.warn('getExpenseCategories error:', err);
+      }
     }
     return mockExpenseCategories.filter((c) => (c as any).family_id === familyId);
   }
@@ -222,9 +239,13 @@ export class FundService {
   // ==========================================
   static async getAssessments(familyId?: string): Promise<IncomeAssessment[]> {
     if (!familyId) return [];
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('income_assessments').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
-      if (!error && data) return data as IncomeAssessment[];
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      try {
+        const { data, error } = await supabase.from('income_assessments').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
+        if (!error && data) return data as IncomeAssessment[];
+      } catch (err) {
+        console.warn('getAssessments error:', err);
+      }
     }
     return mockAssessments.filter((a) => a.family_id === familyId);
   }
@@ -237,33 +258,37 @@ export class FundService {
   }> {
     // 1. Fetch target members — use Supabase when configured
     let allMembers: Member[] = [];
-    if (isSupabaseConfigured()) {
-      let query = supabase
-        .from('members')
-        .select('id, family_id, branch_id, generation_id, full_name, status')
-        .eq('family_id', params.familyId)
-        .eq('status', 'ALIVE');
+    if (isSupabaseConfigured() && isUUID(params.familyId)) {
+      try {
+        let query = supabase
+          .from('members')
+          .select('id, family_id, branch_id, generation_id, full_name, status')
+          .eq('family_id', params.familyId)
+          .eq('status', 'ALIVE');
 
-      if (params.targetScope === 'BRANCH' && params.branchId) {
-        query = query.eq('branch_id', params.branchId);
-      } else if (params.targetScope === 'GENERATION' && params.generationId) {
-        query = query.eq('generation_id', params.generationId);
-      } else if (params.targetScope === 'CUSTOM' && params.memberIds && params.memberIds.length > 0) {
-        query = query.in('id', params.memberIds);
+        if (params.targetScope === 'BRANCH' && params.branchId) {
+          query = query.eq('branch_id', params.branchId);
+        } else if (params.targetScope === 'GENERATION' && params.generationId) {
+          query = query.eq('generation_id', params.generationId);
+        } else if (params.targetScope === 'CUSTOM' && params.memberIds && params.memberIds.length > 0) {
+          query = query.in('id', params.memberIds);
+        }
+
+        const { data, error } = await query;
+        if (!error && data) {
+          allMembers = data.map((row: any) => ({
+            ...row,
+            life_status: row.status || 'ALIVE',
+            first_name: '',
+            last_name: '',
+            gender: 'MALE',
+            created_at: '',
+            updated_at: '',
+          })) as Member[];
+        }
+      } catch (err) {
+        console.warn('createBulkAssessment query error:', err);
       }
-
-      const { data, error } = await query;
-      if (error) return { success: false, count: 0, error: `Lỗi truy vấn thành viên: ${error.message}` };
-      // Map DB rows → Member shape (chỉ cần id + life_status cho logic bên dưới)
-      allMembers = (data || []).map((row: any) => ({
-        ...row,
-        life_status: row.status || 'ALIVE',
-        first_name: '',
-        last_name: '',
-        gender: 'MALE',
-        created_at: '',
-        updated_at: '',
-      }));
     } else {
       // Mock fallback: filter by familyId + scope
       allMembers = mockMembers.filter((m) => m.family_id === params.familyId);
@@ -302,10 +327,14 @@ export class FundService {
       };
     });
 
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('income_assessments').insert(assessmentsToInsert).select();
-      if (error) return { success: false, count: 0, error: error.message };
-      return { success: true, count: data.length, assessments: data as IncomeAssessment[] };
+    if (isSupabaseConfigured() && isUUID(params.familyId)) {
+      try {
+        const { data, error } = await supabase.from('income_assessments').insert(assessmentsToInsert).select();
+        if (!error && data) return { success: true, count: data.length, assessments: data as IncomeAssessment[] };
+        if (error) return { success: false, count: 0, error: error.message };
+      } catch (err: any) {
+        console.warn('createBulkAssessment error:', err);
+      }
     }
 
     // Fallback Mock
@@ -332,7 +361,7 @@ export class FundService {
     }
 
     // Try Supabase RPC first
-    if (isSupabaseConfigured() && params.assessmentId) {
+    if (isSupabaseConfigured() && isUUID(params.familyId) && (!params.assessmentId || isUUID(params.assessmentId))) {
       try {
         const { data, error } = await supabase.rpc('record_income_payment', {
           p_family_id: params.familyId,
@@ -403,9 +432,13 @@ export class FundService {
   // ==========================================
   static async getExpenses(familyId?: string): Promise<ExpenseRecord[]> {
     if (!familyId) return [];
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('expense_records').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
-      if (!error && data) return data as ExpenseRecord[];
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      try {
+        const { data, error } = await supabase.from('expense_records').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
+        if (!error && data) return data as ExpenseRecord[];
+      } catch (err) {
+        console.warn('getExpenses error:', err);
+      }
     }
     return mockExpenses.filter((e) => e.family_id === familyId);
   }
@@ -681,9 +714,13 @@ export class FundService {
   // ==========================================
   static async getContributions(familyId?: string): Promise<Contribution[]> {
     if (!familyId) return [];
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('contributions').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
-      if (!error && data) return data as Contribution[];
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      try {
+        const { data, error } = await supabase.from('contributions').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
+        if (!error && data) return data as Contribution[];
+      } catch (err) {
+        console.warn('getContributions error:', err);
+      }
     }
     return mockContributions.filter((c) => c.family_id === familyId);
   }
@@ -703,12 +740,14 @@ export class FundService {
       payment_method: contribution.payment_method || 'BANK_TRANSFER',
     };
 
-
-
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase.from('contributions').insert([payload]).select().single();
-      if (error) return { success: false, error: error.message };
-      return { success: true, contribution: data as Contribution };
+    if (isSupabaseConfigured() && isUUID(payload.family_id)) {
+      try {
+        const { data, error } = await supabase.from('contributions').insert([payload]).select().single();
+        if (!error && data) return { success: true, contribution: data as Contribution };
+        if (error) return { success: false, error: error.message };
+      } catch (err: any) {
+        console.warn('createContribution error:', err);
+      }
     }
 
     const newCtb: Contribution = {

@@ -13,6 +13,9 @@ import {
 } from '../mockData';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 
+const isUUID = (str?: string | null): boolean =>
+  Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+
 export class SubscriptionService {
   /**
    * Tạo gói dùng thử 30 ngày cho Family mới thành lập (BR-TRIAL-001)
@@ -37,13 +40,17 @@ export class SubscriptionService {
       updated_at: now.toISOString(),
     };
 
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .insert(sub)
-        .select()
-        .single();
-      if (!error && data) return data as Subscription;
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      try {
+        const { data, error } = await supabase
+          .from('subscriptions')
+          .insert(sub)
+          .select()
+          .single();
+        if (!error && data) return data as Subscription;
+      } catch (err) {
+        console.warn('createTrialSubscription error:', err);
+      }
     }
 
     return sub;
@@ -53,9 +60,6 @@ export class SubscriptionService {
    * Lấy thông tin thuê bao hiện tại của Family (Strict Single-Tenant Isolation)
    */
   static async getSubscription(familyId?: string): Promise<Subscription> {
-    const isUUID = (str?: string | null): boolean =>
-      Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
-
     if (isSupabaseConfigured() && familyId && isUUID(familyId)) {
       try {
         const { data, error } = await supabase
@@ -138,13 +142,17 @@ export class SubscriptionService {
       updated_at: now,
     };
 
-    if (isSupabaseConfigured()) {
-      const { error } = await supabase
-        .from('subscriptions')
-        .update(updated)
-        .eq('id', current.id);
+    if (isSupabaseConfigured() && isUUID(familyId) && isUUID(current.id)) {
+      try {
+        const { error } = await supabase
+          .from('subscriptions')
+          .update(updated)
+          .eq('id', current.id);
 
-      if (error) return { success: false, error: error.message };
+        if (error) return { success: false, error: error.message };
+      } catch (err: any) {
+        console.warn('upgradePlan error:', err);
+      }
     }
 
     return { success: true, subscription: updated };
@@ -165,13 +173,17 @@ export class SubscriptionService {
       updated_at: new Date().toISOString(),
     };
 
-    if (isSupabaseConfigured()) {
-      const { error } = await supabase
-        .from('subscriptions')
-        .update(updated)
-        .eq('id', current.id);
+    if (isSupabaseConfigured() && isUUID(familyId) && isUUID(current.id)) {
+      try {
+        const { error } = await supabase
+          .from('subscriptions')
+          .update(updated)
+          .eq('id', current.id);
 
-      if (error) return { success: false, error: error.message };
+        if (error) return { success: false, error: error.message };
+      } catch (err: any) {
+        console.warn('downgradePlan error:', err);
+      }
     }
 
     return { success: true, subscription: updated };
@@ -194,13 +206,17 @@ export class SubscriptionService {
       updated_at: now,
     };
 
-    if (isSupabaseConfigured()) {
-      const { error } = await supabase
-        .from('subscriptions')
-        .update(updated)
-        .eq('id', current.id);
+    if (isSupabaseConfigured() && isUUID(familyId) && isUUID(current.id)) {
+      try {
+        const { error } = await supabase
+          .from('subscriptions')
+          .update(updated)
+          .eq('id', current.id);
 
-      if (error) return { success: false, error: error.message };
+        if (error) return { success: false, error: error.message };
+      } catch (err: any) {
+        console.warn('cancelSubscription error:', err);
+      }
     }
 
     return { success: true, subscription: updated };
@@ -220,13 +236,17 @@ export class SubscriptionService {
       updated_at: new Date().toISOString(),
     };
 
-    if (isSupabaseConfigured()) {
-      const { error } = await supabase
-        .from('subscriptions')
-        .update(updated)
-        .eq('id', current.id);
+    if (isSupabaseConfigured() && isUUID(familyId) && isUUID(current.id)) {
+      try {
+        const { error } = await supabase
+          .from('subscriptions')
+          .update(updated)
+          .eq('id', current.id);
 
-      if (error) return { success: false, error: error.message };
+        if (error) return { success: false, error: error.message };
+      } catch (err: any) {
+        console.warn('resumeSubscription error:', err);
+      }
     }
 
     return { success: true, subscription: updated };

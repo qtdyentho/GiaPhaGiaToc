@@ -789,7 +789,6 @@ export class DataImportService {
           'ngày mất âm lịch (ngày giỗ)',
           'ngày mất âm lịch',
           'ngày mất (âm lịch)',
-          'ngày mất âm',
           'ngày mất al',
           'ngày giỗ (ngày/tháng/năm)',
           'ngày giỗ (ngày tháng năm)',
@@ -803,7 +802,6 @@ export class DataImportService {
           'ngay mat am lich (ngay/thang/nam)',
           'ngay mat am lich (ngay thang nam)',
           'ngay mat am lich',
-          'ngay mat am',
           'ngay mat',
           'ngay gio',
           'death_lunar_date',
@@ -833,7 +831,7 @@ export class DataImportService {
       deathLunarDay: { 
         field: 'deathLunarDay', 
         label: 'Ngày Mất Âm (Số Ngày)', 
-        keywords: ['ngày mất âm (số ngày)', 'ngày mất âm (ngày)', 'ngày mất âm', 'ngày mất (ngày)', 'ngày giỗ (ngày)', 'số ngày mất', 'death_lunar_day', 'death_day', 'ngay mat am (ngay)'] 
+        keywords: ['ngày mất âm (số ngày)', 'ngày mất âm (ngày)', 'ngày mất âm', 'ngày mất (ngày)', 'ngày giỗ (ngày)', 'số ngày mất', 'death_lunar_day', 'death_day', 'ngay mat am (ngay)', 'ngay mat am'] 
       },
       deathLunarMonth: { 
         field: 'deathLunarMonth', 

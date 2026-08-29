@@ -52,15 +52,15 @@ export const UpcomingEventsWidget: React.FC<{ familyId?: string; limit?: number 
   }
 
   return (
-    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+    <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-1.5">
+        <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-1.5">
           <Sparkles className="w-4 h-4 text-heritage-gold" />
           <span>Sự Kiện & Ngày Giỗ Họ Sắp Tới</span>
         </h2>
         <Link
           to="/app/calendar"
-          className="text-xs font-semibold text-heritage-green hover:text-heritage-green-light flex items-center space-x-0.5"
+          className="text-xs font-semibold text-heritage-green dark:text-emerald-400 hover:text-heritage-green-light flex items-center space-x-0.5"
         >
           <span>Xem Lịch</span>
           <ChevronRight className="w-3.5 h-3.5" />
@@ -72,22 +72,22 @@ export const UpcomingEventsWidget: React.FC<{ familyId?: string; limit?: number 
         {upcomingMemorials.map((mem) => (
           <div
             key={mem.id}
-            className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl hover:border-amber-400 transition flex items-start justify-between gap-2"
+            className="p-3 bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800 rounded-xl hover:border-amber-400 transition flex items-start justify-between gap-2"
           >
             <div>
-              <div className="text-xs font-bold text-amber-950 flex items-center space-x-1.5">
+              <div className="text-xs font-bold text-amber-950 dark:text-amber-200 flex items-center space-x-1.5">
                 <span>🕯️</span>
                 <span>{mem.title}</span>
               </div>
-              <div className="text-[11px] text-amber-800 font-semibold mt-0.5">
+              <div className="text-[11px] text-amber-800 dark:text-amber-300 font-semibold mt-0.5">
                 Ngày {mem.lunar_day}/{mem.lunar_month} Âm Lịch {mem.is_leap_month ? '(Tháng Nhuận)' : ''}
               </div>
-              <div className="text-[10px] text-slate-500 mt-0.5">
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                 Dương lịch: {formatDate(mem.solarDate)}
               </div>
             </div>
 
-            <span className="text-[10px] font-bold bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded-full shrink-0">
+            <span className="text-[10px] font-bold bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 px-2 py-0.5 rounded-full shrink-0">
               {mem.daysRemaining === 0
                 ? 'Hôm nay'
                 : mem.daysRemaining > 0
@@ -101,10 +101,10 @@ export const UpcomingEventsWidget: React.FC<{ familyId?: string; limit?: number 
         {upcomingEvents.map((evt) => (
           <div
             key={evt.id}
-            className="p-3 bg-slate-50 border border-slate-200 rounded-xl hover:border-heritage-green transition flex items-start justify-between gap-2"
+            className="p-3 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl hover:border-heritage-green transition flex items-start justify-between gap-2"
           >
             <div>
-              <div className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
+              <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center space-x-1.5">
                 <span>🏛️</span>
                 <span>{evt.title}</span>
               </div>

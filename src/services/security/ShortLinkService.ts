@@ -199,14 +199,20 @@ export class ShortLinkService {
     const clean = code.trim().toLowerCase();
     if (!clean || RESERVED_SLUGS.has(clean)) return false;
 
-    if (isSupabaseConfigured()) {
+    // Check in-memory store first
+    const existingMock = mockShortLinks.find((l) => l.short_code.toLowerCase() === clean);
+    if (existingMock && (!currentFamilyId || existingMock.family_id !== currentFamilyId)) {
+      return false;
+    }
+
+    if (isSupabaseConfigured() && isUUID(currentFamilyId)) {
       try {
         let query = supabase
           .from('clan_short_links')
           .select('id, family_id')
           .ilike('short_code', clean);
 
-        if (currentFamilyId && isUUID(currentFamilyId)) {
+        if (currentFamilyId) {
           query = query.neq('family_id', currentFamilyId);
         }
 
@@ -214,16 +220,12 @@ export class ShortLinkService {
         if (!error && data && data.length > 0) {
           return false;
         }
-        if (!error) return true;
       } catch (err) {
         console.warn('isCodeAvailable Supabase check error:', err);
       }
     }
 
-    const existing = mockShortLinks.find((l) => l.short_code.toLowerCase() === clean);
-    if (!existing) return true;
-    if (currentFamilyId && existing.family_id === currentFamilyId) return true;
-    return false;
+    return true;
   }
 
   /**
