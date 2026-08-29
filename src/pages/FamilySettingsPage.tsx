@@ -11,6 +11,7 @@ import { ClanCovenantModal } from '../components/family/ClanCovenantModal';
 import { PrintableClanQRCodeModal } from '../components/family/PrintableClanQRCodeModal';
 import { ClanPassService } from '../services/security/ClanPassService';
 import { ShortLinkService, ClanShortLink } from '../services/security/ShortLinkService';
+import { DatabaseHealthWidget } from '../components/common/DatabaseHealthWidget';
 import { FamilyMembership, Profile } from '../types/database';
 
 export const FamilySettingsPage: React.FC = () => {
@@ -558,6 +559,11 @@ export const FamilySettingsPage: React.FC = () => {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Box: Bảo Vệ CSDL 24/7 Keep-Alive */}
+      <div className="mt-8">
+        <DatabaseHealthWidget />
       </div>
 
       {/* Modal Thay Đổi Ảnh Từ Đường */}

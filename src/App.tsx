@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -7,6 +7,7 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { RoleGuard } from './components/auth/RoleGuard';
 import { AppLayout } from './components/layout/AppLayout';
 import { PageSkeleton } from './components/ui/PageSkeleton';
+import { DatabaseKeepAliveService } from './services/DatabaseKeepAliveService';
 
 import { ScrollToTop } from './components/ui/ScrollToTop';
 
@@ -126,6 +127,10 @@ const queryClient = new QueryClient({
 });
 
 export const App: React.FC = () => {
+  useEffect(() => {
+    DatabaseKeepAliveService.startClientHeartbeat();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
