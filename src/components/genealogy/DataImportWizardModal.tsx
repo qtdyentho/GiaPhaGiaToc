@@ -10,7 +10,7 @@ import {
   ValidationSummary, 
   ValidatedImportRow,
   ColumnMappingSuggestion, 
-  STANDARD_GENEALOGY_COLUMNS,
+  HIERARCHICAL_GENEALOGY_COLUMNS,
   ParseResult
 } from '../../services/DataImportService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -285,16 +285,16 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                 </div>
               )}
 
-              {/* Banner Hướng dẫn & Tải file mẫu 12 cột */}
+              {/* Banner Hướng dẫn & Tải file mẫu Phân Cấp & Âm Dương Lịch */}
               <div className="p-4 sm:p-5 bg-gradient-to-r from-amber-50/80 to-emerald-50/80 dark:from-amber-950/30 dark:to-emerald-950/30 rounded-2xl border border-amber-200/80 dark:border-amber-800/60 space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <h3 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                       <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                      <span>Chưa có file mẫu? Tải ngay file Excel 12 cột chuẩn hóa</span>
+                      <span>Chưa có file mẫu? Tải ngay file Excel Cây Phân Cấp & Âm Dương Lịch Chuẩn Hóa</span>
                     </h3>
                     <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5">
-                      File mẫu có sẵn dữ liệu chuẩn về Thủy tổ, Tiên tổ các đời và các chi phái giúp bạn điền dễ dàng.
+                      File mẫu có sẵn dữ liệu mẫu về Thủy tổ, Tiên tổ các đời, quan hệ vợ chồng, con cái, giờ sinh, giờ mất và các chi phái giúp bạn điền dễ dàng.
                     </p>
                   </div>
                   <button
@@ -306,13 +306,13 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                   </button>
                 </div>
 
-                {/* 12 Cột Chuẩn Danh Mục */}
+                {/* Danh mục Cột Chuẩn Toàn Diện */}
                 <div className="pt-2 border-t border-amber-200/60 dark:border-amber-800/40">
                   <div className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Danh mục 12 cột chuẩn của hệ thống:
+                    Danh mục các cột chuẩn hóa của hệ thống (Nhận diện tự động 12 - 22 cột):
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5 text-[10px]">
-                    {STANDARD_GENEALOGY_COLUMNS.map((col, idx) => (
+                    {HIERARCHICAL_GENEALOGY_COLUMNS.map((col, idx) => (
                       <div key={idx} className="p-1.5 bg-white/80 dark:bg-slate-800/80 rounded-lg border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between">
                         <span className="font-semibold text-slate-800 dark:text-slate-200">{idx + 1}. {col.label}</span>
                         {col.required ? (
