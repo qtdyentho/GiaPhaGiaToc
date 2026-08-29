@@ -49,19 +49,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleQuickDemoLogin = async (demoEmail: string, demoPass?: string) => {
-    setLoading(true);
-    setEmail(demoEmail);
-    if (demoPass) setPassword(demoPass);
-    const result = await signIn(demoEmail, demoPass || 'giatoctrinhluu');
-    if (result.isSuperAdmin) {
-      navigate('/admin/beta');
-    } else {
-      navigate('/app/dashboard');
-    }
-    setLoading(false);
-  };
-
   return (
     <div className="min-h-screen bg-heritage-bg flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans animate-fade-in">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
@@ -149,30 +136,7 @@ export const LoginPage: React.FC = () => {
             </div>
           </form>
 
-          {/* Quick Demo Access Buttons */}
-          <div className="mt-6 pt-4 border-t border-slate-100 space-y-2">
-            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">
-              Đăng Nhập Nhanh Trực Tiếp
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickDemoLogin('trinhluugiatoc@gmail.com', 'giatoctrinhluu')}
-                className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-[#166534] rounded-xl text-[11px] font-bold transition text-center cursor-pointer"
-              >
-                👑 Trịnh Lưu Gia Tộc
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickDemoLogin('ducanht@gmail.com', 'Ho@ng!an1289')}
-                className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-800 rounded-xl text-[11px] font-bold transition text-center cursor-pointer"
-              >
-                ⚡ Quản Trị Tối Cao
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-slate-100 text-center text-xs text-slate-500">
+          <div className="mt-6 pt-4 border-t border-slate-100 text-center text-xs text-slate-500">
             Chưa có tài khoản gia tộc?{' '}
             <Link to="/register" className="font-bold text-[#1E3A5F] hover:underline">
               Đăng ký dòng họ mới

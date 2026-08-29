@@ -371,7 +371,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 <div className="absolute left-full ml-3 bottom-0 px-3 py-2 bg-slate-900 text-white text-xs rounded-xl whitespace-nowrap shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-150 z-50 border border-slate-700">
                   <div className="font-bold text-white">{user?.full_name || 'Người dùng'}</div>
                   <div className="text-[10px] text-amber-300">
-                    {isAdminSpace ? 'Super Admin' : activeMembership?.role === 'OWNER' ? 'Trưởng Tộc' : isFamilyAdmin ? 'Hội Đồng Dòng Họ' : 'Thành Viên'}
+                    {isAdminSpace ? 'Super Admin' : (activeMembership?.role === 'OWNER' || (activeFamily && user && activeFamily.created_by === user.id)) ? 'Trưởng Tộc' : isFamilyAdmin ? 'Hội Đồng Dòng Họ' : 'Thành Viên'}
                   </div>
                 </div>
               </div>
@@ -387,7 +387,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                     {user?.full_name || 'Người dùng'}
                   </span>
                   <span className="text-[10px] text-slate-300 truncate">
-                    {isAdminSpace ? 'Super Admin' : activeMembership?.role === 'OWNER' ? 'Trưởng Tộc' : isFamilyAdmin ? 'Hội Đồng Dòng Họ' : 'Thành Viên'}
+                    {isAdminSpace ? 'Super Admin' : (activeMembership?.role === 'OWNER' || (activeFamily && user && activeFamily.created_by === user.id)) ? 'Trưởng Tộc' : isFamilyAdmin ? 'Hội Đồng Dòng Họ' : 'Thành Viên'}
                   </span>
                 </div>
               </div>

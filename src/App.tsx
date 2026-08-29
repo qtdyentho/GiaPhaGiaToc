@@ -67,7 +67,6 @@ const RegisterPage = lazyRetry(() => import('./pages/RegisterPage'), 'RegisterPa
 const InviteRegisterPage = lazyRetry(() => import('./pages/InviteRegisterPage'), 'InviteRegisterPage');
 const ClanPassUnlockPage = lazyRetry(() => import('./pages/ClanPassUnlockPage'), 'ClanPassUnlockPage');
 const ShortLinkRedirectPage = lazyRetry(() => import('./pages/ShortLinkRedirectPage'), 'ShortLinkRedirectPage');
-const DevTestLoginPage = lazyRetry(() => import('./pages/DevTestLoginPage'), 'DevTestLoginPage');
 
 // ─── Onboarding & Core Family Pages (Lazy Loaded with Auto-Retry) ──────────────
 const CreateFamilyPage = lazyRetry(() => import('./pages/CreateFamilyPage'), 'CreateFamilyPage');
@@ -145,9 +144,6 @@ export const App: React.FC = () => {
               <Route path="/c/:code" element={<ShortLinkRedirectPage />} />
               <Route path="/clan-pass/:token" element={<ClanPassUnlockPage />} />
               <Route path="/qr/:token" element={<ClanPassUnlockPage />} />
-
-              {/* Dev / Test Mode Routes */}
-              <Route path="/dev/test-login" element={<DevTestLoginPage />} />
 
               {/* Onboarding */}
               <Route

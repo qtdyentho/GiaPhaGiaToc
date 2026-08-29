@@ -258,7 +258,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
   const getRoleLabel = () => {
     if (isSuperAdmin) return 'Quản Trị Tối Cao (Super Admin)';
-    if (activeMembership?.role === 'OWNER') return 'Trưởng Tộc / Quản Trị';
+    if (activeMembership?.role === 'OWNER' || (activeFamily && user && activeFamily.created_by === user.id)) return 'Trưởng Tộc / Quản Trị';
     if (activeMembership?.role === 'ADMIN') return 'Quản Trị Viên';
     if (activeMembership?.role === 'TREASURER') return 'Thủ Quỹ';
     if (activeMembership?.role === 'APPROVER') return 'Kế Toán / Kiểm Soát';
