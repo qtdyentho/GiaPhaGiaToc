@@ -311,8 +311,8 @@ export class GenealogyService {
 
     // Local in-memory Fallback
     const newMember: Member = {
-      id: `mb-${Date.now()}`,
-      family_id: member.family_id || `fam-${Date.now()}`,
+      id: member.id || `mb-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      family_id: member.family_id || `fam-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       branch_id: member.branch_id,
       generation_id: member.generation_id,
       first_name: member.first_name || member.full_name?.split(' ').pop() || '',
@@ -353,7 +353,7 @@ export class GenealogyService {
           }
         }
         mockRelationships.push({
-          id: `rel-${Date.now()}`,
+          id: `rel-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           family_id: newMember.family_id,
           member_id: relationTarget.targetMemberId,
           related_member_id: newMember.id,
@@ -370,7 +370,7 @@ export class GenealogyService {
           }
         }
         mockRelationships.push({
-          id: `rel-${Date.now()}`,
+          id: `rel-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           family_id: newMember.family_id,
           member_id: newMember.id,
           related_member_id: relationTarget.targetMemberId,
@@ -384,7 +384,7 @@ export class GenealogyService {
           target.spouse_id = newMember.id;
         }
         mockRelationships.push({
-          id: `rel-${Date.now()}`,
+          id: `rel-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           family_id: newMember.family_id,
           member_id: relationTarget.targetMemberId,
           related_member_id: newMember.id,
@@ -394,7 +394,7 @@ export class GenealogyService {
         });
       } else {
         mockRelationships.push({
-          id: `rel-${Date.now()}`,
+          id: `rel-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
           family_id: newMember.family_id,
           member_id: relationTarget.targetMemberId,
           related_member_id: newMember.id,
@@ -592,8 +592,8 @@ export class GenealogyService {
     }
 
     mockRelationships.push({
-      id: `rel-${Date.now()}`,
-      family_id: rel.family_id || `fam-${Date.now()}`,
+      id: `rel-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      family_id: rel.family_id || `fam-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       member_id: rel.member_id || '',
       related_member_id: rel.related_member_id || '',
       relationship: relType,

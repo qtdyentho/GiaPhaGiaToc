@@ -133,6 +133,10 @@ export class DatabaseKeepAliveService {
     this.heartbeatTimer = setInterval(() => {
       this.pingDatabase().catch(() => {});
     }, 30 * 60 * 1000);
+
+    if (this.heartbeatTimer && typeof (this.heartbeatTimer as any).unref === 'function') {
+      (this.heartbeatTimer as any).unref();
+    }
   }
 
   /**
