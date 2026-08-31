@@ -1779,13 +1779,21 @@ export class DataImportService {
             };
           });
 
-          const { data: insertedMembers, error: insertErr } = await supabase
-            .from('members')
-            .insert(memberInsertPayload)
-            .select('id, full_name');
+          const insertedMembers: any[] = [];
+          const chunkSize = 100;
+          for (let i = 0; i < memberInsertPayload.length; i += chunkSize) {
+            const chunk = memberInsertPayload.slice(i, i + chunkSize);
+            const { data: chunkInserted, error: chunkErr } = await supabase
+              .from('members')
+              .insert(chunk)
+              .select('id, full_name');
 
-          if (insertErr) {
-            throw new Error(`Lỗi khi lưu danh sách thành viên: ${insertErr.message}`);
+            if (chunkErr) {
+              throw new Error(`Lỗi khi lưu danh sách thành viên (lô ${Math.floor(i / chunkSize) + 1}): ${chunkErr.message}`);
+            }
+            if (chunkInserted) {
+              insertedMembers.push(...chunkInserted);
+            }
           }
 
           // Map tên thành viên -> Member ID (hỗ trợ cả tên gốc, tên chuẩn hóa, mã cây và khử trùng tên nhiều đời)
@@ -1996,12 +2004,15 @@ export class DataImportService {
             }
           });
 
-          // Chèn relationships với try-catch an toàn
+          // Chèn relationships với try-catch an toàn theo lô (chunks)
           if (relationshipsToInsert.length > 0) {
-            try {
-              await supabase.from('member_relationships').insert(relationshipsToInsert);
-            } catch (relErr) {
-              console.warn('Cảnh báo khi lưu quan hệ:', relErr);
+            for (let i = 0; i < relationshipsToInsert.length; i += chunkSize) {
+              const chunk = relationshipsToInsert.slice(i, i + chunkSize);
+              try {
+                await supabase.from('member_relationships').insert(chunk);
+              } catch (relErr) {
+                console.warn('Cảnh báo khi lưu quan hệ:', relErr);
+              }
             }
           }
 
