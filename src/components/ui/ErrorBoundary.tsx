@@ -43,6 +43,13 @@ export class ErrorBoundary extends Component<Props, State> {
               <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                 Hệ thống đang đồng bộ dữ liệu gia tộc mới nhất. Vui lòng bấm làm mới để tiếp tục.
               </p>
+              {this.state.error && (
+                <div className="mt-4 p-3 bg-red-50 dark:bg-red-950/40 rounded-xl border border-red-200 dark:border-red-800 text-left overflow-auto max-h-32">
+                  <p className="text-[10px] font-mono text-red-600 dark:text-red-300 break-all">
+                    {this.state.error.toString()}
+                  </p>
+                </div>
+              )}
             </div>
 
             <button

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, User, Calendar, MapPin, Heart, GitFork, Sparkles, Edit3, Plus, ShieldCheck, Compass, ScrollText } from 'lucide-react';
-import { Member, MemberRelationship, MemorialDate } from '../types/database';
+import { ArrowLeft, User, Calendar, MapPin, Heart, GitFork, Sparkles, Edit3, Plus, ShieldCheck, Compass, ScrollText, X, Loader2, Save } from 'lucide-react';
+import { Member, MemberRelationship, MemorialDate, GenderType, MemberLifeStatus } from '../types/database';
 import { GenealogyService } from '../services/GenealogyService';
 import { MemorialService } from '../services/calendar/MemorialService';
 import { isSupabaseConfigured } from '../lib/supabase';
@@ -18,6 +18,25 @@ export const MemberProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'info' | 'relations' | 'memorial'>('info');
   const [showAddMemorialModal, setShowAddMemorialModal] = useState(false);
   const [showPrayerModal, setShowPrayerModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editForm, setEditForm] = useState({
+    full_name: '',
+    gender: 'MALE' as GenderType,
+    life_status: 'ALIVE' as MemberLifeStatus,
+    birth_solar_date: '',
+    birth_time: '',
+    courtesy_name: '',
+    religious_name: '',
+    death_solar_date: '',
+    death_lunar_day: '',
+    death_lunar_month: '',
+    death_lunar_year: '',
+    death_time: '',
+    burial_place: '',
+    bio: '',
+    avatar_url: '',
+  });
 
   const [member, setMember] = useState<Member | null>(null);
   const [memorial, setMemorial] = useState<MemorialDate | null>(null);
@@ -54,6 +73,67 @@ export const MemberProfilePage: React.FC = () => {
     }
     loadMemberData();
   }, [id]);
+
+  const handleOpenEdit = () => {
+    if (!member) return;
+    setEditForm({
+      full_name: member.full_name || '',
+      gender: member.gender || 'MALE',
+      life_status: member.life_status || 'ALIVE',
+      birth_solar_date: member.birth_solar_date ? member.birth_solar_date.slice(0, 10) : '',
+      birth_time: member.birth_time || '',
+      courtesy_name: member.courtesy_name || '',
+      religious_name: member.religious_name || '',
+      death_solar_date: member.death_solar_date ? member.death_solar_date.slice(0, 10) : '',
+      death_lunar_day: member.death_lunar_day ? String(member.death_lunar_day) : '',
+      death_lunar_month: member.death_lunar_month ? String(member.death_lunar_month) : '',
+      death_lunar_year: member.death_lunar_year ? String(member.death_lunar_year) : '',
+      death_time: member.death_time || '',
+      burial_place: member.burial_place || '',
+      bio: member.bio || '',
+      avatar_url: member.avatar_url || '',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!member) return;
+
+    setIsSavingEdit(true);
+    try {
+      const res = await GenealogyService.updateMember(member.id, {
+        full_name: editForm.full_name,
+        gender: editForm.gender,
+        life_status: editForm.life_status,
+        birth_solar_date: editForm.birth_solar_date || undefined,
+        birth_time: editForm.birth_time || undefined,
+        courtesy_name: editForm.courtesy_name || undefined,
+        religious_name: editForm.religious_name || undefined,
+        death_solar_date: editForm.death_solar_date || undefined,
+        death_lunar_day: editForm.death_lunar_day ? parseInt(editForm.death_lunar_day, 10) : undefined,
+        death_lunar_month: editForm.death_lunar_month ? parseInt(editForm.death_lunar_month, 10) : undefined,
+        death_lunar_year: editForm.death_lunar_year ? parseInt(editForm.death_lunar_year, 10) : undefined,
+        death_time: editForm.death_time || undefined,
+        burial_place: editForm.burial_place || undefined,
+        bio: editForm.bio || undefined,
+        avatar_url: editForm.avatar_url || undefined,
+      });
+
+      if (res.success && res.member) {
+        setMember(res.member);
+      } else {
+        const refreshed = await GenealogyService.getMemberById(member.id);
+        if (refreshed) setMember(refreshed);
+      }
+      setShowEditModal(false);
+    } catch (err) {
+      console.error('Lỗi khi cập nhật thành viên:', err);
+      alert('Không thể lưu thông tin thành viên. Vui lòng thử lại.');
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -171,7 +251,10 @@ export const MemberProfilePage: React.FC = () => {
                 <span>Văn Khấn Cúng Giỗ</span>
               </button>
             )}
-            <button className="px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl flex items-center space-x-1.5 transition shadow-xs cursor-pointer">
+            <button
+              onClick={handleOpenEdit}
+              className="px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl flex items-center space-x-1.5 transition shadow-xs cursor-pointer"
+            >
               <Edit3 className="w-3.5 h-3.5 text-slate-500" />
               <span>Sửa Thông Tin</span>
             </button>
@@ -397,6 +480,262 @@ export const MemberProfilePage: React.FC = () => {
         member={member}
         familyName={activeFamily?.name || 'Gia Tộc'}
       />
+
+      {/* Modal Chỉnh Sửa Thành Viên */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full max-h-[90vh] shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-scale-in">
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-400 flex items-center justify-center">
+                  <Edit3 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white font-serif">
+                    Chỉnh Sửa Hồ Sơ Thành Viên
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Cập nhật thông tin thế hệ, ngày sinh/mất và tiểu sử công đức
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEditModal(false)}
+                className="w-8 h-8 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSaveEdit} className="flex-1 overflow-y-auto p-6 space-y-5 text-xs">
+              {/* Thông tin cơ bản */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Thông Tin Cơ Bản</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="md:col-span-2">
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">
+                      Họ và Tên <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editForm.full_name}
+                      onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                      placeholder="Nguyễn Văn A"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Giới Tính</label>
+                    <select
+                      value={editForm.gender}
+                      onChange={(e) => setEditForm({ ...editForm, gender: e.target.value as GenderType })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <option value="MALE">Nam</option>
+                      <option value="FEMALE">Nữ</option>
+                      <option value="OTHER">Khác</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Tình Trạng</label>
+                    <select
+                      value={editForm.life_status}
+                      onChange={(e) => setEditForm({ ...editForm, life_status: e.target.value as MemberLifeStatus })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <option value="ALIVE">Đương Thời (Còn sống)</option>
+                      <option value="DECEASED">Tiền Nhân (Đã mất)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Tên Tự / Hiệu</label>
+                    <input
+                      type="text"
+                      value={editForm.courtesy_name}
+                      onChange={(e) => setEditForm({ ...editForm, courtesy_name: e.target.value })}
+                      placeholder="VD: Thuần Nhất Tiên Sinh"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Pháp Danh (Nếu có)</label>
+                    <input
+                      type="text"
+                      value={editForm.religious_name}
+                      onChange={(e) => setEditForm({ ...editForm, religious_name: e.target.value })}
+                      placeholder="VD: Thích Trí Tuệ"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Ngày Sinh (Dương Lịch)</label>
+                    <input
+                      type="date"
+                      value={editForm.birth_solar_date}
+                      onChange={(e) => setEditForm({ ...editForm, birth_solar_date: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Giờ Sinh</label>
+                    <input
+                      type="text"
+                      value={editForm.birth_time}
+                      onChange={(e) => setEditForm({ ...editForm, birth_time: e.target.value })}
+                      placeholder="VD: Giờ Thìn (07:30)"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Link Ảnh Đại Diện</label>
+                  <input
+                    type="url"
+                    value={editForm.avatar_url}
+                    onChange={(e) => setEditForm({ ...editForm, avatar_url: e.target.value })}
+                    placeholder="https://images.unsplash.com/..."
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
+              {/* Thông tin ngày mất (Nếu là tiền nhân) */}
+              {editForm.life_status === 'DECEASED' && (
+                <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800 bg-amber-50/50 dark:bg-amber-950/20 p-4 rounded-2xl border border-amber-200/60 dark:border-amber-900/40">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-400">
+                    Thông Tin Tiền Nhân & Kỵ Giỗ
+                  </h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Ngày Mất (Dương Lịch)</label>
+                      <input
+                        type="date"
+                        value={editForm.death_solar_date}
+                        onChange={(e) => setEditForm({ ...editForm, death_solar_date: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Giờ Quy Tiên</label>
+                      <input
+                        type="text"
+                        value={editForm.death_time}
+                        onChange={(e) => setEditForm({ ...editForm, death_time: e.target.value })}
+                        placeholder="VD: Giờ Tỵ (09:15)"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Ngày Mất (Âm)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="30"
+                        value={editForm.death_lunar_day}
+                        onChange={(e) => setEditForm({ ...editForm, death_lunar_day: e.target.value })}
+                        placeholder="VD: 15"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Tháng Mất (Âm)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="12"
+                        value={editForm.death_lunar_month}
+                        onChange={(e) => setEditForm({ ...editForm, death_lunar_month: e.target.value })}
+                        placeholder="VD: 8"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Năm Mất (Âm/Dương)</label>
+                      <input
+                        type="number"
+                        value={editForm.death_lunar_year}
+                        onChange={(e) => setEditForm({ ...editForm, death_lunar_year: e.target.value })}
+                        placeholder="VD: 1975"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Nơi An Táng / Mộ Phần</label>
+                    <input
+                      type="text"
+                      value={editForm.burial_place}
+                      onChange={(e) => setEditForm({ ...editForm, burial_place: e.target.value })}
+                      placeholder="VD: Khu lăng mộ tổ họ Nguyễn, Hoàng Mai, Hà Nội"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Tiểu sử */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Tiểu Sử & Ghi Chép Công Đức</h4>
+                <textarea
+                  rows={4}
+                  value={editForm.bio}
+                  onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                  placeholder="Ghi chú về công đức, chức vụ, đóng góp xây dựng từ đường và gia phả..."
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  disabled={isSavingEdit}
+                  className="px-4 py-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold rounded-xl transition cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingEdit}
+                  className="px-5 py-2 bg-[#166534] hover:bg-[#14532d] text-white font-bold rounded-xl flex items-center space-x-1.5 shadow-sm transition disabled:opacity-50 cursor-pointer"
+                >
+                  {isSavingEdit ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Đang lưu...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>Lưu Thay Đổi</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

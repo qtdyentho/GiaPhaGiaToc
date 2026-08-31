@@ -41,6 +41,7 @@ export interface RawImportMember {
   burialPlace?: string;          // 26. Nơi An Táng / Mộ Phần
   bio?: string;                  // 27. Tiểu Sử / Sự Nghiệp / Ghi Chú
   parentName?: string;           // Tên Cha (Hỗ trợ tương thích ngược)
+  motherName?: string;           // Tên Mẹ (Hỗ trợ tương thích ngược)
   spouseName?: string;           // Tên Vợ / Chồng (Hỗ trợ tương thích ngược)
   isAutoInferredGen?: boolean;   // Đánh dấu thế hệ được hệ thống tự động suy luận
 }
@@ -196,16 +197,16 @@ export class DataImportService {
       return {
         day,
         month,
-        year: year > 1000 ? year : undefined,
+        year: year > 0 ? year : undefined,
         formattedDate: `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`,
         hasDate: true,
       };
     }
 
-    // 2. Nếu là số Excel serial date (ví dụ từ 10000 đến 100000)
+    // 2. Nếu là số Excel serial date (ví dụ từ 10000 đến 100000) hoặc năm số
     if (typeof val === 'number') {
-      if (val >= 1000 && val <= 2100) {
-        // Năm đơn thuần (VD: 1851, 1920)
+      if (val >= 100 && val <= 2100) {
+        // Năm đơn thuần (VD: 544, 938, 1851, 1920)
         return { year: Math.floor(val), hasDate: true };
       }
       if (val >= 1 && val <= 31) {
@@ -223,7 +224,7 @@ export class DataImportService {
             return {
               day,
               month,
-              year: year > 1000 ? year : undefined,
+              year: year > 0 ? year : undefined,
               formattedDate: `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`,
               hasDate: true,
             };
@@ -235,13 +236,13 @@ export class DataImportService {
     const str = String(val).trim();
     if (!str) return { hasDate: false };
 
-    // 3. Chuỗi dạng DD/MM/YYYY, D/M/YYYY, DD-MM-YYYY, DD.MM.YYYY
-    const dmyFullMatch = str.match(/^(\d{1,2})[\/\-. ](\d{1,2})[\/\-. ](\d{4})$/);
+    // 3. Chuỗi dạng DD/MM/YYYY, D/M/YYYY, DD-MM-YYYY, DD.MM.YYYY (hỗ trợ năm từ 100 đến 2100)
+    const dmyFullMatch = str.match(/^(\d{1,2})[\/\-. ](\d{1,2})[\/\-. ](\d{3,4})$/);
     if (dmyFullMatch) {
       const d = parseInt(dmyFullMatch[1], 10);
       const m = parseInt(dmyFullMatch[2], 10);
       const y = parseInt(dmyFullMatch[3], 10);
-      if (d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 1000 && y <= 2100) {
+      if (d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 100 && y <= 2100) {
         return {
           day: d,
           month: m,
@@ -253,12 +254,12 @@ export class DataImportService {
     }
 
     // 4. Chuỗi dạng YYYY-MM-DD, YYYY/MM/DD (ISO Format)
-    const ymdFullMatch = str.match(/^(\d{4})[\/\-. ](\d{1,2})[\/\-. ](\d{1,2})$/);
+    const ymdFullMatch = str.match(/^(\d{3,4})[\/\-. ](\d{1,2})[\/\-. ](\d{1,2})$/);
     if (ymdFullMatch) {
       const y = parseInt(ymdFullMatch[1], 10);
       const m = parseInt(ymdFullMatch[2], 10);
       const d = parseInt(ymdFullMatch[3], 10);
-      if (d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 1000 && y <= 2100) {
+      if (d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 100 && y <= 2100) {
         return {
           day: d,
           month: m,
@@ -270,12 +271,12 @@ export class DataImportService {
     }
 
     // 5. Chuỗi dạng Ngày DD tháng MM năm YYYY (Văn bản tiếng Việt)
-    const vnTextMatch = str.match(/(?:ngày\s*)?(\d{1,2})(?:[\s/tháng\.\-]+)(\d{1,2})(?:[\s/năm\.\-]+)(\d{4})/i);
+    const vnTextMatch = str.match(/(?:ngày\s*)?(\d{1,2})(?:[\s/tháng\.\-]+)(\d{1,2})(?:[\s/năm\.\-]+)(\d{3,4})/i);
     if (vnTextMatch) {
       const d = parseInt(vnTextMatch[1], 10);
       const m = parseInt(vnTextMatch[2], 10);
       const y = parseInt(vnTextMatch[3], 10);
-      if (d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 1000 && y <= 2100) {
+      if (d >= 1 && d <= 31 && m >= 1 && m <= 12 && y >= 100 && y <= 2100) {
         return {
           day: d,
           month: m,
@@ -301,14 +302,16 @@ export class DataImportService {
       }
     }
 
-    // 7. Số năm 4 chữ số đơn thuần trong chuỗi (VD: "1851", "Năm 1887")
-    const yearOnlyMatch = str.match(/\b(1[0-9]{3}|20[0-9]{2})\b/);
+    // 7. Số năm 3-4 chữ số đơn thuần trong chuỗi (VD: "544", "938", "1851", "Năm 1887")
+    const yearOnlyMatch = str.match(/\b([1-9][0-9]{2,3})\b/);
     if (yearOnlyMatch) {
       const y = parseInt(yearOnlyMatch[1], 10);
-      return {
-        year: y,
-        hasDate: true,
-      };
+      if (y >= 100 && y <= 2100) {
+        return {
+          year: y,
+          hasDate: true,
+        };
+      }
     }
 
     // 8. Số ngày/tháng 1 hoặc 2 chữ số (VD: "15", "8", "28")
@@ -321,6 +324,40 @@ export class DataImportService {
     }
 
     return { hasDate: false };
+  }
+
+  /**
+   * Chuyển đổi linh hoạt mọi định dạng ngày sang ISO YYYY-MM-DD cho PostgreSQL DATE (hoặc null)
+   */
+  public static toPostgresDate(val?: any, yearFallback?: number): string | null {
+    if (!val && !yearFallback) return null;
+
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      const isoMatch = trimmed.match(/^(\d{3,4})-(\d{1,2})-(\d{1,2})$/);
+      if (isoMatch) {
+        const y = String(parseInt(isoMatch[1], 10)).padStart(4, '0');
+        const m = String(parseInt(isoMatch[2], 10)).padStart(2, '0');
+        const d = String(parseInt(isoMatch[3], 10)).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+    }
+
+    if (val !== undefined && val !== null && val !== '') {
+      const parsed = this.parseFlexibleDate(val);
+      if (parsed.hasDate && parsed.year) {
+        const y = String(parsed.year).padStart(4, '0');
+        const m = String(parsed.month || 1).padStart(2, '0');
+        const d = String(parsed.day || 1).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+    }
+
+    if (yearFallback && typeof yearFallback === 'number' && yearFallback > 0) {
+      return `${String(yearFallback).padStart(4, '0')}-01-01`;
+    }
+
+    return null;
   }
 
   /**
@@ -920,20 +957,78 @@ export class DataImportService {
         try {
           const buffer = e.target?.result;
           const workbook = XLSX.read(buffer, { type: 'array' });
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-
-          if (!worksheet) {
-            throw new Error('Tệp Excel không chứa trang tính (worksheet) nào hợp lệ.');
+          if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+            throw new Error('Tệp Excel không chứa trang tính (worksheet) nào.');
           }
 
-          const rawRows: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: false });
+          // 1. Tìm trang tính phù hợp nhất (ưu tiên tên có chứa từ khóa gia phả / thành viên / phân cấp)
+          let chosenSheetName = workbook.SheetNames[0];
+          for (const sName of workbook.SheetNames) {
+            const lower = sName.toLowerCase();
+            if (
+              lower.includes('phả') || 
+              lower.includes('pha') || 
+              lower.includes('thành viên') || 
+              lower.includes('thanh vien') || 
+              lower.includes('danh sách') || 
+              lower.includes('danh sach') || 
+              lower.includes('genealogy') || 
+              lower.includes('member') || 
+              lower.includes('cây') || 
+              lower.includes('cay')
+            ) {
+              chosenSheetName = sName;
+              break;
+            }
+          }
+
+          const worksheet = workbook.Sheets[chosenSheetName];
+          if (!worksheet) {
+            throw new Error(`Không thể đọc trang tính '${chosenSheetName}' trong tệp Excel.`);
+          }
+
+          // 2. Quét 10 dòng đầu tiên để tự động tìm dòng tiêu đề chứa nhiều cột chuẩn nhất (chống lỗi banner dòng 1-2)
+          const sheetRows: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '', raw: false });
+          if (!sheetRows || sheetRows.length === 0) {
+            throw new Error('Trang tính Excel trống, không có dòng dữ liệu nào.');
+          }
+
+          let headerRowIdx = 0;
+          let maxRecognizedHeaders = 0;
+          const maxScanRows = Math.min(sheetRows.length, 10);
+
+          for (let r = 0; r < maxScanRows; r++) {
+            const rowCandidate = (sheetRows[r] || []).map((cell: any) => String(cell || '').trim());
+            const recognized = rowCandidate.filter((h: string) => {
+              if (!h) return false;
+              const suggestions = DataImportService.autoMapHeaders([h]);
+              return suggestions.length > 0 && suggestions[0].targetField !== 'unknown' && suggestions[0].confidence >= 0.7;
+            }).length;
+
+            if (recognized > maxRecognizedHeaders) {
+              maxRecognizedHeaders = recognized;
+              headerRowIdx = r;
+            }
+          }
+
+          const rawRows: any[] = XLSX.utils.sheet_to_json(worksheet, { 
+            range: headerRowIdx,
+            defval: '', 
+            raw: false 
+          });
+
           if (rawRows.length === 0) {
-            throw new Error('Tệp Excel trống, không có dòng dữ liệu nào.');
+            throw new Error('Tệp Excel không có dòng dữ liệu thành viên nào sau dòng tiêu đề cột.');
           }
 
           const headers = Object.keys(rawRows[0]);
           const mappings = this.autoMapHeaders(headers);
+
+          // Kiểm tra xem có nhận diện được ít nhất cột Họ và Tên không
+          const hasFullName = mappings.some((m) => m.targetField === 'fullName');
+          if (!hasFullName && maxRecognizedHeaders === 0) {
+            throw new Error('Không nhận diện được các cột dữ liệu gia phả tiêu chuẩn (như Họ và Tên, Giới Tính, Thế Hệ). Vui lòng kiểm tra lại dòng tiêu đề tệp Excel.');
+          }
 
           const headerToField: Record<string, string> = {};
           mappings.forEach((m) => {
@@ -1411,7 +1506,7 @@ export class DataImportService {
 
       // 1. Kiểm tra họ và tên (Bắt buộc)
       if (!row.fullName || row.fullName.trim().length < 2) {
-        errors.push('Họ và tên bị trống hoặc quá ngắn (< 2 ký tự). Vui lòng điền họ tên đầy đủ (VD: Nguyễn Văn Phúc hoặc Cụ Bà Trần Thị Mai).');
+        errors.push('Họ và tên là bắt buộc (tối thiểu 2 ký tự). Vui lòng điền họ tên đầy đủ (VD: Nguyễn Văn Phúc hoặc Cụ Bà Trần Thị Mai).');
       } else if (nameSet.has(row.fullName.trim().toLowerCase())) {
         warnings.push(`Cảnh báo: Trùng họ tên '${row.fullName.trim()}'. Vui lòng kiểm tra lại để đảm bảo phân biệt theo Đời hoặc Chi phái.`);
       }
@@ -1419,9 +1514,14 @@ export class DataImportService {
         nameSet.add(row.fullName.trim().toLowerCase());
       }
 
-      // 2. Kiểm tra thế hệ (Đời 1 - 30)
-      if (!row.generationNumber || row.generationNumber < 1 || row.generationNumber > 30) {
-        errors.push(`Thế hệ (Đời) '${row.generationNumber || 'trống'}' không hợp lệ. Vui lòng nhập số nguyên từ 1 đến 30 (VD: 1 cho Thủy Tổ, 2 cho con, 3 cho cháu).`);
+      // 1b. Kiểm tra giới tính (Bắt buộc)
+      if (!row.gender || (row.gender !== 'MALE' && row.gender !== 'FEMALE')) {
+        errors.push('Giới tính là bắt buộc (Nam hoặc Nữ). Vui lòng chọn giới tính hợp lệ.');
+      }
+
+      // 2. Kiểm tra thế hệ (Đời 1 - 100)
+      if (!row.generationNumber || row.generationNumber < 1 || row.generationNumber > 100) {
+        errors.push(`Thế hệ (Đời) '${row.generationNumber || 'trống'}' không hợp lệ. Vui lòng nhập số nguyên từ 1 đến 100 (VD: 1 cho Thủy Tổ, 2 cho con, 3 cho cháu).`);
       }
 
       // 3. Kiểm tra chi phái
@@ -1453,16 +1553,16 @@ export class DataImportService {
         }
       }
 
-      // 7. Kiểm tra niên đại năm sinh & năm mất
+      // 7. Kiểm tra niên đại năm sinh & năm mất (Hỗ trợ niên đại tiền nhân từ năm 100 SCN)
       if (row.birthYear) {
-        if (row.birthYear < 1000 || row.birthYear > currentYear) {
-          errors.push(`Năm sinh (${row.birthYear}) không hợp lý (phải từ năm 1000 đến ${currentYear}).`);
+        if (row.birthYear < 100 || row.birthYear > currentYear) {
+          errors.push(`Năm sinh (${row.birthYear}) không hợp lý (phải từ năm 100 đến ${currentYear}).`);
         }
       }
 
       if (row.deathLunarYear) {
-        if (row.deathLunarYear < 1000 || row.deathLunarYear > currentYear + 1) {
-          errors.push(`Năm mất (${row.deathLunarYear}) không hợp lý (phải từ năm 1000 đến ${currentYear}).`);
+        if (row.deathLunarYear < 100 || row.deathLunarYear > currentYear + 1) {
+          errors.push(`Năm mất (${row.deathLunarYear}) không hợp lý (phải từ năm 100 đến ${currentYear}).`);
         }
         if (row.birthYear && row.deathLunarYear < row.birthYear) {
           errors.push(`Lỗi logic thời gian: Năm sinh (${row.birthYear}) không được lớn hơn năm mất (${row.deathLunarYear}).`);
@@ -1664,9 +1764,9 @@ export class DataImportService {
               gender: m.gender === 'FEMALE' ? 'FEMALE' : 'MALE',
               status: isDeceased ? 'DECEASED' : 'ALIVE',
               is_deceased: isDeceased,
-              date_of_birth: m.birthSolarDate || (m.birthYear ? `${m.birthYear}-01-01` : null),
+              date_of_birth: DataImportService.toPostgresDate(m.birthSolarDate, m.birthYear),
               birth_time: m.birthTime || null,
-              date_of_death_solar: m.deathSolarDate || null,
+              date_of_death_solar: DataImportService.toPostgresDate(m.deathSolarDate),
               date_of_death_lunar_day: m.deathLunarDay || null,
               date_of_death_lunar_month: m.deathLunarMonth || null,
               date_of_death_lunar_year: m.deathLunarYear || null,
@@ -1674,7 +1774,7 @@ export class DataImportService {
               burial_place: m.burialPlace || null,
               biography: m.bio || null,
               child_lineage_type: m.relationType?.includes('Nuôi') ? 'ADOPTED' : 'BIOLOGICAL',
-              birth_order_in_family: m.birthOrder ? 1 : 1,
+              birth_order_in_family: m.birthOrder ? (parseInt(m.birthOrder.toString(), 10) || null) : null,
               notes: noteParts.length > 0 ? noteParts.join(' • ') : (m.birthYear ? `Năm sinh: ${m.birthYear}` : null),
             };
           });
@@ -1688,7 +1788,7 @@ export class DataImportService {
             throw new Error(`Lỗi khi lưu danh sách thành viên: ${insertErr.message}`);
           }
 
-          // Map tên thành viên -> Member ID (hỗ trợ cả tên gốc và tên chuẩn hóa không dấu/bỏ bí danh)
+          // Map tên thành viên -> Member ID (hỗ trợ cả tên gốc, tên chuẩn hóa, mã cây và khử trùng tên nhiều đời)
           const normalizeForMatch = (str: string) =>
             (str || '')
               .replace(/\(.*?\)/g, '')
@@ -1699,90 +1799,153 @@ export class DataImportService {
               .replace(/[\u0300-\u036f]/g, '')
               .replace(/[đĐ]/g, 'd');
 
-          const nameToIdMap = new Map<string, string>();
-          const normNameToIdMap = new Map<string, { id: string; genNum: number }>();
+          interface IndexedMember {
+            id: string;
+            fullName: string;
+            normName: string;
+            genNum: number;
+            branchName: string;
+            treeCode?: string;
+          }
+
           const treeCodeToIdMap = new Map<string, string>();
+          const nameToMembersMap = new Map<string, IndexedMember[]>();
+          const normNameToMembersMap = new Map<string, IndexedMember[]>();
 
           (insertedMembers || []).forEach((im: any, idx: number) => {
             const fullName = im.full_name.trim();
             const rawRow = validRows[idx]?.data;
             const genNum = rawRow?.generationNumber || 1;
-            nameToIdMap.set(fullName, im.id);
-            normNameToIdMap.set(normalizeForMatch(fullName), { id: im.id, genNum });
-            if (rawRow?.treeCode) {
-              treeCodeToIdMap.set(rawRow.treeCode.trim().toUpperCase(), im.id);
+            const branchName = rawRow?.branchName || '';
+            const normName = normalizeForMatch(fullName);
+
+            const indexed: IndexedMember = {
+              id: im.id,
+              fullName,
+              normName,
+              genNum,
+              branchName,
+              treeCode: rawRow?.treeCode?.trim().toUpperCase(),
+            };
+
+            if (indexed.treeCode) {
+              treeCodeToIdMap.set(indexed.treeCode, im.id);
             }
+
+            if (!nameToMembersMap.has(fullName)) {
+              nameToMembersMap.set(fullName, []);
+            }
+            nameToMembersMap.get(fullName)!.push(indexed);
+
+            if (!normNameToMembersMap.has(normName)) {
+              normNameToMembersMap.set(normName, []);
+            }
+            normNameToMembersMap.get(normName)!.push(indexed);
           });
 
-          const findMatchingMemberId = (queryName: string, childGen?: number, excludeId?: string): string | null => {
+          const findMatchingMemberId = (
+            queryName: string,
+            targetRole: 'PARENT' | 'SPOUSE' | 'ANY',
+            currentGen?: number,
+            excludeId?: string,
+            preferredBranch?: string
+          ): string | null => {
             if (!queryName) return null;
             const trimmed = queryName.trim();
-            if (nameToIdMap.has(trimmed) && nameToIdMap.get(trimmed) !== excludeId) {
-              return nameToIdMap.get(trimmed)!;
-            }
             const queryNorm = normalizeForMatch(queryName);
-            if (normNameToIdMap.has(queryNorm)) {
-              const res = normNameToIdMap.get(queryNorm)!;
-              if (res.id !== excludeId) return res.id;
+
+            let candidates: IndexedMember[] = [];
+            if (nameToMembersMap.has(trimmed)) {
+              candidates.push(...nameToMembersMap.get(trimmed)!);
+            }
+            if (normNameToMembersMap.has(queryNorm)) {
+              for (const m of normNameToMembersMap.get(queryNorm)!) {
+                if (!candidates.some((c) => c.id === m.id)) {
+                  candidates.push(m);
+                }
+              }
             }
 
-            // Tìm khớp gần đúng ưu tiên thế hệ cha (childGen - 1)
-            for (const [normKey, val] of normNameToIdMap.entries()) {
-              if (val.id !== excludeId && (childGen === undefined || val.genNum === childGen - 1)) {
+            if (candidates.length === 0) {
+              for (const [normKey, mList] of normNameToMembersMap.entries()) {
                 if (normKey === queryNorm || normKey.includes(queryNorm) || queryNorm.includes(normKey)) {
-                  return val.id;
+                  for (const m of mList) {
+                    if (!candidates.some((c) => c.id === m.id)) {
+                      candidates.push(m);
+                    }
+                  }
                 }
               }
             }
 
-            // Tìm khớp rộng hơn
-            for (const [normKey, val] of normNameToIdMap.entries()) {
-              if (val.id !== excludeId && (childGen === undefined || val.genNum < (childGen || 99))) {
-                if (normKey.includes(queryNorm) || queryNorm.includes(normKey)) {
-                  return val.id;
-                }
-              }
+            const validCandidates = candidates.filter((c) => c.id !== excludeId);
+            if (validCandidates.length === 0) return null;
+            if (validCandidates.length === 1) return validCandidates[0].id;
+
+            // Khử trùng tên giữa các đời (Homonym Disambiguation):
+            if (targetRole === 'PARENT' && currentGen !== undefined) {
+              // 1. Ưu tiên đời cha (currentGen - 1) cùng chi phái
+              const parentGenSameBranch = validCandidates.find((c) => c.genNum === currentGen - 1 && preferredBranch && c.branchName === preferredBranch);
+              if (parentGenSameBranch) return parentGenSameBranch.id;
+
+              // 2. Ưu tiên đời cha (currentGen - 1)
+              const parentGen = validCandidates.find((c) => c.genNum === currentGen - 1);
+              if (parentGen) return parentGen.id;
+
+              // 3. Ưu tiên đời tiền bối (genNum < currentGen)
+              const seniorGen = validCandidates.find((c) => c.genNum < currentGen);
+              if (seniorGen) return seniorGen.id;
+            } else if (targetRole === 'SPOUSE' && currentGen !== undefined) {
+              // Ưu tiên cùng thế hệ (genNum === currentGen)
+              const sameGen = validCandidates.find((c) => c.genNum === currentGen);
+              if (sameGen) return sameGen.id;
             }
-            return null;
+
+            return validCandidates[0].id;
           };
 
-          // 4. Thiết lập quan hệ cha - con & vợ - chồng (Dùng quan hệ PARENT & SPOUSE chuẩn enum Supabase)
+          // 4. Thiết lập quan hệ cha - con & vợ - chồng (Chuẩn hóa chiều quan hệ cho GenealogyCanvas & Kinship)
           const relationshipsToInsert: any[] = [];
           const memorialsToInsert: any[] = [];
+          const directLineageUpdates: { id: string; father_id: string | null; mother_id: string | null; spouse_id: string | null }[] = [];
 
           validRows.forEach((r, idx) => {
             const m = r.data;
-            const currentMemberId = insertedMembers?.[idx]?.id || nameToIdMap.get(m.fullName.trim()) || findMatchingMemberId(m.fullName);
+            const currentMemberId = insertedMembers?.[idx]?.id || findMatchingMemberId(m.fullName, 'ANY', m.generationNumber);
             if (!currentMemberId) return;
 
-            // Quan hệ Cha -> Con (PARENT: member_id là cha, related_member_id là con)
+            // Quan hệ Cha -> Con (Chuẩn: member_id là Con, related_member_id là Cha với relationship_type: 'PARENT')
             let fatherId: string | null = null;
             if (m.parentCode && treeCodeToIdMap.has(m.parentCode.trim().toUpperCase())) {
               fatherId = treeCodeToIdMap.get(m.parentCode.trim().toUpperCase())!;
             } else if (m.parentName) {
-              fatherId = findMatchingMemberId(m.parentName, m.generationNumber, currentMemberId);
+              fatherId = findMatchingMemberId(m.parentName, 'PARENT', m.generationNumber, currentMemberId, m.branchName);
             }
 
             if (fatherId && fatherId !== currentMemberId) {
               relationshipsToInsert.push({
                 family_id: targetFamilyUUID,
-                member_id: fatherId,
-                related_member_id: currentMemberId,
+                member_id: currentMemberId,
+                related_member_id: fatherId,
                 relationship_type: 'PARENT',
               });
             }
 
-            // Quan hệ Mẹ -> Con (PARENT: member_id là mẹ, related_member_id là con)
+            // Quan hệ Mẹ -> Con (Chuẩn: member_id là Con, related_member_id là Mẹ với relationship_type: 'PARENT')
+            let motherId: string | null = null;
             if (m.motherCode && treeCodeToIdMap.has(m.motherCode.trim().toUpperCase())) {
-              const motherId = treeCodeToIdMap.get(m.motherCode.trim().toUpperCase())!;
-              if (motherId && motherId !== currentMemberId) {
-                relationshipsToInsert.push({
-                  family_id: targetFamilyUUID,
-                  member_id: motherId,
-                  related_member_id: currentMemberId,
-                  relationship_type: 'PARENT',
-                });
-              }
+              motherId = treeCodeToIdMap.get(m.motherCode.trim().toUpperCase())!;
+            } else if (m.motherName) {
+              motherId = findMatchingMemberId(m.motherName, 'PARENT', m.generationNumber, currentMemberId, m.branchName);
+            }
+
+            if (motherId && motherId !== currentMemberId) {
+              relationshipsToInsert.push({
+                family_id: targetFamilyUUID,
+                member_id: currentMemberId,
+                related_member_id: motherId,
+                relationship_type: 'PARENT',
+              });
             }
 
             // Quan hệ Vợ - Chồng (SPOUSE)
@@ -1790,7 +1953,7 @@ export class DataImportService {
             if (m.spouseCode && treeCodeToIdMap.has(m.spouseCode.trim().toUpperCase())) {
               spouseId = treeCodeToIdMap.get(m.spouseCode.trim().toUpperCase())!;
             } else if (m.spouseName) {
-              spouseId = findMatchingMemberId(m.spouseName, m.generationNumber, currentMemberId);
+              spouseId = findMatchingMemberId(m.spouseName, 'SPOUSE', m.generationNumber, currentMemberId, m.branchName);
             }
 
             if (spouseId && spouseId !== currentMemberId) {
@@ -1799,6 +1962,16 @@ export class DataImportService {
                 member_id: currentMemberId,
                 related_member_id: spouseId,
                 relationship_type: 'SPOUSE',
+              });
+            }
+
+            // Đồng bộ trực tiếp father_id, mother_id, spouse_id trên members
+            if (fatherId || motherId || spouseId) {
+              directLineageUpdates.push({
+                id: currentMemberId,
+                father_id: fatherId || null,
+                mother_id: motherId || null,
+                spouse_id: spouseId || null,
               });
             }
 
@@ -1829,6 +2002,24 @@ export class DataImportService {
               await supabase.from('member_relationships').insert(relationshipsToInsert);
             } catch (relErr) {
               console.warn('Cảnh báo khi lưu quan hệ:', relErr);
+            }
+          }
+
+          // Cập nhật các trường trực hệ father_id, mother_id, spouse_id trên bảng members
+          if (directLineageUpdates.length > 0) {
+            for (const item of directLineageUpdates) {
+              try {
+                await supabase
+                  .from('members')
+                  .update({
+                    father_id: item.father_id,
+                    mother_id: item.mother_id,
+                    spouse_id: item.spouse_id,
+                  })
+                  .eq('id', item.id);
+              } catch (upErr) {
+                console.warn('Cảnh báo khi cập nhật liên kết trực hệ members:', upErr);
+              }
             }
           }
 
@@ -1908,26 +2099,70 @@ export class DataImportService {
       }
     });
 
+    const createdMockMembers: any[] = [];
+    const mockTreeCodeMap = new Map<string, string>();
+
     validation.rows.forEach((r, idx) => {
       const m = r.data;
       const mId = `mb-${familyId}-${Date.now()}-${idx}`;
-      mockMembers.push({
+      if (m.treeCode) {
+        mockTreeCodeMap.set(m.treeCode.trim().toUpperCase(), mId);
+      }
+      const memberObj = {
         id: mId,
         family_id: familyId,
         generation_id: genMap.get(m.generationNumber) || '',
+        generation_index: m.generationNumber,
         branch_id: branchMap.get(m.branchName) || '',
         first_name: m.fullName.split(' ').pop() || '',
         last_name: m.fullName.split(' ').slice(0, -1).join(' ') || '',
         full_name: m.fullName,
+        courtesy_name: m.courtesyName || undefined,
         gender: m.gender,
         life_status: m.lifeStatus,
+        date_of_birth: DataImportService.toPostgresDate(m.birthSolarDate, m.birthYear) || undefined,
+        date_of_death_solar: DataImportService.toPostgresDate(m.deathSolarDate) || undefined,
         death_lunar_day: m.deathLunarDay,
         death_lunar_month: m.deathLunarMonth,
         death_lunar_year: m.deathLunarYear,
         burial_place: m.burialPlace,
+        father_id: undefined as string | undefined,
+        mother_id: undefined as string | undefined,
+        spouse_id: undefined as string | undefined,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      });
+      };
+      createdMockMembers.push({ memberObj, raw: m });
+      mockMembers.push(memberObj);
+    });
+
+    // Resolve direct lineage links in mockMembers
+    createdMockMembers.forEach(({ memberObj, raw }) => {
+      if (raw.parentCode && mockTreeCodeMap.has(raw.parentCode.trim().toUpperCase())) {
+        memberObj.father_id = mockTreeCodeMap.get(raw.parentCode.trim().toUpperCase());
+      } else if (raw.parentName) {
+        const found = createdMockMembers.find(
+          (c) => c.memberObj.id !== memberObj.id &&
+                 c.memberObj.full_name.includes(raw.parentName) &&
+                 c.raw.generationNumber === raw.generationNumber - 1
+        );
+        if (found) memberObj.father_id = found.memberObj.id;
+      }
+
+      if (raw.motherCode && mockTreeCodeMap.has(raw.motherCode.trim().toUpperCase())) {
+        memberObj.mother_id = mockTreeCodeMap.get(raw.motherCode.trim().toUpperCase());
+      }
+
+      if (raw.spouseCode && mockTreeCodeMap.has(raw.spouseCode.trim().toUpperCase())) {
+        memberObj.spouse_id = mockTreeCodeMap.get(raw.spouseCode.trim().toUpperCase());
+      } else if (raw.spouseName) {
+        const found = createdMockMembers.find(
+          (c) => c.memberObj.id !== memberObj.id &&
+                 c.memberObj.full_name.includes(raw.spouseName) &&
+                 c.raw.generationNumber === raw.generationNumber
+        );
+        if (found) memberObj.spouse_id = found.memberObj.id;
+      }
     });
 
     return {

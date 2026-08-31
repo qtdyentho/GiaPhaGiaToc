@@ -339,6 +339,22 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
         }
       });
 
+    // Nạp thêm từ trường spouse_id trực tiếp trên member
+    members.forEach((m) => {
+      if (m.spouse_id) {
+        const spouse = memberMap.get(m.spouse_id);
+        if (m.gender === 'MALE' && spouse?.gender === 'FEMALE') {
+          spouseIds.add(spouse.id);
+        } else if (m.gender === 'FEMALE' && spouse?.gender === 'MALE') {
+          spouseIds.add(m.id);
+        } else if (spouse) {
+          if (m.id < spouse.id) {
+            spouseIds.add(spouse.id);
+          }
+        }
+      }
+    });
+
     // 2. Xây dựng bản đồ Cha/Mẹ -> Con cái chuẩn xác hai chiều
     const parentToChildrenMap = new Map<string, Set<string>>();
     const childHasParentSet = new Set<string>();
@@ -376,8 +392,16 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
         // member_id là cha/mẹ, related_member_id là con
         registerParentChild(r.member_id, r.related_member_id);
       } else if (relType === 'PARENT') {
-        // related_member_id là cha/mẹ, member_id là con
-        registerParentChild(r.related_member_id, r.member_id);
+        // Harmonize: nếu member_id có thế hệ nhỏ hơn thì member_id là cha mẹ
+        const m1 = memberMap.get(r.member_id);
+        const m2 = memberMap.get(r.related_member_id);
+        const gen1 = genMap.get(m1?.generation_id || '') || 0;
+        const gen2 = genMap.get(m2?.generation_id || '') || 0;
+        if (gen1 > 0 && gen2 > 0 && gen1 < gen2) {
+          registerParentChild(r.member_id, r.related_member_id);
+        } else {
+          registerParentChild(r.related_member_id, r.member_id);
+        }
       }
     });
 
@@ -486,6 +510,14 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
             visited.add(spouse.id);
           }
         });
+
+      if (member.spouse_id) {
+        const spouse = members.find((m) => m.id === member.spouse_id);
+        if (spouse && !memberSpouses.some((s) => s.id === spouse.id)) {
+          memberSpouses.push(spouse);
+          visited.add(spouse.id);
+        }
+      }
 
       // Lấy danh sách con cái từ parentToChildrenMap cho cả member và các spouse
       const childIdsSet = new Set<string>();

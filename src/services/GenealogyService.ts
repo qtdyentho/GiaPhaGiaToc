@@ -1,5 +1,5 @@
 import { Member, Generation, Branch, MemberRelationship, RelationshipType } from '../types/database';
-import { mockMembers, mockGenerations, mockBranches, mockRelationships } from './mockData';
+import { mockMembers, mockGenerations, mockBranches, mockRelationships, mockMemorialDates } from './mockData';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 export interface FamilyTreeData {
@@ -253,27 +253,52 @@ export class GenealogyService {
         };
 
         if (relationTarget && isUUID(relationTarget.targetMemberId)) {
-          await this.addRelationship({
-            family_id: createdMember.family_id,
-            member_id: relationTarget.targetMemberId,
-            related_member_id: createdMember.id,
-            relationship: relationTarget.relationType,
-            relationship_type: relationTarget.relationType,
-          });
+          const relType = relationTarget.relationType;
 
-          // Cập nhật quan hệ trực hệ father_id / mother_id / spouse_id
-          if (relationTarget.relationType === 'CHILD') {
+          if (relType === 'CHILD') {
             const target = await this.getMemberById(relationTarget.targetMemberId);
             if (target) {
               const updateFields: any = target.gender === 'FEMALE' ? { mother_id: target.id } : { father_id: target.id };
               await supabase.from('members').update(updateFields).eq('id', createdMember.id);
+              if (target.gender === 'FEMALE') createdMember.mother_id = target.id;
+              else createdMember.father_id = target.id;
             }
-          } else if (relationTarget.relationType === 'SPOUSE') {
-            await supabase.from('members').update({ spouse_id: relationTarget.targetMemberId }).eq('id', createdMember.id);
-            await supabase.from('members').update({ spouse_id: createdMember.id }).eq('id', relationTarget.targetMemberId);
-          } else if (relationTarget.relationType === 'PARENT') {
+            await this.addRelationship({
+              family_id: createdMember.family_id,
+              member_id: relationTarget.targetMemberId,
+              related_member_id: createdMember.id,
+              relationship: 'CHILD',
+              relationship_type: 'CHILD',
+            });
+          } else if (relType === 'PARENT') {
             const updateFields: any = createdMember.gender === 'FEMALE' ? { mother_id: createdMember.id } : { father_id: createdMember.id };
             await supabase.from('members').update(updateFields).eq('id', relationTarget.targetMemberId);
+            await this.addRelationship({
+              family_id: createdMember.family_id,
+              member_id: createdMember.id,
+              related_member_id: relationTarget.targetMemberId,
+              relationship: 'CHILD',
+              relationship_type: 'CHILD',
+            });
+          } else if (relType === 'SPOUSE') {
+            await supabase.from('members').update({ spouse_id: relationTarget.targetMemberId }).eq('id', createdMember.id);
+            await supabase.from('members').update({ spouse_id: createdMember.id }).eq('id', relationTarget.targetMemberId);
+            createdMember.spouse_id = relationTarget.targetMemberId;
+            await this.addRelationship({
+              family_id: createdMember.family_id,
+              member_id: relationTarget.targetMemberId,
+              related_member_id: createdMember.id,
+              relationship: 'SPOUSE',
+              relationship_type: 'SPOUSE',
+            });
+          } else {
+            await this.addRelationship({
+              family_id: createdMember.family_id,
+              member_id: relationTarget.targetMemberId,
+              related_member_id: createdMember.id,
+              relationship: relType,
+              relationship_type: relType,
+            });
           }
         }
 
@@ -306,6 +331,9 @@ export class GenealogyService {
       religious_name: member.religious_name,
       burial_place: member.burial_place,
       bio: member.bio,
+      father_id: member.father_id,
+      mother_id: member.mother_id,
+      spouse_id: member.spouse_id,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -313,15 +341,68 @@ export class GenealogyService {
     mockMembers.push(newMember);
 
     if (relationTarget) {
-      mockRelationships.push({
-        id: `rel-${Date.now()}`,
-        family_id: newMember.family_id,
-        member_id: relationTarget.targetMemberId,
-        related_member_id: newMember.id,
-        relationship: relationTarget.relationType,
-        relationship_type: relationTarget.relationType,
-        created_at: new Date().toISOString(),
-      });
+      const relType = relationTarget.relationType;
+      const target = mockMembers.find((m) => m.id === relationTarget.targetMemberId);
+
+      if (relType === 'CHILD') {
+        if (target) {
+          if (target.gender === 'FEMALE') {
+            newMember.mother_id = target.id;
+          } else {
+            newMember.father_id = target.id;
+          }
+        }
+        mockRelationships.push({
+          id: `rel-${Date.now()}`,
+          family_id: newMember.family_id,
+          member_id: relationTarget.targetMemberId,
+          related_member_id: newMember.id,
+          relationship: 'CHILD',
+          relationship_type: 'CHILD',
+          created_at: new Date().toISOString(),
+        });
+      } else if (relType === 'PARENT') {
+        if (target) {
+          if (newMember.gender === 'FEMALE') {
+            target.mother_id = newMember.id;
+          } else {
+            target.father_id = newMember.id;
+          }
+        }
+        mockRelationships.push({
+          id: `rel-${Date.now()}`,
+          family_id: newMember.family_id,
+          member_id: newMember.id,
+          related_member_id: relationTarget.targetMemberId,
+          relationship: 'CHILD',
+          relationship_type: 'CHILD',
+          created_at: new Date().toISOString(),
+        });
+      } else if (relType === 'SPOUSE') {
+        newMember.spouse_id = relationTarget.targetMemberId;
+        if (target) {
+          target.spouse_id = newMember.id;
+        }
+        mockRelationships.push({
+          id: `rel-${Date.now()}`,
+          family_id: newMember.family_id,
+          member_id: relationTarget.targetMemberId,
+          related_member_id: newMember.id,
+          relationship: 'SPOUSE',
+          relationship_type: 'SPOUSE',
+          created_at: new Date().toISOString(),
+        });
+      } else {
+        mockRelationships.push({
+          id: `rel-${Date.now()}`,
+          family_id: newMember.family_id,
+          member_id: relationTarget.targetMemberId,
+          related_member_id: newMember.id,
+          relationship: relType,
+          relationship_type: relType,
+          created_at: new Date().toISOString(),
+        });
+      }
     }
 
     return { success: true, member: newMember };
@@ -354,6 +435,9 @@ export class GenealogyService {
         if (updates.burial_place !== undefined) payload.burial_place = updates.burial_place;
         if (updates.bio !== undefined) payload.biography = updates.bio;
         if (updates.avatar_url !== undefined) payload.avatar_url = updates.avatar_url;
+        if (updates.father_id !== undefined) payload.father_id = updates.father_id;
+        if (updates.mother_id !== undefined) payload.mother_id = updates.mother_id;
+        if (updates.spouse_id !== undefined) payload.spouse_id = updates.spouse_id;
 
         const { data, error } = await supabase.from('members').update(payload).eq('id', id).select().single();
         if (error) {
@@ -373,9 +457,121 @@ export class GenealogyService {
     return { success: false, error: 'Không tìm thấy thành viên' };
   }
 
+  /**
+   * Xóa thành viên an toàn (Safe Member Deletion):
+   * 1. Xóa các quan hệ trong bảng member_relationships liên quan đến memberId
+   * 2. Nullify các liên kết trực hệ father_id, mother_id, spouse_id trên các thành viên khác để tránh dangling pointer
+   * 3. Xóa các ngày giỗ liên kết trong memorial_dates
+   * 4. Xóa bản ghi thành viên khỏi bảng members
+   */
+  static async deleteMember(id: string, familyId?: string): Promise<{ success: boolean; error?: string }> {
+    if (!id) return { success: false, error: 'ID thành viên không hợp lệ' };
+
+    if (isSupabaseConfigured() && isUUID(id)) {
+      try {
+        // 1. Xóa quan hệ liên quan
+        await supabase
+          .from('member_relationships')
+          .delete()
+          .or(`member_id.eq.${id},related_member_id.eq.${id}`);
+
+        // 2. Nullify father_id, mother_id, spouse_id trên các thành viên trỏ tới id này
+        await Promise.all([
+          supabase.from('members').update({ father_id: null }).eq('father_id', id),
+          supabase.from('members').update({ mother_id: null }).eq('mother_id', id),
+          supabase.from('members').update({ spouse_id: null }).eq('spouse_id', id),
+        ]);
+
+        // 3. Xóa ngày giỗ liên kết
+        await supabase.from('memorial_dates').delete().eq('member_id', id);
+
+        // 4. Xóa bản ghi thành viên
+        let query = supabase.from('members').delete().eq('id', id);
+        if (familyId && isUUID(familyId)) {
+          query = query.eq('family_id', familyId);
+        }
+        const { error } = await query;
+        if (error) {
+          return { success: false, error: error.message };
+        }
+        return { success: true };
+      } catch (err: any) {
+        console.error('deleteMember exception:', err);
+        return { success: false, error: err.message };
+      }
+    }
+
+    // In-memory mock store cleanup
+    const idx = mockMembers.findIndex((m) => m.id === id);
+    if (idx === -1) {
+      return { success: false, error: 'Không tìm thấy thành viên' };
+    }
+
+    // 1. Xóa thành viên
+    mockMembers.splice(idx, 1);
+
+    // 2. Xóa các quan hệ liên quan
+    for (let i = mockRelationships.length - 1; i >= 0; i--) {
+      if (mockRelationships[i].member_id === id || mockRelationships[i].related_member_id === id) {
+        mockRelationships.splice(i, 1);
+      }
+    }
+
+    // 3. Nullify father_id, mother_id, spouse_id trên các thành viên còn lại
+    mockMembers.forEach((m) => {
+      if (m.father_id === id) m.father_id = undefined;
+      if (m.mother_id === id) m.mother_id = undefined;
+      if (m.spouse_id === id) m.spouse_id = undefined;
+    });
+
+    // 4. Xóa ngày giỗ liên kết
+    for (let i = mockMemorialDates.length - 1; i >= 0; i--) {
+      if (mockMemorialDates[i].member_id === id) {
+        mockMemorialDates.splice(i, 1);
+      }
+    }
+
+    return { success: true };
+  }
+
+  /**
+   * Lưu trữ thành viên (Soft Archive):
+   * Đánh dấu lưu trữ hồ sơ thành viên mà không xóa vĩnh viễn dữ liệu
+   */
+  static async archiveMember(
+    id: string,
+    familyId?: string,
+    reason?: string
+  ): Promise<{ success: boolean; member?: Member; error?: string }> {
+    const archiveNote = `[ĐÃ LƯU TRỮ${reason ? `: ${reason}` : ''} - ${new Date().toLocaleDateString('vi-VN')}]`;
+
+    if (isSupabaseConfigured() && isUUID(id)) {
+      try {
+        const member = await this.getMemberById(id);
+        const existingBio = member?.bio || '';
+        const updatedBio = existingBio ? `${existingBio}\n${archiveNote}` : archiveNote;
+
+        return await this.updateMember(id, {
+          bio: updatedBio,
+        });
+      } catch (err: any) {
+        return { success: false, error: err.message };
+      }
+    }
+
+    const member = mockMembers.find((m) => m.id === id);
+    if (!member) {
+      return { success: false, error: 'Không tìm thấy thành viên' };
+    }
+
+    member.bio = member.bio ? `${member.bio}\n${archiveNote}` : archiveNote;
+    member.updated_at = new Date().toISOString();
+    return { success: true, member };
+  }
+
   static async addRelationship(rel: Partial<MemberRelationship>): Promise<{ success: boolean; error?: string }> {
     const relType = rel.relationship || rel.relationship_type || 'CHILD';
-    
+
     if (isSupabaseConfigured() && isUUID(rel.family_id) && isUUID(rel.member_id) && isUUID(rel.related_member_id)) {
       try {
         const { error } = await supabase.from('member_relationships').insert([{

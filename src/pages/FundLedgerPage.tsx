@@ -75,33 +75,32 @@ export const FundLedgerPage: React.FC = () => {
     return matchFund && matchType && matchYear && matchSearch;
   });
 
-  const exportCSV = () => {
-    const headers = ['Mã Bút Toán', 'Ngày', 'Loại', 'Số Tiền', 'Quỹ', 'Phương Thức', 'Diễn Giải', 'Trạng Thái'];
-    const rows = filteredTransactions.map((tx) => [
-      tx.transaction_code,
-      tx.transaction_date,
-      tx.transaction_type,
-      tx.amount,
-      funds.find((f) => f.id === tx.fund_id)?.name || 'Quỹ',
-      tx.payment_method,
-      `"${(tx.description || '').replace(/"/g, '""')}"`,
-      tx.status,
-    ]);
+  const exportExcel = () => {
+    import('xlsx').then((XLSX) => {
+      const headers = ['Mã Bút Toán', 'Ngày', 'Loại', 'Số Tiền', 'Quỹ', 'Phương Thức', 'Diễn Giải', 'Trạng Thái'];
+      const rows = filteredTransactions.map((tx) => [
+        tx.transaction_code,
+        tx.transaction_date,
+        tx.transaction_type,
+        tx.amount,
+        funds.find((f) => f.id === tx.fund_id)?.name || 'Quỹ',
+        tx.payment_method,
+        tx.description || '',
+        tx.status,
+      ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `so_quy_gia_toc_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sổ Quỹ');
+      
+      XLSX.writeFile(workbook, `So_Quy_Gia_Toc_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    });
   };
 
   return (
-    <div className="space-y-6 animate-fade-in font-sans">
+    <div className="space-y-6 animate-fade-in font-sans print:bg-white print:text-black">
       {/* Header Banner */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-wrap items-center justify-between gap-4 relative overflow-hidden print:hidden">
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#166534] via-[#C49A3A] to-[#1E3A5F]" />
         <div className="flex items-center gap-3.5">
           <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 flex items-center justify-center text-amber-800 dark:text-amber-300 shadow-sm shrink-0">
@@ -127,11 +126,11 @@ export const FundLedgerPage: React.FC = () => {
           </button>
 
           <button
-            onClick={exportCSV}
+            onClick={exportExcel}
             className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span>Xuất CSV</span>
+            <span>Xuất Excel</span>
           </button>
 
           <button

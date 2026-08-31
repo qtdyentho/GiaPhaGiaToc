@@ -278,13 +278,6 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                 )}
               </div>
 
-              {parseError && (
-                <div className="p-3.5 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 rounded-2xl flex items-center gap-2 text-xs font-medium">
-                  <XCircle className="w-4 h-4 shrink-0" />
-                  <span>{parseError}</span>
-                </div>
-              )}
-
               {/* Banner Hướng dẫn & Tải file mẫu Phân Cấp & Âm Dương Lịch */}
               <div className="p-4 sm:p-5 bg-gradient-to-r from-amber-50/80 to-emerald-50/80 dark:from-amber-950/30 dark:to-emerald-950/30 rounded-2xl border border-amber-200/80 dark:border-amber-800/60 space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -711,7 +704,7 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                                     LỖI
                                   </span>
                                 )}
-                                {row.status === 'ERROR' && editingRowIndex !== realIdx && (
+                                {editingRowIndex !== realIdx && (
                                   <button
                                     onClick={() => handleStartEdit(realIdx, row)}
                                     className="p-1 hover:bg-amber-50 dark:hover:bg-amber-950/60 text-amber-700 dark:text-amber-400 rounded-lg cursor-pointer transition"
@@ -814,3 +807,5 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
     </div>
   );
 };
+
+

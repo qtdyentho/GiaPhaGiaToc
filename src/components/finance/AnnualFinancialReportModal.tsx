@@ -51,33 +51,30 @@ export const AnnualFinancialReportModal: React.FC<AnnualFinancialReportModalProp
 
   const totalBalance = funds.reduce((sum, f) => sum + (Number(f.current_balance) || 0), 0);
 
-  // Handle Export CSV
-  const handleExportCSV = () => {
-    const headers = ['Mã Chứng Từ', 'Ngày', 'Quỹ', 'Loại', 'Số Tiền (VNĐ)', 'Phương Thức', 'Nội Dung'];
-    const rows = yearTx.map((t) => {
-      const fundName = funds.find((f) => f.id === t.fund_id)?.name || 'Quỹ Chung';
-      const typeStr = t.transaction_type === 'INCOME' ? 'THU' : t.transaction_type === 'EXPENSE' ? 'CHI' : t.transaction_type;
-      return [
-        `"${t.transaction_code}"`,
-        `"${t.transaction_date}"`,
-        `"${fundName}"`,
-        `"${typeStr}"`,
-        t.amount,
-        `"${t.payment_method}"`,
-        `"${(t.description || '').replace(/"/g, '""')}"`,
-      ].join(',');
-    });
+  // Handle Export Excel
+  const handleExportExcel = () => {
+    import('xlsx').then((XLSX) => {
+      const headers = ['Mã Chứng Từ', 'Ngày', 'Quỹ', 'Loại', 'Số Tiền (VNĐ)', 'Phương Thức', 'Nội Dung'];
+      const rows = yearTx.map((t) => {
+        const fundName = funds.find((f) => f.id === t.fund_id)?.name || 'Quỹ Chung';
+        const typeStr = t.transaction_type === 'INCOME' ? 'THU' : t.transaction_type === 'EXPENSE' ? 'CHI' : t.transaction_type;
+        return [
+          t.transaction_code,
+          t.transaction_date,
+          fundName,
+          typeStr,
+          t.amount,
+          t.payment_method,
+          t.description || '',
+        ];
+      });
 
-    const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `bao_cao_tai_chinh_nam_${reportYear}_${familyCode.toLowerCase()}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+      const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, `Báo Cáo ${reportYear}`);
+      
+      XLSX.writeFile(workbook, `Bao_Cao_Tai_Chinh_Nam_${reportYear}_${familyCode.toLowerCase()}.xlsx`);
+    });
   };
 
   // Handle Print
@@ -117,7 +114,7 @@ export const AnnualFinancialReportModal: React.FC<AnnualFinancialReportModalProp
 
             <button
               type="button"
-              onClick={handleExportCSV}
+              onClick={handleExportExcel}
               className="px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 text-[#166534] dark:text-emerald-300 text-xs font-bold hover:bg-emerald-100 flex items-center gap-1.5 transition cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
