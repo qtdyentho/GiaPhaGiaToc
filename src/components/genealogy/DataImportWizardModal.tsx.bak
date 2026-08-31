@@ -428,7 +428,7 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
             </div>
           )}
 
-          {/* STEP 3: Quét Lỗi Logic & Chỉnh Sửa */}
+          {/* STEP 3: Quét Lỗi Logic, Chỉnh Sửa Trực Tiếp & Xem Trước */}
           {step === 3 && validation && (
             <div className="space-y-4">
               
@@ -552,20 +552,6 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                 </div>
               )}
 
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <button onClick={() => setStep(2)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl transition cursor-pointer text-xs">
-                  ← Quay Lại Bước 2
-                </button>
-                <button onClick={() => setStep(4)} className="px-5 py-2.5 bg-[#166534] hover:bg-[#14532d] text-white font-bold rounded-xl shadow-md transition inline-flex items-center space-x-1.5 cursor-pointer text-xs">
-                  <span>Chuyển Sang Bước 4: Xem Trước Dữ Liệu</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 4: Xem Trước & Xác Nhận */}
-          {step === 4 && validation && (
-            <div className="space-y-4">
               {/* Filter Tabs & Preview Bar */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
                 <div className="text-[11px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
@@ -984,7 +970,10 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
               {/* Action Buttons & Commit */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button 
-                  onClick={() => setStep(3)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl transition cursor-pointer text-xs">← Quay Lại Bước 3
+                  onClick={() => setStep(2)} 
+                  className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl transition cursor-pointer text-xs"
+                >
+                  ← Ghép Cột
                 </button>
 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto justify-end">
