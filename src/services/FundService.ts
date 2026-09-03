@@ -729,6 +729,7 @@ export class FundService {
   static async createContribution(contribution: Partial<Contribution>): Promise<{
     success: boolean;
     contribution?: Contribution;
+    transactionId?: string;
     error?: string;
   }> {
     const payload = {
@@ -741,22 +742,88 @@ export class FundService {
       payment_method: contribution.payment_method || 'BANK_TRANSFER',
     };
 
+    let transactionId: string | undefined = undefined;
+
     if (isSupabaseConfigured() && isUUID(payload.family_id) && isUUID(payload.fund_id)) {
-      const { data, error } = await supabase.from('contributions').insert([payload]).select().single();
-      if (error) {
-        console.error('createContribution error:', error);
-        return { success: false, error: error.message };
+      const { data: ctbData, error: ctbError } = await supabase.from('contributions').insert([payload]).select().single();
+      if (ctbError) {
+        console.error('createContribution error:', ctbError);
+        return { success: false, error: ctbError.message };
       }
-      if (data) return { success: true, contribution: data as Contribution };
+
+      // Tự động ghi nhận bút toán INCOME vào sổ cái và cộng số dư Quỹ
+      if (payload.amount > 0) {
+        try {
+          const txCode = `CD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`;
+          const { data: txData } = await supabase.from('financial_transactions').insert([{
+            family_id: payload.family_id,
+            fund_id: payload.fund_id,
+            transaction_code: txCode,
+            transaction_type: 'INCOME',
+            member_id: payload.member_id || null,
+            amount: payload.amount,
+            payment_method: payload.payment_method,
+            transaction_date: new Date().toISOString().slice(0, 10),
+            description: `Công đức / Tài trợ: ${payload.donor_name} - ${payload.purpose}`,
+            status: 'POSTED',
+          }]).select('id').single();
+
+          if (txData?.id) {
+            transactionId = txData.id;
+          }
+
+          // Cập nhật số dư quỹ
+          const { data: fundData } = await supabase.from('funds').select('current_balance').eq('id', payload.fund_id).single();
+          if (fundData) {
+            await supabase.from('funds').update({
+              current_balance: Number(fundData.current_balance || 0) + payload.amount,
+              updated_at: new Date().toISOString(),
+            }).eq('id', payload.fund_id);
+          }
+        } catch (postErr) {
+          console.warn('Lỗi ghi sổ cái khi đóng góp công đức:', postErr);
+        }
+      }
+
+      if (ctbData) return { success: true, contribution: ctbData as Contribution, transactionId };
     }
 
+    // Fallback Mock Execution
     const newCtb: Contribution = {
       id: `ctb-${Date.now()}`,
       ...payload,
       created_at: new Date().toISOString(),
     };
     mockContributions.unshift(newCtb);
-    return { success: true, contribution: newCtb };
+
+    // Cập nhật số dư mock fund và ghi mock transaction
+    if (payload.amount > 0) {
+      const fund = mockFunds.find((f) => f.id === payload.fund_id);
+      if (fund) {
+        fund.current_balance += payload.amount;
+        fund.updated_at = new Date().toISOString();
+      }
+
+      const txId = `tx-ctb-${Date.now()}`;
+      transactionId = txId;
+      mockTransactions.unshift({
+        id: txId,
+        family_id: payload.family_id,
+        fund_id: payload.fund_id,
+        transaction_code: `TX-CD-${Date.now().toString().slice(-6)}`,
+        transaction_type: 'INCOME',
+        member_id: payload.member_id,
+        amount: payload.amount,
+        payment_method: payload.payment_method,
+        transaction_date: new Date().toISOString().slice(0, 10),
+        description: `Công đức / Tài trợ: ${payload.donor_name} - ${payload.purpose}`,
+        status: 'POSTED',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    }
+
+    return { success: true, contribution: newCtb, transactionId };
   }
 
   // ==========================================

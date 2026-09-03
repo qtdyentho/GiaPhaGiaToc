@@ -52,10 +52,14 @@ export class FinancialReconciliationService {
         } else if (tx.transaction_type === 'REVERSAL') {
           const refTx = tx.reference_transaction_id ? txMap.get(tx.reference_transaction_id) : undefined;
           if (refTx) {
-            if (refTx.transaction_type === 'EXPENSE') {
-              reversal += tx.amount; // Hoàn chi: cộng lại vào quỹ
-            } else {
-              reversal -= tx.amount; // Hoàn thu: trừ khỏi quỹ
+            // Nếu giao dịch gốc vẫn là POSTED (được tính vào income/expense), bút toán REVERSAL này là để đối trừ.
+            // Nếu giao dịch gốc đã chuyển sang status = 'REVERSED', nó đã bị loại khỏi income/expense, không trừ lần 2.
+            if (refTx.status === 'POSTED') {
+              if (refTx.transaction_type === 'EXPENSE') {
+                reversal += tx.amount; // Hoàn chi: cộng lại vào quỹ
+              } else {
+                reversal -= tx.amount; // Hoàn thu: trừ khỏi quỹ
+              }
             }
           } else if (tx.expense_id || /hoàn chi|thu hồi chi|chi/i.test(tx.description || '')) {
             reversal += tx.amount;
@@ -117,5 +121,32 @@ export class FinancialReconciliationService {
       isMatched,
       status: isMatched ? 'SUCCESS' : bankReceivedAmount < invoice.total ? 'PARTIAL' : 'MISMATCH',
     };
+  }
+
+  /**
+   * Đối soát toàn bộ các Quỹ của một Gia Tộc
+   */
+  static async reconcileFamilyFunds(
+    familyId?: string,
+    fundsList?: Fund[],
+    transactionsList?: FinancialTransaction[]
+  ): Promise<DailyFundReconciliationReport[]> {
+    let funds = fundsList;
+    let transactions = transactionsList;
+
+    if (!funds) {
+      const { FundService } = await import('./FundService');
+      funds = await FundService.getFunds(familyId);
+    }
+
+    if (!transactions) {
+      const { FundService } = await import('./FundService');
+      transactions = await FundService.getLedger(familyId);
+    }
+
+    return (funds || []).map((f) => {
+      const fundTxs = (transactions || []).filter((tx) => tx.fund_id === f.id);
+      return this.reconcileFund(f, fundTxs);
+    });
   }
 }

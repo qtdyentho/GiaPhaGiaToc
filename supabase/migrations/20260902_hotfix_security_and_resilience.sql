@@ -240,3 +240,126 @@ BEGIN
     RETURN v_rev_id;
 END;
 $$;
+
+-- 6. TRIGGER BAO VE SO CAI BAT BIEN (RULE 4 IMMUTABLE LEDGER)
+CREATE OR REPLACE FUNCTION public.fn_prevent_ledger_tampering()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        IF OLD.status = 'POSTED' THEN
+            RAISE EXCEPTION 'NGHIEM CAM XOA BUT TOAN DA GHI SO (POSTED). Bat buoc phai thuc hien dao nguoc (REVERSAL) theo quy dinh ke toan dong ho.';
+        END IF;
+        RETURN OLD;
+    END IF;
+
+    IF TG_OP = 'UPDATE' THEN
+        IF OLD.status = 'POSTED' THEN
+            -- Chi cho phep cap nhat status sang REVERSED
+            IF NEW.status = 'REVERSED' AND NEW.amount = OLD.amount AND NEW.fund_id = OLD.fund_id AND NEW.transaction_type = OLD.transaction_type THEN
+                RETURN NEW;
+            ELSE
+                RAISE EXCEPTION 'BUT TOAN DA GHI SO LA BAT BIEN (IMMUTABLE). Khong duoc phep sua doi so tien, quy hoac loai giao dich.';
+            END IF;
+        END IF;
+        RETURN NEW;
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_protect_immutable_ledger ON public.financial_transactions;
+CREATE TRIGGER trg_protect_immutable_ledger
+BEFORE UPDATE OR DELETE ON public.financial_transactions
+FOR EACH ROW
+EXECUTE FUNCTION public.fn_prevent_ledger_tampering();
+
+-- 7. RPC THU QUY TRUC TIEP & NGHIA VU THU DINH MUC AN TOAN (SAFE DIRECT & ASSESSMENT INCOME)
+CREATE OR REPLACE FUNCTION public.record_income_payment(
+    p_family_id UUID,
+    p_fund_id UUID,
+    p_assessment_id UUID,
+    p_amount NUMERIC,
+    p_payment_method payment_method,
+    p_transaction_date DATE,
+    p_description TEXT,
+    p_receipt_url TEXT,
+    p_user_id UUID,
+    p_member_id UUID DEFAULT NULL,
+    p_category_id UUID DEFAULT NULL
+)
+RETURNS UUID AS $$
+DECLARE
+    v_assessment RECORD;
+    v_tx_id UUID;
+    v_tx_code TEXT;
+    v_new_paid NUMERIC;
+    v_new_status assessment_status;
+    v_cat_id UUID := p_category_id;
+    v_event_id UUID := NULL;
+    v_mem_id UUID := p_member_id;
+BEGIN
+    IF p_amount <= 0 THEN
+        RAISE EXCEPTION 'So tien thanh toan phai lon hon 0.';
+    END IF;
+
+    -- 1. Neu co gan voi nghia vu thu dinh muc (Assessment)
+    IF p_assessment_id IS NOT NULL THEN
+        SELECT * INTO v_assessment FROM public.income_assessments 
+        WHERE id = p_assessment_id AND family_id = p_family_id FOR UPDATE;
+
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'Khoan thu dinh muc khong ton tai hoac khong thuoc gia toc nay.';
+        END IF;
+
+        v_new_paid := v_assessment.amount_paid + p_amount;
+        IF v_new_paid >= v_assessment.amount_due THEN
+            v_new_status := 'PAID';
+        ELSE
+            v_new_status := 'PARTIAL';
+        END IF;
+
+        v_cat_id := COALESCE(v_cat_id, v_assessment.category_id);
+        v_event_id := v_assessment.event_id;
+        v_mem_id := COALESCE(v_mem_id, v_assessment.member_id);
+
+        UPDATE public.income_assessments 
+        SET amount_paid = v_new_paid,
+            status = v_new_status,
+            updated_at = NOW()
+        WHERE id = p_assessment_id;
+    END IF;
+
+    -- 2. Sinh ma giao dich duy nhat
+    v_tx_code := 'THU-' || TO_CHAR(NOW(), 'YYYYMMDD') || '-' || LPAD(FLOOR(RANDOM()*10000)::TEXT, 4, '0');
+
+    -- 3. Tao ban ghi giao dich tai chinh POSTED
+    INSERT INTO public.financial_transactions (
+        family_id, fund_id, transaction_code, transaction_type, category_id,
+        event_id, member_id, assessment_id, amount, payment_method,
+        transaction_date, description, receipt_url, status, created_by
+    ) VALUES (
+        p_family_id, p_fund_id, v_tx_code, 'INCOME', v_cat_id,
+        v_event_id, v_mem_id, p_assessment_id, p_amount, p_payment_method,
+        p_transaction_date, p_description, p_receipt_url, 'POSTED', p_user_id
+    ) RETURNING id INTO v_tx_id;
+
+    -- 4. Cap nhat so du quy nguyen tu
+    UPDATE public.funds 
+    SET current_balance = current_balance + p_amount,
+        updated_at = NOW()
+    WHERE id = p_fund_id;
+
+    -- 5. Ghi nhat ky kiem toan
+    INSERT INTO public.audit_logs (
+        family_id, user_id, action, entity_type, entity_id, new_data
+    ) VALUES (
+        p_family_id, p_user_id, 'POST', 'financial_transactions', v_tx_id,
+        jsonb_build_object('amount', p_amount, 'assessment_id', p_assessment_id, 'code', v_tx_code)
+    );
+
+    RETURN v_tx_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
