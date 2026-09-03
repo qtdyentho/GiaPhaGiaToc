@@ -1,4 +1,4 @@
-﻿-- ============================================================================
+-- ============================================================================
 -- MIGRATION HOTFIX: VA LO HONG BAO MAT CLAN PASS & RO RI PIN HASH
 -- Du an: GiaPhaGiaToc
 -- Ngay: 2026-09-02
@@ -363,3 +363,71 @@ BEGIN
     RETURN v_tx_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
+
+-- ============================================================================
+-- 8. SIẾT CHẶT RBAC RLS TẠI POSTGRESQL (SEC-01 & BIL-01)
+-- ============================================================================
+
+-- 8.1. Bảo vệ bảng members: Chỉ OWNER, ADMIN hoặc GENEALOGY_ADMIN mới được ghi
+DROP POLICY IF EXISTS members_tenant_write ON public.members;
+DROP POLICY IF EXISTS members_rbac_write ON public.members;
+
+CREATE POLICY members_rbac_write ON public.members
+  FOR ALL TO authenticated
+  USING (
+    family_id IN (
+      SELECT family_id FROM public.family_memberships 
+      WHERE user_id = auth.uid() 
+        AND status = 'ACTIVE' 
+        AND role IN ('OWNER', 'ADMIN', 'GENEALOGY_ADMIN')
+    )
+    OR public.is_superadmin()
+  )
+  WITH CHECK (
+    family_id IN (
+      SELECT family_id FROM public.family_memberships 
+      WHERE user_id = auth.uid() 
+        AND status = 'ACTIVE' 
+        AND role IN ('OWNER', 'ADMIN', 'GENEALOGY_ADMIN')
+    )
+    OR public.is_superadmin()
+  );
+
+-- 8.2. Bảo vệ bảng quỹ và sổ cái tài chính: Chỉ OWNER, ADMIN, TREASURER mới được ghi
+DROP POLICY IF EXISTS funds_tenant_write ON public.funds;
+DROP POLICY IF EXISTS funds_rbac_write ON public.funds;
+
+CREATE POLICY funds_rbac_write ON public.funds
+  FOR ALL TO authenticated
+  USING (
+    family_id IN (
+      SELECT family_id FROM public.family_memberships 
+      WHERE user_id = auth.uid() 
+        AND status = 'ACTIVE' 
+        AND role IN ('OWNER', 'ADMIN', 'TREASURER')
+    )
+    OR public.is_superadmin()
+  )
+  WITH CHECK (
+    family_id IN (
+      SELECT family_id FROM public.family_memberships 
+      WHERE user_id = auth.uid() 
+        AND status = 'ACTIVE' 
+        AND role IN ('OWNER', 'ADMIN', 'TREASURER')
+    )
+    OR public.is_superadmin()
+  );
+
+-- 8.3. Bảo vệ bảng subscriptions (BIL-01): Chỉ cho phép SELECT, cấm tự nâng cấp gói trái phép
+DROP POLICY IF EXISTS subscriptions_tenant_write ON public.subscriptions;
+DROP POLICY IF EXISTS subscriptions_admin_write ON public.subscriptions;
+
+CREATE POLICY subscriptions_admin_write ON public.subscriptions
+  FOR ALL TO authenticated
+  USING (
+    public.is_superadmin()
+  )
+  WITH CHECK (
+    public.is_superadmin()
+  );
+

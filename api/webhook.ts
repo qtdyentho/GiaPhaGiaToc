@@ -25,7 +25,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const signature = req.headers['x-bank-signature'] as string;
-  const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+  let rawBody: string;
+  if (Buffer.isBuffer(req.body)) {
+    rawBody = req.body.toString('utf8');
+  } else if (typeof req.body === 'string') {
+    rawBody = req.body;
+  } else {
+    rawBody = JSON.stringify(req.body);
+  }
 
   // 1. Mandatory HMAC Signature Verification
   if (!signature) {
@@ -44,7 +51,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ success: false, error: 'Invalid HMAC Signature' });
   }
 
-  const payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+  let payload: any = {};
+  try {
+    payload = Buffer.isBuffer(req.body)
+      ? JSON.parse(req.body.toString('utf8'))
+      : typeof req.body === 'string'
+      ? JSON.parse(req.body)
+      : req.body;
+  } catch (parseErr) {
+    return res.status(400).json({ success: false, error: 'Malformed JSON payload in webhook body' });
+  }
+
   const { transactionId, invoiceNumber, amount, paymentMethod } = payload || {};
 
   if (!transactionId || !invoiceNumber || !amount) {

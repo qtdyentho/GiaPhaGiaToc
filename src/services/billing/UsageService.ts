@@ -1,5 +1,5 @@
 import { UsageCounter, PlanFeature } from '../../types/database';
-import { mockUsageCounters, mockMembers, mockEvents, mockBranches, mockTransactions } from '../mockData';
+import { mockUsageCounters, mockMembers, mockEvents, mockBranches, mockTransactions, mockPlans } from '../mockData';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { SubscriptionService } from './SubscriptionService';
 
@@ -72,6 +72,54 @@ export class UsageService {
 
     const storageUsageGB = Number(((memberCount * 12 + 100) / 1024).toFixed(2));
 
+    // Đọc động hạn mức theo gói cước thực tế của dòng họ (BIL-04)
+    let maxMembers: number | null = 300;
+    let maxBranches: number | null = 15;
+    let maxEvents: number | null = 50;
+    let maxStorage: number | null = 5.0;
+
+    try {
+      const sub = await SubscriptionService.getSubscription(familyId);
+      if (sub) {
+        const plan = mockPlans.find((p) => p.id === sub.plan_id) || mockPlans.find((p) => p.code === (sub as any).plan_tier);
+        const planCode = plan?.code || (sub as any).plan_tier || 'GIA_TOC';
+        switch (planCode) {
+          case 'FREE':
+            maxMembers = 30;
+            maxBranches = 3;
+            maxEvents = 5;
+            maxStorage = 1.0;
+            break;
+          case 'FAMILY':
+            maxMembers = 100;
+            maxBranches = 5;
+            maxEvents = 20;
+            maxStorage = 2.0;
+            break;
+          case 'GIA_TOC':
+            maxMembers = 300;
+            maxBranches = 15;
+            maxEvents = 50;
+            maxStorage = 5.0;
+            break;
+          case 'DONG_HO':
+            maxMembers = 1000;
+            maxBranches = 50;
+            maxEvents = 100;
+            maxStorage = 15.0;
+            break;
+          case 'PREMIUM':
+            maxMembers = null;
+            maxBranches = null;
+            maxEvents = null;
+            maxStorage = null;
+            break;
+        }
+      }
+    } catch {
+      // Giữ default an toàn
+    }
+
     const metrics: {
       code: string;
       name: string;
@@ -79,10 +127,10 @@ export class UsageService {
       limit: number | null;
       unit: string;
     }[] = [
-      { code: 'MAX_MEMBERS', name: 'Số lượng thành viên', usage: memberCount, limit: 300, unit: 'người' },
-      { code: 'MAX_BRANCHES', name: 'Số chi / nhánh dòng họ', usage: branchCount, limit: 10, unit: 'chi' },
-      { code: 'MAX_EVENTS', name: 'Sự kiện & Đại lễ năm', usage: eventCount, limit: 50, unit: 'sự kiện' },
-      { code: 'MAX_STORAGE', name: 'Dung lượng lưu trữ', usage: storageUsageGB, limit: 5.0, unit: 'GB' },
+      { code: 'MAX_MEMBERS', name: 'Số lượng thành viên', usage: memberCount, limit: maxMembers, unit: 'người' },
+      { code: 'MAX_BRANCHES', name: 'Số chi / nhánh dòng họ', usage: branchCount, limit: maxBranches, unit: 'chi' },
+      { code: 'MAX_EVENTS', name: 'Sự kiện & Đại lễ năm', usage: eventCount, limit: maxEvents, unit: 'sự kiện' },
+      { code: 'MAX_STORAGE', name: 'Dung lượng lưu trữ', usage: storageUsageGB, limit: maxStorage, unit: 'GB' },
       { code: 'MAX_EXPORTS', name: 'Xuất cây gia phả PDF', usage: 2, limit: 20, unit: 'lượt/tháng' },
       { code: 'MAX_REPORTS', name: 'Báo cáo thu chi chuyên sâu', usage: Math.min(txCount, 30), limit: 30, unit: 'bản/tháng' },
     ];

@@ -47,7 +47,14 @@ export const SubscriptionGate: React.FC<SubscriptionGateProps> = ({
         </div>
 
         {/* Read-only disabled content wrapper */}
-        <div className="pointer-events-none opacity-80 select-none">
+        <div
+          className="relative pointer-events-none opacity-80 select-none"
+          aria-disabled="true"
+          onClickCapture={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+        >
           {children}
         </div>
       </div>

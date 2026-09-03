@@ -246,7 +246,7 @@ export function lunarToSolar(
   if (b11 - a11 > 365) {
     const leapOff = getLeapMonthOffset(a11, timeZone);
     let leapMonth = leapOff - 2;
-    if (leapMonth < 0) leapMonth += 12;
+    if (leapMonth <= 0) leapMonth += 12;
 
     if (isLeap && lunarMonth !== leapMonth) {
       // Nếu yêu cầu tháng nhuận nhưng tháng này không nhuận trong năm

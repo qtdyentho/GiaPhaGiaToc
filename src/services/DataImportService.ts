@@ -2144,6 +2144,7 @@ export class DataImportService {
               memorialsToInsert.push({
                 family_id: targetFamilyUUID,
                 member_id: currentMemberId,
+                title: `Ngày giỗ ${m.fullName}`,
                 lunar_day: m.deathLunarDay,
                 lunar_month: m.deathLunarMonth,
                 lunar_year: m.deathLunarYear || null,
