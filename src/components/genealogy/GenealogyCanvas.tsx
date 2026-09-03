@@ -65,6 +65,25 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
   const [kinshipResult, setKinshipResult] = useState<KinshipResult | null>(null);
   const [isCalculatingKinship, setIsCalculatingKinship] = useState<boolean>(false);
 
+  // Collapsible Subtree States (Performance Optimization for Large Trees)
+  const [collapsedNodeIds, setCollapsedNodeIds] = useState<Set<string>>(new Set());
+
+  const toggleCollapseNode = useCallback((nodeId: string) => {
+    setCollapsedNodeIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(nodeId)) {
+        next.delete(nodeId);
+      } else {
+        next.add(nodeId);
+      }
+      return next;
+    });
+  }, []);
+
+  const expandAllNodes = useCallback(() => {
+    setCollapsedNodeIds(new Set());
+  }, []);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const treeContentRef = useRef<HTMLDivElement>(null);
 
@@ -555,7 +574,6 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
           const spouse = members.find((m) => m.id === spouseId);
           if (spouse && !memberSpouses.some((s) => s.id === spouse.id)) {
             memberSpouses.push(spouse);
-            visited.add(spouse.id);
           }
         });
 
@@ -563,7 +581,6 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
         const spouse = members.find((m) => m.id === member.spouse_id);
         if (spouse && !memberSpouses.some((s) => s.id === spouse.id)) {
           memberSpouses.push(spouse);
-          visited.add(spouse.id);
         }
       }
 
@@ -939,6 +956,19 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
           <span className="sm:hidden">Toàn Bộ</span>
         </button>
 
+        {collapsedNodeIds.size > 0 && (
+          <button
+            type="button"
+            onClick={expandAllNodes}
+            title="Mở rộng toàn bộ các nhánh con đã thu gọn"
+            className="canvas-control-button px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-xl text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/70 hover:bg-amber-100 dark:hover:bg-amber-900 text-xs font-bold transition flex items-center gap-1 cursor-pointer border border-amber-300 dark:border-amber-700 animate-pulse"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+            <span className="hidden sm:inline">Mở Rộng Hết ({collapsedNodeIds.size})</span>
+            <span className="sm:hidden">Mở ({collapsedNodeIds.size})</span>
+          </button>
+        )}
+
         <button
           type="button"
           onClick={toggleFullscreen}
@@ -977,6 +1007,8 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
                   selectedMemberId={selectedMemberId || highlightedMemberId}
                   onSelectMember={handleMemberCardClick}
                   onAddRelation={onAddRelation}
+                  collapsedNodeIds={collapsedNodeIds}
+                  onToggleCollapse={toggleCollapseNode}
                 />
               </div>
             ))

@@ -10,7 +10,7 @@ test.describe('Genealogy Module', () => {
 
   test('hiển thị danh sách / cây thành viên', async ({ page }) => {
     await loginAsDemo(page, '/app/genealogy');
-    const treeElement = page.locator('canvas, svg, [data-testid="member-card"], .member-card, .genealogy-node, button').first();
+    const treeElement = page.locator('.member-card-interactive, [id^="member-node-"], .canvas-control-button, button:visible').first();
     await expect(treeElement).toBeVisible({ timeout: 10_000 });
   });
 

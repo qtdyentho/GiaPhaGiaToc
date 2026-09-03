@@ -19,6 +19,8 @@ interface GenealogyTreeNodeProps {
   selectedMemberId?: string | null;
   onSelectMember: (member: Member) => void;
   onAddRelation?: (targetMember: Member, defaultType: 'CHILD' | 'SPOUSE' | 'PARENT') => void;
+  collapsedNodeIds?: Set<string>;
+  onToggleCollapse?: (nodeId: string) => void;
 }
 
 export const GenealogyTreeNode: React.FC<GenealogyTreeNodeProps> = ({
@@ -29,11 +31,14 @@ export const GenealogyTreeNode: React.FC<GenealogyTreeNodeProps> = ({
   selectedMemberId,
   onSelectMember,
   onAddRelation,
+  collapsedNodeIds,
+  onToggleCollapse,
 }) => {
   const { primaryMember: m, spouses, children, generationNumber } = node;
   const isSelected = selectedMemberId === m.id;
   const isDeceased = m.life_status === 'DECEASED';
   const lineageInfo = getLineageHierarchyInfo(m, generations, branches, allMembers);
+  const isCollapsed = collapsedNodeIds ? collapsedNodeIds.has(m.id) : false;
 
   return (
     <div className="flex flex-col items-center relative">
@@ -302,51 +307,69 @@ export const GenealogyTreeNode: React.FC<GenealogyTreeNodeProps> = ({
           {/* Trục đứng liên tục từ đáy cha mẹ xuyên qua badge xuống thanh ngang con */}
           <div className="relative flex flex-col items-center justify-center my-1">
             {/* Dây đứng xuyên suốt không đứt đoạn */}
-            <div className="absolute inset-y-0 w-[2px] bg-emerald-600/80 dark:bg-emerald-400/80" />
+            {!isCollapsed && <div className="absolute inset-y-0 w-[2px] bg-emerald-600/80 dark:bg-emerald-400/80" />}
             <div className="relative z-10 my-2">
-              <span className="px-3 py-0.5 rounded-full bg-[#166534] text-white text-[10px] font-bold shadow-xs font-serif inline-flex items-center gap-1 border border-emerald-500/40">
-                <Sparkles className="w-3 h-3 text-amber-300" />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleCollapse && onToggleCollapse(m.id);
+                }}
+                className={`px-3 py-1 rounded-full text-[10px] font-bold shadow-xs font-serif inline-flex items-center gap-1.5 border transition-all cursor-pointer hover:scale-105 ${
+                  isCollapsed
+                    ? 'bg-amber-600 hover:bg-amber-700 text-white border-amber-400 ring-2 ring-amber-400/30'
+                    : 'bg-[#166534] hover:bg-[#15803d] text-white border-emerald-500/40'
+                }`}
+                title={isCollapsed ? "Bấm để mở rộng cành con cháu" : "Bấm để thu gọn cành con cháu"}
+              >
+                <Sparkles className={`w-3 h-3 ${isCollapsed ? 'text-white' : 'text-amber-300'}`} />
                 <span>
-                  {children.length} Hậu Duệ (Đời Thứ {generationNumber + 1})
+                  {isCollapsed
+                    ? `[+] ${children.length} Hậu Duệ (Đã Thu Gọn)`
+                    : `${children.length} Hậu Duệ (Đời Thứ ${generationNumber + 1})`}
                 </span>
-              </span>
+              </button>
             </div>
           </div>
 
-          {/* Khung chứa các con: Căn giữa hoàn hảo so với cha mẹ */}
-          <div className="flex items-start justify-center relative pt-6">
-            {/* Render từng con cháu đệ quy với thanh nối liền mạch chuẩn xác */}
-            {children.map((childNode, cIdx) => (
-              <div key={childNode.id} className="flex flex-col items-center relative px-6">
-                {/* Đường dây nhánh ngang (Horizontal Connector Segment) */}
-                {children.length > 1 && (
-                  <div
-                    className={`absolute top-0 h-[2px] bg-emerald-600/80 dark:bg-emerald-400/80 ${
-                      cIdx === 0
-                        ? 'left-1/2 right-0'
-                        : cIdx === children.length - 1
-                        ? 'left-0 right-1/2'
-                        : 'left-0 right-0'
-                    }`}
+          {/* Khung chứa các con: Căn giữa hoàn hảo so với cha mẹ (chỉ hiển thị khi không thu gọn) */}
+          {!isCollapsed && (
+            <div className="flex items-start justify-center relative pt-6 animate-fade-in">
+              {/* Render từng con cháu đệ quy với thanh nối liền mạch chuẩn xác */}
+              {children.map((childNode, cIdx) => (
+                <div key={childNode.id} className="flex flex-col items-center relative px-6">
+                  {/* Đường dây nhánh ngang (Horizontal Connector Segment) */}
+                  {children.length > 1 && (
+                    <div
+                      className={`absolute top-0 h-[2px] bg-emerald-600/80 dark:bg-emerald-400/80 ${
+                        cIdx === 0
+                          ? 'left-1/2 right-0'
+                          : cIdx === children.length - 1
+                          ? 'left-0 right-1/2'
+                          : 'left-0 right-0'
+                      }`}
+                    />
+                  )}
+
+                  {/* Đường đứng nối từ thanh ngang xuống đỉnh của người con */}
+                  <div className="w-[2px] h-6 bg-emerald-600/80 dark:bg-emerald-400/80 absolute -top-6 left-1/2 -translate-x-1/2" />
+
+                  {/* Đệ quy Node Con */}
+                  <GenealogyTreeNode
+                    node={childNode}
+                    generations={generations}
+                    branches={branches}
+                    allMembers={allMembers}
+                    selectedMemberId={selectedMemberId}
+                    onSelectMember={onSelectMember}
+                    onAddRelation={onAddRelation}
+                    collapsedNodeIds={collapsedNodeIds}
+                    onToggleCollapse={onToggleCollapse}
                   />
-                )}
-
-                {/* Đường đứng nối từ thanh ngang xuống đỉnh của người con */}
-                <div className="w-[2px] h-6 bg-emerald-600/80 dark:bg-emerald-400/80 absolute -top-6 left-1/2 -translate-x-1/2" />
-
-                {/* Đệ quy Node Con */}
-                <GenealogyTreeNode
-                  node={childNode}
-                  generations={generations}
-                  branches={branches}
-                  allMembers={allMembers}
-                  selectedMemberId={selectedMemberId}
-                  onSelectMember={onSelectMember}
-                  onAddRelation={onAddRelation}
-                />
-              </div>
-            ))}
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

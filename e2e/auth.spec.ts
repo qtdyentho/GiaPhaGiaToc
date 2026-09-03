@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { loginAsDemo } from './helpers/authHelper';
 
 /**
  * E2E Tests: Authentication Flow
@@ -59,15 +60,11 @@ test.describe('Authentication', () => {
     await expect(successTitle).toBeVisible({ timeout: 5_000 });
   });
 
-  test('đăng nhập nhanh bằng nút Đại Tộc Nguyễn Văn thành công vào dashboard', async ({ page }) => {
-    await page.goto('/login');
-
-    const quickBtn = page.locator('button:has-text("Đại Tộc Nguyễn Văn")').first();
-    await expect(quickBtn).toBeVisible();
-    await quickBtn.click();
-
-    // Điều hướng vào dashboard
+  test('phiên đăng nhập hợp lệ truy cập thành công vào dashboard', async ({ page }) => {
+    await loginAsDemo(page, '/app/dashboard');
     await expect(page).toHaveURL(/\/app|\/dashboard/i, { timeout: 10_000 });
+    const heading = page.locator('h1, h2, h3, header, span, div').filter({ hasText: /Tổng Quan|Bảng Điều Khiển|Đại Tộc|Gia Tộc/i }).first();
+    await expect(heading).toBeVisible({ timeout: 10_000 });
   });
 
   test('link đến trang đăng ký hoạt động', async ({ page }) => {
