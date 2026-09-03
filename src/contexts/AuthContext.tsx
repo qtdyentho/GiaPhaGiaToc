@@ -44,62 +44,42 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const INITIAL_FAMILIES: Family[] = [];
 const INITIAL_MEMBERSHIPS: FamilyMembership[] = [];
 
+function safeJsonParse<T>(raw: string | null, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    console.warn('[AuthContext] safeJsonParse caught invalid storage JSON:', err);
+    return fallback;
+  }
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<Profile | null>(() => {
-    const saved = localStorage.getItem('hl_auth_user');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        // ignore
-      }
-    }
-    return null; // Không tự động đăng nhập tài khoản mock nếu chưa đăng nhập
+    return safeJsonParse<Profile | null>(localStorage.getItem('hl_auth_user'), null);
   });
 
   const [families, setFamilies] = useState<Family[]>(() => {
-    const saved = localStorage.getItem('hl_families');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        // ignore
-      }
-    }
-    return INITIAL_FAMILIES;
+    return safeJsonParse<Family[]>(localStorage.getItem('hl_families'), INITIAL_FAMILIES);
   });
 
   const [memberships, setMemberships] = useState<FamilyMembership[]>(() => {
-    const saved = localStorage.getItem('hl_memberships');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        // ignore
-      }
-    }
-    return INITIAL_MEMBERSHIPS;
+    return safeJsonParse<FamilyMembership[]>(localStorage.getItem('hl_memberships'), INITIAL_MEMBERSHIPS);
   });
 
   const [platformRole, setPlatformRole] = useState<PlatformRole>('USER');
 
   // Chỉ kích hoạt activeFamily khi thuộc về đúng tài khoản user đang đăng nhập hoặc có ClanPassSession
   const [activeFamily, setActiveFamily] = useState<Family | null>(() => {
-    const savedUserStr = localStorage.getItem('hl_auth_user');
-    const savedUser: Profile | null = savedUserStr ? JSON.parse(savedUserStr) : null;
-    
-    // Check Clan Pass Session if not logged in as a normal user
-    const clanPassStr = localStorage.getItem('hl_clan_pass_session');
-    const clanPass = clanPassStr ? JSON.parse(clanPassStr) : null;
+    const savedUser = safeJsonParse<Profile | null>(localStorage.getItem('hl_auth_user'), null);
+    const clanPass = safeJsonParse<any | null>(localStorage.getItem('hl_clan_pass_session'), null);
 
     if (!savedUser && !clanPass) return null;
 
-    const savedFamiliesStr = localStorage.getItem('hl_families');
-    const allFamilies: Family[] = savedFamiliesStr ? JSON.parse(savedFamiliesStr) : INITIAL_FAMILIES;
+    const allFamilies = safeJsonParse<Family[]>(localStorage.getItem('hl_families'), INITIAL_FAMILIES);
 
     if (savedUser) {
-      const savedMembershipsStr = localStorage.getItem('hl_memberships');
-      const allMemberships: FamilyMembership[] = savedMembershipsStr ? JSON.parse(savedMembershipsStr) : mockMemberships;
+      const allMemberships = safeJsonParse<FamilyMembership[]>(localStorage.getItem('hl_memberships'), mockMemberships);
 
       // Lọc các dòng họ mà user này thực sự có quyền truy cập
       const userFamilies = allFamilies.filter(
@@ -169,22 +149,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         let userEmail: string | null = null;
         let userId: string | null = null;
 
-        // 1. Check local storage
-        const savedUserStr = localStorage.getItem('hl_auth_user');
-        if (savedUserStr) {
-          try {
-            const savedUser: Profile = JSON.parse(savedUserStr);
-            userEmail = savedUser.email;
-            userId = savedUser.id;
-          } catch {}
-        }
-
-        // 2. If no local storage, check active Supabase Auth session
-        if (!userEmail) {
-          const { data: sessionData } = await supabase.auth.getSession();
-          if (sessionData?.session?.user) {
-            userEmail = sessionData.session.user.email || null;
-            userId = sessionData.session.user.id || null;
+        // 1. Luôn ưu tiên kiểm tra phiên xác thực thực tế từ Supabase Auth trước (Chống giả mạo LocalStorage)
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session?.user) {
+          userEmail = sessionData.session.user.email || null;
+          userId = sessionData.session.user.id || null;
+        } else {
+          // Nếu Supabase Auth không có session, hủy bỏ hl_auth_user để chống giả mạo phiên
+          const savedUser = safeJsonParse<Profile | null>(localStorage.getItem('hl_auth_user'), null);
+          if (savedUser && savedUser.id) {
+            // Chỉ dùng cho dev mock nếu ID không phải UUID của Supabase Auth
+            if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(savedUser.id)) {
+              userEmail = savedUser.email;
+              userId = savedUser.id;
+            } else {
+              // Phiên Supabase đã hết hạn hoặc không hợp lệ -> Dọn sạch storage
+              localStorage.removeItem('hl_auth_user');
+              localStorage.removeItem('hl_active_family_id');
+            }
           }
         }
 
@@ -827,6 +809,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
+        // Xóa sạch phiên ClanPass của khách trước đó khi đăng nhập tài khoản thật
+        localStorage.removeItem('hl_clan_pass_session');
+
         if (resolvedFamily) {
           setActiveFamily(resolvedFamily);
           setActiveMembership(resolvedMembership);
@@ -837,7 +822,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { success: true, activeFamily: resolvedFamily, isSuperAdmin: isSuper };
         }
 
-        // Tài khoản hợp lệ nhưng chưa liên kết / tạo dòng họ nào
+        // Tài khoản hợp lệ nhưng chưa liên kết / tạo dòng họ nào -> Dọn sạch state của phiên trước
+        setFamilies([]);
+        setMemberships([]);
         setActiveFamily(null);
         setActiveMembership(null);
         sessionStorage.removeItem('active_family_id');

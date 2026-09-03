@@ -10,6 +10,7 @@ import { PageSkeleton } from './components/ui/PageSkeleton';
 import { DatabaseKeepAliveService } from './services/DatabaseKeepAliveService';
 
 import { ScrollToTop } from './components/ui/ScrollToTop';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
 /**
  * Trình nạp Lazy Component tự phục hồi:
@@ -132,7 +133,8 @@ export const App: React.FC = () => {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
           <BrowserRouter>
@@ -318,9 +320,10 @@ export const App: React.FC = () => {
           </Suspense>
         </BrowserRouter>
       </AuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
 };
 
 export default App;

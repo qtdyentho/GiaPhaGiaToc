@@ -16,6 +16,48 @@ export interface EventBudgetSummary {
 const isUUID = (str?: string | null): boolean =>
   Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
 
+const VALID_EVENT_TYPES = new Set([
+  'CLAN_ANCESTRAL_DAY',
+  'MEMORIAL',
+  'BRANCH_MEMORIAL',
+  'FAMILY_MEETING',
+  'ANCESTRAL_HALL_OPENING',
+  'ANCESTRAL_HALL_RENOVATION',
+  'CLAN_ANNIVERSARY',
+  'BIRTHDAY',
+  'LONGEVITY',
+  'WEDDING',
+  'FUNERAL',
+  'OTHER',
+]);
+
+const VALID_EVENT_SCOPES = new Set([
+  'FAMILY',
+  'BRANCH',
+  'SUB_BRANCH',
+  'HOUSEHOLD',
+  'INDIVIDUAL',
+]);
+
+function normalizeEventType(type?: string): any {
+  if (!type) return 'CLAN_ANCESTRAL_DAY';
+  if (VALID_EVENT_TYPES.has(type)) return type;
+  if (type === 'GIO_HO' || type === 'GIO_TO') return 'CLAN_ANCESTRAL_DAY';
+  if (type === 'GIO_CHI') return 'BRANCH_MEMORIAL';
+  if (type === 'HOP_HO') return 'FAMILY_MEETING';
+  if (type === 'KY_NIEM') return 'CLAN_ANNIVERSARY';
+  return 'OTHER';
+}
+
+function normalizeEventScope(scope?: string): any {
+  if (!scope) return 'FAMILY';
+  if (VALID_EVENT_SCOPES.has(scope)) return scope;
+  if (scope === 'ALL' || scope === 'TOAN_TOC') return 'FAMILY';
+  if (scope === 'CHI_HO') return 'BRANCH';
+  if (scope === 'PHAN_CHI') return 'SUB_BRANCH';
+  return 'FAMILY';
+}
+
 export class EventService {
   /**
    * Lấy danh sách sự kiện họ tộc có hỗ trợ bộ lọc
@@ -152,8 +194,8 @@ export class EventService {
         family_id: data.family_id,
         title: data.title,
         description: data.description,
-        event_type: data.event_type || 'GIO_HO',
-        scope: data.scope || 'ALL',
+        event_type: normalizeEventType(data.event_type),
+        scope: normalizeEventScope(data.scope),
         solar_date: solarDate || new Date().toISOString().split('T')[0],
         lunar_day: lunarDay || 1,
         lunar_month: lunarMonth || 1,
@@ -168,19 +210,18 @@ export class EventService {
       };
 
       if (isSupabaseConfigured() && isUUID(data.family_id)) {
-        try {
-          const { data: inserted, error } = await supabase
-            .from('events')
-            .insert([eventPayload])
-            .select()
-            .single();
+        const { data: inserted, error } = await supabase
+          .from('events')
+          .insert([eventPayload])
+          .select()
+          .single();
 
-          if (!error && inserted) {
-            return { success: true, event: inserted as Event };
-          }
-          if (error) return { success: false, error: error.message };
-        } catch (dbErr: any) {
-          console.warn('createEvent Supabase error:', dbErr);
+        if (error) {
+          console.error('createEvent Supabase error:', error);
+          return { success: false, error: error.message };
+        }
+        if (inserted) {
+          return { success: true, event: inserted as Event };
         }
       }
 

@@ -51,12 +51,24 @@ export const MemberProfilePage: React.FC = () => {
       }
       setLoading(true);
       try {
-        const found = await GenealogyService.getMemberById(id);
+        const found = await GenealogyService.getMemberById(id, activeFamily?.id);
         if (found) {
+          // BẢO MẬT PHÂN TÁCH ĐA GIA TỘC: Chặn đứng đọc trộm thành viên thuộc gia tộc khác (IDOR Guard)
+          if (activeFamily?.id && found.family_id !== activeFamily.id) {
+            console.warn('[Security Guard] Chặn truy cập thành viên không thuộc gia tộc active:', {
+              requestedMemberId: id,
+              targetFamilyId: found.family_id,
+              currentFamilyId: activeFamily.id,
+            });
+            setMember(null);
+            setLoading(false);
+            return;
+          }
+
           setMember(found);
           const [mems, tree] = await Promise.all([
-            MemorialService.getMemorials(found.family_id),
-            GenealogyService.getFamilyTree(found.family_id),
+            MemorialService.getMemorials(activeFamily?.id || found.family_id),
+            GenealogyService.getFamilyTree(activeFamily?.id || found.family_id),
           ]);
           const mem = mems.find((m) => m.member_id === found.id) || null;
           setMemorial(mem);

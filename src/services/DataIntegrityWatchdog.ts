@@ -144,11 +144,28 @@ export class DataIntegrityWatchdog {
     const issues: IntegrityIssue[] = [];
 
     let calculatedBalance = fund.opening_balance || 0;
+    const txMap = new Map<string, FinancialTransaction>(transactions.map((t) => [t.id, t]));
+
     for (const t of transactions) {
       if (t.status === 'POSTED') {
-        if (t.transaction_type === 'INCOME') calculatedBalance += t.amount;
-        else if (t.transaction_type === 'EXPENSE') calculatedBalance -= t.amount;
-        else if (t.transaction_type === 'REVERSAL') calculatedBalance += t.amount;
+        if (t.transaction_type === 'INCOME') {
+          calculatedBalance += t.amount;
+        } else if (t.transaction_type === 'EXPENSE') {
+          calculatedBalance -= t.amount;
+        } else if (t.transaction_type === 'REVERSAL') {
+          const refTx = t.reference_transaction_id ? txMap.get(t.reference_transaction_id) : undefined;
+          if (refTx) {
+            if (refTx.transaction_type === 'EXPENSE') {
+              calculatedBalance += t.amount; // Hoàn chi: cộng lại
+            } else {
+              calculatedBalance -= t.amount; // Hoàn thu: trừ đi
+            }
+          } else if (t.expense_id || /hoàn chi|thu hồi chi|chi/i.test(t.description || '')) {
+            calculatedBalance += t.amount;
+          } else {
+            calculatedBalance -= t.amount;
+          }
+        }
       }
     }
 

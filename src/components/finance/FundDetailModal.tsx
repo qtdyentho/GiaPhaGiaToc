@@ -49,7 +49,7 @@ export const FundDetailModal: React.FC<FundDetailModalProps> = ({
   const loadFundTransactions = async (fundId: string) => {
     setLoading(true);
     try {
-      const allTx = await FundService.getLedger();
+      const allTx = await FundService.getLedger(fund?.family_id);
       const fundTx = allTx.filter((t) => t.fund_id === fundId);
       setTransactions(fundTx);
     } catch (err) {

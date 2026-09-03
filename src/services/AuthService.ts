@@ -21,8 +21,10 @@ export class AuthService {
             updated_at: user.created_at,
           };
         }
+        return null;
       } catch (err) {
         console.error('AuthService getCurrentUser error:', err);
+        return null;
       }
     }
     const saved = localStorage.getItem('hl_auth_user');
@@ -30,12 +32,18 @@ export class AuthService {
   }
 
   static async signIn(email: string, password?: string): Promise<{ user: Profile; token: string }> {
-    if (isSupabaseConfigured() && password) {
+    if (isSupabaseConfigured()) {
+      if (!password) {
+        throw new Error('Mật khẩu là bắt buộc khi đăng nhập');
+      }
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
       });
-      if (!error && data.user) {
+      if (error) {
+        throw new Error(error.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
+      }
+      if (data?.user) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
@@ -55,6 +63,7 @@ export class AuthService {
           token: data.session?.access_token || '',
         };
       }
+      throw new Error('Không thể lấy thông tin phiên đăng nhập');
     }
 
     return {
@@ -64,7 +73,10 @@ export class AuthService {
   }
 
   static async signUp(email: string, fullName: string, phone?: string, password?: string): Promise<{ user: Profile }> {
-    if (isSupabaseConfigured() && password) {
+    if (isSupabaseConfigured()) {
+      if (!password) {
+        throw new Error('Mật khẩu là bắt buộc khi đăng ký tài khoản');
+      }
       const { data, error } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
@@ -76,7 +88,11 @@ export class AuthService {
         },
       });
 
-      if (!error && data.user) {
+      if (error) {
+        throw new Error(error.message || 'Đăng ký tài khoản thất bại');
+      }
+
+      if (data?.user) {
         const newProfile: Profile = {
           id: data.user.id,
           email: data.user.email || email,
@@ -86,9 +102,13 @@ export class AuthService {
           updated_at: new Date().toISOString(),
         };
 
-        await supabase.from('profiles').insert([newProfile]);
+        const { error: profileError } = await supabase.from('profiles').insert([newProfile]);
+        if (profileError) {
+          console.warn('Profile insert note:', profileError.message);
+        }
         return { user: newProfile };
       }
+      throw new Error('Đăng ký không thành công');
     }
 
     return {

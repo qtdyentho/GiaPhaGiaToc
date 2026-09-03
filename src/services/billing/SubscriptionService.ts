@@ -24,6 +24,34 @@ export class SubscriptionService {
     const now = new Date();
     const trialEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      const payload: Record<string, any> = {
+        family_id: familyId,
+        status: 'TRIALING',
+        billing_cycle: 'YEARLY',
+        current_period_start: now.toISOString(),
+        current_period_end: trialEnd.toISOString(),
+        cancel_at_period_end: false,
+        auto_renew: true,
+        payment_provider: 'VIETQR',
+      };
+      if (isUUID(planId)) {
+        payload.plan_id = planId;
+      }
+
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .insert([payload])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('createTrialSubscription error:', error);
+        throw new Error(error.message || 'Không thể tạo gói dùng thử trên cơ sở dữ liệu');
+      }
+      if (data) return data as Subscription;
+    }
+
     const sub: Subscription = {
       id: `sub-trial-${Date.now()}`,
       family_id: familyId,
@@ -39,19 +67,6 @@ export class SubscriptionService {
       created_at: now.toISOString(),
       updated_at: now.toISOString(),
     };
-
-    if (isSupabaseConfigured() && isUUID(familyId)) {
-      try {
-        const { data, error } = await supabase
-          .from('subscriptions')
-          .insert(sub)
-          .select()
-          .single();
-        if (!error && data) return data as Subscription;
-      } catch (err) {
-        console.warn('createTrialSubscription error:', err);
-      }
-    }
 
     return sub;
   }

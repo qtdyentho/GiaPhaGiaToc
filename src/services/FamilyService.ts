@@ -33,23 +33,28 @@ export class FamilyService {
   }
 
   static async createFamily(name: string, description: string, originProvince: string, userId?: string): Promise<Family> {
-    const newId = `fam-${Date.now()}`;
+    const cleanedName = name.replace(/^(Gia tộc|Dòng họ|Họ)\s+/i, '').trim();
+    const surname = cleanedName.split(/\s+/)[0] || name.trim().split(/\s+/)[0] || 'Họ';
+
     const payload = {
-      name,
-      description,
-      origin_province: originProvince,
-      created_by: userId,
+      name: name.trim(),
+      surname,
+      description: description?.trim() || null,
+      origin: originProvince?.trim() || null,
+      ancestral_home: originProvince?.trim() || null,
+      created_by: userId && isUUID(userId) ? userId : null,
     };
 
     if (isSupabaseConfigured() && userId && isUUID(userId)) {
-      try {
-        const { data, error } = await supabase.from('families').insert([payload]).select().single();
-        if (!error && data) return data as Family;
-      } catch (err) {
-        console.warn('createFamily Supabase error:', err);
+      const { data, error } = await supabase.from('families').insert([payload]).select().single();
+      if (error) {
+        console.error('createFamily Supabase error:', error);
+        throw new Error(error.message || 'Không thể tạo gia tộc trên cơ sở dữ liệu');
       }
+      if (data) return data as Family;
     }
 
+    const newId = `fam-${Date.now()}`;
     return {
       ...mockFamily,
       id: newId,

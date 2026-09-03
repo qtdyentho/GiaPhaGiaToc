@@ -188,7 +188,7 @@ export class MemorialService {
         created_at: new Date().toISOString(),
       };
 
-      if (isSupabaseConfigured()) {
+      if (isSupabaseConfigured() && isUUID(data.family_id) && isUUID(data.member_id)) {
         const { data: dbData, error } = await supabase
           .from('memorial_dates')
           .insert({
@@ -204,8 +204,10 @@ export class MemorialService {
           .single();
 
         if (error) {
-          console.warn('Supabase memorial insert fallback:', error.message);
-        } else if (dbData) {
+          console.error('createMemorial Supabase error:', error);
+          return { success: false, error: error.message };
+        }
+        if (dbData) {
           return { success: true, memorial: { ...dbData, next_solar_date: next.solarDate } };
         }
       }
@@ -233,7 +235,7 @@ export class MemorialService {
         )
       : null;
 
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && isUUID(id) && isUUID(familyId)) {
       const { data: dbData, error } = await supabase
         .from('memorial_dates')
         .update({
@@ -245,7 +247,12 @@ export class MemorialService {
         .select()
         .single();
 
-      if (!error && dbData) {
+      if (error) {
+        console.error('updateMemorial Supabase error:', error);
+        return { success: false, error: error.message };
+      }
+
+      if (dbData) {
         return {
           success: true,
           memorial: { ...dbData, next_solar_date: next?.solarDate },
@@ -270,7 +277,7 @@ export class MemorialService {
    * Xóa ngày giỗ
    */
   static async deleteMemorial(id: string, familyId: string): Promise<{ success: boolean; error?: string }> {
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && isUUID(id) && isUUID(familyId)) {
       const { error } = await supabase
         .from('memorial_dates')
         .delete()

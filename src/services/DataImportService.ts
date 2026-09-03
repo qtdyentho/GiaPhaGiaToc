@@ -361,6 +361,32 @@ export class DataImportService {
   }
 
   /**
+   * Trích xuất năm an toàn từ chuỗi ngày tháng DD/MM/YYYY, ISO, hoặc số (chống lỗi NaN của new Date())
+   */
+  public static extractYear(val?: any): number {
+    if (val === undefined || val === null || val === '') return 0;
+    if (typeof val === 'number') {
+      return !isNaN(val) && val > 0 ? Math.floor(val) : 0;
+    }
+    const parsed = DataImportService.parseFlexibleDate(val);
+    if (parsed.hasDate && parsed.year) {
+      return parsed.year;
+    }
+    const str = String(val).trim();
+    if (str.includes('/')) {
+      const parts = str.split('/');
+      const y = parseInt(parts[parts.length - 1], 10);
+      if (!isNaN(y) && y > 0) return y;
+    }
+    const match = str.match(/\b([1-9][0-9]{2,3})\b/);
+    if (match) {
+      const y = parseInt(match[1], 10);
+      if (!isNaN(y) && y > 0) return y;
+    }
+    return 0;
+  }
+
+  /**
    * Thuật toán tự động nhận diện & suy luận thế hệ + quan hệ phả hệ (Hỗ trợ Mã Cây Phân Cấp & BFS)
    */
   public static autoInferGenerationsAndBranches(rawMembers: RawImportMember[]): {
@@ -475,15 +501,32 @@ export class DataImportService {
 
     // 4. Xác định các gốc (Root / Thủy Tổ) nếu không dùng treeCode
     members.forEach((m) => {
-      const parent = m.parentName ? memberByName.get(norm(m.parentName)) : null;
-      if (!m.parentName || !parent) {
+      const parent = m.parentName ? memberByName.get(norm(m.parentName)) : (m.parentCode ? memberByTreeCode.get(m.parentCode.trim().toUpperCase()) : null);
+      if (!parent) {
+        const spouse = m.spouseName ? memberByName.get(norm(m.spouseName)) : (m.spouseCode ? memberByTreeCode.get(m.spouseCode.trim().toUpperCase()) : null);
+        const spouseParent = spouse ? (spouse.parentName ? memberByName.get(norm(spouse.parentName)) : (spouse.parentCode ? memberByTreeCode.get(spouse.parentCode.trim().toUpperCase()) : null)) : null;
+
+        // Chỉ gán Đời 1 nếu:
+        // 1. Không có vợ/chồng -> Đây là Root đơn thân
+        // 2. Có vợ/chồng nhưng vợ/chồng cũng không có cha mẹ và chưa có đời -> Gán Đời 1 cho m để lan truyền sang vợ/chồng ở bước 5
+        // (Nếu vợ/chồng có cha mẹ hoặc đã có đời > 0, KHÔNG gán Đời 1 ở đây để bước 5 nhận đời từ vợ/chồng)
         if (!m.generationNumber || m.generationNumber === 0) {
-          m.generationNumber = 1;
-          m.isAutoInferredGen = true;
-          autoInferredCount++;
+          if (!spouse) {
+            m.generationNumber = 1;
+            m.isAutoInferredGen = true;
+            autoInferredCount++;
+          } else if (!spouseParent && (!spouse.generationNumber || spouse.generationNumber === 0)) {
+            m.generationNumber = 1;
+            m.isAutoInferredGen = true;
+            autoInferredCount++;
+          }
         }
         if (!m.branchName || m.branchName.trim() === '') {
-          m.branchName = 'Chi Trưởng';
+          if (spouse && spouse.branchName && spouse.branchName !== 'Chi Trưởng') {
+            m.branchName = spouse.branchName;
+          } else {
+            m.branchName = 'Chi Trưởng';
+          }
         }
       }
     });
@@ -520,12 +563,15 @@ export class DataImportService {
         if (m.spouseName) {
           const spouse = memberByName.get(norm(m.spouseName));
           if (spouse) {
-            if (m.generationNumber > 0 && (!spouse.generationNumber || spouse.generationNumber === 0)) {
+            const spouseHasParent = !!(spouse.parentName && memberByName.get(norm(spouse.parentName)));
+            const mHasParent = !!(m.parentName && memberByName.get(norm(m.parentName)));
+
+            if (m.generationNumber > 0 && (!spouse.generationNumber || spouse.generationNumber === 0 || (!spouseHasParent && spouse.generationNumber !== m.generationNumber))) {
               spouse.generationNumber = m.generationNumber;
               spouse.isAutoInferredGen = true;
               autoInferredCount++;
               changed = true;
-            } else if (spouse.generationNumber > 0 && (!m.generationNumber || m.generationNumber === 0)) {
+            } else if (spouse.generationNumber > 0 && (!m.generationNumber || m.generationNumber === 0 || (!mHasParent && m.generationNumber !== spouse.generationNumber))) {
               m.generationNumber = spouse.generationNumber;
               m.isAutoInferredGen = true;
               autoInferredCount++;
@@ -533,6 +579,9 @@ export class DataImportService {
             }
             if (!spouse.branchName && m.branchName) {
               spouse.branchName = m.branchName;
+              changed = true;
+            } else if (!m.branchName && spouse.branchName) {
+              m.branchName = spouse.branchName;
               changed = true;
             }
           }
@@ -1486,15 +1535,101 @@ export class DataImportService {
     const currentYear = new Date().getFullYear();
     let autoInferredCount = 0;
 
-    // 1. Thu thập danh sách toàn bộ treeCode hợp lệ để đối soát quan hệ cha con / vợ chồng
+    // 1. Thu thập danh sách toàn bộ treeCode hợp lệ và tên để đối soát quan hệ
     const allTreeCodes = new Set<string>();
-    rows.forEach((r) => {
+    const treeCodeToIdx = new Map<string, number>();
+    const norm = (s?: string) => (s || '').toLowerCase().trim().replace(/\s+/g, ' ');
+    const nameToIndices = new Map<string, number[]>();
+
+    rows.forEach((r, idx) => {
       if (r.treeCode && r.treeCode.trim()) {
         const code = r.treeCode.trim();
         allTreeCodes.add(code);
         treeCodeOccurrences.set(code, (treeCodeOccurrences.get(code) || 0) + 1);
+        treeCodeToIdx.set(code.toUpperCase(), idx);
+      }
+      if (r.fullName && r.fullName.trim()) {
+        const n = norm(r.fullName);
+        if (!nameToIndices.has(n)) nameToIndices.set(n, []);
+        nameToIndices.get(n)!.push(idx);
       }
     });
+
+    // 2. Thuật toán phát hiện chu trình phả hệ đa bậc (Multi-Node Family Cycle Detection qua DFS 3 màu)
+    const adj: number[][] = Array.from({ length: rows.length }, () => []);
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      // Theo parentCode
+      if (row.parentCode && treeCodeToIdx.has(row.parentCode.trim().toUpperCase())) {
+        const pIdx = treeCodeToIdx.get(row.parentCode.trim().toUpperCase())!;
+        adj[i].push(pIdx);
+      } else if (row.parentName) {
+        const pIndices = nameToIndices.get(norm(row.parentName));
+        if (pIndices && pIndices.length > 0) {
+          if (pIndices.length === 1) {
+            adj[i].push(pIndices[0]);
+          } else {
+            const match = pIndices.find((idx) => rows[idx].generationNumber === row.generationNumber - 1) ?? pIndices[0];
+            adj[i].push(match);
+          }
+        }
+      }
+
+      // Theo motherCode
+      if (row.motherCode && treeCodeToIdx.has(row.motherCode.trim().toUpperCase())) {
+        const mIdx = treeCodeToIdx.get(row.motherCode.trim().toUpperCase())!;
+        adj[i].push(mIdx);
+      } else if (row.motherName) {
+        const mIndices = nameToIndices.get(norm(row.motherName));
+        if (mIndices && mIndices.length > 0) {
+          if (mIndices.length === 1) {
+            adj[i].push(mIndices[0]);
+          } else {
+            const match = mIndices.find((idx) => rows[idx].generationNumber === row.generationNumber - 1) ?? mIndices[0];
+            adj[i].push(match);
+          }
+        }
+      }
+    }
+
+    const color = new Array(rows.length).fill(0); // 0 = WHITE, 1 = GRAY, 2 = BLACK
+    const parentStack: number[] = [];
+    const cycleErrorsByRow = new Map<number, string>();
+
+    const dfsCycle = (u: number) => {
+      color[u] = 1;
+      parentStack.push(u);
+
+      for (const v of adj[u]) {
+        if (v === u) {
+          // Vòng lặp tự thân 1 bậc
+        } else if (color[v] === 1) {
+          // Phát hiện chu trình khép kín đa bậc (A -> B -> C -> A)
+          const cycleStartIdx = parentStack.indexOf(v);
+          if (cycleStartIdx !== -1) {
+            const cycleMembers = parentStack.slice(cycleStartIdx);
+            const cycleNames = cycleMembers.concat(v).map((idx) => rows[idx].fullName || rows[idx].treeCode || `Dòng ${idx + 1}`);
+            const cycleMsg = `Lỗi logic gia phả: Phát hiện chu trình phả hệ khép kín giữa các thành viên: ${cycleNames.join(' -> ')}. Vui lòng kiểm tra lại quan hệ cha con.`;
+            for (const idx of cycleMembers) {
+              if (!cycleErrorsByRow.has(idx)) {
+                cycleErrorsByRow.set(idx, cycleMsg);
+              }
+            }
+          }
+        } else if (color[v] === 0) {
+          dfsCycle(v);
+        }
+      }
+
+      parentStack.pop();
+      color[u] = 2;
+    };
+
+    for (let i = 0; i < rows.length; i++) {
+      if (color[i] === 0) {
+        dfsCycle(i);
+      }
+    }
 
     rows.forEach((row, index) => {
       const errors: string[] = [];
@@ -1582,9 +1717,15 @@ export class DataImportService {
         }
       }
 
-      // 9. Kiểm tra quan hệ cha con (Chống vòng lặp)
+      // 9. Kiểm tra quan hệ cha con (Chống vòng lặp tự thân & chu trình đa bậc)
       if (row.parentName && row.fullName && row.parentName.trim().toLowerCase() === row.fullName.trim().toLowerCase()) {
         errors.push(`Lỗi logic gia phả: Tên cha '${row.parentName.trim()}' trùng với chính thành viên. Vui lòng kiểm tra lại.`);
+      }
+      if (row.parentCode && row.treeCode && row.parentCode.trim().toUpperCase() === row.treeCode.trim().toUpperCase()) {
+        errors.push(`Lỗi logic gia phả: Mã cha '${row.parentCode.trim()}' trùng với chính mã cây của thành viên. Vui lòng kiểm tra lại.`);
+      }
+      if (cycleErrorsByRow.has(index)) {
+        errors.push(cycleErrorsByRow.get(index)!);
       }
 
       validatedRows.push({
@@ -1735,11 +1876,17 @@ export class DataImportService {
           }
 
           // 3. Chuẩn bị insert danh sách thành viên vào bảng members (Khớp 100% schema members)
-          const memberInsertPayload = validRows.map((r) => {
+          const validRowToId = new Map<number, string>();
+          const memberInsertPayload = validRows.map((r, idx) => {
             const m = r.data;
-            const isDeceased = m.lifeStatus === 'DECEASED';
+            const isDeceased = m.lifeStatus === 'DECEASED' || !!m.deathLunarDay || !!m.deathLunarFull || !!m.deathSolarDate || !!m.deathLunarYear;
+            const memberUUID = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+              ? crypto.randomUUID()
+              : `mb-${targetFamilyUUID}-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 8)}`;
+            validRowToId.set(idx, memberUUID);
 
             const noteParts = [
+              `[BATCH:${validation.batchId}]`,
               m.treeCode ? `Mã cây: ${m.treeCode}` : '',
               m.parentCode ? `Mã cha: ${m.parentCode}` : '',
               m.motherCode ? `Mã mẹ: ${m.motherCode}` : '',
@@ -1756,6 +1903,7 @@ export class DataImportService {
             ].filter(Boolean);
 
             return {
+              id: memberUUID,
               family_id: targetFamilyUUID,
               generation_id: genMap.get(m.generationNumber) || null,
               branch_id: branchMap.get(m.branchName) || null,
@@ -1820,24 +1968,25 @@ export class DataImportService {
           const nameToMembersMap = new Map<string, IndexedMember[]>();
           const normNameToMembersMap = new Map<string, IndexedMember[]>();
 
-          (insertedMembers || []).forEach((im: any, idx: number) => {
-            const fullName = im.full_name.trim();
-            const rawRow = validRows[idx]?.data;
-            const genNum = rawRow?.generationNumber || 1;
-            const branchName = rawRow?.branchName || '';
+          validRows.forEach((r, idx) => {
+            const m = r.data;
+            const memberId = validRowToId.get(idx)!;
+            const fullName = m.fullName.trim();
+            const genNum = m.generationNumber || 1;
+            const branchName = m.branchName || '';
             const normName = normalizeForMatch(fullName);
 
             const indexed: IndexedMember = {
-              id: im.id,
+              id: memberId,
               fullName,
               normName,
               genNum,
               branchName,
-              treeCode: rawRow?.treeCode?.trim().toUpperCase(),
+              treeCode: m.treeCode?.trim().toUpperCase(),
             };
 
             if (indexed.treeCode) {
-              treeCodeToIdMap.set(indexed.treeCode, im.id);
+              treeCodeToIdMap.set(indexed.treeCode, memberId);
             }
 
             if (!nameToMembersMap.has(fullName)) {
@@ -1919,7 +2068,7 @@ export class DataImportService {
 
           validRows.forEach((r, idx) => {
             const m = r.data;
-            const currentMemberId = insertedMembers?.[idx]?.id || findMatchingMemberId(m.fullName, 'ANY', m.generationNumber);
+            const currentMemberId = validRowToId.get(idx) || findMatchingMemberId(m.fullName, 'ANY', m.generationNumber);
             if (!currentMemberId) return;
 
             // Quan hệ Cha -> Con (Chuẩn: member_id là Con, related_member_id là Cha với relationship_type: 'PARENT')
@@ -2045,7 +2194,7 @@ export class DataImportService {
 
           // Lưu metadata đợt nạp để hỗ trợ hoàn tác thật (Rollback Undo)
           try {
-            const memberIds = (insertedMembers || []).map((m: any) => m.id);
+            const memberIds = Array.from(validRowToId.values());
             localStorage.setItem(`hl_import_batch_${validation.batchId}`, JSON.stringify({
               batchId: validation.batchId,
               familyId: targetFamilyUUID,
@@ -2202,27 +2351,71 @@ export class DataImportService {
         }
       }
 
-      if (isSupabaseConfigured() && memberIds.length > 0) {
-        // 1. Xóa quan hệ liên quan
-        await supabase
-          .from('member_relationships')
-          .delete()
-          .or(`member_id.in.(${memberIds.join(',')}),related_member_id.in.(${memberIds.join(',')})`);
+      if (isSupabaseConfigured()) {
+        // Fallback: Nếu không có memberIds trong localStorage, truy vấn trực tiếp từ Supabase qua notes [BATCH:batchId]
+        if (memberIds.length === 0 && batchId) {
+          try {
+            const { data: batchMembers } = await supabase
+              .from('members')
+              .select('id')
+              .ilike('notes', `%[BATCH:${batchId}]%`);
+            if (batchMembers && batchMembers.length > 0) {
+              memberIds = batchMembers.map((m: any) => m.id);
+            }
+          } catch (fetchErr) {
+            console.warn('Không thể truy vấn batchMembers theo notes:', fetchErr);
+          }
+        }
 
-        // 2. Xóa ngày giỗ liên quan
-        await supabase
-          .from('memorial_dates')
-          .delete()
-          .in('member_id', memberIds);
+        if (memberIds.length > 0) {
+          const BATCH_DELETE_SIZE = 40;
 
-        // 3. Xóa các thành viên
-        const { error: delErr } = await supabase
-          .from('members')
-          .delete()
-          .in('id', memberIds);
+          // 1. Xóa quan hệ liên quan theo từng chunk nhỏ (30-50 IDs) để tránh lỗi HTTP 414 URI Too Long
+          for (let i = 0; i < memberIds.length; i += BATCH_DELETE_SIZE) {
+            const chunk = memberIds.slice(i, i + BATCH_DELETE_SIZE);
+            try {
+              await supabase
+                .from('member_relationships')
+                .delete()
+                .in('member_id', chunk);
+            } catch (relErr1) {
+              console.warn('Cảnh báo khi xóa relationships member_id:', relErr1);
+            }
+            try {
+              await supabase
+                .from('member_relationships')
+                .delete()
+                .in('related_member_id', chunk);
+            } catch (relErr2) {
+              console.warn('Cảnh báo khi xóa relationships related_member_id:', relErr2);
+            }
+          }
 
-        if (delErr) {
-          throw new Error(`Không thể xóa dữ liệu đợt nạp từ Supabase: ${delErr.message}`);
+          // 2. Xóa ngày giỗ liên quan theo chunk
+          for (let i = 0; i < memberIds.length; i += BATCH_DELETE_SIZE) {
+            const chunk = memberIds.slice(i, i + BATCH_DELETE_SIZE);
+            try {
+              await supabase
+                .from('memorial_dates')
+                .delete()
+                .in('member_id', chunk);
+            } catch (memErr) {
+              console.warn('Cảnh báo khi xóa memorial_dates:', memErr);
+            }
+          }
+
+          // 3. Xóa các thành viên theo chunk
+          for (let i = 0; i < memberIds.length; i += BATCH_DELETE_SIZE) {
+            const chunk = memberIds.slice(i, i + BATCH_DELETE_SIZE);
+            const { error: delErr } = await supabase
+              .from('members')
+              .delete()
+              .in('id', chunk);
+
+            if (delErr) {
+              throw new Error(`Không thể xóa dữ liệu đợt nạp từ Supabase: ${delErr.message}`);
+            }
+          }
         }
       }
 
@@ -2234,6 +2427,10 @@ export class DataImportService {
           for (let i = mockMembers.length - 1; i >= 0; i--) {
             if (idSet.has(mockMembers[i].id)) mockMembers.splice(i, 1);
           }
+        }
+      } else if (batchId) {
+        for (let i = mockMembers.length - 1; i >= 0; i--) {
+          if (mockMembers[i].id.includes(batchId)) mockMembers.splice(i, 1);
         }
       }
 
@@ -2254,3 +2451,5 @@ export class DataImportService {
     }
   }
 }
+
+export const extractYear = DataImportService.extractYear;

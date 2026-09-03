@@ -116,10 +116,16 @@ export class KinshipService {
     const ancestryB = this.getAncestors(b, allMembers);
 
     let lca: Member | null = null;
-    for (const ancA of ancestryA) {
-      if (ancestryB.some((ancB) => ancB.id === ancA.id)) {
-        lca = ancA;
-        break;
+    if (ancestryA.some((anc) => anc.id === b.id)) {
+      lca = b;
+    } else if (ancestryB.some((anc) => anc.id === a.id)) {
+      lca = a;
+    } else {
+      for (const ancA of ancestryA) {
+        if (ancestryB.some((ancB) => ancB.id === ancA.id)) {
+          lca = ancA;
+          break;
+        }
       }
     }
 
@@ -137,21 +143,33 @@ export class KinshipService {
   }
 
   /**
-   * Lấy danh sách tổ tiên ngược lên từ con -> bố -> ông -> cụ -> thủy tổ
+   * Lấy danh sách tổ tiên ngược lên từ con -> cha mẹ -> ông bà -> cụ -> thủy tổ (hỗ trợ cả nội tộc và ngoại tộc/mẫu hệ)
    */
   private static getAncestors(member: Member, allMembers: Member[]): Member[] {
     const list: Member[] = [];
-    let curr: Member | undefined = member;
-    const visited = new Set<string>();
+    const memberMap = new Map(allMembers.map((m) => [m.id, m]));
+    const visited = new Set<string>([member.id]);
+    const queue: Member[] = [];
 
-    while (curr && curr.father_id && !visited.has(curr.id)) {
-      visited.add(curr.id);
-      const father = allMembers.find((m) => m.id === curr!.father_id);
-      if (father) {
-        list.push(father);
-        curr = father;
-      } else {
-        break;
+    const parentIds = [member.father_id, member.mother_id].filter(Boolean) as string[];
+    for (const pId of parentIds) {
+      const p = memberMap.get(pId);
+      if (p && !visited.has(p.id)) {
+        visited.add(p.id);
+        queue.push(p);
+      }
+    }
+
+    while (queue.length > 0) {
+      const curr = queue.shift()!;
+      list.push(curr);
+      const nextParentIds = [curr.father_id, curr.mother_id].filter(Boolean) as string[];
+      for (const pId of nextParentIds) {
+        const p = memberMap.get(pId);
+        if (p && !visited.has(p.id)) {
+          visited.add(p.id);
+          queue.push(p);
+        }
       }
     }
     return list;
@@ -161,11 +179,15 @@ export class KinshipService {
    * Suy luận đời thứ mấy nếu chưa có generation_index
    */
   private static inferGeneration(member: Member, allMembers: Member[]): number {
+    if (member.generation_index) return member.generation_index;
     let gen = 1;
     let curr: Member | undefined = member;
-    while (curr && curr.father_id) {
+    const visited = new Set<string>();
+    while (curr && (curr.father_id || curr.mother_id) && !visited.has(curr.id)) {
+      visited.add(curr.id);
       gen++;
-      curr = allMembers.find((m) => m.id === curr!.father_id);
+      const nextId: string | undefined = curr.father_id || curr.mother_id;
+      curr = allMembers.find((m) => m.id === nextId);
     }
     return gen;
   }
@@ -215,14 +237,29 @@ export class KinshipService {
     lca: Member,
     allMembers: Member[]
   ): Member[] {
-    const path: Member[] = [];
-    let curr: Member | undefined = member;
-    while (curr && curr.id !== lca.id) {
-      path.unshift(curr);
-      if (!curr.father_id) break;
-      curr = allMembers.find((m) => m.id === curr!.father_id);
+    if (member.id === lca.id) return [];
+    const memberMap = new Map(allMembers.map((m) => [m.id, m]));
+    const queue: { current: Member; path: Member[] }[] = [{ current: member, path: [member] }];
+    const visited = new Set<string>([member.id]);
+
+    while (queue.length > 0) {
+      const { current, path } = queue.shift()!;
+      const parentIds = [current.father_id, current.mother_id].filter(Boolean) as string[];
+      for (const pId of parentIds) {
+        if (pId === lca.id) {
+          // Path from LCA down to member (excluding LCA itself)
+          return [...path].reverse();
+        }
+        if (!visited.has(pId)) {
+          visited.add(pId);
+          const p = memberMap.get(pId);
+          if (p) {
+            queue.push({ current: p, path: [...path, p] });
+          }
+        }
+      }
     }
-    return path;
+    return [];
   }
 
   /**

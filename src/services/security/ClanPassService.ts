@@ -115,6 +115,26 @@ export class ClanPassService {
 
     if (isSupabaseConfigured()) {
       try {
+        // 0. Thử gọi RPC fn_get_public_pass_info bảo mật (không lộ pin_hash hay pin_salt)
+        try {
+          const { data: publicPassInfo, error: rpcErr } = await supabase.rpc('fn_get_public_pass_info', {
+            p_pass_token: clean,
+          });
+
+          if (!rpcErr && publicPassInfo?.success) {
+            return {
+              success: true,
+              pass_token: publicPassInfo.pass_token,
+              family_id: publicPassInfo.family_id,
+              family_name: publicPassInfo.family_name,
+              banner_url: publicPassInfo.banner_url,
+              is_locked: publicPassInfo.is_locked,
+            };
+          }
+        } catch {
+          // Fallback tiếp tục query trực tiếp nếu RPC chưa được tạo
+        }
+
         // 1. Tìm trực tiếp theo pass_token
         let { data: pass } = await supabase
           .from('clan_access_passes')
@@ -226,7 +246,7 @@ export class ClanPassService {
     error?: string;
   }> {
     const passInfo = await this.getPassByToken(passToken);
-    if (!passInfo.success || !passInfo.family_id || !passInfo.pin_salt) {
+    if (!passInfo.success || !passInfo.family_id) {
       return { success: false, error: passInfo.error || 'Mã QR không hợp lệ.' };
     }
 
@@ -237,13 +257,17 @@ export class ClanPassService {
       };
     }
 
-    const computedHash = await this.hashPin(inputPin, passInfo.pin_salt, passInfo.family_id);
+    let computedHash: string | undefined = undefined;
+    if (passInfo.pin_salt) {
+      computedHash = await this.hashPin(inputPin, passInfo.pin_salt, passInfo.family_id);
+    }
 
     if (isSupabaseConfigured() && isUUID(passInfo.family_id)) {
       try {
         const { data, error } = await supabase.rpc('fn_verify_clan_pin', {
           p_pass_token: passToken,
-          p_input_pin_hash: computedHash,
+          p_input_pin_hash: computedHash || null,
+          p_raw_pin: inputPin,
         });
 
         if (!error && data?.success) {

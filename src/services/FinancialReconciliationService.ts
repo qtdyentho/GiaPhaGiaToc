@@ -41,11 +41,28 @@ export class FinancialReconciliationService {
     let expense = 0;
     let reversal = 0;
 
+    const txMap = new Map<string, FinancialTransaction>(transactions.map((t) => [t.id, t]));
+
     for (const tx of transactions) {
       if (tx.status === 'POSTED') {
-        if (tx.transaction_type === 'INCOME') income += tx.amount;
-        else if (tx.transaction_type === 'EXPENSE') expense += tx.amount;
-        else if (tx.transaction_type === 'REVERSAL') reversal += tx.amount;
+        if (tx.transaction_type === 'INCOME') {
+          income += tx.amount;
+        } else if (tx.transaction_type === 'EXPENSE') {
+          expense += tx.amount;
+        } else if (tx.transaction_type === 'REVERSAL') {
+          const refTx = tx.reference_transaction_id ? txMap.get(tx.reference_transaction_id) : undefined;
+          if (refTx) {
+            if (refTx.transaction_type === 'EXPENSE') {
+              reversal += tx.amount; // Hoàn chi: cộng lại vào quỹ
+            } else {
+              reversal -= tx.amount; // Hoàn thu: trừ khỏi quỹ
+            }
+          } else if (tx.expense_id || /hoàn chi|thu hồi chi|chi/i.test(tx.description || '')) {
+            reversal += tx.amount;
+          } else {
+            reversal -= tx.amount;
+          }
+        }
       }
     }
 

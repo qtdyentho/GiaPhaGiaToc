@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { QrCode, CheckCircle2, Copy, ArrowLeft, Clock, ShieldCheck, AlertCircle, Send, HelpCircle, Building } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { PaymentService } from '../services/billing/PaymentService';
@@ -10,6 +10,8 @@ export const CheckoutPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [copied, setCopied] = useState(false);
   const [claimSubmitted, setClaimSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [customerRef, setCustomerRef] = useState('');
   const [customerNote, setCustomerNote] = useState('');
   const navigate = useNavigate();
@@ -48,11 +50,23 @@ export const CheckoutPage: React.FC = () => {
 
   const handleSubmitClaim = (e: React.FormEvent) => {
     e.preventDefault();
-    PaymentService.submitPaymentClaim(`inv-${Date.now()}`, {
-      customerBankReference: customerRef,
-      customerNote: customerNote,
-    });
-    setClaimSubmitted(true);
+    setIsSubmitting(true);
+    setErrorMessage(null);
+    try {
+      PaymentService.submitPaymentClaim(`inv-${Date.now()}`, {
+        familyId: activeFamily?.id,
+        amount: planInfo.total,
+        billingReason: `${planInfo.name} (${activeFamily?.name})`,
+        customerBankReference: customerRef,
+        customerNote: customerNote,
+      });
+      setClaimSubmitted(true);
+    } catch (err: any) {
+      console.error('Lỗi gửi xác nhận thanh toán:', err);
+      setErrorMessage(err.message || 'Không thể gửi xác nhận thanh toán. Vui lòng kiểm tra lại.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!activeFamily) {
@@ -178,12 +192,20 @@ export const CheckoutPage: React.FC = () => {
                   />
                 </div>
 
+                {errorMessage && (
+                  <div className="p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 rounded-xl text-rose-700 dark:text-rose-300 text-xs flex items-center space-x-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                    <span>{errorMessage}</span>
+                  </div>
+                )}
+
                 <button
                   type="submit"
-                  className="w-full py-2.5 bg-[#166534] hover:bg-[#14532d] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-bold rounded-xl text-xs transition flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer"
+                  disabled={isSubmitting}
+                  className="w-full py-2.5 bg-[#166534] hover:bg-[#14532d] dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-bold rounded-xl text-xs transition flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer disabled:opacity-50"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>Tôi Đã Chuyển Khoản Thành Công</span>
+                  <span>{isSubmitting ? 'Đang Gửi Yêu Cầu...' : 'Tôi Đã Chuyển Khoản Thành Công'}</span>
                 </button>
               </form>
             ) : (

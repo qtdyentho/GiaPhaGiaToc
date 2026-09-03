@@ -277,9 +277,42 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
     setIsExporting(true);
     try {
       const scale = Number(resolutionScale) || 2;
-      const canvas = document.createElement('canvas');
+      const sortedGens = [...generations].sort((a, b) => a.generation_number - b.generation_number);
+
+      const nodeWidth = 240 * scale;
+      const nodeHeight = 80 * scale;
+      const marginX = 80 * scale;
+      const gapX = 20 * scale;
+      const subRowGapY = 16 * scale;
+      const genHeaderHeight = 36 * scale;
+      const genMarginBottom = 36 * scale;
+
       const width = 2400 * scale;
-      const height = 1600 * scale;
+      const availableWidth = width - marginX * 2;
+      const cardsPerRow = Math.max(1, Math.floor((availableWidth + gapX) / (nodeWidth + gapX)));
+
+      // Precompute layout per generation and total height
+      let totalHeightNeeded = 220 * scale; // header space
+
+      const genLayouts = sortedGens.map((gen) => {
+        const genMembers = members.filter((m) => m.generation_id === gen.id);
+        const rowCount = Math.max(1, Math.ceil(genMembers.length / cardsPerRow));
+        const genHeight = genHeaderHeight + rowCount * nodeHeight + (rowCount - 1) * subRowGapY + genMarginBottom;
+        const layout = {
+          gen,
+          genMembers,
+          rowCount,
+          genHeight,
+          yStart: totalHeightNeeded,
+        };
+        totalHeightNeeded += genHeight;
+        return layout;
+      });
+
+      totalHeightNeeded += 100 * scale; // bottom padding
+      const height = Math.max(1600 * scale, totalHeightNeeded);
+
+      const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext('2d');
@@ -312,28 +345,24 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
           135 * scale
         );
 
-        // Generation rows
-        const sortedGens = [...generations].sort((a, b) => a.generation_number - b.generation_number);
-        const yStart = 200 * scale;
-        const genSpacing = (height - 300 * scale) / Math.max(sortedGens.length, 1);
-
-        sortedGens.forEach((gen, gIdx) => {
-          const genMembers = members.filter((m) => m.generation_id === gen.id);
-          const y = yStart + gIdx * genSpacing;
-
+        // Render generation rows
+        genLayouts.forEach(({ gen, genMembers, yStart }) => {
           ctx.fillStyle = '#166534';
           ctx.font = `bold ${14 * scale}px "Be Vietnam Pro", sans-serif`;
           ctx.textAlign = 'left';
-          ctx.fillText(`ĐỜI ${gen.generation_number}: ${gen.name.toUpperCase()}`, 70 * scale, y - 20 * scale);
+          ctx.fillText(`ĐỜI ${gen.generation_number}: ${gen.name.toUpperCase()} (${genMembers.length} thành viên)`, marginX, yStart + 16 * scale);
 
           if (genMembers.length > 0) {
-            const nodeWidth = 240 * scale;
-            const nodeHeight = 80 * scale;
-            const totalWidth = genMembers.length * nodeWidth + (genMembers.length - 1) * 30 * scale;
-            let startX = Math.max((width - totalWidth) / 2, 70 * scale);
-
             genMembers.forEach((m, mIdx) => {
-              const x = startX + mIdx * (nodeWidth + 30 * scale);
+              const rowIdx = Math.floor(mIdx / cardsPerRow);
+              const colIdx = mIdx % cardsPerRow;
+
+              const totalInThisRow = Math.min(cardsPerRow, genMembers.length - rowIdx * cardsPerRow);
+              const rowTotalWidth = totalInThisRow * nodeWidth + (totalInThisRow - 1) * gapX;
+              const startX = Math.max((width - rowTotalWidth) / 2, marginX);
+
+              const x = startX + colIdx * (nodeWidth + gapX);
+              const y = yStart + genHeaderHeight + rowIdx * (nodeHeight + subRowGapY);
 
               // Node Box
               ctx.fillStyle = '#FFFFFF';
@@ -350,16 +379,21 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
               ctx.textAlign = 'left';
               ctx.fillText(m.full_name.replace(/\(.*?\)/g, '').trim(), x + 15 * scale, y + 25 * scale);
 
-              // Status
+              // Status & Info
               ctx.fillStyle = '#64748B';
               ctx.font = `${10 * scale}px "Be Vietnam Pro", sans-serif`;
-              const genLabel = gIdx === 0 ? 'Thủy Tổ' : `Đời ${gen.generation_number}`;
+              const genLabel = gen.generation_number === 1 ? 'Thủy Tổ' : `Đời ${gen.generation_number}`;
               const statusLabel = m.life_status === 'DECEASED' ? '🕯️ Đã mất' : '🌿 Còn sống';
               ctx.fillText(`${genLabel} • ${statusLabel}`, x + 15 * scale, y + 45 * scale);
 
               if (includeLunarDates && m.death_lunar_day && m.death_lunar_month) {
                 ctx.fillStyle = '#92400E';
                 ctx.fillText(`Giỗ: Ngày ${m.death_lunar_day}/${m.death_lunar_month} ÂL`, x + 15 * scale, y + 65 * scale);
+              } else if (m.birth_solar_date) {
+                ctx.fillStyle = '#64748B';
+                const yearMatch = m.birth_solar_date.match(/\b(1\d{3}|20\d{2})\b/);
+                const yearStr = yearMatch ? yearMatch[1] : m.birth_solar_date;
+                ctx.fillText(`Sinh: ${yearStr}`, x + 15 * scale, y + 65 * scale);
               }
             });
           }

@@ -118,13 +118,43 @@ export class AdminBillingService {
       throw new Error('Mã giao dịch ngân hàng / tham chiếu (Transaction Reference) là bắt buộc');
     }
 
-    // 2. Tìm hóa đơn
+    const isUUID = (str?: string | null): boolean =>
+      Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+
     const invoice = mockInvoices.find((i) => i.id === invoiceId);
+
+    // Supabase RPC Call when configured
+    if (isSupabaseConfigured() && isUUID(invoiceId)) {
+      const { data, error } = await supabase.rpc('admin_confirm_payment', {
+        p_invoice_id: invoiceId,
+        p_transaction_reference: transactionReference,
+        p_received_amount: receivedAmount,
+        p_bank_transaction_date: bankTransactionDate || new Date().toISOString(),
+        p_audit_reason: auditReason,
+      });
+
+      if (error) {
+        Logger.error('AdminBillingService', 'ADMIN_CONFIRM_PAYMENT_FAILED', Logger.generateRequestId(), { error: error.message });
+        throw new Error(error.message || 'Xác nhận thanh toán trên máy chủ thất bại');
+      }
+
+      if (data) {
+        const isSuccess = data.success === true;
+        const code = (data.code as any) || (isSuccess ? (receivedAmount > (invoice?.total || receivedAmount) ? 'OVERPAYMENT' : 'CONFIRM_SUCCESS') : 'FAILED');
+        return {
+          success: isSuccess,
+          code,
+          message: data.message || (isSuccess ? 'Xác nhận thanh toán thành công' : 'Xử lý thanh toán thất bại'),
+          invoice: invoice ? { ...invoice, status: isSuccess ? 'PAID' : invoice.status } : undefined,
+        };
+      }
+    }
+
+    // Fallback Mock Execution
     if (!invoice) {
       throw new Error(`Không tìm thấy hóa đơn: ${invoiceId}`);
     }
 
-    // 3. Idempotency Check
     if (invoice.status === 'PAID') {
       return {
         success: false,

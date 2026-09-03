@@ -29,7 +29,7 @@ export default function AdminPaymentsPage() {
       if (isSupabaseConfigured()) {
         try {
           const { data, error } = await supabase
-            .from('subscription_invoices')
+            .from('invoices')
             .select('*')
             .order('created_at', { ascending: false });
 

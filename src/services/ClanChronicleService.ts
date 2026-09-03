@@ -67,6 +67,9 @@ function saveLocalComments(chronicleId: string, items: ClanChronicleComment[]) {
   }
 }
 
+const isUUID = (str?: string | null): boolean =>
+  Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+
 export class ClanChronicleService {
   /**
    * Lấy danh sách bài viết / ký sự của dòng họ
@@ -80,7 +83,7 @@ export class ClanChronicleService {
 
     let list: ClanChronicle[] = [];
 
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && isUUID(familyId)) {
       try {
         let query = supabase
           .from('clan_chronicles')
@@ -135,7 +138,7 @@ export class ClanChronicleService {
   static async getChronicleById(id: string, familyId: string): Promise<ClanChronicle | null> {
     if (!id || !familyId) return null;
 
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && isUUID(id) && isUUID(familyId)) {
       try {
         const { data, error } = await supabase
           .from('clan_chronicles')
@@ -168,7 +171,7 @@ export class ClanChronicleService {
    * Tăng lượt xem bài viết
    */
   static async incrementViews(id: string, familyId: string): Promise<void> {
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && isUUID(id)) {
       try {
         const { error } = await supabase.rpc('increment_chronicle_views', { chronicle_id: id });
         if (error) {
@@ -186,7 +189,7 @@ export class ClanChronicleService {
    */
   static async likeChronicle(id: string, familyId: string): Promise<{ success: boolean; likes: number }> {
     let currentLikes = 0;
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && isUUID(id)) {
       try {
         const { data } = await supabase.from('clan_chronicles').select('likes_count').eq('id', id).single();
         if (data) {
@@ -235,7 +238,7 @@ export class ClanChronicleService {
       return { success: false, error: 'Vui lòng nhập đầy đủ Tiêu đề và Nội dung bài viết.' };
     }
 
-    const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `chr-${Date.now()}`;
+    const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : undefined;
     const slug = data.title
       .toLowerCase()
       .normalize('NFD')
@@ -243,8 +246,49 @@ export class ClanChronicleService {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
 
+    if (isSupabaseConfigured() && isUUID(data.family_id)) {
+      const insertPayload: Record<string, any> = {
+        family_id: data.family_id,
+        author_id: data.author_id || null,
+        author_name: data.author_name.trim() || 'Thành viên gia tộc',
+        author_avatar: data.author_avatar || null,
+        author_branch: data.author_branch || null,
+        author_generation: typeof data.author_generation === 'number' ? data.author_generation : null,
+        title: data.title.trim(),
+        slug: `${slug}-${(id || Date.now().toString()).slice(0, 6)}`,
+        summary: data.summary.trim() || data.content.slice(0, 150) + '...',
+        content: data.content.trim(),
+        category: data.category,
+        cover_image_url: data.cover_image_url || null,
+        gallery_images: data.gallery_images || [],
+        attached_documents: data.attached_documents || [],
+        tags: data.tags || [],
+        status: 'PUBLISHED',
+        is_featured: !!data.is_featured,
+        is_pinned: !!data.is_pinned,
+        views_count: 1,
+        likes_count: 0,
+        comments_count: 0,
+        published_at: new Date().toISOString(),
+      };
+      if (id) insertPayload.id = id;
+
+      const { data: dbData, error } = await supabase.from('clan_chronicles').insert([insertPayload]).select().single();
+      if (error) {
+        console.error('Supabase insert clan_chronicles error:', error);
+        return { success: false, error: error.message };
+      }
+      if (dbData) {
+        const chronicle = dbData as ClanChronicle;
+        const localList = getLocalChronicles(data.family_id);
+        localList.unshift(chronicle);
+        saveLocalChronicles(data.family_id, localList);
+        return { success: true, chronicle };
+      }
+    }
+
     const newChronicle: ClanChronicle = {
-      id,
+      id: id || `chr-${Date.now()}`,
       family_id: data.family_id,
       author_id: data.author_id,
       author_name: data.author_name.trim() || 'Thành viên gia tộc',
@@ -252,7 +296,7 @@ export class ClanChronicleService {
       author_branch: data.author_branch,
       author_generation: data.author_generation,
       title: data.title.trim(),
-      slug: `${slug}-${id.slice(0, 6)}`,
+      slug: `${slug}-${(id || Date.now().toString()).slice(0, 6)}`,
       summary: data.summary.trim() || data.content.slice(0, 150) + '...',
       content: data.content.trim(),
       category: data.category,
@@ -271,42 +315,6 @@ export class ClanChronicleService {
       updated_at: new Date().toISOString(),
     };
 
-    if (isSupabaseConfigured()) {
-      try {
-        const { error } = await supabase.from('clan_chronicles').insert({
-          id: newChronicle.id,
-          family_id: newChronicle.family_id,
-          author_id: newChronicle.author_id || null,
-          author_name: newChronicle.author_name,
-          author_avatar: newChronicle.author_avatar || null,
-          author_branch: newChronicle.author_branch || null,
-          author_generation: typeof newChronicle.author_generation === 'number' ? newChronicle.author_generation : null,
-          title: newChronicle.title,
-          slug: newChronicle.slug,
-          summary: newChronicle.summary,
-          content: newChronicle.content,
-          category: newChronicle.category,
-          cover_image_url: newChronicle.cover_image_url || null,
-          gallery_images: newChronicle.gallery_images,
-          attached_documents: newChronicle.attached_documents,
-          tags: newChronicle.tags,
-          status: newChronicle.status,
-          is_featured: newChronicle.is_featured,
-          is_pinned: newChronicle.is_pinned,
-          views_count: newChronicle.views_count,
-          likes_count: newChronicle.likes_count,
-          comments_count: newChronicle.comments_count,
-          published_at: newChronicle.published_at,
-        });
-
-        if (error) {
-          console.warn('Supabase insert clan_chronicles error, saving in-memory:', error.message);
-        }
-      } catch (err) {
-        console.warn('Supabase insert clan_chronicles exception:', err);
-      }
-    }
-
     // Always update in-memory / local storage
     const localList = getLocalChronicles(data.family_id);
     localList.unshift(newChronicle);
@@ -321,11 +329,11 @@ export class ClanChronicleService {
   static async deleteChronicle(id: string, familyId: string): Promise<boolean> {
     if (!id || !familyId) return false;
 
-    if (isSupabaseConfigured()) {
-      try {
-        await supabase.from('clan_chronicles').delete().eq('id', id).eq('family_id', familyId);
-      } catch (err) {
-        console.warn('Supabase delete error:', err);
+    if (isSupabaseConfigured() && isUUID(id) && isUUID(familyId)) {
+      const { error } = await supabase.from('clan_chronicles').delete().eq('id', id).eq('family_id', familyId);
+      if (error) {
+        console.error('Supabase delete error:', error);
+        return false;
       }
     }
 
@@ -342,7 +350,7 @@ export class ClanChronicleService {
 
     let comments: ClanChronicleComment[] = [];
 
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && isUUID(chronicleId) && isUUID(familyId)) {
       try {
         const { data, error } = await supabase
           .from('clan_chronicle_comments')
@@ -385,9 +393,47 @@ export class ClanChronicleService {
       return { success: false, error: 'Vui lòng nhập nội dung lưu bút.' };
     }
 
-    const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `cmt-${Date.now()}`;
+    const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : undefined;
+
+    if (isSupabaseConfigured() && isUUID(data.chronicle_id) && isUUID(data.family_id)) {
+      const commentPayload: Record<string, any> = {
+        chronicle_id: data.chronicle_id,
+        family_id: data.family_id,
+        author_id: data.author_id || null,
+        author_name: data.author_name.trim() || 'Con cháu dòng tộc',
+        author_avatar: data.author_avatar || null,
+        author_branch: data.author_branch || null,
+        content: data.content.trim(),
+      };
+      if (id) commentPayload.id = id;
+
+      const { data: dbComment, error } = await supabase
+        .from('clan_chronicle_comments')
+        .insert([commentPayload])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Supabase addComment error:', error);
+        return { success: false, error: error.message };
+      }
+
+      if (dbComment) {
+        // Update comment count
+        const { data: chr } = await supabase.from('clan_chronicles').select('comments_count').eq('id', data.chronicle_id).single();
+        if (chr) {
+          await supabase.from('clan_chronicles').update({ comments_count: (chr.comments_count || 0) + 1 }).eq('id', data.chronicle_id);
+        }
+        const comment = dbComment as ClanChronicleComment;
+        const localComments = getLocalComments(data.chronicle_id);
+        localComments.unshift(comment);
+        saveLocalComments(data.chronicle_id, localComments);
+        return { success: true, comment };
+      }
+    }
+
     const newComment: ClanChronicleComment = {
-      id,
+      id: id || `cmt-${Date.now()}`,
       chronicle_id: data.chronicle_id,
       family_id: data.family_id,
       author_id: data.author_id,
@@ -397,29 +443,6 @@ export class ClanChronicleService {
       content: data.content.trim(),
       created_at: new Date().toISOString(),
     };
-
-    if (isSupabaseConfigured()) {
-      try {
-        await supabase.from('clan_chronicle_comments').insert({
-          id: newComment.id,
-          chronicle_id: newComment.chronicle_id,
-          family_id: newComment.family_id,
-          author_id: newComment.author_id || null,
-          author_name: newComment.author_name,
-          author_avatar: newComment.author_avatar || null,
-          author_branch: newComment.author_branch || null,
-          content: newComment.content,
-        });
-
-        // Update comment count
-        const { data: chr } = await supabase.from('clan_chronicles').select('comments_count').eq('id', data.chronicle_id).single();
-        if (chr) {
-          await supabase.from('clan_chronicles').update({ comments_count: (chr.comments_count || 0) + 1 }).eq('id', data.chronicle_id);
-        }
-      } catch (err) {
-        console.warn('Supabase addComment error:', err);
-      }
-    }
 
     const localComments = getLocalComments(data.chronicle_id);
     localComments.unshift(newComment);
@@ -488,7 +511,7 @@ export class ClanChronicleService {
       }
     } catch {}
 
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && isUUID(familyId)) {
       try {
         const { data, error } = await supabase
           .from('families')
@@ -538,7 +561,7 @@ export class ClanChronicleService {
       }
     } catch {}
 
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && isUUID(familyId)) {
       try {
         await supabase
           .from('families')

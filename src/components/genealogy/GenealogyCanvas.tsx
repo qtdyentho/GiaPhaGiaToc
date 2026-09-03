@@ -89,32 +89,43 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
         const containerRect = containerRef.current.getBoundingClientRect();
         const elRect = targetEl.getBoundingClientRect();
 
-        // Calculate offset to bring element to center of viewport
-        const currentCenterX = elRect.left + elRect.width / 2;
-        const currentCenterY = elRect.top + elRect.height / 2;
-        const targetCenterX = containerRect.left + containerRect.width / 2;
-        const targetCenterY = containerRect.top + containerRect.height / 2;
+        // Node position in unscaled content space
+        const targetZoom = 1.0;
+        const nodeContentX = (elRect.left - containerRect.left - pan.x) / zoom;
+        const nodeContentY = (elRect.top - containerRect.top - pan.y) / zoom;
+        const nodeContentW = elRect.width / zoom;
+        const nodeContentH = elRect.height / zoom;
 
-        const deltaX = targetCenterX - currentCenterX;
-        const deltaY = targetCenterY - currentCenterY;
+        const newPanX = containerRect.width / 2 - (nodeContentX + nodeContentW / 2) * targetZoom;
+        const newPanY = containerRect.height / 2 - (nodeContentY + nodeContentH / 2) * targetZoom;
 
-        setPan((prev) => ({
-          x: Math.round(prev.x + deltaX),
-          y: Math.round(prev.y + deltaY),
-        }));
-        setZoom(1.0);
+        setPan({
+          x: Math.round(newPanX),
+          y: Math.round(newPanY),
+        });
+        setZoom(targetZoom);
       }
       setTimeout(() => setHighlightedMemberId(null), 3500);
     },
-    []
+    [pan, zoom]
   );
 
-  // Mouse wheel zoom & pan
+  // Mouse wheel zoom & pan with focal point compensation
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     if (e.ctrlKey || e.metaKey) {
-      const delta = e.deltaY < 0 ? 0.1 : -0.1;
-      setZoom((prev) => Math.min(Math.max(prev + delta, 0.35), 2.0));
+      if (!containerRef.current) return;
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const focalX = e.clientX - containerRect.left;
+      const focalY = e.clientY - containerRect.top;
+      const delta = e.deltaY < 0 ? 0.15 : -0.15;
+      const newZoom = Math.min(Math.max(zoom + delta, 0.35), 2.0);
+      const scaleFactor = newZoom / zoom;
+      setPan((prev) => ({
+        x: Math.round(focalX - (focalX - prev.x) * scaleFactor),
+        y: Math.round(focalY - (focalY - prev.y) * scaleFactor),
+      }));
+      setZoom(newZoom);
     } else {
       setPan((prev) => ({
         x: prev.x - e.deltaX * 0.8,
@@ -189,14 +200,25 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
         x: e.touches[0].clientX - dragStart.x,
         y: e.touches[0].clientY - dragStart.y,
       });
-    } else if (e.touches.length === 2 && touchDistance !== null) {
+    } else if (e.touches.length === 2 && touchDistance !== null && containerRef.current) {
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
       const dist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
+        touch1.clientX - touch2.clientX,
+        touch1.clientY - touch2.clientY
       );
       const factor = dist / touchDistance;
-      if (Math.abs(factor - 1) > 0.05) {
-        setZoom((prev) => Math.min(Math.max(prev * factor, 0.35), 2.0));
+      if (Math.abs(factor - 1) > 0.03) {
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const focalX = (touch1.clientX + touch2.clientX) / 2 - containerRect.left;
+        const focalY = (touch1.clientY + touch2.clientY) / 2 - containerRect.top;
+        const newZoom = Math.min(Math.max(zoom * factor, 0.35), 2.0);
+        const scaleFactor = newZoom / zoom;
+        setPan((prev) => ({
+          x: Math.round(focalX - (focalX - prev.x) * scaleFactor),
+          y: Math.round(focalY - (focalY - prev.y) * scaleFactor),
+        }));
+        setZoom(newZoom);
         setTouchDistance(dist);
       }
     }
@@ -325,17 +347,34 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
 
     // 1. Tập hợp các ID vợ/chồng phụ thuộc để không chọn làm Root độc lập
     const spouseIds = new Set<string>();
+    const filteredMemberIds = new Set(filteredMembers.map((m) => m.id));
+
     relationships
       .filter((r) => r.relationship === 'SPOUSE' || r.relationship_type === 'SPOUSE')
       .forEach((r) => {
         const m1 = members.find((m) => m.id === r.member_id);
         const m2 = members.find((m) => m.id === r.related_member_id);
-        if (m1?.gender === 'MALE' && m2?.gender === 'FEMALE') {
+        if (!m1 || !m2) return;
+
+        // Chỉ đưa vào spouseIds nếu cả 2 bên đều có mặt hoặc bên phối ngẫu là thành viên hợp lệ
+        if (m1.is_direct_lineage === true && m2.is_direct_lineage === false) {
           spouseIds.add(m2.id);
-        } else if (m1?.gender === 'FEMALE' && m2?.gender === 'MALE') {
+        } else if (m1.is_direct_lineage === false && m2.is_direct_lineage === true) {
           spouseIds.add(m1.id);
+        } else if (m1.gender === 'MALE' && m2.gender === 'FEMALE') {
+          if (filteredMemberIds.has(m1.id)) {
+            spouseIds.add(m2.id);
+          }
+        } else if (m1.gender === 'FEMALE' && m2.gender === 'MALE') {
+          if (filteredMemberIds.has(m2.id) && !m1.is_direct_lineage) {
+            spouseIds.add(m1.id);
+          } else if (filteredMemberIds.has(m1.id) && m1.is_direct_lineage) {
+            spouseIds.add(m2.id);
+          }
         } else {
-          spouseIds.add(r.related_member_id);
+          if (filteredMemberIds.has(m1.id)) {
+            spouseIds.add(m2.id);
+          }
         }
       });
 
@@ -343,12 +382,22 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
     members.forEach((m) => {
       if (m.spouse_id) {
         const spouse = memberMap.get(m.spouse_id);
-        if (m.gender === 'MALE' && spouse?.gender === 'FEMALE') {
-          spouseIds.add(spouse.id);
-        } else if (m.gender === 'FEMALE' && spouse?.gender === 'MALE') {
-          spouseIds.add(m.id);
-        } else if (spouse) {
-          if (m.id < spouse.id) {
+        if (spouse) {
+          if (m.is_direct_lineage === true && spouse.is_direct_lineage === false) {
+            spouseIds.add(spouse.id);
+          } else if (m.is_direct_lineage === false && spouse.is_direct_lineage === true) {
+            spouseIds.add(m.id);
+          } else if (m.gender === 'MALE' && spouse.gender === 'FEMALE') {
+            if (filteredMemberIds.has(m.id)) {
+              spouseIds.add(spouse.id);
+            }
+          } else if (m.gender === 'FEMALE' && spouse.gender === 'MALE') {
+            if (filteredMemberIds.has(spouse.id) && !m.is_direct_lineage) {
+              spouseIds.add(m.id);
+            } else if (filteredMemberIds.has(m.id) && m.is_direct_lineage) {
+              spouseIds.add(spouse.id);
+            }
+          } else if (filteredMemberIds.has(m.id) && m.id < spouse.id && !spouseIds.has(m.id)) {
             spouseIds.add(spouse.id);
           }
         }
@@ -439,10 +488,12 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
           const sId = treeCodeToMemberId.get(sCode);
           if (sId) {
             if (m.gender === 'FEMALE') {
-              spouseIds.add(m.id);
+              if (filteredMemberIds.has(sId) && !m.is_direct_lineage) {
+                spouseIds.add(m.id);
+              }
             } else {
               const spouseMember = memberMap.get(sId);
-              if (spouseMember && spouseMember.gender === 'FEMALE') {
+              if (spouseMember && spouseMember.gender === 'FEMALE' && filteredMemberIds.has(m.id)) {
                 spouseIds.add(sId);
               }
             }
@@ -457,36 +508,33 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
     // Fallback nếu không có root hoặc tất cả đều có liên kết
     if (roots.length === 0 && filteredMembers.length > 0) {
       const minGenNum = Math.min(
-        ...filteredMembers.map((m) => genMap.get(m.generation_id || '') || 1)
+        ...filteredMembers.map((m) => genMap.get(m.generation_id || '') || m.generation_index || 1)
       );
       roots = filteredMembers.filter(
-        (m) => (genMap.get(m.generation_id || '') || 1) === minGenNum && !spouseIds.has(m.id)
+        (m) => (genMap.get(m.generation_id || '') || m.generation_index || 1) === minGenNum && !spouseIds.has(m.id)
       );
     }
 
     // Nếu vẫn rỗng (ví dụ toàn bộ là nữ)
     if (roots.length === 0 && filteredMembers.length > 0) {
       const minGenNum = Math.min(
-        ...filteredMembers.map((m) => genMap.get(m.generation_id || '') || 1)
+        ...filteredMembers.map((m) => genMap.get(m.generation_id || '') || m.generation_index || 1)
       );
       roots = filteredMembers.filter(
-        (m) => (genMap.get(m.generation_id || '') || 1) === minGenNum
+        (m) => (genMap.get(m.generation_id || '') || m.generation_index || 1) === minGenNum
       );
     }
 
-    // Sắp xếp các roots theo thế hệ tăng dần (Đời 1 lên trước)
+    // Sắp xếp các roots theo thế hệ tăng dần (Đời 1 lên trước), sau đó theo thứ tự sinh / tên
     roots.sort((a, b) => {
-      const genA = genMap.get(a.generation_id || '') || 1;
-      const genB = genMap.get(b.generation_id || '') || 1;
-      return genA - genB;
+      const genA = genMap.get(a.generation_id || '') || a.generation_index || 1;
+      const genB = genMap.get(b.generation_id || '') || b.generation_index || 1;
+      if (genA !== genB) return genA - genB;
+      const orderA = a.birth_order || 1;
+      const orderB = b.birth_order || 1;
+      if (orderA !== orderB) return orderA - orderB;
+      return a.full_name.localeCompare(b.full_name);
     });
-
-    // Nếu có nhiều roots nhưng có những roots thuộc đời cao hơn (ví dụ root đời 12 trong khi có root đời 1 hoặc đời 11),
-    // Lọc chỉ giữ những roots ở đời nhỏ nhất để các đời sau hiển thị đệ quy làm nhánh con!
-    if (roots.length > 1) {
-      const minRootGen = Math.min(...roots.map((r) => genMap.get(r.generation_id || '') || 1));
-      roots = roots.filter((r) => (genMap.get(r.generation_id || '') || 1) === minRootGen);
-    }
 
     const visited = new Set<string>();
 
@@ -787,9 +835,18 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
               const clickY = e.clientY - rect.top;
               const pctX = clickX / rect.width;
               const pctY = clickY / rect.height;
+
+              const contentW = treeContentRef.current?.scrollWidth || 2400;
+              const contentH = treeContentRef.current?.scrollHeight || 1600;
+              const containerW = containerRef.current?.clientWidth || 1000;
+              const containerH = containerRef.current?.clientHeight || 800;
+
+              const targetContentX = pctX * contentW;
+              const targetContentY = pctY * contentH;
+
               setPan({
-                x: Math.round(-pctX * 1200 + 400),
-                y: Math.round(-pctY * 800 + 300),
+                x: Math.round(containerW / 2 - targetContentX * zoom),
+                y: Math.round(containerH / 2 - targetContentY * zoom),
               });
             }}
             className="w-40 h-28 bg-emerald-950/10 dark:bg-emerald-950/40 rounded-xl relative overflow-hidden cursor-crosshair border border-emerald-200 dark:border-emerald-800 flex items-center justify-center"
@@ -802,15 +859,36 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
             </div>
 
             {/* Viewport Indicator Rectangle */}
-            <div
-              className="absolute border-2 border-emerald-600 bg-emerald-500/20 rounded shadow-xs pointer-events-none transition-all duration-75"
-              style={{
-                width: `${Math.max(20, Math.min(100, 100 / zoom))}%`,
-                height: `${Math.max(20, Math.min(100, 100 / zoom))}%`,
-                left: `${Math.max(0, Math.min(70, -pan.x / 30 + 30))}%`,
-                top: `${Math.max(0, Math.min(70, -pan.y / 20 + 20))}%`,
-              }}
-            />
+            {(() => {
+              const contentW = treeContentRef.current?.scrollWidth || 2400;
+              const contentH = treeContentRef.current?.scrollHeight || 1600;
+              const containerW = containerRef.current?.clientWidth || 1000;
+              const containerH = containerRef.current?.clientHeight || 800;
+
+              const viewRatioW = Math.min(100, Math.max(12, (containerW / (contentW * zoom)) * 100));
+              const viewRatioH = Math.min(100, Math.max(12, (containerH / (contentH * zoom)) * 100));
+
+              const leftPct = Math.min(
+                100 - viewRatioW,
+                Math.max(0, ((-pan.x / zoom) / contentW) * 100)
+              );
+              const topPct = Math.min(
+                100 - viewRatioH,
+                Math.max(0, ((-pan.y / zoom) / contentH) * 100)
+              );
+
+              return (
+                <div
+                  className="absolute border-2 border-emerald-600 bg-emerald-500/20 rounded shadow-xs pointer-events-none transition-all duration-75"
+                  style={{
+                    width: `${viewRatioW}%`,
+                    height: `${viewRatioH}%`,
+                    left: `${leftPct}%`,
+                    top: `${topPct}%`,
+                  }}
+                />
+              );
+            })()}
           </div>
         </div>
       )}

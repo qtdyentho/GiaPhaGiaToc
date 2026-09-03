@@ -422,4 +422,550 @@ test('12-COLUMN EXCEL GENEALOGY IMPORT & GENERATION AUTO-INFERENCE TEST SUITE', 
     console.log('✅ [IMPORT-012: Ancient Lineage Dates < 1000 AD] PASS');
   });
 
+  await t.test('IMPORT-ADV-001: Multi-Node Circular Ancestry Detection (A->B->C->A, 4-Node Cycles, Disconnected Loops)', () => {
+    // 1. 3-node cycle via parentName: A -> B -> C -> A
+    const threeNodeCycleRows: RawImportMember[] = [
+      {
+        fullName: 'Nguyễn Văn A',
+        gender: 'MALE',
+        generationNumber: 1,
+        branchName: 'Chi Trưởng',
+        parentName: 'Nguyễn Văn B',
+        lifeStatus: 'ALIVE',
+      },
+      {
+        fullName: 'Nguyễn Văn B',
+        gender: 'MALE',
+        generationNumber: 2,
+        branchName: 'Chi Trưởng',
+        parentName: 'Nguyễn Văn C',
+        lifeStatus: 'ALIVE',
+      },
+      {
+        fullName: 'Nguyễn Văn C',
+        gender: 'MALE',
+        generationNumber: 3,
+        branchName: 'Chi Trưởng',
+        parentName: 'Nguyễn Văn A',
+        lifeStatus: 'ALIVE',
+      },
+    ];
+
+    const validation3 = DataImportService.validateImportData(threeNodeCycleRows);
+    assert.strictEqual(validation3.totalRows, 3);
+    assert.strictEqual(validation3.canCommit, false, '3-node cycle must block commit');
+    assert.ok(validation3.errorRows >= 3, 'All 3 members in the cycle must be marked with ERROR');
+    for (const r of validation3.rows) {
+      assert.ok(
+        r.errors.some((e) => e.includes('chu trình phả hệ khép kín')),
+        `Row ${r.rowNumber} (${r.data.fullName}) must have cycle detection error`
+      );
+    }
+
+    // 2. 4-node cycle via treeCode & parentCode: 1.1 -> 1.2 -> 1.3 -> 1.4 -> 1.1
+    const fourNodeCycleRows: RawImportMember[] = [
+      {
+        treeCode: '1.1',
+        parentCode: '1.2',
+        fullName: 'Thành Viên Vòng 1',
+        gender: 'MALE',
+        generationNumber: 2,
+        branchName: 'Chi 1',
+        lifeStatus: 'ALIVE',
+      },
+      {
+        treeCode: '1.2',
+        parentCode: '1.3',
+        fullName: 'Thành Viên Vòng 2',
+        gender: 'MALE',
+        generationNumber: 2,
+        branchName: 'Chi 1',
+        lifeStatus: 'ALIVE',
+      },
+      {
+        treeCode: '1.3',
+        parentCode: '1.4',
+        fullName: 'Thành Viên Vòng 3',
+        gender: 'MALE',
+        generationNumber: 2,
+        branchName: 'Chi 1',
+        lifeStatus: 'ALIVE',
+      },
+      {
+        treeCode: '1.4',
+        parentCode: '1.1',
+        fullName: 'Thành Viên Vòng 4',
+        gender: 'MALE',
+        generationNumber: 2,
+        branchName: 'Chi 1',
+        lifeStatus: 'ALIVE',
+      },
+    ];
+
+    const validation4 = DataImportService.validateImportData(fourNodeCycleRows);
+    assert.strictEqual(validation4.canCommit, false, '4-node cycle must block commit');
+    assert.strictEqual(validation4.errorRows, 4, 'All 4 members in 4-node cycle must have ERROR');
+
+    // 3. Disconnected loops + valid subtrees in same batch
+    const mixedGraphRows: RawImportMember[] = [
+      // Valid Subtree (Root -> Child 1 -> Child 2)
+      {
+        treeCode: 'ROOT',
+        fullName: 'Cụ Khởi Tổ Hợp Lệ',
+        gender: 'MALE',
+        generationNumber: 1,
+        branchName: 'Chi Trưởng',
+        lifeStatus: 'DECEASED',
+      },
+      {
+        treeCode: 'CHILD.1',
+        parentCode: 'ROOT',
+        fullName: 'Con Trưởng Hợp Lệ',
+        gender: 'MALE',
+        generationNumber: 2,
+        branchName: 'Chi Trưởng',
+        lifeStatus: 'ALIVE',
+      },
+      // Disconnected 2-Node Cycle (L1 <-> L2)
+      {
+        treeCode: 'LOOP1',
+        parentCode: 'LOOP2',
+        fullName: 'Vòng Độc Lập 1',
+        gender: 'MALE',
+        generationNumber: 2,
+        branchName: 'Chi Hai',
+        lifeStatus: 'ALIVE',
+      },
+      {
+        treeCode: 'LOOP2',
+        parentCode: 'LOOP1',
+        fullName: 'Vòng Độc Lập 2',
+        gender: 'MALE',
+        generationNumber: 2,
+        branchName: 'Chi Hai',
+        lifeStatus: 'ALIVE',
+      },
+    ];
+
+    const mixedValidation = DataImportService.validateImportData(mixedGraphRows);
+    assert.strictEqual(mixedValidation.totalRows, 4);
+    assert.strictEqual(mixedValidation.rows[0].status, 'VALID', 'Valid root must remain VALID');
+    assert.strictEqual(mixedValidation.rows[1].status, 'VALID', 'Valid child must remain VALID');
+    assert.strictEqual(mixedValidation.rows[2].status, 'ERROR', 'LOOP1 must be flagged ERROR');
+    assert.strictEqual(mixedValidation.rows[3].status, 'ERROR', 'LOOP2 must be flagged ERROR');
+    assert.strictEqual(mixedValidation.canCommit, false);
+
+    // 4. Self-Parent Loop detection
+    const selfParentRow: RawImportMember[] = [
+      {
+        treeCode: 'SELF_NODE',
+        parentCode: 'SELF_NODE',
+        fullName: 'Tự Làm Cha Mình',
+        gender: 'MALE',
+        generationNumber: 1,
+        branchName: 'Toàn Tộc',
+        lifeStatus: 'ALIVE',
+      },
+    ];
+    const selfValidation = DataImportService.validateImportData(selfParentRow);
+    assert.strictEqual(selfValidation.errorRows, 1);
+    assert.ok(selfValidation.rows[0].errors.some((e) => e.includes('trùng với chính')));
+
+    console.log('✅ [IMPORT-ADV-001: Multi-Node Circular Ancestry Detection] PASS');
+  });
+
+  await t.test('IMPORT-ADV-002: Malformed Dates, Vietnamese Text Dates, Leap Years & Dual Calendar Conversions', () => {
+    // 1. Vietnamese text dates
+    const dateVn1 = DataImportService.parseFlexibleDate('Ngày 21 tháng 10 năm 1851');
+    assert.strictEqual(dateVn1.hasDate, true);
+    assert.strictEqual(dateVn1.day, 21);
+    assert.strictEqual(dateVn1.month, 10);
+    assert.strictEqual(dateVn1.year, 1851);
+    assert.strictEqual(dateVn1.formattedDate, '21/10/1851');
+
+    const dateVn2 = DataImportService.parseFlexibleDate('25 thg 8 1887');
+    assert.strictEqual(dateVn2.hasDate, true);
+    assert.strictEqual(dateVn2.day, 25);
+    assert.strictEqual(dateVn2.month, 8);
+    assert.strictEqual(dateVn2.year, 1887);
+
+    // 2. Leap year handling: 29/02/2000, 29/02/2024
+    const leap2000 = DataImportService.parseFlexibleDate('29/02/2000');
+    assert.strictEqual(leap2000.hasDate, true);
+    assert.strictEqual(leap2000.day, 29);
+    assert.strictEqual(leap2000.month, 2);
+    assert.strictEqual(leap2000.year, 2000);
+    assert.strictEqual(DataImportService.toPostgresDate('29/02/2000'), '2000-02-29');
+
+    const leap2024 = DataImportService.parseFlexibleDate('29/02/2024');
+    assert.strictEqual(leap2024.hasDate, true);
+    assert.strictEqual(DataImportService.toPostgresDate('29/02/2024'), '2024-02-29');
+
+    // 3. Ancient year ISO formatting & zero padding
+    assert.strictEqual(DataImportService.toPostgresDate('15/08/544'), '0544-08-15');
+    assert.strictEqual(DataImportService.toPostgresDate('1/1/938'), '0938-01-01');
+    assert.strictEqual(DataImportService.toPostgresDate(undefined, 503), '0503-01-01');
+
+    // 4. Extract year robustly
+    assert.strictEqual(DataImportService.extractYear('21/10/1910'), 1910);
+    assert.strictEqual(DataImportService.extractYear('1980-06-29'), 1980);
+    assert.strictEqual(DataImportService.extractYear(1952), 1952);
+    assert.strictEqual(DataImportService.extractYear('Năm 1887'), 1887);
+    assert.strictEqual(DataImportService.extractYear(544), 544);
+    assert.strictEqual(DataImportService.extractYear(''), 0);
+    assert.strictEqual(DataImportService.extractYear(null), 0);
+
+    // 5. Dual Calendar Auto-Conversion in autoInferGenerationsAndBranches
+    const calendarTestRows: RawImportMember[] = [
+      {
+        fullName: 'Thành Viên Có Ngày Sinh Dương',
+        gender: 'MALE',
+        generationNumber: 1,
+        branchName: 'Chi Trưởng',
+        birthSolarDate: '21/10/1910', // Solar date -> should infer Lunar date
+        lifeStatus: 'ALIVE',
+      },
+      {
+        fullName: 'Thành Viên Có Ngày Sinh Âm',
+        gender: 'FEMALE',
+        generationNumber: 1,
+        branchName: 'Chi Trưởng',
+        birthLunarDate: '18/09/1910', // Lunar date -> should infer Solar date
+        lifeStatus: 'ALIVE',
+      },
+      {
+        fullName: 'Thành Viên Có Ngày Mất Dương',
+        gender: 'MALE',
+        generationNumber: 1,
+        branchName: 'Chi Trưởng',
+        deathSolarDate: '29/06/1980', // Solar death -> should infer Lunar giỗ & lifeStatus DECEASED
+        lifeStatus: 'ALIVE',
+      },
+      {
+        fullName: 'Thành Viên Có Ngày Giỗ Âm',
+        gender: 'FEMALE',
+        generationNumber: 1,
+        branchName: 'Chi Trưởng',
+        deathLunarDay: 18,
+        deathLunarMonth: 5,
+        deathLunarYear: 1980, // Lunar giỗ -> should infer Solar death & lifeStatus DECEASED
+        lifeStatus: 'ALIVE',
+      },
+    ];
+
+    const { members: inferredCal } = DataImportService.autoInferGenerationsAndBranches(calendarTestRows);
+    
+    // Member 1: Solar -> Lunar
+    assert.ok(inferredCal[0].birthLunarDay && inferredCal[0].birthLunarDay > 0);
+    assert.ok(inferredCal[0].birthLunarMonth && inferredCal[0].birthLunarMonth > 0);
+    assert.ok(inferredCal[0].birthLunarYear && inferredCal[0].birthLunarYear === 1910);
+    assert.ok(inferredCal[0].birthLunarDate && inferredCal[0].birthLunarDate.length > 0);
+
+    // Member 2: Lunar -> Solar
+    assert.ok(inferredCal[1].birthSolarDate && inferredCal[1].birthSolarDate.includes('1910'));
+    assert.strictEqual(inferredCal[1].birthYear, 1910);
+
+    // Member 3: Solar Death -> Lunar Giỗ & DECEASED
+    assert.strictEqual(inferredCal[2].lifeStatus, 'DECEASED');
+    assert.ok(inferredCal[2].deathLunarDay && inferredCal[2].deathLunarDay > 0);
+    assert.ok(inferredCal[2].deathLunarMonth && inferredCal[2].deathLunarMonth > 0);
+    assert.ok(inferredCal[2].deathLunarFull && inferredCal[2].deathLunarFull.length > 0);
+
+    // Member 4: Lunar Giỗ -> Solar Death & DECEASED
+    assert.strictEqual(inferredCal[3].lifeStatus, 'DECEASED');
+    assert.ok(inferredCal[3].deathSolarDate && inferredCal[3].deathSolarDate.includes('1980'));
+
+    // 6. Chronological Error Validation (deathYear < birthYear, invalid months/days)
+    const chronologicalAnomalyRows: RawImportMember[] = [
+      {
+        fullName: 'Người Sinh Sau Khi Mất',
+        gender: 'MALE',
+        generationNumber: 1,
+        branchName: 'Chi Trưởng',
+        birthYear: 1980,
+        deathLunarYear: 1950, // ERROR: Death < Birth
+        lifeStatus: 'DECEASED',
+      },
+      {
+        fullName: 'Người Có Tháng Mất Sai',
+        gender: 'FEMALE',
+        generationNumber: 1,
+        branchName: 'Chi Trưởng',
+        deathLunarMonth: 13, // ERROR: Month > 12
+        deathLunarDay: 35, // ERROR: Day > 30
+        lifeStatus: 'DECEASED',
+      },
+    ];
+
+    const chronoValidation = DataImportService.validateImportData(chronologicalAnomalyRows);
+    assert.strictEqual(chronoValidation.canCommit, false);
+    assert.strictEqual(chronoValidation.errorRows, 2);
+    assert.ok(chronoValidation.rows[0].errors.some((e) => e.includes('không được lớn hơn năm mất')));
+    assert.ok(chronoValidation.rows[1].errors.some((e) => e.includes('Tháng mất âm lịch')));
+    assert.ok(chronoValidation.rows[1].errors.some((e) => e.includes('Ngày mất âm lịch')));
+
+    console.log('✅ [IMPORT-ADV-002: Malformed Dates, Leap Years & Dual Calendar Conversions] PASS');
+  });
+
+  await t.test('IMPORT-ADV-003: Large Batch Import Stress Test (500+ Records) & Chunked Rollback', async () => {
+    // Generate synthetic tree of 520 records across 10 generations
+    const largeBatchRows: RawImportMember[] = [];
+    const totalTarget = 520;
+    
+    // Gen 1: Patriarch & Matriarch
+    largeBatchRows.push({
+      treeCode: '1',
+      fullName: 'Cụ Thủy Tổ Đời 1',
+      gender: 'MALE',
+      generationNumber: 1,
+      branchName: 'Toàn Tộc',
+      birthYear: 1700,
+      deathLunarYear: 1775,
+      deathLunarMonth: 3,
+      deathLunarDay: 15,
+      lifeStatus: 'DECEASED',
+    });
+    largeBatchRows.push({
+      treeCode: '1-V1',
+      spouseCode: '1',
+      fullName: 'Cụ Bà Chính Thất Đời 1',
+      gender: 'FEMALE',
+      generationNumber: 1,
+      branchName: 'Toàn Tộc',
+      birthYear: 1705,
+      deathLunarYear: 1780,
+      lifeStatus: 'DECEASED',
+    });
+
+    let currentGen = 2;
+    let memberCount = 2;
+    let prevGenCodes = ['1'];
+
+    while (memberCount < totalTarget && currentGen <= 10) {
+      const nextGenCodes: string[] = [];
+      for (const parentCode of prevGenCodes) {
+        if (memberCount >= totalTarget) break;
+        // 2 children per parent
+        for (let c = 1; c <= 2; c++) {
+          if (memberCount >= totalTarget) break;
+          const childCode = `${parentCode}.${c}`;
+          const childName = `Thành Viên ${childCode} (Đời ${currentGen})`;
+          const birthY = 1700 + (currentGen - 1) * 30;
+          const isDeceased = currentGen <= 6;
+          
+          largeBatchRows.push({
+            treeCode: childCode,
+            parentCode: parentCode,
+            fullName: childName,
+            gender: c === 1 ? 'MALE' : 'FEMALE',
+            generationNumber: currentGen,
+            branchName: parentCode.startsWith('1.1') ? 'Chi Trưởng' : 'Chi Thứ',
+            birthYear: birthY,
+            deathLunarYear: isDeceased ? birthY + 70 : undefined,
+            deathLunarMonth: isDeceased ? 5 : undefined,
+            deathLunarDay: isDeceased ? 10 : undefined,
+            lifeStatus: isDeceased ? 'DECEASED' : 'ALIVE',
+          });
+          memberCount++;
+          nextGenCodes.push(childCode);
+
+          // Add spouse for first child
+          if (c === 1 && memberCount < totalTarget) {
+            const spouseCode = `${childCode}-V1`;
+            largeBatchRows.push({
+              treeCode: spouseCode,
+              spouseCode: childCode,
+              fullName: `Phu Nhân ${spouseCode} (Đời ${currentGen})`,
+              gender: 'FEMALE',
+              generationNumber: currentGen,
+              branchName: parentCode.startsWith('1.1') ? 'Chi Trưởng' : 'Chi Thứ',
+              birthYear: birthY + 2,
+              lifeStatus: isDeceased ? 'DECEASED' : 'ALIVE',
+            });
+            memberCount++;
+          }
+        }
+      }
+      prevGenCodes = nextGenCodes;
+      currentGen++;
+    }
+
+    assert.ok(largeBatchRows.length >= 500, `Must generate at least 500 records (actual: ${largeBatchRows.length})`);
+
+    // Benchmark validation performance
+    const startTime = Date.now();
+    const largeValidation = DataImportService.validateImportData(largeBatchRows);
+    const durationMs = Date.now() - startTime;
+
+    assert.strictEqual(largeValidation.totalRows, largeBatchRows.length);
+    assert.strictEqual(largeValidation.errorRows, 0, 'Synthetic 500+ tree must be 100% VALID');
+    assert.strictEqual(largeValidation.canCommit, true);
+    assert.ok(durationMs < 500, `Validation of ${largeBatchRows.length} records took ${durationMs}ms (must be < 500ms)`);
+
+    // Test Commit of Large Batch (500+ records)
+    const largeBatchClanId = 'clan-stress-500-test';
+    const commitResult = await DataImportService.commitImport(largeBatchClanId, largeValidation);
+    assert.strictEqual(commitResult.success, true);
+    assert.strictEqual(commitResult.insertedCount, largeBatchRows.length);
+
+    // Test Rollback of Large Batch
+    const rollbackResult = await DataImportService.rollbackBatch(commitResult.batchId);
+    assert.strictEqual(rollbackResult.success, true);
+
+    console.log(`✅ [IMPORT-ADV-003: Large Batch Import Stress (${largeBatchRows.length} records in ${durationMs}ms) & Rollback] PASS`);
+  });
+
+  await t.test('IMPORT-ADV-004: Spouse Generation Inference with Complex Nuclear & Polygyny Graphs', () => {
+    // 1. Patriarch with 3 wives (Chính Thất, Kế Thất, Trắc Thất)
+    const polygynyRows: RawImportMember[] = [
+      {
+        treeCode: '1',
+        fullName: 'Cụ Trưởng Tộc Đa Thê',
+        gender: 'MALE',
+        generationNumber: 0, // Inferred as 1
+        branchName: 'Chi Trưởng',
+        lifeStatus: 'DECEASED',
+      },
+      {
+        treeCode: '1-V1',
+        fullName: 'Cụ Bà Trần Thị Nhất (Chính Thất)',
+        gender: 'MALE', // Deliberately MALE in raw -> autoInfer should fix to FEMALE
+        generationNumber: 0,
+        branchName: '',
+        lifeStatus: 'DECEASED',
+      },
+      {
+        treeCode: '1-V2',
+        fullName: 'Cụ Bà Lê Thị Nhị (Kế Thất)',
+        gender: 'FEMALE',
+        generationNumber: 0,
+        branchName: '',
+        lifeStatus: 'DECEASED',
+      },
+      {
+        treeCode: '1-V3',
+        fullName: 'Cụ Bà Hoàng Thị Tam (Trắc Thất)',
+        gender: 'FEMALE',
+        generationNumber: 0,
+        branchName: '',
+        lifeStatus: 'DECEASED',
+      },
+      // Son from Wife 1 (1.1) with his own 2 wives
+      {
+        treeCode: '1.1',
+        parentCode: '1',
+        motherCode: '1-V1',
+        fullName: 'Nguyễn Văn Trưởng Nam (Con Bà Cả)',
+        gender: 'MALE',
+        generationNumber: 0,
+        branchName: '',
+        lifeStatus: 'DECEASED',
+      },
+      {
+        treeCode: '1.1-V1',
+        fullName: 'Bà Dâu Trưởng Cả',
+        gender: 'FEMALE',
+        generationNumber: 0,
+        branchName: '',
+        lifeStatus: 'DECEASED',
+      },
+      {
+        treeCode: '1.1-V2',
+        fullName: 'Bà Dâu Trưởng Hai',
+        gender: 'FEMALE',
+        generationNumber: 0,
+        branchName: '',
+        lifeStatus: 'DECEASED',
+      },
+      // Son from Wife 2 (1.2)
+      {
+        treeCode: '1.2',
+        parentCode: '1',
+        motherCode: '1-V2',
+        fullName: 'Nguyễn Văn Thứ Nam (Con Bà Hai)',
+        gender: 'MALE',
+        generationNumber: 0,
+        branchName: '',
+        lifeStatus: 'ALIVE',
+      },
+      // Daughter from Wife 3 (1.3) with husband consort (1.3-C1)
+      {
+        treeCode: '1.3',
+        parentCode: '1',
+        motherCode: '1-V3',
+        fullName: 'Nguyễn Thị Nữ Nhi (Con Bà Ba)',
+        gender: 'FEMALE',
+        generationNumber: 0,
+        branchName: '',
+        lifeStatus: 'ALIVE',
+      },
+      {
+        treeCode: '1.3-HP1',
+        spouseCode: '1.3',
+        fullName: 'Ông Rể Quý (Phu Quân)',
+        gender: 'MALE',
+        generationNumber: 0,
+        branchName: '',
+        lifeStatus: 'ALIVE',
+      },
+      // Deep prefix generation member: D11.1-V1
+      {
+        treeCode: 'D11.1',
+        fullName: 'Cháu Đời 11 Tiền Tố D11',
+        gender: 'MALE',
+        generationNumber: 0,
+        branchName: 'Chi Ba',
+        lifeStatus: 'ALIVE',
+      },
+      {
+        treeCode: 'D11.1-V1',
+        fullName: 'Vợ Cháu Đời 11',
+        gender: 'FEMALE',
+        generationNumber: 0,
+        branchName: '',
+        lifeStatus: 'ALIVE',
+      },
+    ];
+
+    const { members: inferredPolygyny, autoInferredCount } = DataImportService.autoInferGenerationsAndBranches(polygynyRows);
+    
+    assert.strictEqual(autoInferredCount, 12, 'All 12 members should be auto-inferred');
+
+    // Check Patriarch & Wives
+    assert.strictEqual(inferredPolygyny[0].generationNumber, 1); // 1
+    assert.strictEqual(inferredPolygyny[1].generationNumber, 1); // 1-V1
+    assert.strictEqual(inferredPolygyny[1].gender, 'FEMALE', '1-V1 must be normalized to FEMALE');
+    assert.strictEqual(inferredPolygyny[1].relationType, 'Vợ Cả (Chính Thất)');
+    assert.strictEqual(inferredPolygyny[1].spouseCode, '1');
+
+    assert.strictEqual(inferredPolygyny[2].generationNumber, 1); // 1-V2
+    assert.strictEqual(inferredPolygyny[2].relationType, 'Vợ Thứ 2 (Kế Thất)');
+
+    assert.strictEqual(inferredPolygyny[3].generationNumber, 1); // 1-V3
+    assert.strictEqual(inferredPolygyny[3].relationType, 'Vợ Thứ 3 (Kế Thất)');
+
+    // Check Son 1.1 & his wives
+    assert.strictEqual(inferredPolygyny[4].generationNumber, 2); // 1.1
+    assert.strictEqual(inferredPolygyny[5].generationNumber, 2); // 1.1-V1
+    assert.strictEqual(inferredPolygyny[5].spouseCode, '1.1');
+    assert.strictEqual(inferredPolygyny[6].generationNumber, 2); // 1.1-V2
+    assert.strictEqual(inferredPolygyny[6].spouseCode, '1.1');
+
+    // Check Son 1.2
+    assert.strictEqual(inferredPolygyny[7].generationNumber, 2); // 1.2
+
+    // Check Daughter 1.3 & Husband Consort 1.3-HP1
+    assert.strictEqual(inferredPolygyny[8].generationNumber, 2); // 1.3
+    assert.strictEqual(inferredPolygyny[9].generationNumber, 2); // 1.3-HP1
+    assert.strictEqual(inferredPolygyny[9].spouseCode, '1.3');
+
+    // Check Prefix generation D11
+    assert.strictEqual(inferredPolygyny[10].generationNumber, 11); // D11.1
+    assert.strictEqual(inferredPolygyny[11].generationNumber, 11); // D11.1-V1
+    assert.strictEqual(inferredPolygyny[11].branchName, 'Chi Ba', 'Spouse must inherit branch');
+
+    console.log('✅ [IMPORT-ADV-004: Spouse Generation Inference with Complex Polygyny Graphs] PASS');
+  });
+
 });
+

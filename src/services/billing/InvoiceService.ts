@@ -21,6 +21,40 @@ export class InvoiceService {
     const now = new Date().toISOString();
     const dueDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
+    const isUUID = (str?: string | null): boolean =>
+      Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      const payload: Record<string, any> = {
+        family_id: familyId,
+        invoice_number: invNumber,
+        status: 'OPEN',
+        subtotal: amount,
+        discount: 0,
+        tax: 0,
+        total: amount,
+        currency: 'VND',
+        billing_reason: `${plan.name} (${cycle === 'YEARLY' ? '1 năm' : '1 tháng'})`,
+        issued_at: now,
+        due_at: dueDate,
+      };
+      if (isUUID(subscriptionId)) {
+        payload.subscription_id = subscriptionId;
+      }
+
+      const { data, error } = await supabase
+        .from('invoices')
+        .insert([payload])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('createSubscriptionInvoice error:', error);
+        throw new Error(error.message || 'Không thể tạo hóa đơn trên cơ sở dữ liệu');
+      }
+      if (data) return data as Invoice;
+    }
+
     const invoice: Invoice = {
       id: `inv-${Date.now()}`,
       family_id: familyId,
@@ -38,16 +72,6 @@ export class InvoiceService {
       created_at: now,
       updated_at: now,
     };
-
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase
-        .from('invoices')
-        .insert(invoice)
-        .select()
-        .single();
-
-      if (!error && data) return data as Invoice;
-    }
 
     mockInvoices.push(invoice);
     return invoice;

@@ -27,12 +27,20 @@ export function getLineageHierarchyInfo(
   branches: Branch[],
   allMembers?: Member[]
 ): LineageHierarchyInfo {
-  const gen = generations.find((g) => g.id === member.generation_id);
-  const genNum = gen ? gen.generation_number : member.generation_index || 1;
-  const branch = branches.find((b) => b.id === member.branch_id);
-  const chiName = branch ? branch.name : (member.branch_code?.includes('c2') ? 'Chi Hai' : 'Chi Trưởng');
+  let effectiveMember = member;
+  if (!member.father_id && !member.mother_id && member.spouse_id && allMembers) {
+    const spouse = allMembers.find((m) => m.id === member.spouse_id);
+    if (spouse && (spouse.father_id || spouse.mother_id || spouse.generation_id)) {
+      effectiveMember = spouse;
+    }
+  }
 
-  const birthOrder = member.birth_order || 1;
+  const gen = generations.find((g) => g.id === effectiveMember.generation_id);
+  const genNum = gen ? gen.generation_number : effectiveMember.generation_index || 1;
+  const branch = branches.find((b) => b.id === effectiveMember.branch_id);
+  const chiName = branch ? branch.name : (effectiveMember.branch_code?.includes('c2') ? 'Chi Hai' : 'Chi Trưởng');
+
+  const birthOrder = effectiveMember.birth_order || 1;
 
   // ĐỜI 1: THỦY TỔ (GỐC RỄ)
   if (genNum === 1) {
@@ -49,7 +57,7 @@ export function getLineageHierarchyInfo(
 
   // ĐỜI 2: CHI (PHÂN CHI ĐỘC LẬP TỪ THỦY TỔ)
   if (genNum === 2) {
-    const isTruong = member.birth_order === 1 || member.branch_id?.includes('1') || chiName.includes('Trưởng');
+    const isTruong = effectiveMember.birth_order === 1 || effectiveMember.branch_id?.includes('1') || chiName.includes('Trưởng');
     return {
       levelType: 'CHI',
       levelName: 'Chi',
@@ -79,18 +87,55 @@ export function getLineageHierarchyInfo(
   }
 
   // ĐỜI 4, 5+: NHÁNH (PHÂN TỪ CÀNH)
-  const canhIndex = Math.max(1, Math.min(3, Math.ceil(birthOrder / 2)));
-  const nhanhName = `Nhánh ${birthOrder}`;
+  // Truy vết ngược lên Đời 3 để xác định chính xác Cành thủy tổ
+  let gen3Ancestor: Member | undefined;
+  let gen4Ancestor: Member | undefined;
+
+  if (allMembers && allMembers.length > 0) {
+    const memberMap = new Map(allMembers.map((m) => [m.id, m]));
+    const genMap = new Map(generations.map((g) => [g.id, g.generation_number]));
+    const getGenNum = (m: Member) => genMap.get(m.generation_id || '') || m.generation_index || 1;
+
+    let curr: Member | undefined = effectiveMember;
+    const visited = new Set<string>();
+
+    while (curr && (curr.father_id || curr.mother_id) && !visited.has(curr.id)) {
+      visited.add(curr.id);
+      const parentId = curr.father_id || curr.mother_id;
+      const parent = memberMap.get(parentId!);
+      if (!parent) break;
+      const pGen = getGenNum(parent);
+      if (pGen === 4) {
+        gen4Ancestor = parent;
+      }
+      if (pGen === 3) {
+        gen3Ancestor = parent;
+        break;
+      }
+      curr = parent;
+    }
+  }
+
+  const canhIndex = gen3Ancestor
+    ? (gen3Ancestor.birth_order || 1)
+    : Math.max(1, Math.min(3, Math.ceil(birthOrder / 2)));
+  const canhName = `Cành ${canhIndex}`;
+
+  let nhanhName = `Nhánh ${birthOrder}`;
+  if (genNum >= 5 && gen4Ancestor) {
+    nhanhName = `Nhánh ${gen4Ancestor.birth_order || 1}`;
+  }
+
   return {
     levelType: 'NHANH',
     levelName: 'Nhánh',
     generationNumber: genNum,
     chiName,
-    canhName: `Cành ${canhIndex}`,
+    canhName,
     nhanhName,
     badgeLabel: `🍃 ${chiName} • ${nhanhName}`,
     badgeColor: 'bg-amber-50 text-amber-900 border-amber-200 dark:bg-slate-800 dark:text-amber-300 dark:border-amber-900',
-    fullHierarchyPath: `${chiName} ➔ Cành ${canhIndex} ➔ ${nhanhName} (Đời ${genNum})`,
+    fullHierarchyPath: `${chiName} ➔ ${canhName} ➔ ${nhanhName} (Đời ${genNum})`,
   };
 }
 
@@ -101,6 +146,7 @@ export function getLineageHierarchyInfo(
  * 2. Khi chọn CHI (Đời 2): Hiển thị Cụ Thủy Tổ Đời 1 (bố mẹ đẻ ra Chi) + toàn bộ con cháu hậu duệ thuộc Chi đó.
  * 3. Khi chọn CÀNH (Đời 3): Hiển thị Vị Đứng Đầu Chi Đời 2 (Thủy Tổ của Cành) + Cành đó (Đời 3) + toàn bộ con cháu (Đời 4, 5+). Ẩn Đời 1 và các Cành khác.
  * 4. Khi chọn NHÁNH (Đời 4+): Hiển thị Vị Đứng Đầu Cành Đời 3 (Thủy Tổ của Nhánh) + Nhánh đó (Đời 4) + toàn bộ con cháu (Đời 5+). Ẩn Đời 1, Đời 2 và các Nhánh khác.
+ * 5. BẢO TOÀN HÔN PHỐI (Preserve Spouses): Các phối ngẫu (Vợ/Chồng) của thành viên hợp lệ luôn được giữ lại cùng phả đồ.
  */
 export function filterLineageTree(
   members: Member[],
@@ -117,60 +163,77 @@ export function filterLineageTree(
     return members;
   }
 
-  return members.filter((m) => {
+  // Bước 1: Thu thập tất cả thành viên trực hệ thỏa mãn bộ lọc
+  const matchedDirectIds = new Set<string>();
+
+  members.forEach((m) => {
     const info = getLineageHierarchyInfo(m, generations, branches, members);
     
     // 1. Lọc theo CHI (Đời 2 trở đi):
     if (filter.mode === 'CHI') {
-      // Phía trên 1 đời: Bố Mẹ đẻ ra Chi = Thủy Tổ Dòng Họ (Đời 1)
-      if (info.generationNumber === 1) return true;
-      // Dưới: Chỉ lấy các thành viên thuộc đúng Chi này
+      if (info.generationNumber === 1) {
+        matchedDirectIds.add(m.id);
+        return;
+      }
       if (filter.selectedChiId) {
-        return m.branch_id === filter.selectedChiId;
+        if (m.branch_id === filter.selectedChiId) {
+          matchedDirectIds.add(m.id);
+        }
+      } else {
+        matchedDirectIds.add(m.id);
       }
-      return true;
-    }
-
-    // 2. Lọc theo CÀNH (Đời 3 trở đi):
-    if (filter.mode === 'CANH') {
+    } else if (filter.mode === 'CANH') {
+      // 2. Lọc theo CÀNH (Đời 3 trở đi):
       const matchChi = !filter.selectedChiId || m.branch_id === filter.selectedChiId;
-      if (!matchChi) return false;
+      if (!matchChi) return;
 
-      // Phía trên 1 đời: Bố Mẹ đẻ ra Cành = Vị Đứng Đầu Chi (Đời 2) -> Là Thủy Tổ của Cành này!
-      if (info.generationNumber === 2) return true;
+      if (info.generationNumber === 2) {
+        matchedDirectIds.add(m.id);
+        return;
+      }
 
-      // Dưới: Chỉ lấy Cành đã chọn (Đời 3) và tất cả hậu duệ các nhánh đời 4, 5+ thuộc Cành này
       if (info.generationNumber >= 3) {
-        if (!filter.selectedCanh) return true;
-        return info.canhName === filter.selectedCanh;
+        if (!filter.selectedCanh || info.canhName === filter.selectedCanh) {
+          matchedDirectIds.add(m.id);
+        }
       }
-
-      // Ẩn Cụ Thủy Tổ Đời 1 vì đây là phả đồ riêng của Cành
-      return false;
-    }
-
-    // 3. Lọc theo NHÁNH (Đời 4 trở đi):
-    if (filter.mode === 'NHANH') {
+    } else if (filter.mode === 'NHANH') {
+      // 3. Lọc theo NHÁNH (Đời 4 trở đi):
       const matchChi = !filter.selectedChiId || m.branch_id === filter.selectedChiId;
-      if (!matchChi) return false;
+      if (!matchChi) return;
 
-      // Phía trên 1 đời: Bố Mẹ đẻ ra Nhánh = Vị Đứng Đầu Cành (Đời 3) -> Là Thủy Tổ của Nhánh này!
       if (info.generationNumber === 3) {
-        if (!filter.selectedCanh) return true;
-        return info.canhName === filter.selectedCanh;
+        if (!filter.selectedCanh || info.canhName === filter.selectedCanh) {
+          matchedDirectIds.add(m.id);
+        }
+        return;
       }
 
-      // Dưới: Chỉ lấy Nhánh đã chọn (Đời 4) và các con cháu đời 5+ của Nhánh này
       if (info.generationNumber >= 4) {
         const matchCanh = !filter.selectedCanh || info.canhName === filter.selectedCanh;
         const matchNhanh = !filter.selectedNhanh || info.nhanhName === filter.selectedNhanh;
-        return matchCanh && matchNhanh;
+        if (matchCanh && matchNhanh) {
+          matchedDirectIds.add(m.id);
+        }
       }
-
-      // Ẩn Đời 1 và Đời 2 vì đây là phả đồ riêng của Nhánh
-      return false;
     }
-
-    return true;
   });
+
+  // Bước 2: Bảo toàn hôn phối (vợ/chồng của các thành viên trực hệ đã chọn)
+  const finalIds = new Set<string>(matchedDirectIds);
+  members.forEach((m) => {
+    if (m.spouse_id && matchedDirectIds.has(m.spouse_id)) {
+      finalIds.add(m.id);
+    }
+    if (!finalIds.has(m.id)) {
+      const isSpouseOfMatched = members.some(
+        (matched) => matchedDirectIds.has(matched.id) && matched.spouse_id === m.id
+      );
+      if (isSpouseOfMatched) {
+        finalIds.add(m.id);
+      }
+    }
+  });
+
+  return members.filter((m) => finalIds.has(m.id));
 }

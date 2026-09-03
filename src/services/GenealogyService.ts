@@ -46,6 +46,21 @@ export class GenealogyService {
               family_id: dbRow.family_id,
               generation_id: dbRow.generation_id,
               branch_id: dbRow.branch_id,
+              father_id: dbRow.father_id,
+              mother_id: dbRow.mother_id,
+              spouse_id: dbRow.spouse_id,
+              union_id: dbRow.union_id,
+              birth_order: dbRow.birth_order,
+              generation_index: dbRow.generation_index,
+              branch_code: dbRow.branch_code,
+              branch_path: dbRow.branch_path,
+              is_direct_lineage: dbRow.is_direct_lineage,
+              child_lineage_type: dbRow.child_lineage_type,
+              is_stepchild: dbRow.is_stepchild,
+              biological_mother_id: dbRow.biological_mother_id,
+              biological_father_id: dbRow.biological_father_id,
+              spouse_rank: dbRow.spouse_rank,
+              marriage_order: dbRow.marriage_order,
               first_name: dbRow.first_name || dbRow.full_name?.split(' ').pop() || '',
               last_name: dbRow.last_name || dbRow.full_name?.split(' ').slice(0, -1).join(' ') || '',
               full_name: dbRow.full_name || `${dbRow.last_name || ''} ${dbRow.first_name || ''}`.trim(),
@@ -115,6 +130,21 @@ export class GenealogyService {
               family_id: dbRow.family_id,
               generation_id: dbRow.generation_id,
               branch_id: dbRow.branch_id,
+              father_id: dbRow.father_id,
+              mother_id: dbRow.mother_id,
+              spouse_id: dbRow.spouse_id,
+              union_id: dbRow.union_id,
+              birth_order: dbRow.birth_order,
+              generation_index: dbRow.generation_index,
+              branch_code: dbRow.branch_code,
+              branch_path: dbRow.branch_path,
+              is_direct_lineage: dbRow.is_direct_lineage,
+              child_lineage_type: dbRow.child_lineage_type,
+              is_stepchild: dbRow.is_stepchild,
+              biological_mother_id: dbRow.biological_mother_id,
+              biological_father_id: dbRow.biological_father_id,
+              spouse_rank: dbRow.spouse_rank,
+              marriage_order: dbRow.marriage_order,
               first_name: dbRow.first_name || dbRow.full_name?.split(' ').pop() || '',
               last_name: dbRow.last_name || dbRow.full_name?.split(' ').slice(0, -1).join(' ') || '',
               full_name: dbRow.full_name || `${dbRow.last_name || ''} ${dbRow.first_name || ''}`.trim(),
@@ -130,6 +160,7 @@ export class GenealogyService {
               burial_place: dbRow.burial_place,
               bio: dbRow.biography || dbRow.notes,
               notes: dbRow.notes,
+              avatar_url: dbRow.avatar_url,
               created_at: dbRow.created_at,
               updated_at: dbRow.updated_at,
             };
@@ -143,10 +174,14 @@ export class GenealogyService {
     return mockMembers.filter((m) => m.family_id === familyId);
   }
 
-  static async getMemberById(id: string): Promise<Member | undefined> {
+  static async getMemberById(id: string, familyId?: string): Promise<Member | undefined> {
     if (isSupabaseConfigured() && isUUID(id)) {
       try {
-        const { data, error } = await supabase.from('members').select('*').eq('id', id).single();
+        let query = supabase.from('members').select('*').eq('id', id);
+        if (familyId && isUUID(familyId)) {
+          query = query.eq('family_id', familyId);
+        }
+        const { data, error } = await query.single();
         if (!error && data) {
           const notesStr = data.notes || data.biography || '';
           const extractNote = (prefix: string) => {
@@ -159,6 +194,21 @@ export class GenealogyService {
             family_id: data.family_id,
             generation_id: data.generation_id,
             branch_id: data.branch_id,
+            father_id: data.father_id,
+            mother_id: data.mother_id,
+            spouse_id: data.spouse_id,
+            union_id: data.union_id,
+            birth_order: data.birth_order,
+            generation_index: data.generation_index,
+            branch_code: data.branch_code,
+            branch_path: data.branch_path,
+            is_direct_lineage: data.is_direct_lineage,
+            child_lineage_type: data.child_lineage_type,
+            is_stepchild: data.is_stepchild,
+            biological_mother_id: data.biological_mother_id,
+            biological_father_id: data.biological_father_id,
+            spouse_rank: data.spouse_rank,
+            marriage_order: data.marriage_order,
             first_name: data.first_name || data.full_name?.split(' ').pop() || '',
             last_name: data.last_name || data.full_name?.split(' ').slice(0, -1).join(' ') || '',
             full_name: data.full_name,
@@ -184,7 +234,7 @@ export class GenealogyService {
         console.warn('getMemberById Supabase error:', err);
       }
     }
-    return mockMembers.find((m) => m.id === id);
+    return mockMembers.find((m) => m.id === id && (!familyId || m.family_id === familyId));
   }
 
   static async addMember(
@@ -218,6 +268,14 @@ export class GenealogyService {
         religious_name: member.religious_name || null,
         burial_place: member.burial_place || null,
         biography: member.bio || null,
+        father_id: member.father_id || null,
+        mother_id: member.mother_id || null,
+        spouse_id: member.spouse_id || null,
+        birth_order: member.birth_order || null,
+        generation_index: member.generation_index || null,
+        branch_code: member.branch_code || null,
+        spouse_rank: member.spouse_rank || null,
+        marriage_order: member.marriage_order || null,
       };
 
       try {
@@ -232,6 +290,21 @@ export class GenealogyService {
           family_id: data.family_id,
           generation_id: data.generation_id,
           branch_id: data.branch_id,
+          father_id: data.father_id,
+          mother_id: data.mother_id,
+          spouse_id: data.spouse_id,
+          union_id: data.union_id,
+          birth_order: data.birth_order,
+          generation_index: data.generation_index,
+          branch_code: data.branch_code,
+          branch_path: data.branch_path,
+          is_direct_lineage: data.is_direct_lineage,
+          child_lineage_type: data.child_lineage_type,
+          is_stepchild: data.is_stepchild,
+          biological_mother_id: data.biological_mother_id,
+          biological_father_id: data.biological_father_id,
+          spouse_rank: data.spouse_rank,
+          marriage_order: data.marriage_order,
           first_name: member.first_name || member.full_name?.split(' ').pop() || '',
           last_name: member.last_name || member.full_name?.split(' ').slice(0, -1).join(' ') || '',
           full_name: data.full_name,
@@ -438,18 +511,70 @@ export class GenealogyService {
         if (updates.father_id !== undefined) payload.father_id = updates.father_id;
         if (updates.mother_id !== undefined) payload.mother_id = updates.mother_id;
         if (updates.spouse_id !== undefined) payload.spouse_id = updates.spouse_id;
+        if (updates.birth_order !== undefined) payload.birth_order = updates.birth_order;
+        if (updates.generation_index !== undefined) payload.generation_index = updates.generation_index;
+        if (updates.branch_code !== undefined) payload.branch_code = updates.branch_code;
+        if (updates.spouse_rank !== undefined) payload.spouse_rank = updates.spouse_rank;
+        if (updates.marriage_order !== undefined) payload.marriage_order = updates.marriage_order;
+        if (updates.branch_id !== undefined) payload.branch_id = updates.branch_id;
+        if (updates.generation_id !== undefined) payload.generation_id = updates.generation_id;
 
-        const { data, error } = await supabase.from('members').update(payload).eq('id', id).select().single();
+        let updateQuery = supabase.from('members').update(payload).eq('id', id);
+        if (updates.family_id && isUUID(updates.family_id)) {
+          updateQuery = updateQuery.eq('family_id', updates.family_id);
+        }
+        const { data, error } = await updateQuery.select().single();
         if (error) {
           return { success: false, error: error.message };
         }
-        return { success: true, member: data as unknown as Member };
+        const updatedMember: Member = {
+          id: data.id,
+          family_id: data.family_id,
+          generation_id: data.generation_id,
+          branch_id: data.branch_id,
+          father_id: data.father_id,
+          mother_id: data.mother_id,
+          spouse_id: data.spouse_id,
+          union_id: data.union_id,
+          birth_order: data.birth_order,
+          generation_index: data.generation_index,
+          branch_code: data.branch_code,
+          branch_path: data.branch_path,
+          is_direct_lineage: data.is_direct_lineage,
+          child_lineage_type: data.child_lineage_type,
+          is_stepchild: data.is_stepchild,
+          biological_mother_id: data.biological_mother_id,
+          biological_father_id: data.biological_father_id,
+          spouse_rank: data.spouse_rank,
+          marriage_order: data.marriage_order,
+          first_name: data.first_name || data.full_name?.split(' ').pop() || '',
+          last_name: data.last_name || data.full_name?.split(' ').slice(0, -1).join(' ') || '',
+          full_name: data.full_name,
+          gender: data.gender,
+          life_status: data.status || (data.is_deceased ? 'DECEASED' : 'ALIVE'),
+          birth_solar_date: data.date_of_birth,
+          birth_time: data.birth_time,
+          courtesy_name: data.courtesy_name,
+          death_solar_date: data.date_of_death_solar,
+          death_lunar_day: data.date_of_death_lunar_day,
+          death_lunar_month: data.date_of_death_lunar_month,
+          death_lunar_year: data.date_of_death_lunar_year,
+          death_time: data.death_time,
+          religious_name: data.religious_name,
+          burial_place: data.burial_place,
+          bio: data.biography || data.notes,
+          avatar_url: data.avatar_url,
+          created_at: data.created_at,
+          updated_at: data.updated_at,
+        };
+        return { success: true, member: updatedMember };
       } catch (err: any) {
+        console.error('updateMember exception:', err);
         return { success: false, error: err.message };
       }
     }
 
-    const idx = mockMembers.findIndex((m) => m.id === id);
+    const idx = mockMembers.findIndex((m) => m.id === id && (!updates.family_id || m.family_id === updates.family_id));
     if (idx !== -1) {
       mockMembers[idx] = { ...mockMembers[idx], ...updates, updated_at: new Date().toISOString() };
       return { success: true, member: mockMembers[idx] };
@@ -470,20 +595,32 @@ export class GenealogyService {
     if (isSupabaseConfigured() && isUUID(id)) {
       try {
         // 1. Xóa quan hệ liên quan
-        await supabase
+        let relQuery = supabase
           .from('member_relationships')
           .delete()
           .or(`member_id.eq.${id},related_member_id.eq.${id}`);
+        if (familyId && isUUID(familyId)) {
+          relQuery = relQuery.eq('family_id', familyId);
+        }
+        await relQuery;
 
         // 2. Nullify father_id, mother_id, spouse_id trên các thành viên trỏ tới id này
-        await Promise.all([
-          supabase.from('members').update({ father_id: null }).eq('father_id', id),
-          supabase.from('members').update({ mother_id: null }).eq('mother_id', id),
-          supabase.from('members').update({ spouse_id: null }).eq('spouse_id', id),
-        ]);
+        let fQuery = supabase.from('members').update({ father_id: null }).eq('father_id', id);
+        let mQuery = supabase.from('members').update({ mother_id: null }).eq('mother_id', id);
+        let sQuery = supabase.from('members').update({ spouse_id: null }).eq('spouse_id', id);
+        if (familyId && isUUID(familyId)) {
+          fQuery = fQuery.eq('family_id', familyId);
+          mQuery = mQuery.eq('family_id', familyId);
+          sQuery = sQuery.eq('family_id', familyId);
+        }
+        await Promise.all([fQuery, mQuery, sQuery]);
 
         // 3. Xóa ngày giỗ liên kết
-        await supabase.from('memorial_dates').delete().eq('member_id', id);
+        let memQuery = supabase.from('memorial_dates').delete().eq('member_id', id);
+        if (familyId && isUUID(familyId)) {
+          memQuery = memQuery.eq('family_id', familyId);
+        }
+        await memQuery;
 
         // 4. Xóa bản ghi thành viên
         let query = supabase.from('members').delete().eq('id', id);

@@ -186,13 +186,12 @@ export class FundService {
     };
 
     if (isSupabaseConfigured() && isUUID(payload.family_id)) {
-      try {
-        const { data, error } = await supabase.from('funds').insert([payload]).select().single();
-        if (!error && data) return { success: true, fund: data as Fund };
-        if (error) return { success: false, error: error.message };
-      } catch (err: any) {
-        console.warn('FundService.createFund error:', err);
+      const { data, error } = await supabase.from('funds').insert([payload]).select().single();
+      if (error) {
+        console.error('FundService.createFund error:', error);
+        return { success: false, error: error.message };
       }
+      if (data) return { success: true, fund: data as Fund };
     }
 
     const newFund: Fund = {
@@ -328,13 +327,12 @@ export class FundService {
     });
 
     if (isSupabaseConfigured() && isUUID(params.familyId)) {
-      try {
-        const { data, error } = await supabase.from('income_assessments').insert(assessmentsToInsert).select();
-        if (!error && data) return { success: true, count: data.length, assessments: data as IncomeAssessment[] };
-        if (error) return { success: false, count: 0, error: error.message };
-      } catch (err: any) {
-        console.warn('createBulkAssessment error:', err);
+      const { data, error } = await supabase.from('income_assessments').insert(assessmentsToInsert).select();
+      if (error) {
+        console.error('createBulkAssessment error:', error);
+        return { success: false, count: 0, error: error.message };
       }
+      if (data) return { success: true, count: data.length, assessments: data as IncomeAssessment[] };
     }
 
     // Fallback Mock
@@ -361,25 +359,26 @@ export class FundService {
     }
 
     // Try Supabase RPC first
-    if (isSupabaseConfigured() && isUUID(params.familyId) && (!params.assessmentId || isUUID(params.assessmentId))) {
-      try {
-        const { data, error } = await supabase.rpc('record_income_payment', {
-          p_family_id: params.familyId,
-          p_fund_id: params.fundId,
-          p_assessment_id: params.assessmentId,
-          p_amount: params.amount,
-          p_payment_method: params.paymentMethod,
-          p_transaction_date: params.transactionDate || new Date().toISOString().slice(0, 10),
-          p_description: params.description,
-          p_receipt_url: params.receiptUrl || null,
-          p_user_id: params.userId || null,
-        });
+    if (isSupabaseConfigured() && isUUID(params.familyId) && isUUID(params.fundId) && (!params.assessmentId || isUUID(params.assessmentId))) {
+      const { data, error } = await supabase.rpc('record_income_payment', {
+        p_family_id: params.familyId,
+        p_fund_id: params.fundId,
+        p_assessment_id: params.assessmentId || null,
+        p_amount: params.amount,
+        p_payment_method: params.paymentMethod,
+        p_transaction_date: params.transactionDate || new Date().toISOString().slice(0, 10),
+        p_description: params.description,
+        p_receipt_url: params.receiptUrl || null,
+        p_user_id: params.userId || null,
+      });
 
-        if (!error && data) {
-          return { success: true, transactionId: data };
-        }
-      } catch (rpcErr) {
-        console.warn('RPC record_income_payment unavailable, using atomic client fallback:', rpcErr);
+      if (error) {
+        console.error('RPC record_income_payment error:', error);
+        return { success: false, error: error.message };
+      }
+
+      if (data) {
+        return { success: true, transactionId: data };
       }
     }
 
@@ -458,33 +457,35 @@ export class FundService {
       };
     }
 
-    if (isSupabaseConfigured()) {
-      try {
-        const { data, error } = await supabase.rpc('fn_record_direct_expense', {
-          p_family_id: params.familyId,
-          p_fund_id: params.fundId,
-          p_category_id: params.categoryId || null,
-          p_title: params.title,
-          p_amount: params.amount,
-          p_recipient_name: params.recipientName,
-          p_expense_date: params.expenseDate,
-          p_payment_method: params.paymentMethod,
-          p_description: params.description,
-          p_receipt_url: params.receiptUrl || null,
-          p_user_id: params.userId || null,
-        });
+    if (isSupabaseConfigured() && isUUID(params.familyId) && isUUID(params.fundId)) {
+      const { data, error } = await supabase.rpc('fn_record_direct_expense', {
+        p_family_id: params.familyId,
+        p_fund_id: params.fundId,
+        p_category_id: params.categoryId || null,
+        p_title: params.title,
+        p_amount: params.amount,
+        p_recipient_name: params.recipientName,
+        p_expense_date: params.expenseDate,
+        p_payment_method: params.paymentMethod,
+        p_description: params.description,
+        p_receipt_url: params.receiptUrl || null,
+        p_user_id: params.userId || null,
+      });
 
-        if (!error && data?.success) {
-          return {
-            success: true,
-            transactionId: data.transaction_id,
-          };
-        }
-        if (error) {
-          console.warn('RPC fn_record_direct_expense error, falling back to local/REST:', error.message);
-        }
-      } catch (rpcErr) {
-        console.warn('RPC call failed:', rpcErr);
+      if (error) {
+        console.error('RPC fn_record_direct_expense error:', error);
+        return { success: false, error: error.message };
+      }
+
+      if (data?.success) {
+        return {
+          success: true,
+          transactionId: data.transaction_id,
+        };
+      }
+
+      if (data && !data.success) {
+        return { success: false, error: data.error || 'Giải ngân thất bại' };
       }
     }
 
@@ -563,17 +564,17 @@ export class FundService {
     transactionId?: string;
     error?: string;
   }> {
-    if (isSupabaseConfigured()) {
-      try {
-        const { data, error } = await supabase.rpc('approve_expense_record', {
-          p_family_id: familyId,
-          p_expense_id: expenseId,
-          p_approver_id: approverId,
-        });
-        if (!error && data) return { success: true, transactionId: data };
-      } catch (rpcErr) {
-        console.warn('RPC approve_expense_record fallback:', rpcErr);
+    if (isSupabaseConfigured() && isUUID(familyId) && isUUID(expenseId)) {
+      const { data, error } = await supabase.rpc('approve_expense_record', {
+        p_family_id: familyId,
+        p_expense_id: expenseId,
+        p_approver_id: approverId,
+      });
+      if (error) {
+        console.error('RPC approve_expense_record error:', error);
+        return { success: false, error: error.message };
       }
+      if (data) return { success: true, transactionId: data };
     }
 
     // Fallback Mock Execution
@@ -623,9 +624,9 @@ export class FundService {
   // ==========================================
   static async getLedger(familyId?: string, filters?: { fundId?: string; type?: TransactionType }): Promise<FinancialTransaction[]> {
     if (!familyId) return [];
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && isUUID(familyId)) {
       let query = supabase.from('financial_transactions').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
-      if (filters?.fundId) query = query.eq('fund_id', filters.fundId);
+      if (filters?.fundId && isUUID(filters.fundId)) query = query.eq('fund_id', filters.fundId);
       if (filters?.type) query = query.eq('transaction_type', filters.type);
       const { data, error } = await query;
       if (!error && data) return data as FinancialTransaction[];
@@ -643,18 +644,18 @@ export class FundService {
     reason: string,
     userId?: string
   ): Promise<{ success: boolean; reversalTransactionId?: string; error?: string }> {
-    if (isSupabaseConfigured()) {
-      try {
-        const { data, error } = await supabase.rpc('reverse_financial_transaction', {
-          p_family_id: familyId,
-          p_transaction_id: transactionId,
-          p_reason: reason,
-          p_user_id: userId || null,
-        });
-        if (!error && data) return { success: true, reversalTransactionId: data };
-      } catch (rpcErr) {
-        console.warn('RPC reverse_financial_transaction fallback:', rpcErr);
+    if (isSupabaseConfigured() && isUUID(familyId) && isUUID(transactionId)) {
+      const { data, error } = await supabase.rpc('reverse_financial_transaction', {
+        p_family_id: familyId,
+        p_transaction_id: transactionId,
+        p_reason: reason,
+        p_user_id: userId || null,
+      });
+      if (error) {
+        console.error('RPC reverse_financial_transaction error:', error);
+        return { success: false, error: error.message };
       }
+      if (data) return { success: true, reversalTransactionId: data };
     }
 
     // Symmetrical Fallback Reversal Logic
@@ -740,14 +741,13 @@ export class FundService {
       payment_method: contribution.payment_method || 'BANK_TRANSFER',
     };
 
-    if (isSupabaseConfigured() && isUUID(payload.family_id)) {
-      try {
-        const { data, error } = await supabase.from('contributions').insert([payload]).select().single();
-        if (!error && data) return { success: true, contribution: data as Contribution };
-        if (error) return { success: false, error: error.message };
-      } catch (err: any) {
-        console.warn('createContribution error:', err);
+    if (isSupabaseConfigured() && isUUID(payload.family_id) && isUUID(payload.fund_id)) {
+      const { data, error } = await supabase.from('contributions').insert([payload]).select().single();
+      if (error) {
+        console.error('createContribution error:', error);
+        return { success: false, error: error.message };
       }
+      if (data) return { success: true, contribution: data as Contribution };
     }
 
     const newCtb: Contribution = {

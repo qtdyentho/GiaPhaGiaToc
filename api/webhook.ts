@@ -52,22 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // 2. Idempotency Check: Đã xử lý giao dịch này chưa?
-    const { data: existingPayment } = await supabase
-      .from('payments')
-      .select('id, status')
-      .eq('payment_code', transactionId)
-      .maybeSingle();
-
-    if (existingPayment && existingPayment.status === 'SUCCESS') {
-      return res.status(200).json({
-        success: true,
-        message: 'Idempotent replay: Transaction already processed',
-        transactionId,
-      });
-    }
-
-    // 3. Verify Invoice
+    // 2. Fetch invoice
     const { data: invoice, error: invError } = await supabase
       .from('invoices')
       .select('id, family_id, subscription_id, total, status')
@@ -78,68 +63,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(404).json({ success: false, error: 'Invoice not found' });
     }
 
-    // 4. Verify Amount
-    if (Number(amount) < Number(invoice.total)) {
-      // Ghi nhận partial payment
-      await supabase.from('payments').insert({
-        family_id: invoice.family_id,
-        subscription_id: invoice.subscription_id,
-        invoice_id: invoice.id,
-        payment_code: transactionId,
-        amount: Number(amount),
-        currency: 'VND',
-        payment_method: paymentMethod || 'VIETQR',
-        provider: 'VIETQR',
-        status: 'PARTIAL',
-      });
+    // 3. Atomic Activation via PostgreSQL RPC (handles idempotency, row locking, and status updates)
+    const { data: rpcResult, error: rpcError } = await supabase.rpc('activate_subscription_via_webhook', {
+      p_family_id: invoice.family_id,
+      p_subscription_id: invoice.subscription_id,
+      p_invoice_id: invoice.id,
+      p_payment_code: transactionId,
+      p_amount: Number(amount),
+      p_payment_method: paymentMethod || 'VIETQR',
+      p_provider: 'VIETQR',
+    });
 
+    if (rpcError) {
+      console.error('RPC activate_subscription_via_webhook error:', rpcError);
+      return res.status(500).json({ success: false, error: rpcError.message });
+    }
+
+    if (!rpcResult?.success) {
       return res.status(400).json({
         success: false,
-        error: 'Underpayment: Payment amount less than invoice total',
+        error: rpcResult?.error || rpcResult?.message || 'Payment activation failed',
         received: amount,
         expected: invoice.total,
       });
     }
 
-    // 5. Atomic Activation: Cập nhật Payment, Invoice, và Subscription
-    const now = new Date().toISOString();
-    const periodEnd = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
-
-    // Insert / Upsert Payment
-    await supabase.from('payments').upsert({
-      family_id: invoice.family_id,
-      subscription_id: invoice.subscription_id,
-      invoice_id: invoice.id,
-      payment_code: transactionId,
-      amount: Number(amount),
-      currency: 'VND',
-      payment_method: paymentMethod || 'VIETQR',
-      provider: 'VIETQR',
-      status: 'SUCCESS',
-      paid_at: now,
-    });
-
-    // Update Invoice -> PAID
-    await supabase.from('invoices').update({ status: 'PAID', paid_at: now }).eq('id', invoice.id);
-
-    // Update Subscription -> ACTIVE
-    await supabase
-      .from('subscriptions')
-      .update({
-        status: 'ACTIVE',
-        current_period_start: now,
-        current_period_end: periodEnd,
-      })
-      .eq('id', invoice.subscription_id);
-
     return res.status(200).json({
       success: true,
-      message: 'Bank Webhook processed and Subscription Activated Successfully',
+      message: rpcResult.message || 'Bank Webhook processed and Subscription Activated Successfully',
       data: {
         familyId: invoice.family_id,
         subscriptionId: invoice.subscription_id,
         invoiceId: invoice.id,
-        status: 'ACTIVE',
+        status: rpcResult.status || 'ACTIVE',
       },
     });
   } catch (error: any) {

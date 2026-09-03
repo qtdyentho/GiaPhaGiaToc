@@ -124,80 +124,131 @@ export const GenealogyTreeNode: React.FC<GenealogyTreeNodeProps> = ({
           </div>
         )}
 
-        {/* Danh sách Vợ / Chồng (Xếp ngang hàng chuẩn mực) */}
-        {spouses.map((s, sIdx) => {
-          const isSpouseSelected = selectedMemberId === s.id;
-          const isSpouseDeceased = s.life_status === 'DECEASED';
+        {/* Danh sách Vợ / Chồng (Xếp ngang hàng chuẩn mực, sắp xếp theo thứ tự hôn phối) */}
+        {(() => {
+          const sortedSpouses = [...spouses].sort((a, b) => {
+            const orderA = a.marriage_order || 1;
+            const orderB = b.marriage_order || 1;
+            if (orderA !== orderB) return orderA - orderB;
+            const rankPriority: Record<string, number> = {
+              CHINH_THAT: 1,
+              KE_THAT: 2,
+              THAC_THAT: 3,
+              KHONG_RO: 4,
+            };
+            const pA = a.spouse_rank ? rankPriority[a.spouse_rank] || 5 : 5;
+            const pB = b.spouse_rank ? rankPriority[b.spouse_rank] || 5 : 5;
+            return pA - pB;
+          });
 
-          const wifeTitle =
-            sIdx === 0
-              ? '👑 Bà Cả (Chính Thất)'
-              : sIdx === 1
-              ? '🌿 Bà Hai (Kế Thất)'
-              : sIdx === 2
-              ? '🍃 Bà Ba (Trắc Thất)'
-              : `🌸 Bà Thứ ${sIdx + 1}`;
+          return sortedSpouses.map((s, sIdx) => {
+            const isSpouseSelected = selectedMemberId === s.id;
+            const isSpouseDeceased = s.life_status === 'DECEASED';
+            const isMaleSpouse = s.gender === 'MALE';
 
-          const wifeBadgeColor =
-            sIdx === 0
-              ? 'border-amber-300 text-amber-900 bg-amber-50 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-700'
-              : sIdx === 1
-              ? 'border-teal-300 text-teal-900 bg-teal-50 dark:bg-teal-950 dark:text-teal-200 dark:border-teal-700'
-              : 'border-rose-200 text-rose-900 bg-rose-50 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800';
+            let spouseTitle = '';
+            let spouseBadgeColor = '';
 
-          return (
-            <div
-              key={s.id}
-              id={`member-node-${s.id}`}
-              data-member-id={s.id}
-              onClick={() => onSelectMember(s)}
-              className={`member-card-interactive w-60 bg-white dark:bg-slate-800 rounded-2xl p-4 transition-all duration-200 cursor-pointer border-2 ${
-                isSpouseSelected
-                  ? 'border-rose-500 ring-4 ring-rose-500/20 bg-rose-50/20'
-                  : 'border-slate-200 dark:border-slate-700 hover:border-rose-400'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-1 pb-2 mb-2 border-b border-slate-100 dark:border-slate-700">
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border font-serif ${wifeBadgeColor}`}>
-                  {wifeTitle}
-                </span>
-                <span className={`text-[10px] font-bold ${isSpouseDeceased ? 'text-slate-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
-                  {isSpouseDeceased ? '🕯️ Đã Mất' : '🌿 Còn Sống'}
-                </span>
-              </div>
+            if (isMaleSpouse) {
+              if (s.spouse_rank === 'CHINH_THAT' || sIdx === 0) {
+                spouseTitle = '👑 Phu Quân (Chính Phu)';
+              } else if (s.spouse_rank === 'KE_THAT' || sIdx === 1) {
+                spouseTitle = '🌿 Kế Phu';
+              } else if (s.spouse_rank === 'THAC_THAT' || sIdx === 2) {
+                spouseTitle = '🍃 Trượng Phu';
+              } else {
+                spouseTitle = `🌸 Trượng Phu ${sIdx + 1}`;
+              }
+              spouseBadgeColor =
+                sIdx === 0
+                  ? 'border-blue-300 text-blue-900 bg-blue-50 dark:bg-blue-950 dark:text-blue-200 dark:border-blue-700'
+                  : sIdx === 1
+                  ? 'border-teal-300 text-teal-900 bg-teal-50 dark:bg-teal-950 dark:text-teal-200 dark:border-teal-700'
+                  : 'border-slate-200 text-slate-900 bg-slate-50 dark:bg-slate-950 dark:text-slate-300 dark:border-slate-800';
+            } else {
+              if (s.spouse_rank === 'CHINH_THAT' || sIdx === 0) {
+                spouseTitle = '👑 Bà Cả (Chính Thất)';
+              } else if (s.spouse_rank === 'KE_THAT' || sIdx === 1) {
+                spouseTitle = '🌿 Bà Hai (Kế Thất)';
+              } else if (s.spouse_rank === 'THAC_THAT' || sIdx === 2) {
+                spouseTitle = '🍃 Bà Ba (Trắc Thất)';
+              } else {
+                spouseTitle = `🌸 Bà Thứ ${sIdx + 1}`;
+              }
+              spouseBadgeColor =
+                sIdx === 0
+                  ? 'border-amber-300 text-amber-900 bg-amber-50 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-700'
+                  : sIdx === 1
+                  ? 'border-teal-300 text-teal-900 bg-teal-50 dark:bg-teal-950 dark:text-teal-200 dark:border-teal-700'
+                  : 'border-rose-200 text-rose-900 bg-rose-50 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800';
+            }
 
-              <div className="flex items-start gap-3">
-                <div
-                  className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold shadow-2xs shrink-0 ${
-                    sIdx === 0 ? 'bg-amber-100 dark:bg-amber-950 text-amber-900' : 'bg-rose-100 dark:bg-rose-950 text-rose-800'
-                  }`}
-                >
-                  👩
+            return (
+              <div
+                key={s.id}
+                id={`member-node-${s.id}`}
+                data-member-id={s.id}
+                onClick={() => onSelectMember(s)}
+                className={`member-card-interactive w-60 bg-white dark:bg-slate-800 rounded-2xl p-4 transition-all duration-200 cursor-pointer border-2 ${
+                  isSpouseSelected
+                    ? isMaleSpouse
+                      ? 'border-blue-500 ring-4 ring-blue-500/20 bg-blue-50/20'
+                      : 'border-rose-500 ring-4 ring-rose-500/20 bg-rose-50/20'
+                    : isMaleSpouse
+                    ? 'border-slate-200 dark:border-slate-700 hover:border-blue-400'
+                    : 'border-slate-200 dark:border-slate-700 hover:border-rose-400'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-1 pb-2 mb-2 border-b border-slate-100 dark:border-slate-700">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border font-serif ${spouseBadgeColor}`}>
+                    {spouseTitle}
+                  </span>
+                  <span className={`text-[10px] font-bold ${isSpouseDeceased ? 'text-slate-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
+                    {isSpouseDeceased ? '🕯️ Đã Mất' : '🌿 Còn Sống'}
+                  </span>
                 </div>
-                <div className="flex-1 min-w-0 space-y-0.5">
-                  <h4 className="font-bold text-slate-900 dark:text-white text-sm truncate font-serif">
-                    {s.full_name.replace(/\(.*?\)/g, '').trim()}
-                  </h4>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                    {isSpouseDeceased && s.death_lunar_day && s.death_lunar_month
-                      ? `Giỗ: ${s.death_lunar_day}/${s.death_lunar_month} ÂL`
-                      : 'Hiền thê phụng thờ'}
+
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold shadow-2xs shrink-0 ${
+                      isMaleSpouse
+                        ? sIdx === 0
+                          ? 'bg-blue-100 dark:bg-blue-950 text-blue-900'
+                          : 'bg-teal-100 dark:bg-teal-950 text-teal-800'
+                        : sIdx === 0
+                        ? 'bg-amber-100 dark:bg-amber-950 text-amber-900'
+                        : 'bg-rose-100 dark:bg-rose-950 text-rose-800'
+                    }`}
+                  >
+                    {isMaleSpouse ? '👨' : '👩'}
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-0.5">
+                    <h4 className="font-bold text-slate-900 dark:text-white text-sm truncate font-serif">
+                      {s.full_name.replace(/\(.*?\)/g, '').trim()}
+                    </h4>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                      {isSpouseDeceased && s.death_lunar_day && s.death_lunar_month
+                        ? `Giỗ: ${s.death_lunar_day}/${s.death_lunar_month} ÂL`
+                        : isMaleSpouse
+                        ? 'Trượng phu phụng thờ'
+                        : 'Hiền thê phụng thờ'}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs">
-                <span className="text-[10px] text-rose-700 dark:text-rose-400 font-bold flex items-center gap-0.5">
-                  <Eye className="w-3 h-3" />
-                  <span>Xem 360°</span>
-                </span>
-                <span className="text-[9px] text-slate-400 font-serif">Hôn Phối Đời {generationNumber}</span>
+                <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs">
+                  <span className={`text-[10px] ${isMaleSpouse ? 'text-blue-700 dark:text-blue-400' : 'text-rose-700 dark:text-rose-400'} font-bold flex items-center gap-0.5`}>
+                    <Eye className="w-3 h-3" />
+                    <span>Xem 360°</span>
+                  </span>
+                  <span className="text-[9px] text-slate-400 font-serif">Hôn Phối Đời {generationNumber}</span>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          });
+        })()}
 
-        {/* Nút Thao Tác Thêm Nhanh (Thêm Con / Thêm Vợ) */}
+        {/* Nút Thao Tác Thêm Nhanh (Thêm Con / Thêm Hôn Phối) */}
         {onAddRelation && (
           <div className="flex flex-col gap-1.5 pl-1 border-l border-slate-100 dark:border-slate-700">
             <button
@@ -219,12 +270,26 @@ export const GenealogyTreeNode: React.FC<GenealogyTreeNodeProps> = ({
                 e.stopPropagation();
                 onAddRelation(m, 'SPOUSE');
               }}
-              title={spouses.length === 0 ? 'Thêm Vợ (Chính Thất)' : 'Thêm Kế Thất / Thứ Thiếp'}
+              title={
+                m.gender === 'FEMALE'
+                  ? spouses.length === 0
+                    ? 'Thêm Chồng (Phu Quân)'
+                    : 'Thêm Kế Phu / Trượng Phu'
+                  : spouses.length === 0
+                  ? 'Thêm Vợ (Chính Thất)'
+                  : 'Thêm Kế Thất / Thứ Thiếp'
+              }
               className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950 hover:bg-rose-100 text-rose-800 dark:text-rose-300 text-[10px] font-bold transition flex items-center gap-1 cursor-pointer border border-rose-200 dark:border-rose-800"
             >
               <Heart className="w-3 h-3" />
               <span className="hidden group-hover:inline">
-                {spouses.length === 0 ? 'Thêm Vợ' : '+ Thêm Thứ Thất'}
+                {m.gender === 'FEMALE'
+                  ? spouses.length === 0
+                    ? 'Thêm Chồng'
+                    : '+ Thêm Phu Quân'
+                  : spouses.length === 0
+                  ? 'Thêm Vợ'
+                  : '+ Thêm Thứ Thất'}
               </span>
             </button>
           </div>
@@ -233,20 +298,19 @@ export const GenealogyTreeNode: React.FC<GenealogyTreeNodeProps> = ({
 
       {/* 🌿 DÂY NỐI PHẢ HỆ VÀ CÁC CHI NHÁNH CON (CHILDREN BRANCHING CONNECTOR) */}
       {children.length > 0 && (
-        <div className="flex flex-col items-center w-full">
-          {/* Trục đứng từ đáy cha mẹ xuống điểm giao thoa */}
-          <div className="w-[2px] h-8 bg-gradient-to-b from-[#166534] to-emerald-600 dark:from-emerald-400 dark:to-emerald-600 relative">
-            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-amber-400 border border-[#166534]" />
-          </div>
-
-          {/* Nhãn số lượng hậu duệ đời kế tiếp */}
-          <div className="mb-4">
-            <span className="px-3 py-0.5 rounded-full bg-[#166534] text-white text-[10px] font-bold shadow-xs font-serif inline-flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-amber-300" />
-              <span>
-                {children.length} Hậu Duệ (Đời Thứ {generationNumber + 1})
+        <div className="flex flex-col items-center w-full relative">
+          {/* Trục đứng liên tục từ đáy cha mẹ xuyên qua badge xuống thanh ngang con */}
+          <div className="relative flex flex-col items-center justify-center my-1">
+            {/* Dây đứng xuyên suốt không đứt đoạn */}
+            <div className="absolute inset-y-0 w-[2px] bg-emerald-600/80 dark:bg-emerald-400/80" />
+            <div className="relative z-10 my-2">
+              <span className="px-3 py-0.5 rounded-full bg-[#166534] text-white text-[10px] font-bold shadow-xs font-serif inline-flex items-center gap-1 border border-emerald-500/40">
+                <Sparkles className="w-3 h-3 text-amber-300" />
+                <span>
+                  {children.length} Hậu Duệ (Đời Thứ {generationNumber + 1})
+                </span>
               </span>
-            </span>
+            </div>
           </div>
 
           {/* Khung chứa các con: Căn giữa hoàn hảo so với cha mẹ */}
@@ -257,7 +321,7 @@ export const GenealogyTreeNode: React.FC<GenealogyTreeNodeProps> = ({
                 {/* Đường dây nhánh ngang (Horizontal Connector Segment) */}
                 {children.length > 1 && (
                   <div
-                    className={`absolute top-0 h-[2px] bg-emerald-600/70 dark:bg-emerald-400/70 ${
+                    className={`absolute top-0 h-[2px] bg-emerald-600/80 dark:bg-emerald-400/80 ${
                       cIdx === 0
                         ? 'left-1/2 right-0'
                         : cIdx === children.length - 1
@@ -268,7 +332,7 @@ export const GenealogyTreeNode: React.FC<GenealogyTreeNodeProps> = ({
                 )}
 
                 {/* Đường đứng nối từ thanh ngang xuống đỉnh của người con */}
-                <div className="w-[2px] h-6 bg-emerald-600/70 dark:bg-emerald-400/70 absolute -top-6 left-1/2 -translate-x-1/2" />
+                <div className="w-[2px] h-6 bg-emerald-600/80 dark:bg-emerald-400/80 absolute -top-6 left-1/2 -translate-x-1/2" />
 
                 {/* Đệ quy Node Con */}
                 <GenealogyTreeNode
