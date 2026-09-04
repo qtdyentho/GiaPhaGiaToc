@@ -1643,7 +1643,7 @@ export class DataImportService {
       if (!row.fullName || row.fullName.trim().length < 2) {
         errors.push('Họ và tên là bắt buộc (tối thiểu 2 ký tự). Vui lòng điền họ tên đầy đủ (VD: Nguyễn Văn Phúc hoặc Cụ Bà Trần Thị Mai).');
       } else if (nameSet.has(row.fullName.trim().toLowerCase())) {
-        warnings.push(`Cảnh báo: Trùng họ tên '${row.fullName.trim()}'. Vui lòng kiểm tra lại để đảm bảo phân biệt theo Đời hoặc Chi phái.`);
+        warnings.push(`Trùng họ tên '${row.fullName.trim()}'. • Nguyên nhân: Đã có một thành viên khác trong tệp có cùng họ và tên. • Hướng khắc phục: Nếu là hai người khác đời/nhánh, hệ thống vẫn nạp bình thường; bạn có thể bấm 'Sửa' để điền thêm Tên tự/hiệu hoặc Chi phái để phân biệt rõ ràng.`);
       }
       if (row.fullName) {
         nameSet.add(row.fullName.trim().toLowerCase());
@@ -1684,7 +1684,15 @@ export class DataImportService {
       if (row.motherCode && row.motherCode.trim()) {
         const mCode = row.motherCode.trim();
         if (!allTreeCodes.has(mCode)) {
-          warnings.push(`Mã mẹ '${mCode}' chưa có dòng thông tin tương ứng trong file. Hệ thống vẫn lưu nhưng khuyến nghị bổ sung để cây gia phả đầy đủ.`);
+          warnings.push(`Mã mẹ/vợ '${mCode}' chưa có dòng riêng trong tệp. • Nguyên nhân: Cột Mẹ có ghi mã '${mCode}' nhưng bảng tính không có dòng khai báo thông tin độc lập cho người này. • Hướng khắc phục: Hệ thống vẫn tự động tạo liên kết mẹ - con; nếu muốn hiển thị ngày sinh/mất của mẹ trên cây, bạn có thể bổ sung 1 dòng riêng với Mã cây là '${mCode}'.`);
+        }
+      }
+
+      // 6b. Kiểm tra mã phối ngẫu (spouseCode) có tồn tại trong file không
+      if (row.spouseCode && row.spouseCode.trim()) {
+        const sCode = row.spouseCode.trim();
+        if (!allTreeCodes.has(sCode)) {
+          warnings.push(`Mã phối ngẫu '${sCode}' chưa có dòng riêng trong tệp. • Nguyên nhân: Cột Vợ/Chồng có ghi mã '${sCode}' nhưng chưa có dòng khai báo thông tin độc lập cho người này. • Hướng khắc phục: Hệ thống vẫn ghi nhận mã phối ngẫu vào thông tin thành viên; bạn có thể bổ sung dòng riêng cho người phối ngẫu nếu muốn hiển thị thẻ đôi trực quan trên cây phả hệ.`);
         }
       }
 
@@ -1703,7 +1711,7 @@ export class DataImportService {
           errors.push(`Lỗi logic thời gian: Năm sinh (${row.birthYear}) không được lớn hơn năm mất (${row.deathLunarYear}).`);
         }
         if (row.birthYear && row.deathLunarYear - row.birthYear > 120) {
-          warnings.push(`Cảnh báo niên đại: Khoảng cách giữa năm sinh và năm mất là ${row.deathLunarYear - row.birthYear} năm (> 120 tuổi). Vui lòng kiểm tra lại.`);
+          warnings.push(`Tuổi thọ ${row.deathLunarYear - row.birthYear} năm (> 120 tuổi). • Nguyên nhân: Khoảng cách giữa năm sinh (${row.birthYear}) và năm mất (${row.deathLunarYear}) vượt quá 120 năm. • Hướng khắc phục: Kiểm tra lại xem chữ số năm sinh hoặc năm mất có bị nhập sai không, bấm 'Sửa' để điều chỉnh lại.`);
         }
       }
 
@@ -1754,16 +1762,19 @@ export class DataImportService {
 
   /**
    * Commit nguyên tử vào CSDL Supabase 100%
+   * @param onProgress - Callback nhận (phần trăm 0-100, nhãn trạng thái) để cập nhật UI progress bar
    */
   public static async commitImport(
     familyId: string, 
-    validation: ValidationSummary
+    validation: ValidationSummary,
+    onProgress?: (pct: number, label: string) => void
   ): Promise<{ success: boolean; batchId: string; insertedCount: number; message: string; error?: string }> {
     const isUUID = (str?: string | null): boolean =>
       Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
 
     if (isSupabaseConfigured()) {
       try {
+        onProgress?.(5, 'Đang kết nối tới cơ sở dữ liệu...');
         let targetFamilyUUID = familyId;
         if (!isUUID(targetFamilyUUID)) {
           // Resolve actual UUID from Supabase families table
@@ -1804,6 +1815,7 @@ export class DataImportService {
           }
 
           // 1. Đảm bảo các thế hệ (generations) tồn tại trong CSDL
+          onProgress?.(15, `Đang chuẩn bị ${validRows.length} thành viên — tạo thế hệ (Đời)...`);
           const genNumbers = Array.from(new Set(validRows.map((r) => r.data.generationNumber).filter(Boolean)));
           const { data: existingGens } = await supabase
             .from('generations')
@@ -1811,6 +1823,7 @@ export class DataImportService {
             .eq('family_id', targetFamilyUUID);
 
           const genMap = new Map<number, string>();
+
           (existingGens || []).forEach((g: any) => genMap.set(g.generation_number, g.id));
 
           for (const genNum of genNumbers) {
@@ -1839,6 +1852,7 @@ export class DataImportService {
           }
 
           // 2. Đảm bảo các chi phái (branches) tồn tại trong CSDL (với cột code bắt buộc)
+          onProgress?.(30, 'Đang khởi tạo chi phái trong cơ sở dữ liệu...');
           const branchNames = Array.from(new Set(validRows.map((r) => r.data.branchName).filter(Boolean)));
           const { data: existingBranches } = await supabase
             .from('branches')
@@ -1876,6 +1890,7 @@ export class DataImportService {
           }
 
           // 3. Chuẩn bị insert danh sách thành viên vào bảng members (Khớp 100% schema members)
+          onProgress?.(50, `Đang lưu ${validRows.length} thành viên vào cơ sở dữ liệu...`);
           const validRowToId = new Map<number, string>();
           const memberInsertPayload = validRows.map((r, idx) => {
             const m = r.data;
@@ -2156,6 +2171,7 @@ export class DataImportService {
 
           // Chèn relationships với try-catch an toàn theo lô (chunks)
           if (relationshipsToInsert.length > 0) {
+            onProgress?.(75, `Đang liên kết ${relationshipsToInsert.length} quan hệ huyết thống & hôn phối...`);
             for (let i = 0; i < relationshipsToInsert.length; i += chunkSize) {
               const chunk = relationshipsToInsert.slice(i, i + chunkSize);
               try {
@@ -2168,6 +2184,7 @@ export class DataImportService {
 
           // Cập nhật các trường trực hệ father_id, mother_id, spouse_id trên bảng members
           if (directLineageUpdates.length > 0) {
+            onProgress?.(85, `Đang cập nhật chỉ mục trực hệ cho ${directLineageUpdates.length} thành viên...`);
             for (const item of directLineageUpdates) {
               try {
                 await supabase
@@ -2186,6 +2203,7 @@ export class DataImportService {
 
           // Chèn memorials với try-catch an toàn
           if (memorialsToInsert.length > 0) {
+            onProgress?.(92, `Đang khởi tạo ${memorialsToInsert.length} ngày giỗ âm lịch trong phả tộc...`);
             try {
               await supabase.from('memorial_dates').insert(memorialsToInsert);
             } catch (memErr) {
@@ -2205,6 +2223,8 @@ export class DataImportService {
           } catch (e) {
             // ignore storage error
           }
+
+          onProgress?.(100, 'Đồng bộ hoàn tất 100%!');
 
           return {
             success: true,

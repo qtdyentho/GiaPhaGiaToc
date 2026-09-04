@@ -555,30 +555,38 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
       return a.full_name.localeCompare(b.full_name);
     });
 
+    // 🚀 TỐI ƯU HIỆU NĂNG: Lập chỉ mục O(1) cho phối ngẫu trước khi duyệt đệ quy cây
+    const spouseMap = new Map<string, string[]>();
+    const addSpousePair = (id1: string, id2: string) => {
+      if (!id1 || !id2 || id1 === id2) return;
+      if (!spouseMap.has(id1)) spouseMap.set(id1, []);
+      if (!spouseMap.get(id1)!.includes(id2)) spouseMap.get(id1)!.push(id2);
+      if (!spouseMap.has(id2)) spouseMap.set(id2, []);
+      if (!spouseMap.get(id2)!.includes(id1)) spouseMap.get(id2)!.push(id1);
+    };
+
+    relationships.forEach((r) => {
+      const relType = r.relationship_type || r.relationship;
+      if (relType === 'SPOUSE') {
+        addSpousePair(r.member_id, r.related_member_id);
+      }
+    });
+
+    members.forEach((m) => {
+      if (m.spouse_id) addSpousePair(m.id, m.spouse_id);
+    });
+
     const visited = new Set<string>();
 
     function buildNode(member: Member): FamilyTreeNodeData {
       visited.add(member.id);
       const genNum = genMap.get(member.generation_id || '') || 1;
 
-      // Tìm danh sách vợ / chồng
+      // Tìm danh sách vợ / chồng qua Map O(1)
+      const spouseIds = spouseMap.get(member.id) || [];
       const memberSpouses: Member[] = [];
-      relationships
-        .filter(
-          (r) =>
-            (r.relationship === 'SPOUSE' || r.relationship_type === 'SPOUSE') &&
-            (r.member_id === member.id || r.related_member_id === member.id)
-        )
-        .forEach((r) => {
-          const spouseId = r.member_id === member.id ? r.related_member_id : r.member_id;
-          const spouse = members.find((m) => m.id === spouseId);
-          if (spouse && !memberSpouses.some((s) => s.id === spouse.id)) {
-            memberSpouses.push(spouse);
-          }
-        });
-
-      if (member.spouse_id) {
-        const spouse = members.find((m) => m.id === member.spouse_id);
+      for (const sId of spouseIds) {
+        const spouse = memberMap.get(sId);
         if (spouse && !memberSpouses.some((s) => s.id === spouse.id)) {
           memberSpouses.push(spouse);
         }
@@ -587,20 +595,23 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
       // Lấy danh sách con cái từ parentToChildrenMap cho cả member và các spouse
       const childIdsSet = new Set<string>();
       const pIds = [member.id, ...memberSpouses.map((s) => s.id)];
-      pIds.forEach((pId) => {
+      for (const pId of pIds) {
         const cIds = parentToChildrenMap.get(pId);
         if (cIds) {
-          cIds.forEach((cId) => childIdsSet.add(cId));
+          for (const cId of cIds) {
+            childIdsSet.add(cId);
+          }
         }
-      });
+      }
 
+      // Tra cứu con cái qua Map O(1)
       const childMembers: Member[] = [];
-      childIdsSet.forEach((cId) => {
-        const child = members.find((m) => m.id === cId);
+      for (const cId of childIdsSet) {
+        const child = memberMap.get(cId);
         if (child && !childMembers.some((c) => c.id === child.id)) {
           childMembers.push(child);
         }
-      });
+      }
 
       // Sắp xếp con cái theo thứ tự năm sinh hoặc tên
       childMembers.sort((a, b) => {
@@ -981,9 +992,11 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
 
       {/* Infinite Canvas Viewport */}
       <div
-        className="flex-1 w-full h-full relative overflow-visible transition-transform duration-75 ease-out origin-top-left"
+        className="flex-1 w-full h-full relative overflow-visible origin-top-left"
         style={{
-          transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+          transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom})`,
+          willChange: isDragging ? 'transform' : 'auto',
+          transition: isDragging ? 'none' : 'transform 120ms cubic-bezier(0.16, 1, 0.3, 1)',
         }}
       >
         {/* Render Hierarchical Tree Nodes with Centering & Branch Connectors */}

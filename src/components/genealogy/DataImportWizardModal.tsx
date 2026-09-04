@@ -44,6 +44,11 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
   const [errorAccordionOpen, setErrorAccordionOpen] = useState(true);
   const [warningAccordionOpen, setWarningAccordionOpen] = useState(false);
 
+  // New states: Real-time progress, Preview confirmation, and Warning detail modal
+  const [commitProgress, setCommitProgress] = useState<{ percent: number; label: string } | null>(null);
+  const [hasConfirmedPreview, setHasConfirmedPreview] = useState<boolean>(false);
+  const [activeWarningDetail, setActiveWarningDetail] = useState<{ rowNumber: number; fullName: string; warnings: string[]; rowIndex: number } | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
@@ -99,14 +104,38 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
     setStep(3);
   };
 
+  // Helper to split warning message into Title, Cause (Nguyên nhân) and Solution (Hướng khắc phục)
+  const parseWarningMessage = (msg: string) => {
+    const parts = msg.split('•').map((p) => p.trim());
+    const title = parts[0] || msg;
+    let cause = '';
+    let solution = '';
+
+    parts.slice(1).forEach((part) => {
+      if (part.startsWith('Nguyên nhân:')) {
+        cause = part.replace(/^Nguyên nhân:\s*/, '');
+      } else if (part.startsWith('Hướng khắc phục:')) {
+        solution = part.replace(/^Hướng khắc phục:\s*/, '');
+      }
+    });
+
+    return { title, cause, solution };
+  };
+
   const handleCommit = async () => {
     if (!validation) return;
     const targetFamilyId = activeFamily?.id || '';
     setIsCommitting(true);
     setParseError(null);
+    setCommitProgress({ percent: 10, label: 'Đang chuẩn bị tiến trình nạp...' });
     try {
-      const result = await DataImportService.commitImport(targetFamilyId, validation);
+      const result = await DataImportService.commitImport(
+        targetFamilyId, 
+        validation,
+        (percent, label) => setCommitProgress({ percent, label })
+      );
       setIsCommitting(false);
+      setCommitProgress(null);
       if (result.success) {
         setCommitResult(result);
         setStep(5);
@@ -116,6 +145,7 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
       }
     } catch (err: any) {
       setIsCommitting(false);
+      setCommitProgress(null);
       setParseError(err.message || 'Lỗi kết nối khi nạp dữ liệu');
     }
   };
@@ -130,9 +160,15 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
     };
     setIsCommitting(true);
     setParseError(null);
+    setCommitProgress({ percent: 10, label: 'Đang chuẩn bị nạp các dòng hợp lệ...' });
     try {
-      const result = await DataImportService.commitImport(targetFamilyId, validOnly);
+      const result = await DataImportService.commitImport(
+        targetFamilyId, 
+        validOnly,
+        (percent, label) => setCommitProgress({ percent, label })
+      );
       setIsCommitting(false);
+      setCommitProgress(null);
       if (result.success) {
         setCommitResult(result);
         setStep(5);
@@ -142,6 +178,7 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
       }
     } catch (err: any) {
       setIsCommitting(false);
+      setCommitProgress(null);
       setParseError(err.message || 'Lỗi kết nối khi nạp dữ liệu');
     }
   };
@@ -530,12 +567,29 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                                   </span>
                                   <span className="text-slate-700 dark:text-slate-200">{row.data.fullName || '(Chưa có tên)'}</span>
                                 </div>
-                                {row.warnings.map((warn, wi) => (
-                                  <div key={wi} className="text-[11px] text-amber-700 dark:text-amber-400 flex items-start gap-1.5 pl-2">
-                                    <span className="text-amber-500 mt-0.5">⚠</span>
-                                    <span>{warn}</span>
-                                  </div>
-                                ))}
+                                {row.warnings.map((warn, wi) => {
+                                  const { title, cause, solution } = parseWarningMessage(warn);
+                                  return (
+                                    <div key={wi} className="text-[11px] space-y-1 pl-2 border-l-2 border-amber-300 dark:border-amber-700 ml-1 py-0.5">
+                                      <div className="text-amber-900 dark:text-amber-200 font-semibold flex items-center gap-1.5">
+                                        <span className="text-amber-500">⚠</span>
+                                        <span>{title}</span>
+                                      </div>
+                                      {cause && (
+                                        <div className="text-[10px] text-slate-600 dark:text-slate-300 flex items-start gap-1 pl-4">
+                                          <span className="font-bold text-amber-700 dark:text-amber-400 shrink-0">🔍 Nguyên nhân:</span>
+                                          <span>{cause}</span>
+                                        </div>
+                                      )}
+                                      {solution && (
+                                        <div className="text-[10px] text-emerald-700 dark:text-emerald-400 flex items-start gap-1 pl-4">
+                                          <span className="font-bold text-emerald-800 dark:text-emerald-300 shrink-0">💡 Hướng khắc phục:</span>
+                                          <span>{solution}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
                               </div>
                               <button
                                 onClick={() => handleStartEdit(idx, row)}
@@ -552,12 +606,12 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                 </div>
               )}
 
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <button onClick={() => setStep(2)} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl transition cursor-pointer text-xs">
                   ← Quay Lại Bước 2
                 </button>
                 <button onClick={() => setStep(4)} className="px-5 py-2.5 bg-[#166534] hover:bg-[#14532d] text-white font-bold rounded-xl shadow-md transition inline-flex items-center space-x-1.5 cursor-pointer text-xs">
-                  <span>Chuyển Sang Bước 4: Xem Trước Dữ Liệu</span>
+                  <span>Tiếp Tục: Xem Trước Cây Phả Hệ (Bước 4) →</span>
                 </button>
               </div>
             </div>
@@ -731,9 +785,20 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                                     </span>
                                   )}
                                   {row.status === 'WARNING' && (
-                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300">
-                                      CẢNH BÁO
-                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setActiveWarningDetail({
+                                        rowNumber: row.rowNumber,
+                                        fullName: row.data.fullName || '(Chưa có tên)',
+                                        warnings: row.warnings,
+                                        rowIndex: realIdx,
+                                      })}
+                                      className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/60 dark:hover:bg-amber-800 text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700 cursor-pointer flex items-center gap-1 transition shadow-xs"
+                                      title="Bấm để xem nguyên nhân & hướng khắc phục cảnh báo này"
+                                    >
+                                      <span>CẢNH BÁO ({row.warnings.length})</span>
+                                      <HelpCircle className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
+                                    </button>
                                   )}
                                   {row.status === 'ERROR' && (
                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-300">
@@ -969,17 +1034,61 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                 </table>
               </div>
 
+              {/* Tiến trình nạp dữ liệu Realtime Progress Bar */}
+              {isCommitting && (
+                <div className="p-4 bg-emerald-50 dark:bg-emerald-950/80 border-2 border-emerald-500/60 rounded-2xl space-y-3 shadow-lg animate-fade-in">
+                  <div className="flex items-center justify-between text-xs font-bold text-emerald-900 dark:text-emerald-200">
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-[#166534] dark:text-emerald-400" />
+                      <span>Tiến trình nhập dữ liệu gia phả...</span>
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-200 dark:bg-emerald-800 font-mono text-xs font-bold text-[#166534] dark:text-emerald-200">
+                      {commitProgress?.percent ?? 15}%
+                    </span>
+                  </div>
+                  
+                  {/* Progress Bar Track */}
+                  <div className="w-full h-3 bg-emerald-200/80 dark:bg-emerald-900/80 rounded-full overflow-hidden p-0.5 shadow-inner">
+                    <div 
+                      className="h-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-400 rounded-full transition-all duration-300 ease-out shadow-sm"
+                      style={{ width: `${commitProgress?.percent ?? 15}%` }}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-emerald-800 dark:text-emerald-300 font-medium">
+                    <span>{commitProgress?.label || 'Đang chuẩn bị nạp dữ liệu vào cơ sở dữ liệu...'}</span>
+                    <span className="italic text-slate-500 dark:text-slate-400">Vui lòng không đóng cửa sổ</span>
+                  </div>
+                </div>
+              )}
+
               {/* Thông báo lỗi khi Commit (nếu có) */}
               {parseError && (
                 <div className="p-4 bg-rose-50 dark:bg-rose-950/60 border-2 border-rose-300 dark:border-rose-800 text-rose-800 dark:text-rose-200 rounded-2xl flex items-start gap-3 text-xs shadow-md animate-fade-in">
                   <XCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
                   <div className="flex-1 space-y-1">
-                    <p className="font-bold text-sm">Lỗi Khi Nạp Dữ Liệu Vào Supabase:</p>
+                    <p className="font-bold text-sm">Lỗi Khi Nạp Dữ Liệu:</p>
                     <p className="font-mono text-xs break-all bg-white/80 dark:bg-black/30 p-2 rounded-lg border border-rose-200 dark:border-rose-900">{parseError}</p>
                     <p className="text-[11px] text-rose-600 dark:text-rose-400">Vui lòng kiểm tra lại kết nối mạng hoặc sửa các dòng có lỗi logic phía trên trước khi nạp lại.</p>
                   </div>
                 </div>
               )}
+
+              {/* Hộp Xác Nhận Xem Trước — Bắt buộc tích chọn để "sáng đèn" nút Nhập Dữ Liệu */}
+              <div className="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-800 dark:text-slate-200 select-none">
+                  <input
+                    type="checkbox"
+                    checked={hasConfirmedPreview}
+                    onChange={(e) => setHasConfirmedPreview(e.target.checked)}
+                    className="w-4 h-4 rounded text-[#166534] focus:ring-[#166534] cursor-pointer"
+                  />
+                  <span>Tôi đã xem trước dữ liệu phả hệ, kiểm tra các cảnh báo và xác nhận nhập dữ liệu</span>
+                </label>
+                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full transition ${hasConfirmedPreview ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300' : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300'}`}>
+                  {hasConfirmedPreview ? '✅ Đã xác nhận — Sáng đèn nút Nhập' : '⚠️ Cần xác nhận để mở khóa'}
+                </span>
+              </div>
 
               {/* Action Buttons & Commit */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
@@ -991,27 +1100,39 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
                   {/* Partial import button — chỉ hiện khi có lỗi nhưng có ít nhất 1 dòng hợp lệ */}
                   {validation.errorRows > 0 && (validation.validRows + validation.warningRows) > 0 && (
                     <button
-                      disabled={isCommitting}
+                      disabled={isCommitting || !hasConfirmedPreview}
                       onClick={handlePartialCommit}
-                      className="px-4 py-2.5 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-950 text-amber-900 dark:text-amber-300 border border-amber-200 dark:border-amber-800 font-bold rounded-xl inline-flex items-center gap-1.5 transition cursor-pointer text-xs shadow-sm"
+                      title={!hasConfirmedPreview ? 'Vui lòng tích vào ô xác nhận đã xem trước phía trên' : 'Nạp các dòng hợp lệ'}
+                      className={`px-4 py-2.5 font-bold rounded-xl inline-flex items-center gap-1.5 transition text-xs shadow-sm ${
+                        hasConfirmedPreview && !isCommitting
+                          ? 'bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-950 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700 cursor-pointer'
+                          : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-300 dark:border-slate-700'
+                      }`}
                     >
                       {isCommitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <SkipForward className="w-3.5 h-3.5" />}
-                      <span>Bỏ Qua {validation.errorRows} Dòng Lỗi & Nạp {validation.validRows + validation.warningRows} Dòng Hợp Lệ</span>
+                      <span>{isCommitting ? 'Đang Nhập Dữ Liệu...' : `Bỏ Qua Dòng Lỗi & Nhập Dữ Liệu (${validation.validRows + validation.warningRows} Thành Viên)`}</span>
                     </button>
                   )}
 
-                  {/* Full commit button */}
+                  {/* Full commit button — Chỉ "sáng đèn" khi canCommit, không committing VÀ đã xác nhận xem trước */}
                   <button
-                    disabled={!validation.canCommit || isCommitting}
+                    disabled={!validation.canCommit || isCommitting || !hasConfirmedPreview}
                     onClick={handleCommit}
-                    className={`px-6 py-2.5 font-bold rounded-xl inline-flex items-center justify-center gap-2 shadow-md transition cursor-pointer text-xs ${
-                      validation.canCommit && !isCommitting
-                        ? 'bg-[#166534] hover:bg-[#14532d] text-white hover:scale-[1.02]'
-                        : 'bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed'
+                    title={
+                      !hasConfirmedPreview 
+                        ? 'Vui lòng tích vào ô xác nhận đã xem trước để mở khóa nút Nhập dữ liệu' 
+                        : !validation.canCommit 
+                          ? 'Vui lòng sửa các dòng lỗi chặn nạp trước khi nhập' 
+                          : 'Bấm để nhập dữ liệu vào cơ sở dữ liệu'
+                    }
+                    className={`px-6 py-2.5 font-bold rounded-xl inline-flex items-center justify-center gap-2 shadow-md transition text-xs ${
+                      validation.canCommit && !isCommitting && hasConfirmedPreview
+                        ? 'bg-[#166534] hover:bg-[#14532d] text-white hover:scale-[1.02] shadow-lg ring-2 ring-emerald-500/50 cursor-pointer'
+                        : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-300 dark:border-slate-700'
                     }`}
                   >
                     {isCommitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                    <span>{isCommitting ? 'Đang Nạp Vào Supabase...' : `Xác Nhận & Nạp ${validation.validRows + validation.warningRows} Thành Viên`}</span>
+                    <span>{isCommitting ? 'Đang Nhập Dữ Liệu...' : `Nhập Dữ Liệu (${validation.validRows + validation.warningRows} Thành Viên)`}</span>
                   </button>
                 </div>
               </div>
@@ -1061,6 +1182,97 @@ export const DataImportWizardModal: React.FC<DataImportWizardModalProps> = ({ is
           )}
         </div>
       </div>
+
+      {/* MODAL CHI TIẾT NGUYÊN NHÂN & HƯỚNG KHẮC PHỤC CẢNH BÁO */}
+      {activeWarningDetail && (
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-[120] animate-fade-in font-sans">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-5 sm:p-6 border-2 border-amber-300 dark:border-amber-700 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 rounded-xl">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>Cảnh Báo Dòng #{activeWarningDetail.rowNumber}</span>
+                    <span className="text-[10px] bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-bold px-2 py-0.5 rounded-full">
+                      {activeWarningDetail.warnings.length} lưu ý
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Thành viên: <strong className="text-slate-700 dark:text-slate-200">{activeWarningDetail.fullName}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveWarningDetail(null)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto flex-1 space-y-3 pr-1 text-xs">
+              {activeWarningDetail.warnings.map((warn, wi) => {
+                const { title, cause, solution } = parseWarningMessage(warn);
+                return (
+                  <div key={wi} className="p-3.5 bg-amber-50/70 dark:bg-amber-950/30 rounded-2xl border border-amber-200 dark:border-amber-800 space-y-2">
+                    <div className="font-bold text-amber-900 dark:text-amber-200 flex items-start gap-1.5">
+                      <span className="text-amber-500 mt-0.5">⚠️</span>
+                      <span>{title}</span>
+                    </div>
+                    {cause && (
+                      <div className="p-2.5 bg-white/90 dark:bg-slate-800/90 rounded-xl border border-amber-200/80 dark:border-amber-900/50 space-y-0.5">
+                        <div className="text-[10px] font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wide flex items-center gap-1">
+                          <span>🔍</span>
+                          <span>Nguyên nhân phát sinh:</span>
+                        </div>
+                        <div className="text-slate-700 dark:text-slate-300 text-[11px] leading-relaxed pl-4">
+                          {cause}
+                        </div>
+                      </div>
+                    )}
+                    {solution && (
+                      <div className="p-2.5 bg-emerald-50/90 dark:bg-emerald-950/50 rounded-xl border border-emerald-200/80 dark:border-emerald-800/60 space-y-0.5">
+                        <div className="text-[10px] font-bold text-[#166534] dark:text-emerald-400 uppercase tracking-wide flex items-center gap-1">
+                          <span>💡</span>
+                          <span>Hướng dẫn khắc phục:</span>
+                        </div>
+                        <div className="text-emerald-900 dark:text-emerald-200 text-[11px] leading-relaxed pl-4">
+                          {solution}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0">
+              <button
+                onClick={() => setActiveWarningDetail(null)}
+                className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-semibold text-xs cursor-pointer transition"
+              >
+                Đóng
+              </button>
+              <button
+                onClick={() => {
+                  const rowIndex = activeWarningDetail.rowIndex;
+                  const targetRow = validation?.rows[rowIndex];
+                  setActiveWarningDetail(null);
+                  if (targetRow) {
+                    handleStartEdit(rowIndex, targetRow);
+                  }
+                }}
+                className="px-4 py-2 bg-[#166534] hover:bg-[#14532d] text-white rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer transition"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                <span>Sửa Dòng Này Ngay</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

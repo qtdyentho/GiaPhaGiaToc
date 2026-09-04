@@ -23,7 +23,7 @@ interface GenealogyTreeNodeProps {
   onToggleCollapse?: (nodeId: string) => void;
 }
 
-export const GenealogyTreeNode: React.FC<GenealogyTreeNodeProps> = ({
+const GenealogyTreeNodeComponent: React.FC<GenealogyTreeNodeProps> = ({
   node,
   generations,
   branches,
@@ -37,7 +37,10 @@ export const GenealogyTreeNode: React.FC<GenealogyTreeNodeProps> = ({
   const { primaryMember: m, spouses, children, generationNumber } = node;
   const isSelected = selectedMemberId === m.id;
   const isDeceased = m.life_status === 'DECEASED';
-  const lineageInfo = getLineageHierarchyInfo(m, generations, branches, allMembers);
+  const lineageInfo = React.useMemo(
+    () => getLineageHierarchyInfo(m, generations, branches, allMembers),
+    [m, generations, branches, allMembers]
+  );
   const isCollapsed = collapsedNodeIds ? collapsedNodeIds.has(m.id) : false;
 
   return (
@@ -375,3 +378,5 @@ export const GenealogyTreeNode: React.FC<GenealogyTreeNodeProps> = ({
     </div>
   );
 };
+
+export const GenealogyTreeNode = React.memo(GenealogyTreeNodeComponent);
