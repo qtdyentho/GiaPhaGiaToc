@@ -15,49 +15,47 @@ export class MemorialService {
     if (!familyId) return [];
 
     if (isSupabaseConfigured() && isUUID(familyId)) {
-      try {
-        const { data, error } = await supabase
-          .from('memorial_dates')
-          .select(`
-            *,
-            members (
-              id,
-              full_name,
-              burial_place,
-              generation_id,
-              branch_id
-            )
-          `)
-          .eq('family_id', familyId)
-          .order('lunar_month', { ascending: true })
-          .order('lunar_day', { ascending: true });
+      const { data, error } = await supabase
+        .from('memorial_dates')
+        .select(`
+          *,
+          members (
+            id,
+            full_name,
+            burial_place,
+            generation_id,
+            branch_id
+          )
+        `)
+        .eq('family_id', familyId)
+        .order('lunar_month', { ascending: true })
+        .order('lunar_day', { ascending: true });
 
-        if (!error && data) {
-          return data.map((row: any) => {
-            const next = LunarCalendarService.getNextSolarDateForMemorial(
-              row.lunar_day,
-              row.lunar_month,
-              row.is_leap_month
-            );
-            const member = row.members;
-
-            return {
-              ...row,
-              members: undefined, // loại bỏ nested object khỏi response
-              next_solar_date: next.solarDate,
-              generation_name: member ? `Đời thứ ${member.generation_id || '?'}` : undefined,
-              generation_number: 1,
-              branch_name: 'Chi Trưởng',
-              burial_place: member?.burial_place,
-            } as MemorialDate;
-          });
-        }
-        if (error) {
-          console.warn('Lỗi khi truy vấn ngày giỗ:', error.message);
-        }
-      } catch (err) {
-        console.warn('MemorialService getMemorials error:', err);
+      if (error) {
+        throw new Error(`MemorialService.getMemorials error: ${error.message}`);
       }
+
+      if (data) {
+        return data.map((row: any) => {
+          const next = LunarCalendarService.getNextSolarDateForMemorial(
+            row.lunar_day,
+            row.lunar_month,
+            row.is_leap_month
+          );
+          const member = row.members;
+
+          return {
+            ...row,
+            members: undefined, // loại bỏ nested object khỏi response
+            next_solar_date: next.solarDate,
+            generation_name: member ? `Đời thứ ${member.generation_id || '?'}` : undefined,
+            generation_number: 1,
+            branch_name: 'Chi Trưởng',
+            burial_place: member?.burial_place,
+          } as MemorialDate;
+        });
+      }
+      return [];
     }
 
 
@@ -123,19 +121,41 @@ export class MemorialService {
   > {
     if (!familyId) return [];
     const memorials = await this.getMemorials(familyId);
+
+    const memberNameMap = new Map<string, string>();
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      const memberIds = memorials.map((m) => m.member_id).filter((id) => isUUID(id));
+      if (memberIds.length > 0) {
+        try {
+          const { data: membersData } = await supabase
+            .from('members')
+            .select('id, full_name')
+            .in('id', memberIds);
+          if (membersData) {
+            membersData.forEach((m: any) => memberNameMap.set(m.id, m.full_name));
+          }
+        } catch (err) {
+          console.warn('Lỗi lấy tên thành viên ngày giỗ:', err);
+        }
+      }
+    }
+
     const calculated = memorials.map((mem) => {
       const next = LunarCalendarService.getNextSolarDateForMemorial(
         mem.lunar_day,
         mem.lunar_month,
         mem.is_leap_month
       );
-      const member = mockMembers.find((m) => m.id === mem.member_id);
+      const memberName =
+        memberNameMap.get(mem.member_id) ||
+        mockMembers.find((m) => m.id === mem.member_id)?.full_name;
+
       return {
         ...mem,
         solarDate: next.solarDate,
         daysRemaining: next.daysRemaining,
         isSpecial30Fallback: next.isSpecial30Fallback,
-        memberName: member?.full_name,
+        memberName,
       };
     });
 
@@ -210,6 +230,7 @@ export class MemorialService {
         if (dbData) {
           return { success: true, memorial: { ...dbData, next_solar_date: next.solarDate } };
         }
+        return { success: false, error: 'Không thể tạo ngày giỗ trên cơ sở dữ liệu' };
       }
 
       mockMemorialDates.push(newRecord);
@@ -236,10 +257,22 @@ export class MemorialService {
       : null;
 
     if (isSupabaseConfigured() && isUUID(id) && isUUID(familyId)) {
+      const {
+        next_solar_date,
+        generation_name,
+        generation_number,
+        branch_name,
+        burial_place,
+        birth_year,
+        death_year,
+        members,
+        ...cleanData
+      } = data as any;
+
       const { data: dbData, error } = await supabase
         .from('memorial_dates')
         .update({
-          ...data,
+          ...cleanData,
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)
@@ -258,6 +291,7 @@ export class MemorialService {
           memorial: { ...dbData, next_solar_date: next?.solarDate },
         };
       }
+      return { success: false, error: 'Không thể cập nhật ngày giỗ trên cơ sở dữ liệu' };
     }
 
     const idx = mockMemorialDates.findIndex((m) => m.id === id && m.family_id === familyId);
@@ -287,6 +321,7 @@ export class MemorialService {
       if (error) {
         return { success: false, error: error.message };
       }
+      return { success: true };
     }
 
     const idx = mockMemorialDates.findIndex((m) => m.id === id && m.family_id === familyId);

@@ -114,13 +114,16 @@ export class PaymentService {
       amount?: number;
       billingReason?: string;
     } = {}
-  ): { success: boolean; invoice: Invoice; payment: Payment } {
+  ): Promise<{ success: boolean; invoice: Invoice; payment: Payment }> & {
+    success: boolean;
+    invoice: Invoice;
+    payment: Payment;
+  } {
     const foundInvoice = mockInvoices.find((i) => i.id === invoiceId);
     let invoice: Invoice;
     const now = new Date().toISOString();
 
     if (!foundInvoice) {
-      // Graceful fallback: Khởi tạo hóa đơn hợp lệ tức thì để bảo toàn luồng thanh toán không bị crash
       invoice = {
         id: invoiceId,
         family_id: claimData.familyId || 'fam-0000-0001',
@@ -154,7 +157,6 @@ export class PaymentService {
       invoice.updated_at = now;
     }
 
-    // Tạo hoặc cập nhật bản ghi Payment với status = 'SUBMITTED'
     let payment = mockPayments.find((p) => p.invoice_id === invoiceId);
     if (!payment) {
       payment = {
@@ -181,42 +183,112 @@ export class PaymentService {
       payment.updated_at = now;
     }
 
-    if (isSupabaseConfigured() && isUUID(invoiceId) && isUUID(invoice.family_id)) {
-      supabase
-        .from('invoices')
-        .update({
-          status: 'WAITING_CONFIRMATION',
-          customer_submitted_at: now,
-          customer_bank_reference: invoice.customer_bank_reference,
-          customer_note: invoice.customer_note,
-          updated_at: now,
-        })
-        .eq('id', invoiceId)
-        .then(({ error }) => {
-          if (error) console.error('submitPaymentClaim invoice update error:', error);
-        });
+    const dbPromise = (async () => {
+      if (isSupabaseConfigured() && isUUID(invoiceId) && isUUID(invoice.family_id)) {
+        const { data: existingInv } = await supabase
+          .from('invoices')
+          .select('id')
+          .eq('id', invoiceId)
+          .maybeSingle();
 
-      supabase
-        .from('payments')
-        .insert({
-          family_id: invoice.family_id,
-          subscription_id: isUUID(invoice.subscription_id) ? invoice.subscription_id : null,
-          invoice_id: invoice.id,
-          payment_code: `PAY-SUB-${Date.now()}`,
-          amount: invoice.total,
-          currency: invoice.currency,
-          payment_method: 'VIETQR',
-          provider: 'VIETQR_MANUAL',
-          status: 'SUBMITTED',
-          created_at: now,
-          updated_at: now,
-        })
-        .then(({ error }) => {
-          if (error) console.error('submitPaymentClaim payment insert error:', error);
-        });
-    }
+        if (existingInv) {
+          const { error: invErr } = await supabase
+            .from('invoices')
+            .update({
+              status: 'WAITING_CONFIRMATION',
+              customer_submitted_at: now,
+              customer_bank_reference: invoice.customer_bank_reference,
+              customer_note: invoice.customer_note,
+              updated_at: now,
+            })
+            .eq('id', invoiceId);
 
-    return { success: true, invoice, payment };
+          if (invErr) {
+            console.error('submitPaymentClaim invoice update error:', invErr);
+            throw new Error(`Cập nhật hóa đơn thất bại: ${invErr.message}`);
+          }
+        } else {
+          let subId = invoice.subscription_id;
+          if (!isUUID(subId)) {
+            const { data: subData } = await supabase
+              .from('subscriptions')
+              .select('id')
+              .eq('family_id', invoice.family_id)
+              .maybeSingle();
+            if (subData?.id) subId = subData.id;
+          }
+
+          if (subId) {
+            const { error: insertInvErr } = await supabase
+              .from('invoices')
+              .insert({
+                id: invoiceId,
+                family_id: invoice.family_id,
+                subscription_id: subId,
+                invoice_number: invoice.invoice_number,
+                status: 'WAITING_CONFIRMATION',
+                subtotal: invoice.subtotal,
+                discount: invoice.discount,
+                tax: invoice.tax,
+                total: invoice.total,
+                currency: invoice.currency,
+                billing_reason: invoice.billing_reason,
+                customer_submitted_at: now,
+                customer_bank_reference: invoice.customer_bank_reference,
+                customer_note: invoice.customer_note,
+                issued_at: now,
+                due_at: now,
+                created_at: now,
+                updated_at: now,
+              });
+
+            if (insertInvErr) {
+              console.error('submitPaymentClaim invoice insert error:', insertInvErr);
+              throw new Error(`Tạo hóa đơn thất bại: ${insertInvErr.message}`);
+            }
+          }
+        }
+
+        let subIdForPay = invoice.subscription_id;
+        if (!isUUID(subIdForPay)) {
+          const { data: subData } = await supabase
+            .from('subscriptions')
+            .select('id')
+            .eq('family_id', invoice.family_id)
+            .maybeSingle();
+          if (subData?.id) subIdForPay = subData.id;
+        }
+
+        const { error: payErr } = await supabase
+          .from('payments')
+          .insert({
+            family_id: invoice.family_id,
+            subscription_id: isUUID(subIdForPay) ? subIdForPay : null,
+            invoice_id: invoiceId,
+            payment_code: payment.payment_code,
+            amount: payment.amount,
+            currency: payment.currency,
+            payment_method: payment.payment_method,
+            provider: payment.provider,
+            status: payment.status,
+            metadata: payment.metadata,
+            created_at: now,
+            updated_at: now,
+          });
+
+        if (payErr) {
+          console.error('submitPaymentClaim payment insert error:', payErr);
+          throw new Error(`Ghi nhận thanh toán thất bại: ${payErr.message}`);
+        }
+      }
+      return { success: true, invoice, payment };
+    })();
+
+    return Object.assign(dbPromise, {
+      success: true,
+      invoice,
+      payment,
+    });
   }
 
   /**

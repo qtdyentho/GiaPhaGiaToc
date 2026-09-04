@@ -1,6 +1,7 @@
 import { Invoice, InvoiceItem } from '../../types/database';
 import { mockInvoices, mockPlans, mockPlanVersions } from '../mockData';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { SubscriptionService } from './SubscriptionService';
 
 export class InvoiceService {
   /**
@@ -25,8 +26,32 @@ export class InvoiceService {
       Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
 
     if (isSupabaseConfigured() && isUUID(familyId)) {
+      let resolvedSubId: string | null = isUUID(subscriptionId) ? subscriptionId : null;
+      if (!resolvedSubId) {
+        const { data: subData } = await supabase.from('subscriptions').select('id').eq('family_id', familyId).maybeSingle();
+        if (subData?.id) {
+          resolvedSubId = subData.id;
+        }
+      }
+
+      if (!resolvedSubId) {
+        try {
+          const newSub = await SubscriptionService.createTrialSubscription(familyId);
+          if (isUUID(newSub?.id)) {
+            resolvedSubId = newSub.id;
+          }
+        } catch (e) {
+          console.warn('createSubscriptionInvoice auto-subscription error:', e);
+        }
+      }
+
+      if (!resolvedSubId) {
+        throw new Error('Không thể tạo hóa đơn khi chưa có mã thuê bao hợp lệ');
+      }
+
       const payload: Record<string, any> = {
         family_id: familyId,
+        subscription_id: resolvedSubId,
         invoice_number: invNumber,
         status: 'OPEN',
         subtotal: amount,
@@ -38,9 +63,6 @@ export class InvoiceService {
         issued_at: now,
         due_at: dueDate,
       };
-      if (isUUID(subscriptionId)) {
-        payload.subscription_id = subscriptionId;
-      }
 
       const { data, error } = await supabase
         .from('invoices')
@@ -84,40 +106,42 @@ export class InvoiceService {
     const isUUID = (str?: string | null): boolean =>
       Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
 
-    if (isSupabaseConfigured() && familyId && isUUID(familyId)) {
-      try {
-        const { data, error } = await supabase
-          .from('invoices')
-          .select('*')
-          .eq('family_id', familyId)
-          .order('created_at', { ascending: false });
+    if (!familyId) return [];
 
-        if (!error && data) return data as Invoice[];
-      } catch (err) {
-        console.warn('Invoice fetch error:', err);
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('*')
+        .eq('family_id', familyId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw new Error(`InvoiceService.getInvoices error: ${error.message}`);
       }
-      return [];
+      return (data || []) as Invoice[];
     }
 
-    if (familyId) {
-      return mockInvoices.filter((i) => i.family_id === familyId);
-    }
-
-    return [];
+    return mockInvoices.filter((i) => i.family_id === familyId);
   }
 
   /**
    * Lấy chi tiết hóa đơn theo ID
    */
   static async getInvoiceById(invoiceId: string): Promise<Invoice | null> {
-    if (isSupabaseConfigured()) {
+    const isUUID = (str?: string | null): boolean =>
+      Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+
+    if (isSupabaseConfigured() && isUUID(invoiceId)) {
       const { data, error } = await supabase
         .from('invoices')
         .select('*')
         .eq('id', invoiceId)
         .maybeSingle();
 
-      if (!error && data) return data as Invoice;
+      if (error) {
+        throw new Error(`InvoiceService.getInvoiceById error: ${error.message}`);
+      }
+      return (data as Invoice) || null;
     }
 
     return mockInvoices.find((i) => i.id === invoiceId) || null;

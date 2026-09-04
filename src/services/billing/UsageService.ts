@@ -16,6 +16,9 @@ export interface FeatureUsageSummary {
   isBlocked: boolean;
 }
 
+const isUUID = (str?: string): boolean =>
+  !!str && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+
 export class UsageService {
   /**
    * Lấy danh sách thống kê sử dụng hạn mức thực tế của Gia Tộc
@@ -26,7 +29,7 @@ export class UsageService {
     let eventCount = 0;
     let txCount = 0;
 
-    if (isSupabaseConfigured() && familyId && familyId.includes('-')) {
+    if (isSupabaseConfigured() && isUUID(familyId)) {
       try {
         const [
           { count: memC },
@@ -49,25 +52,27 @@ export class UsageService {
       }
     }
 
-    // Fallback: đếm theo mock/local state của familyId
-    if (memberCount === 0) {
-      if (familyId === 'fam-0000-0001') {
-        memberCount = 86;
-      } else {
-        memberCount = mockMembers.filter((m) => m.family_id === familyId).length || 2;
+    // Fallback: đếm theo mock/local state của familyId (chỉ khi Supabase chưa cấu hình hoặc không dùng UUID)
+    if (!isSupabaseConfigured() || !isUUID(familyId)) {
+      if (memberCount === 0) {
+        if (familyId === 'fam-0000-0001') {
+          memberCount = 86;
+        } else {
+          memberCount = mockMembers.filter((m) => m.family_id === familyId).length || 2;
+        }
       }
-    }
 
-    if (branchCount === 0) {
-      branchCount = mockBranches.filter((b) => b.family_id === familyId).length || 3;
-    }
+      if (branchCount === 0) {
+        branchCount = mockBranches.filter((b) => b.family_id === familyId).length || 3;
+      }
 
-    if (eventCount === 0) {
-      eventCount = mockEvents.filter((e) => e.family_id === familyId).length || 4;
-    }
+      if (eventCount === 0) {
+        eventCount = mockEvents.filter((e) => e.family_id === familyId).length || 4;
+      }
 
-    if (txCount === 0) {
-      txCount = mockTransactions.filter((t) => t.family_id === familyId).length || 5;
+      if (txCount === 0) {
+        txCount = mockTransactions.filter((t) => t.family_id === familyId).length || 5;
+      }
     }
 
     const storageUsageGB = Number(((memberCount * 12 + 100) / 1024).toFixed(2));

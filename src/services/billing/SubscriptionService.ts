@@ -25,8 +25,24 @@ export class SubscriptionService {
     const trialEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
     if (isSupabaseConfigured() && isUUID(familyId)) {
+      let resolvedPlanId: string | null = isUUID(planId) ? planId : null;
+      if (!resolvedPlanId) {
+        const { data: planData } = await supabase.from('plans').select('id').eq('code', 'GIA_TOC').maybeSingle();
+        if (planData?.id) {
+          resolvedPlanId = planData.id;
+        } else {
+          const { data: anyPlan } = await supabase.from('plans').select('id').limit(1).maybeSingle();
+          if (anyPlan?.id) resolvedPlanId = anyPlan.id;
+        }
+      }
+
+      if (!resolvedPlanId) {
+        throw new Error('Không tìm thấy gói dịch vụ hợp lệ trong cơ sở dữ liệu');
+      }
+
       const payload: Record<string, any> = {
         family_id: familyId,
+        plan_id: resolvedPlanId,
         status: 'TRIALING',
         billing_cycle: 'YEARLY',
         current_period_start: now.toISOString(),
@@ -35,9 +51,6 @@ export class SubscriptionService {
         auto_renew: true,
         payment_provider: 'VIETQR',
       };
-      if (isUUID(planId)) {
-        payload.plan_id = planId;
-      }
 
       const { data, error } = await supabase
         .from('subscriptions')
@@ -157,17 +170,28 @@ export class SubscriptionService {
       updated_at: now,
     };
 
-    if (isSupabaseConfigured() && isUUID(familyId) && isUUID(current.id)) {
-      try {
-        const { error } = await supabase
-          .from('subscriptions')
-          .update(updated)
-          .eq('id', current.id);
-
-        if (error) return { success: false, error: error.message };
-      } catch (err: any) {
-        console.warn('upgradePlan error:', err);
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      let subId = isUUID(current.id) ? current.id : null;
+      if (!subId) {
+        const { data: realSub } = await supabase.from('subscriptions').select('id').eq('family_id', familyId).maybeSingle();
+        if (realSub?.id) subId = realSub.id;
       }
+
+      if (subId) {
+        try {
+          const { error } = await supabase
+            .from('subscriptions')
+            .update(updated)
+            .eq('id', subId);
+
+          if (error) return { success: false, error: error.message };
+          return { success: true, subscription: { ...updated, id: subId } };
+        } catch (err: any) {
+          console.warn('upgradePlan error:', err);
+          return { success: false, error: err?.message || 'Lỗi khi nâng cấp gói thuê bao' };
+        }
+      }
+      return { success: false, error: 'Không tìm thấy thông tin thuê bao của dòng họ trong cơ sở dữ liệu.' };
     }
 
     return { success: true, subscription: updated };
@@ -188,17 +212,28 @@ export class SubscriptionService {
       updated_at: new Date().toISOString(),
     };
 
-    if (isSupabaseConfigured() && isUUID(familyId) && isUUID(current.id)) {
-      try {
-        const { error } = await supabase
-          .from('subscriptions')
-          .update(updated)
-          .eq('id', current.id);
-
-        if (error) return { success: false, error: error.message };
-      } catch (err: any) {
-        console.warn('downgradePlan error:', err);
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      let subId = isUUID(current.id) ? current.id : null;
+      if (!subId) {
+        const { data: realSub } = await supabase.from('subscriptions').select('id').eq('family_id', familyId).maybeSingle();
+        if (realSub?.id) subId = realSub.id;
       }
+
+      if (subId) {
+        try {
+          const { error } = await supabase
+            .from('subscriptions')
+            .update(updated)
+            .eq('id', subId);
+
+          if (error) return { success: false, error: error.message };
+          return { success: true, subscription: { ...updated, id: subId } };
+        } catch (err: any) {
+          console.warn('downgradePlan error:', err);
+          return { success: false, error: err?.message || 'Lỗi khi hạ cấp gói thuê bao' };
+        }
+      }
+      return { success: false, error: 'Không tìm thấy thông tin thuê bao của dòng họ trong cơ sở dữ liệu.' };
     }
 
     return { success: true, subscription: updated };
@@ -221,17 +256,28 @@ export class SubscriptionService {
       updated_at: now,
     };
 
-    if (isSupabaseConfigured() && isUUID(familyId) && isUUID(current.id)) {
-      try {
-        const { error } = await supabase
-          .from('subscriptions')
-          .update(updated)
-          .eq('id', current.id);
-
-        if (error) return { success: false, error: error.message };
-      } catch (err: any) {
-        console.warn('cancelSubscription error:', err);
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      let subId = isUUID(current.id) ? current.id : null;
+      if (!subId) {
+        const { data: realSub } = await supabase.from('subscriptions').select('id').eq('family_id', familyId).maybeSingle();
+        if (realSub?.id) subId = realSub.id;
       }
+
+      if (subId) {
+        try {
+          const { error } = await supabase
+            .from('subscriptions')
+            .update(updated)
+            .eq('id', subId);
+
+          if (error) return { success: false, error: error.message };
+          return { success: true, subscription: { ...updated, id: subId } };
+        } catch (err: any) {
+          console.warn('cancelSubscription error:', err);
+          return { success: false, error: err?.message || 'Lỗi khi hủy gia hạn thuê bao' };
+        }
+      }
+      return { success: false, error: 'Không tìm thấy thông tin thuê bao của dòng họ trong cơ sở dữ liệu.' };
     }
 
     return { success: true, subscription: updated };
@@ -251,17 +297,28 @@ export class SubscriptionService {
       updated_at: new Date().toISOString(),
     };
 
-    if (isSupabaseConfigured() && isUUID(familyId) && isUUID(current.id)) {
-      try {
-        const { error } = await supabase
-          .from('subscriptions')
-          .update(updated)
-          .eq('id', current.id);
-
-        if (error) return { success: false, error: error.message };
-      } catch (err: any) {
-        console.warn('resumeSubscription error:', err);
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      let subId = isUUID(current.id) ? current.id : null;
+      if (!subId) {
+        const { data: realSub } = await supabase.from('subscriptions').select('id').eq('family_id', familyId).maybeSingle();
+        if (realSub?.id) subId = realSub.id;
       }
+
+      if (subId) {
+        try {
+          const { error } = await supabase
+            .from('subscriptions')
+            .update(updated)
+            .eq('id', subId);
+
+          if (error) return { success: false, error: error.message };
+          return { success: true, subscription: { ...updated, id: subId } };
+        } catch (err: any) {
+          console.warn('resumeSubscription error:', err);
+          return { success: false, error: err?.message || 'Lỗi khi khôi phục thuê bao' };
+        }
+      }
+      return { success: false, error: 'Không tìm thấy thông tin thuê bao của dòng họ trong cơ sở dữ liệu.' };
     }
 
     return { success: true, subscription: updated };

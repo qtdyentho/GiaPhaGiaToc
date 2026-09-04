@@ -75,35 +75,32 @@ export class EventService {
     if (!familyId) return [];
 
     if (isSupabaseConfigured() && isUUID(familyId)) {
-      try {
-        let query = supabase
-          .from('events')
-          .select('*')
-          .eq('family_id', familyId)
-          .order('solar_date', { ascending: true });
+      let query = supabase
+        .from('events')
+        .select('*')
+        .eq('family_id', familyId)
+        .order('solar_date', { ascending: true });
 
-        if (filters?.eventType && filters.eventType !== 'ALL') {
-          query = query.eq('event_type', filters.eventType);
-        }
-        if (filters?.branchId && filters.branchId !== 'ALL') {
-          query = query.eq('branch_id', filters.branchId);
-        }
-
-        const { data, error } = await query;
-        if (!error && data) {
-          let list = data as Event[];
-          if (filters?.search) {
-            const s = filters.search.toLowerCase();
-            list = list.filter((e) => e.title.toLowerCase().includes(s) || e.location?.toLowerCase().includes(s));
-          }
-          return list;
-        }
-        if (error) {
-          console.warn('Lỗi khi truy vấn events:', error.message);
-        }
-      } catch (err) {
-        console.warn('EventService getEvents error:', err);
+      if (filters?.eventType && filters.eventType !== 'ALL') {
+        query = query.eq('event_type', filters.eventType);
       }
+      if (filters?.branchId && filters.branchId !== 'ALL') {
+        query = query.eq('branch_id', filters.branchId);
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        throw new Error(`EventService.getEvents error: ${error.message}`);
+      }
+      if (data) {
+        let list = data as Event[];
+        if (filters?.search) {
+          const s = filters.search.toLowerCase();
+          list = list.filter((e) => e.title.toLowerCase().includes(s) || e.location?.toLowerCase().includes(s));
+        }
+        return list;
+      }
+      return [];
     }
 
     // Mock Fallback
@@ -124,17 +121,16 @@ export class EventService {
   static async getEventById(id: string, familyId?: string): Promise<Event | null> {
     if (!familyId) return null;
     if (isSupabaseConfigured() && isUUID(familyId) && isUUID(id)) {
-      try {
-        const { data, error } = await supabase
-          .from('events')
-          .select('*')
-          .eq('id', id)
-          .eq('family_id', familyId)
-          .single();
-        if (!error && data) return data as Event;
-      } catch (err) {
-        console.warn('getEventById error:', err);
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', id)
+        .eq('family_id', familyId)
+        .maybeSingle();
+      if (error) {
+        throw new Error(`EventService.getEventById error: ${error.message}`);
       }
+      return (data as Event) || null;
     }
 
     const evt = mockEvents.find((e) => e.id === id && e.family_id === familyId);
@@ -223,6 +219,7 @@ export class EventService {
         if (inserted) {
           return { success: true, event: inserted as Event };
         }
+        return { success: false, error: 'Không thể tạo sự kiện trên cơ sở dữ liệu' };
       }
 
       // In-Memory Fallback
@@ -264,6 +261,7 @@ export class EventService {
         if (error) return { success: false, error: error.message };
       } catch (err: any) {
         console.warn('updateEvent Supabase error:', err);
+        return { success: false, error: err?.message || 'Lỗi khi cập nhật sự kiện' };
       }
     }
 
@@ -296,6 +294,7 @@ export class EventService {
         if (error) return { success: false, error: error.message };
       } catch (err: any) {
         console.warn('deleteEvent Supabase error:', err);
+        return { success: false, error: err?.message || 'Lỗi khi xóa sự kiện' };
       }
     }
 

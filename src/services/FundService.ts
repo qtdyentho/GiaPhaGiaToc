@@ -165,12 +165,11 @@ export class FundService {
   static async getFunds(familyId?: string): Promise<Fund[]> {
     if (!familyId) return [];
     if (isSupabaseConfigured() && isUUID(familyId)) {
-      try {
-        const { data, error } = await supabase.from('funds').select('*').eq('family_id', familyId).order('created_at', { ascending: true });
-        if (!error && data) return data as Fund[];
-      } catch (err) {
-        console.warn('FundService.getFunds error:', err);
+      const { data, error } = await supabase.from('funds').select('*').eq('family_id', familyId).order('created_at', { ascending: true });
+      if (error) {
+        throw new Error(`FundService.getFunds error: ${error.message}`);
       }
+      return (data || []) as Fund[];
     }
     return mockFunds.filter((f) => f.family_id === familyId);
   }
@@ -192,6 +191,7 @@ export class FundService {
         return { success: false, error: error.message };
       }
       if (data) return { success: true, fund: data as Fund };
+      return { success: false, error: 'Không thể tạo quỹ trên cơ sở dữ liệu' };
     }
 
     const newFund: Fund = {
@@ -210,12 +210,11 @@ export class FundService {
   static async getIncomeCategories(familyId?: string): Promise<IncomeCategory[]> {
     if (!familyId) return [];
     if (isSupabaseConfigured() && isUUID(familyId)) {
-      try {
-        const { data, error } = await supabase.from('income_categories').select('*').eq('family_id', familyId);
-        if (!error && data) return data as IncomeCategory[];
-      } catch (err) {
-        console.warn('getIncomeCategories error:', err);
+      const { data, error } = await supabase.from('income_categories').select('*').eq('family_id', familyId);
+      if (error) {
+        throw new Error(`getIncomeCategories error: ${error.message}`);
       }
+      return (data || []) as IncomeCategory[];
     }
     return mockIncomeCategories.filter((c) => (c as any).family_id === familyId);
   }
@@ -223,12 +222,11 @@ export class FundService {
   static async getExpenseCategories(familyId?: string): Promise<ExpenseCategory[]> {
     if (!familyId) return [];
     if (isSupabaseConfigured() && isUUID(familyId)) {
-      try {
-        const { data, error } = await supabase.from('expense_categories').select('*').eq('family_id', familyId);
-        if (!error && data) return data as ExpenseCategory[];
-      } catch (err) {
-        console.warn('getExpenseCategories error:', err);
+      const { data, error } = await supabase.from('expense_categories').select('*').eq('family_id', familyId);
+      if (error) {
+        throw new Error(`getExpenseCategories error: ${error.message}`);
       }
+      return (data || []) as ExpenseCategory[];
     }
     return mockExpenseCategories.filter((c) => (c as any).family_id === familyId);
   }
@@ -239,12 +237,11 @@ export class FundService {
   static async getAssessments(familyId?: string): Promise<IncomeAssessment[]> {
     if (!familyId) return [];
     if (isSupabaseConfigured() && isUUID(familyId)) {
-      try {
-        const { data, error } = await supabase.from('income_assessments').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
-        if (!error && data) return data as IncomeAssessment[];
-      } catch (err) {
-        console.warn('getAssessments error:', err);
+      const { data, error } = await supabase.from('income_assessments').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
+      if (error) {
+        throw new Error(`getAssessments error: ${error.message}`);
       }
+      return (data || []) as IncomeAssessment[];
     }
     return mockAssessments.filter((a) => a.family_id === familyId);
   }
@@ -255,38 +252,37 @@ export class FundService {
     assessments?: IncomeAssessment[];
     error?: string;
   }> {
-    // 1. Fetch target members — use Supabase when configured
+    // 1. Fetch target members — use Supabase when configured and familyId is UUID
     let allMembers: Member[] = [];
     if (isSupabaseConfigured() && isUUID(params.familyId)) {
-      try {
-        let query = supabase
-          .from('members')
-          .select('id, family_id, branch_id, generation_id, full_name, status')
-          .eq('family_id', params.familyId)
-          .eq('status', 'ALIVE');
+      let query = supabase
+        .from('members')
+        .select('id, family_id, branch_id, generation_id, full_name, status')
+        .eq('family_id', params.familyId)
+        .eq('status', 'ALIVE');
 
-        if (params.targetScope === 'BRANCH' && params.branchId) {
-          query = query.eq('branch_id', params.branchId);
-        } else if (params.targetScope === 'GENERATION' && params.generationId) {
-          query = query.eq('generation_id', params.generationId);
-        } else if (params.targetScope === 'CUSTOM' && params.memberIds && params.memberIds.length > 0) {
-          query = query.in('id', params.memberIds);
-        }
+      if (params.targetScope === 'BRANCH' && params.branchId) {
+        query = query.eq('branch_id', params.branchId);
+      } else if (params.targetScope === 'GENERATION' && params.generationId) {
+        query = query.eq('generation_id', params.generationId);
+      } else if (params.targetScope === 'CUSTOM' && params.memberIds && params.memberIds.length > 0) {
+        query = query.in('id', params.memberIds);
+      }
 
-        const { data, error } = await query;
-        if (!error && data) {
-          allMembers = data.map((row: any) => ({
-            ...row,
-            life_status: row.status || 'ALIVE',
-            first_name: '',
-            last_name: '',
-            gender: 'MALE',
-            created_at: '',
-            updated_at: '',
-          })) as Member[];
-        }
-      } catch (err) {
-        console.warn('createBulkAssessment query error:', err);
+      const { data, error } = await query;
+      if (error) {
+        return { success: false, count: 0, error: `Lỗi truy vấn thành viên: ${error.message}` };
+      }
+      if (data) {
+        allMembers = data.map((row: any) => ({
+          ...row,
+          life_status: row.status || 'ALIVE',
+          first_name: '',
+          last_name: '',
+          gender: 'MALE',
+          created_at: '',
+          updated_at: '',
+        })) as Member[];
       }
     } else {
       // Mock fallback: filter by familyId + scope
@@ -333,6 +329,7 @@ export class FundService {
         return { success: false, count: 0, error: error.message };
       }
       if (data) return { success: true, count: data.length, assessments: data as IncomeAssessment[] };
+      return { success: false, count: 0, error: 'Không thể tạo nghĩa vụ thu trên cơ sở dữ liệu' };
     }
 
     // Fallback Mock
@@ -380,6 +377,7 @@ export class FundService {
       if (data) {
         return { success: true, transactionId: data };
       }
+      return { success: false, error: 'Ghi nhận thanh toán thất bại' };
     }
 
     // Atomic In-Memory / Client-side Transaction Fallback
@@ -432,12 +430,11 @@ export class FundService {
   static async getExpenses(familyId?: string): Promise<ExpenseRecord[]> {
     if (!familyId) return [];
     if (isSupabaseConfigured() && isUUID(familyId)) {
-      try {
-        const { data, error } = await supabase.from('expense_records').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
-        if (!error && data) return data as ExpenseRecord[];
-      } catch (err) {
-        console.warn('getExpenses error:', err);
+      const { data, error } = await supabase.from('expense_records').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
+      if (error) {
+        throw new Error(`getExpenses error: ${error.message}`);
       }
+      return (data || []) as ExpenseRecord[];
     }
     return mockExpenses.filter((e) => e.family_id === familyId);
   }
@@ -448,15 +445,6 @@ export class FundService {
     transactionId?: string;
     error?: string;
   }> {
-    // Check fund balance
-    const fund = mockFunds.find((f) => f.id === params.fundId);
-    if (fund && fund.current_balance < params.amount) {
-      return {
-        success: false,
-        error: `Số dư quỹ không đủ (Hiện có: ${fund.current_balance.toLocaleString()} ₫, Cần chi: ${params.amount.toLocaleString()} ₫)`,
-      };
-    }
-
     if (isSupabaseConfigured() && isUUID(params.familyId) && isUUID(params.fundId)) {
       const { data, error } = await supabase.rpc('fn_record_direct_expense', {
         p_family_id: params.familyId,
@@ -487,6 +475,16 @@ export class FundService {
       if (data && !data.success) {
         return { success: false, error: data.error || 'Giải ngân thất bại' };
       }
+      return { success: false, error: 'Giải ngân thất bại' };
+    }
+
+    // Check fund balance (Mock mode only)
+    const fund = mockFunds.find((f) => f.id === params.fundId);
+    if (fund && fund.current_balance < params.amount) {
+      return {
+        success: false,
+        error: `Số dư quỹ không đủ (Hiện có: ${fund.current_balance.toLocaleString()} ₫, Cần chi: ${params.amount.toLocaleString()} ₫)`,
+      };
     }
 
     // Direct local / fallback execution
@@ -575,6 +573,7 @@ export class FundService {
         return { success: false, error: error.message };
       }
       if (data) return { success: true, transactionId: data };
+      return { success: false, error: 'Phê duyệt chi thất bại' };
     }
 
     // Fallback Mock Execution
@@ -629,7 +628,10 @@ export class FundService {
       if (filters?.fundId && isUUID(filters.fundId)) query = query.eq('fund_id', filters.fundId);
       if (filters?.type) query = query.eq('transaction_type', filters.type);
       const { data, error } = await query;
-      if (!error && data) return data as FinancialTransaction[];
+      if (error) {
+        throw new Error(`getLedger error: ${error.message}`);
+      }
+      return (data || []) as FinancialTransaction[];
     }
 
     let result = mockTransactions.filter((t) => t.family_id === familyId);
@@ -656,6 +658,7 @@ export class FundService {
         return { success: false, error: error.message };
       }
       if (data) return { success: true, reversalTransactionId: data };
+      return { success: false, error: 'Đảo ngược giao dịch thất bại' };
     }
 
     // Symmetrical Fallback Reversal Logic
@@ -716,12 +719,11 @@ export class FundService {
   static async getContributions(familyId?: string): Promise<Contribution[]> {
     if (!familyId) return [];
     if (isSupabaseConfigured() && isUUID(familyId)) {
-      try {
-        const { data, error } = await supabase.from('contributions').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
-        if (!error && data) return data as Contribution[];
-      } catch (err) {
-        console.warn('getContributions error:', err);
+      const { data, error } = await supabase.from('contributions').select('*').eq('family_id', familyId).order('created_at', { ascending: false });
+      if (error) {
+        throw new Error(`getContributions error: ${error.message}`);
       }
+      return (data || []) as Contribution[];
     }
     return mockContributions.filter((c) => c.family_id === familyId);
   }
@@ -752,7 +754,7 @@ export class FundService {
       }
 
       // Tự động ghi nhận bút toán INCOME vào sổ cái và cộng số dư Quỹ
-      if (payload.amount > 0) {
+      if (payload.amount > 0 && ctbData) {
         try {
           const txCode = `CD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`;
           const { data: txData } = await supabase.from('financial_transactions').insert([{
@@ -770,6 +772,8 @@ export class FundService {
 
           if (txData?.id) {
             transactionId = txData.id;
+            await supabase.from('contributions').update({ transaction_id: txData.id }).eq('id', ctbData.id);
+            (ctbData as any).transaction_id = txData.id;
           }
 
           // Cập nhật số dư quỹ
@@ -786,6 +790,7 @@ export class FundService {
       }
 
       if (ctbData) return { success: true, contribution: ctbData as Contribution, transactionId };
+      return { success: false, error: 'Không thể tạo đóng góp trên cơ sở dữ liệu' };
     }
 
     // Fallback Mock Execution

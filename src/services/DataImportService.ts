@@ -1778,34 +1778,12 @@ export class DataImportService {
     const isUUID = (str?: string | null): boolean =>
       Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
 
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && !familyId.startsWith('clan-') && !familyId.startsWith('fam-')) {
       try {
         onProgress?.(5, 'Đang kết nối tới cơ sở dữ liệu...');
         let targetFamilyUUID = familyId;
         if (!isUUID(targetFamilyUUID)) {
-          // Resolve actual UUID from Supabase families table
-          const { data: matchedFam } = await supabase
-            .from('families')
-            .select('id')
-            .limit(1)
-            .maybeSingle();
-
-          if (matchedFam?.id) {
-            targetFamilyUUID = matchedFam.id;
-          } else {
-            const { data: newDbFam } = await supabase
-              .from('families')
-              .insert([{
-                name: 'Gia Tộc Việt Nam',
-                surname: 'Gia Tộc',
-                description: 'Cơ sở dữ liệu phả đồ gia tộc điện tử',
-              }])
-              .select('id')
-              .single();
-            if (newDbFam?.id) {
-              targetFamilyUUID = newDbFam.id;
-            }
-          }
+          throw new Error(`Mã dòng họ (familyId: "${familyId}") không đúng định dạng UUID.`);
         }
 
         if (isUUID(targetFamilyUUID)) {
@@ -1943,7 +1921,14 @@ export class DataImportService {
               burial_place: m.burialPlace || null,
               biography: m.bio || null,
               child_lineage_type: m.relationType?.includes('Nuôi') ? 'ADOPTED' : 'BIOLOGICAL',
+              birth_order: m.birthOrder ? (parseInt(m.birthOrder.toString(), 10) || null) : null,
               birth_order_in_family: m.birthOrder ? (parseInt(m.birthOrder.toString(), 10) || null) : null,
+              hometown: m.hometown || null,
+              current_residence: m.currentResidence || null,
+              occupation: m.occupation || null,
+              work_status: (m.workStatus as any) || null,
+              phone: m.phone || null,
+              education_level: m.educationLevel || null,
               notes: noteParts.length > 0 ? noteParts.join(' • ') : (m.birthYear ? `Năm sinh: ${m.birthYear}` : null),
             };
           });
@@ -2175,13 +2160,16 @@ export class DataImportService {
             }
           });
 
-          // Chèn relationships với try-catch an toàn theo lô (chunks)
+          // Chèn relationships với kiểm tra lỗi theo lô (chunks)
           if (relationshipsToInsert.length > 0) {
             onProgress?.(75, `Đang liên kết ${relationshipsToInsert.length} quan hệ huyết thống & hôn phối...`);
             for (let i = 0; i < relationshipsToInsert.length; i += chunkSize) {
               const chunk = relationshipsToInsert.slice(i, i + chunkSize);
               try {
-                await supabase.from('member_relationships').insert(chunk);
+                const { error: relErr } = await supabase.from('member_relationships').insert(chunk);
+                if (relErr) {
+                  console.warn('Lỗi khi lưu quan hệ:', relErr.message);
+                }
               } catch (relErr) {
                 console.warn('Cảnh báo khi lưu quan hệ:', relErr);
               }
@@ -2193,7 +2181,7 @@ export class DataImportService {
             onProgress?.(85, `Đang cập nhật chỉ mục trực hệ cho ${directLineageUpdates.length} thành viên...`);
             for (const item of directLineageUpdates) {
               try {
-                await supabase
+                const { error: upErr } = await supabase
                   .from('members')
                   .update({
                     father_id: item.father_id,
@@ -2201,17 +2189,23 @@ export class DataImportService {
                     spouse_id: item.spouse_id,
                   })
                   .eq('id', item.id);
+                if (upErr) {
+                  console.warn('Lỗi khi cập nhật liên kết trực hệ members:', upErr.message);
+                }
               } catch (upErr) {
                 console.warn('Cảnh báo khi cập nhật liên kết trực hệ members:', upErr);
               }
             }
           }
 
-          // Chèn memorials với try-catch an toàn
+          // Chèn memorials với kiểm tra lỗi
           if (memorialsToInsert.length > 0) {
             onProgress?.(92, `Đang khởi tạo ${memorialsToInsert.length} ngày giỗ âm lịch trong phả tộc...`);
             try {
-              await supabase.from('memorial_dates').insert(memorialsToInsert);
+              const { error: memErr } = await supabase.from('memorial_dates').insert(memorialsToInsert);
+              if (memErr) {
+                console.warn('Lỗi lưu ngày giỗ:', memErr.message);
+              }
             } catch (memErr) {
               console.warn('Lưu ngày giỗ:', memErr);
             }

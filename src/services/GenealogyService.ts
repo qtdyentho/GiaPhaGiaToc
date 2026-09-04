@@ -27,84 +27,98 @@ export class GenealogyService {
       try {
         const targetUUID = familyId;
         const [membersRes, genRes, branchRes, relRes] = await Promise.all([
-            supabase.from('members').select('*').eq('family_id', targetUUID),
-            supabase.from('generations').select('*').eq('family_id', targetUUID).order('generation_number', { ascending: true }),
-            supabase.from('branches').select('*').eq('family_id', targetUUID),
-            supabase.from('member_relationships').select('*').eq('family_id', targetUUID),
-          ]);
+          supabase.from('members').select('*').eq('family_id', targetUUID),
+          supabase.from('generations').select('*').eq('family_id', targetUUID).order('generation_number', { ascending: true }),
+          supabase.from('branches').select('*').eq('family_id', targetUUID),
+          supabase.from('member_relationships').select('*').eq('family_id', targetUUID),
+        ]);
 
-        if (!membersRes.error && membersRes.data) {
-          const mappedMembers: Member[] = (membersRes.data || []).map((dbRow: any) => {
-            const notesStr = dbRow.notes || dbRow.biography || '';
-            const extractNote = (prefix: string) => {
-              const match = notesStr.match(new RegExp(`${prefix}:\\s*([^•|]+)`, 'i'));
-              return match && match[1] ? match[1].trim() : undefined;
-            };
+        if (membersRes.error) {
+          throw new Error(`Lỗi truy vấn danh sách thành viên: ${membersRes.error.message}`);
+        }
+        if (genRes.error) {
+          throw new Error(`Lỗi truy vấn thế hệ: ${genRes.error.message}`);
+        }
+        if (branchRes.error) {
+          throw new Error(`Lỗi truy vấn chi phái: ${branchRes.error.message}`);
+        }
+        if (relRes.error) {
+          throw new Error(`Lỗi truy vấn quan hệ nhân thân: ${relRes.error.message}`);
+        }
 
-            return {
-              id: dbRow.id,
-              family_id: dbRow.family_id,
-              generation_id: dbRow.generation_id,
-              branch_id: dbRow.branch_id,
-              father_id: dbRow.father_id,
-              mother_id: dbRow.mother_id,
-              spouse_id: dbRow.spouse_id,
-              union_id: dbRow.union_id,
-              birth_order: dbRow.birth_order,
-              generation_index: dbRow.generation_index,
-              branch_code: dbRow.branch_code,
-              branch_path: dbRow.branch_path,
-              is_direct_lineage: dbRow.is_direct_lineage,
-              child_lineage_type: dbRow.child_lineage_type,
-              is_stepchild: dbRow.is_stepchild,
-              biological_mother_id: dbRow.biological_mother_id,
-              biological_father_id: dbRow.biological_father_id,
-              spouse_rank: dbRow.spouse_rank,
-              marriage_order: dbRow.marriage_order,
-              first_name: dbRow.first_name || dbRow.full_name?.split(' ').pop() || '',
-              last_name: dbRow.last_name || dbRow.full_name?.split(' ').slice(0, -1).join(' ') || '',
-              full_name: dbRow.full_name || `${dbRow.last_name || ''} ${dbRow.first_name || ''}`.trim(),
-              gender: dbRow.gender || 'MALE',
-              life_status: dbRow.status || (dbRow.is_deceased ? 'DECEASED' : 'ALIVE'),
-              birth_solar_date: dbRow.date_of_birth || extractNote('Ngày sinh dương'),
-              birth_time: dbRow.birth_time || extractNote('Giờ sinh'),
-              courtesy_name: dbRow.courtesy_name || extractNote('Tên tự/hiệu'),
-              death_solar_date: dbRow.date_of_death_solar || extractNote('Ngày mất dương'),
-              death_lunar_day: dbRow.date_of_death_lunar_day,
-              death_lunar_month: dbRow.date_of_death_lunar_month,
-              death_lunar_year: dbRow.date_of_death_lunar_year,
-              death_time: dbRow.death_time || extractNote('Giờ mất'),
-              religious_name: dbRow.religious_name,
-              burial_place: dbRow.burial_place || extractNote('Mộ phần'),
-              bio: dbRow.biography || dbRow.notes,
-              avatar_url: dbRow.avatar_url,
-              hometown: dbRow.hometown || extractNote('Quê quán'),
-              current_residence: dbRow.current_residence || extractNote('Nơi ở'),
-              occupation: dbRow.occupation || extractNote('Nghề nghiệp'),
-              work_status: dbRow.work_status || (extractNote('Trạng thái công tác') as any),
-              phone: dbRow.phone || extractNote('Điện thoại'),
-              education_level: dbRow.education_level || extractNote('Trình độ'),
-              social_links: dbRow.social_links || (extractNote('Mạng xã hội') ? { facebook: extractNote('Mạng xã hội') } : undefined),
-              created_at: dbRow.created_at,
-              updated_at: dbRow.updated_at,
-            };
-          });
+        const mappedMembers: Member[] = (membersRes.data || []).map((dbRow: any) => {
+          const notesStr = dbRow.notes || dbRow.biography || '';
+          const extractNote = (prefix: string) => {
+            const match = notesStr.match(new RegExp(`${prefix}:\\s*([^•|]+)`, 'i'));
+            return match && match[1] ? match[1].trim() : undefined;
+          };
 
           return {
-            members: mappedMembers,
-            generations: (genRes.data as Generation[]) || [],
-            branches: (branchRes.data as Branch[]) || [],
-            relationships: (relRes.data as MemberRelationship[]) || [],
+            id: dbRow.id,
+            family_id: dbRow.family_id,
+            generation_id: dbRow.generation_id,
+            branch_id: dbRow.branch_id,
+            father_id: dbRow.father_id,
+            mother_id: dbRow.mother_id,
+            spouse_id: dbRow.spouse_id,
+            union_id: dbRow.union_id,
+            birth_order: dbRow.birth_order,
+            generation_index: dbRow.generation_index,
+            branch_code: dbRow.branch_code,
+            branch_path: dbRow.branch_path,
+            is_direct_lineage: dbRow.is_direct_lineage,
+            child_lineage_type: dbRow.child_lineage_type,
+            is_stepchild: dbRow.is_stepchild,
+            biological_mother_id: dbRow.biological_mother_id,
+            biological_father_id: dbRow.biological_father_id,
+            spouse_rank: dbRow.spouse_rank,
+            marriage_order: dbRow.marriage_order,
+            first_name: dbRow.first_name || dbRow.full_name?.split(' ').pop() || '',
+            last_name: dbRow.last_name || dbRow.full_name?.split(' ').slice(0, -1).join(' ') || '',
+            full_name: dbRow.full_name || `${dbRow.last_name || ''} ${dbRow.first_name || ''}`.trim(),
+            gender: dbRow.gender || 'MALE',
+            life_status: dbRow.status || (dbRow.is_deceased ? 'DECEASED' : 'ALIVE'),
+            birth_solar_date: dbRow.date_of_birth || extractNote('Ngày sinh dương'),
+            birth_time: dbRow.birth_time || extractNote('Giờ sinh'),
+            courtesy_name: dbRow.courtesy_name || extractNote('Tên tự/hiệu'),
+            death_solar_date: dbRow.date_of_death_solar || extractNote('Ngày mất dương'),
+            death_lunar_day: dbRow.date_of_death_lunar_day,
+            death_lunar_month: dbRow.date_of_death_lunar_month,
+            death_lunar_year: dbRow.date_of_death_lunar_year,
+            death_time: dbRow.death_time || extractNote('Giờ mất'),
+            religious_name: dbRow.religious_name,
+            burial_place: dbRow.burial_place || extractNote('Mộ phần'),
+            bio: dbRow.biography || dbRow.notes,
+            avatar_url: dbRow.avatar_url,
+            hometown: dbRow.hometown || extractNote('Quê quán'),
+            current_residence: dbRow.current_residence || extractNote('Nơi ở'),
+            occupation: dbRow.occupation || extractNote('Nghề nghiệp'),
+            work_status: dbRow.work_status || (extractNote('Trạng thái công tác') as any),
+            phone: dbRow.phone || extractNote('Điện thoại'),
+            education_level: dbRow.education_level || extractNote('Trình độ'),
+            social_links: dbRow.social_links || (extractNote('Mạng xã hội') ? { facebook: extractNote('Mạng xã hội') } : undefined),
+            created_at: dbRow.created_at,
+            updated_at: dbRow.updated_at,
           };
-        }
-        return { members: [], generations: [], branches: [], relationships: [] };
-      } catch (err) {
-        console.warn('getFamilyTree Supabase fetch error:', err);
-        return { members: [], generations: [], branches: [], relationships: [] };
+        });
+
+        return {
+          members: mappedMembers,
+          generations: (genRes.data as Generation[]) || [],
+          branches: (branchRes.data as Branch[]) || [],
+          relationships: (relRes.data as MemberRelationship[]) || [],
+        };
+      } catch (err: any) {
+        console.error('getFamilyTree Supabase fetch error:', err);
+        throw err;
       }
     }
 
-    // Local / In-memory Store: Filter strictly by familyId
+    if (isSupabaseConfigured() && !familyId.startsWith('fam-') && !familyId.startsWith('clan-')) {
+      throw new Error(`Mã dòng họ (familyId: "${familyId}") không đúng định dạng UUID.`);
+    }
+
+    // Local / In-memory Store: Filter strictly by familyId (dành cho chế độ offline hoặc test với mã fam-*)
     return {
       members: mockMembers.filter((m) => m.family_id === familyId),
       generations: mockGenerations.filter((g) => g.family_id === familyId),
@@ -124,58 +138,74 @@ export class GenealogyService {
           .eq('family_id', familyId)
           .order('full_name', { ascending: true });
 
-        if (!error && data) {
-          return data.map((dbRow: any) => {
-            const notesStr = dbRow.notes || dbRow.biography || '';
-            const extractNote = (prefix: string) => {
-              const match = notesStr.match(new RegExp(`${prefix}:\\s*([^•|]+)`, 'i'));
-              return match && match[1] ? match[1].trim() : undefined;
-            };
-
-            return {
-              id: dbRow.id,
-              family_id: dbRow.family_id,
-              generation_id: dbRow.generation_id,
-              branch_id: dbRow.branch_id,
-              father_id: dbRow.father_id,
-              mother_id: dbRow.mother_id,
-              spouse_id: dbRow.spouse_id,
-              union_id: dbRow.union_id,
-              birth_order: dbRow.birth_order,
-              generation_index: dbRow.generation_index,
-              branch_code: dbRow.branch_code,
-              branch_path: dbRow.branch_path,
-              is_direct_lineage: dbRow.is_direct_lineage,
-              child_lineage_type: dbRow.child_lineage_type,
-              is_stepchild: dbRow.is_stepchild,
-              biological_mother_id: dbRow.biological_mother_id,
-              biological_father_id: dbRow.biological_father_id,
-              spouse_rank: dbRow.spouse_rank,
-              marriage_order: dbRow.marriage_order,
-              first_name: dbRow.first_name || dbRow.full_name?.split(' ').pop() || '',
-              last_name: dbRow.last_name || dbRow.full_name?.split(' ').slice(0, -1).join(' ') || '',
-              full_name: dbRow.full_name || `${dbRow.last_name || ''} ${dbRow.first_name || ''}`.trim(),
-              gender: dbRow.gender || 'MALE',
-              life_status: dbRow.status || (dbRow.is_deceased ? 'DECEASED' : 'ALIVE'),
-              birth_solar_date: dbRow.date_of_birth || extractNote('Ngày sinh dương'),
-              birth_time: dbRow.birth_time || extractNote('Giờ sinh'),
-              courtesy_name: dbRow.courtesy_name || extractNote('Tên tự/hiệu'),
-              death_solar_date: dbRow.date_of_death_solar || extractNote('Ngày mất dương'),
-              death_lunar_day: dbRow.date_of_death_lunar_day,
-              death_lunar_month: dbRow.date_of_death_lunar_month,
-              death_lunar_year: dbRow.date_of_death_lunar_year,
-              burial_place: dbRow.burial_place,
-              bio: dbRow.biography || dbRow.notes,
-              notes: dbRow.notes,
-              avatar_url: dbRow.avatar_url,
-              created_at: dbRow.created_at,
-              updated_at: dbRow.updated_at,
-            };
-          });
+        if (error) {
+          throw new Error(`Lỗi truy vấn danh sách thành viên từ Supabase: ${error.message}`);
         }
-      } catch (err) {
-        console.warn('getMembers direct query error:', err);
+
+        return (data || []).map((dbRow: any) => {
+          const notesStr = dbRow.notes || dbRow.biography || '';
+          const extractNote = (prefix: string) => {
+            const match = notesStr.match(new RegExp(`${prefix}:\\s*([^•|]+)`, 'i'));
+            return match && match[1] ? match[1].trim() : undefined;
+          };
+
+          return {
+            id: dbRow.id,
+            family_id: dbRow.family_id,
+            generation_id: dbRow.generation_id,
+            branch_id: dbRow.branch_id,
+            father_id: dbRow.father_id,
+            mother_id: dbRow.mother_id,
+            spouse_id: dbRow.spouse_id,
+            union_id: dbRow.union_id,
+            birth_order: dbRow.birth_order,
+            generation_index: dbRow.generation_index,
+            branch_code: dbRow.branch_code,
+            branch_path: dbRow.branch_path,
+            is_direct_lineage: dbRow.is_direct_lineage,
+            child_lineage_type: dbRow.child_lineage_type,
+            is_stepchild: dbRow.is_stepchild,
+            biological_mother_id: dbRow.biological_mother_id,
+            biological_father_id: dbRow.biological_father_id,
+            spouse_rank: dbRow.spouse_rank,
+            marriage_order: dbRow.marriage_order,
+            first_name: dbRow.first_name || dbRow.full_name?.split(' ').pop() || '',
+            last_name: dbRow.last_name || dbRow.full_name?.split(' ').slice(0, -1).join(' ') || '',
+            full_name: dbRow.full_name || `${dbRow.last_name || ''} ${dbRow.first_name || ''}`.trim(),
+            gender: dbRow.gender || 'MALE',
+            life_status: dbRow.status || (dbRow.is_deceased ? 'DECEASED' : 'ALIVE'),
+            birth_solar_date: dbRow.date_of_birth || extractNote('Ngày sinh dương'),
+            birth_time: dbRow.birth_time || extractNote('Giờ sinh'),
+            courtesy_name: dbRow.courtesy_name || extractNote('Tên tự/hiệu'),
+            death_solar_date: dbRow.date_of_death_solar || extractNote('Ngày mất dương'),
+            death_lunar_day: dbRow.date_of_death_lunar_day,
+            death_lunar_month: dbRow.date_of_death_lunar_month,
+            death_lunar_year: dbRow.date_of_death_lunar_year,
+            death_time: dbRow.death_time || extractNote('Giờ mất'),
+            religious_name: dbRow.religious_name,
+            burial_place: dbRow.burial_place || extractNote('Mộ phần'),
+            bio: dbRow.biography || dbRow.notes,
+            notes: dbRow.notes,
+            avatar_url: dbRow.avatar_url,
+            hometown: dbRow.hometown || extractNote('Quê quán'),
+            current_residence: dbRow.current_residence || extractNote('Nơi ở'),
+            occupation: dbRow.occupation || extractNote('Nghề nghiệp'),
+            work_status: dbRow.work_status || (extractNote('Trạng thái công tác') as any),
+            phone: dbRow.phone || extractNote('Điện thoại'),
+            education_level: dbRow.education_level || extractNote('Trình độ'),
+            social_links: dbRow.social_links || (extractNote('Mạng xã hội') ? { facebook: extractNote('Mạng xã hội') } : undefined),
+            created_at: dbRow.created_at,
+            updated_at: dbRow.updated_at,
+          };
+        });
+      } catch (err: any) {
+        console.error('getMembers direct query error:', err);
+        throw err;
       }
+    }
+
+    if (isSupabaseConfigured() && !familyId.startsWith('fam-') && !familyId.startsWith('clan-')) {
+      throw new Error(`Mã dòng họ (familyId: "${familyId}") không đúng định dạng UUID.`);
     }
 
     return mockMembers.filter((m) => m.family_id === familyId);
@@ -189,7 +219,11 @@ export class GenealogyService {
           query = query.eq('family_id', familyId);
         }
         const { data, error } = await query.single();
-        if (!error && data) {
+        if (error) {
+          if (error.code === 'PGRST116') return undefined;
+          throw new Error(`Supabase getMemberById error: ${error.message}`);
+        }
+        if (data) {
           const notesStr = data.notes || data.biography || '';
           const extractNote = (prefix: string) => {
             const match = notesStr.match(new RegExp(`${prefix}:\\s*([^•|]+)`, 'i'));
@@ -233,14 +267,28 @@ export class GenealogyService {
             burial_place: data.burial_place || extractNote('Mộ phần'),
             bio: data.biography || data.notes,
             avatar_url: data.avatar_url,
+            hometown: data.hometown || extractNote('Quê quán'),
+            current_residence: data.current_residence || extractNote('Nơi ở'),
+            occupation: data.occupation || extractNote('Nghề nghiệp'),
+            work_status: data.work_status || (extractNote('Trạng thái công tác') as any),
+            phone: data.phone || extractNote('Điện thoại'),
+            education_level: data.education_level || extractNote('Trình độ'),
+            social_links: data.social_links || (extractNote('Mạng xã hội') ? { facebook: extractNote('Mạng xã hội') } : undefined),
             created_at: data.created_at,
             updated_at: data.updated_at,
           };
         }
-      } catch (err) {
-        console.warn('getMemberById Supabase error:', err);
+        return undefined;
+      } catch (err: any) {
+        console.error('getMemberById Supabase error:', err);
+        throw err;
       }
     }
+
+    if (isSupabaseConfigured() && !id.startsWith('mb-') && !id.startsWith('mat-') && (!familyId || (!familyId.startsWith('fam-') && !familyId.startsWith('clan-')))) {
+      throw new Error(`Mã thành viên (id: "${id}") không đúng định dạng UUID.`);
+    }
+
     return mockMembers.find((m) => m.id === id && (!familyId || m.family_id === familyId));
   }
 
@@ -254,6 +302,10 @@ export class GenealogyService {
     const safeFamilyId = isUUID(member.family_id) ? member.family_id : null;
     const safeBranchId = isUUID(member.branch_id) ? member.branch_id : null;
     const safeGenId = isUUID(member.generation_id) ? member.generation_id : null;
+
+    if (isSupabaseConfigured() && (!member.family_id || (!isUUID(member.family_id) && !member.family_id.startsWith('fam-') && !member.family_id.startsWith('clan-')))) {
+      return { success: false, error: `Mã dòng họ (family_id: "${member.family_id}") không đúng định dạng UUID.` };
+    }
 
     if (isSupabaseConfigured() && safeFamilyId) {
       const memberPayload: any = {
@@ -275,6 +327,7 @@ export class GenealogyService {
         religious_name: member.religious_name || null,
         burial_place: member.burial_place || null,
         biography: member.bio || null,
+        avatar_url: member.avatar_url || null,
         father_id: member.father_id || null,
         mother_id: member.mother_id || null,
         spouse_id: member.spouse_id || null,
@@ -283,6 +336,18 @@ export class GenealogyService {
         branch_code: member.branch_code || null,
         spouse_rank: member.spouse_rank || null,
         marriage_order: member.marriage_order || null,
+        child_lineage_type: member.child_lineage_type || null,
+        is_direct_lineage: member.is_direct_lineage ?? true,
+        is_stepchild: member.is_stepchild ?? false,
+        biological_mother_id: member.biological_mother_id || null,
+        biological_father_id: member.biological_father_id || null,
+        hometown: member.hometown || null,
+        current_residence: member.current_residence || null,
+        occupation: member.occupation || null,
+        work_status: member.work_status || null,
+        phone: member.phone || null,
+        education_level: member.education_level || null,
+        social_links: member.social_links || null,
       };
 
       try {
@@ -328,6 +393,14 @@ export class GenealogyService {
           religious_name: data.religious_name,
           burial_place: data.burial_place,
           bio: data.biography,
+          avatar_url: data.avatar_url,
+          hometown: data.hometown || member.hometown,
+          current_residence: data.current_residence || member.current_residence,
+          occupation: data.occupation || member.occupation,
+          work_status: data.work_status || member.work_status,
+          phone: data.phone || member.phone,
+          education_level: data.education_level || member.education_level,
+          social_links: data.social_links || member.social_links,
           created_at: data.created_at,
           updated_at: data.updated_at,
         };
@@ -494,6 +567,13 @@ export class GenealogyService {
   ): Promise<{ success: boolean; member?: Member; error?: string }> {
     if (isSupabaseConfigured() && isUUID(id)) {
       try {
+        // Lấy thông tin phụ huynh & phối ngẫu hiện tại từ Supabase để đồng bộ quan hệ chính xác mà không xóa nhầm
+        const { data: currentMember } = await supabase
+          .from('members')
+          .select('father_id, mother_id, spouse_id, family_id')
+          .eq('id', id)
+          .maybeSingle();
+
         const payload: any = {
           updated_at: new Date().toISOString(),
         };
@@ -543,50 +623,73 @@ export class GenealogyService {
         }
 
         // Đồng bộ member_relationships khi thay đổi cha, mẹ hoặc vợ/chồng
-        const effectiveFamId = data.family_id || updates.family_id;
+        const effectiveFamId = data.family_id || updates.family_id || currentMember?.family_id;
         if (effectiveFamId && isUUID(effectiveFamId)) {
           try {
             // Đồng bộ Bố (CHILD relation: father_id -> member_id)
             if (updates.father_id !== undefined) {
-              await supabase.from('member_relationships').delete()
-                .eq('family_id', effectiveFamId)
-                .eq('related_member_id', id)
-                .eq('relationship_type', 'CHILD');
+              const oldFatherId = currentMember?.father_id;
+              if (oldFatherId && isUUID(oldFatherId)) {
+                const { error: delErr } = await supabase.from('member_relationships').delete()
+                  .eq('family_id', effectiveFamId)
+                  .eq('member_id', oldFatherId)
+                  .eq('related_member_id', id)
+                  .eq('relationship_type', 'CHILD');
+                if (delErr) console.warn('Delete old father relationship error:', delErr.message);
+              }
               if (updates.father_id && isUUID(updates.father_id)) {
-                await supabase.from('member_relationships').insert([{
+                const { error: insErr } = await supabase.from('member_relationships').insert([{
                   family_id: effectiveFamId,
                   member_id: updates.father_id,
                   related_member_id: id,
                   relationship_type: 'CHILD',
                 }]);
+                if (insErr) console.warn('Insert father relationship error:', insErr.message);
               }
             }
 
             // Đồng bộ Mẹ (CHILD relation: mother_id -> member_id)
-            if (updates.mother_id !== undefined && updates.mother_id && isUUID(updates.mother_id)) {
-              await supabase.from('member_relationships').insert([{
-                family_id: effectiveFamId,
-                member_id: updates.mother_id,
-                related_member_id: id,
-                relationship_type: 'CHILD',
-              }]);
+            if (updates.mother_id !== undefined) {
+              const oldMotherId = currentMember?.mother_id;
+              if (oldMotherId && isUUID(oldMotherId)) {
+                const { error: delErr } = await supabase.from('member_relationships').delete()
+                  .eq('family_id', effectiveFamId)
+                  .eq('member_id', oldMotherId)
+                  .eq('related_member_id', id)
+                  .eq('relationship_type', 'CHILD');
+                if (delErr) console.warn('Delete old mother relationship error:', delErr.message);
+              }
+              if (updates.mother_id && isUUID(updates.mother_id)) {
+                const { error: insErr } = await supabase.from('member_relationships').insert([{
+                  family_id: effectiveFamId,
+                  member_id: updates.mother_id,
+                  related_member_id: id,
+                  relationship_type: 'CHILD',
+                }]);
+                if (insErr) console.warn('Insert mother relationship error:', insErr.message);
+              }
             }
 
             // Đồng bộ Vợ/Chồng (SPOUSE relation 2 chiều & spouse_id trên đối phương)
             if (updates.spouse_id !== undefined) {
-              await supabase.from('member_relationships').delete()
-                .eq('family_id', effectiveFamId)
-                .eq('relationship_type', 'SPOUSE')
-                .or(`member_id.eq.${id},related_member_id.eq.${id}`);
+              const oldSpouseId = currentMember?.spouse_id;
+              if (oldSpouseId && isUUID(oldSpouseId)) {
+                await supabase.from('members').update({ spouse_id: null }).eq('id', oldSpouseId).eq('spouse_id', id);
+                await supabase.from('member_relationships').delete()
+                  .eq('family_id', effectiveFamId)
+                  .eq('relationship_type', 'SPOUSE')
+                  .or(`and(member_id.eq.${id},related_member_id.eq.${oldSpouseId}),and(member_id.eq.${oldSpouseId},related_member_id.eq.${id})`);
+              }
               
               if (updates.spouse_id && isUUID(updates.spouse_id)) {
                 await supabase.from('members').update({ spouse_id: id }).eq('id', updates.spouse_id);
-                await supabase.from('member_relationships').insert([{
+                const { error: insErr } = await supabase.from('member_relationships').insert([{
                   family_id: effectiveFamId,
                   member_id: id,
                   related_member_id: updates.spouse_id,
                   relationship_type: 'SPOUSE',
                 }]);
+                if (insErr) console.warn('Insert spouse relationship error:', insErr.message);
               }
             }
           } catch (relErr) {
@@ -648,15 +751,23 @@ export class GenealogyService {
       }
     }
 
+    if (isSupabaseConfigured() && !id.startsWith('mb-') && !id.startsWith('mat-') && (!updates.family_id || (!updates.family_id.startsWith('fam-') && !updates.family_id.startsWith('clan-')))) {
+      return { success: false, error: `Mã thành viên (id: "${id}") không đúng định dạng UUID.` };
+    }
+
     const idx = mockMembers.findIndex((m) => m.id === id && (!updates.family_id || m.family_id === updates.family_id));
     if (idx !== -1) {
+      const oldFatherId = mockMembers[idx].father_id;
+      const oldMotherId = mockMembers[idx].mother_id;
       mockMembers[idx] = { ...mockMembers[idx], ...updates, updated_at: new Date().toISOString() };
       
       // Đồng bộ mockRelationships
-      if (updates.father_id !== undefined || updates.mother_id !== undefined) {
-        for (let i = mockRelationships.length - 1; i >= 0; i--) {
-          if (mockRelationships[i].related_member_id === id && (mockRelationships[i].relationship === 'CHILD' || mockRelationships[i].relationship_type === 'CHILD')) {
-            mockRelationships.splice(i, 1);
+      if (updates.father_id !== undefined) {
+        if (oldFatherId) {
+          for (let i = mockRelationships.length - 1; i >= 0; i--) {
+            if (mockRelationships[i].member_id === oldFatherId && mockRelationships[i].related_member_id === id && (mockRelationships[i].relationship === 'CHILD' || mockRelationships[i].relationship_type === 'CHILD')) {
+              mockRelationships.splice(i, 1);
+            }
           }
         }
         if (updates.father_id) {
@@ -669,6 +780,15 @@ export class GenealogyService {
             relationship_type: 'CHILD',
             created_at: new Date().toISOString(),
           });
+        }
+      }
+      if (updates.mother_id !== undefined) {
+        if (oldMotherId) {
+          for (let i = mockRelationships.length - 1; i >= 0; i--) {
+            if (mockRelationships[i].member_id === oldMotherId && mockRelationships[i].related_member_id === id && (mockRelationships[i].relationship === 'CHILD' || mockRelationships[i].relationship_type === 'CHILD')) {
+              mockRelationships.splice(i, 1);
+            }
+          }
         }
         if (updates.mother_id) {
           mockRelationships.push({
@@ -729,7 +849,10 @@ export class GenealogyService {
         if (familyId && isUUID(familyId)) {
           relQuery = relQuery.eq('family_id', familyId);
         }
-        await relQuery;
+        const { error: relError } = await relQuery;
+        if (relError) {
+          return { success: false, error: relError.message };
+        }
 
         // 2. Nullify father_id, mother_id, spouse_id trên các thành viên trỏ tới id này
         let fQuery = supabase.from('members').update({ father_id: null }).eq('father_id', id);
@@ -740,14 +863,18 @@ export class GenealogyService {
           mQuery = mQuery.eq('family_id', familyId);
           sQuery = sQuery.eq('family_id', familyId);
         }
-        await Promise.all([fQuery, mQuery, sQuery]);
+        const [fRes, mRes, sRes] = await Promise.all([fQuery, mQuery, sQuery]);
+        if (fRes.error) return { success: false, error: fRes.error.message };
+        if (mRes.error) return { success: false, error: mRes.error.message };
+        if (sRes.error) return { success: false, error: sRes.error.message };
 
         // 3. Xóa ngày giỗ liên kết
         let memQuery = supabase.from('memorial_dates').delete().eq('member_id', id);
         if (familyId && isUUID(familyId)) {
           memQuery = memQuery.eq('family_id', familyId);
         }
-        await memQuery;
+        const { error: memError } = await memQuery;
+        if (memError) return { success: false, error: memError.message };
 
         // 4. Xóa bản ghi thành viên
         let query = supabase.from('members').delete().eq('id', id);
@@ -763,6 +890,10 @@ export class GenealogyService {
         console.error('deleteMember exception:', err);
         return { success: false, error: err.message };
       }
+    }
+
+    if (isSupabaseConfigured() && !id.startsWith('mb-') && !id.startsWith('mat-') && (!familyId || (!familyId.startsWith('fam-') && !familyId.startsWith('clan-')))) {
+      return { success: false, error: `Mã thành viên (id: "${id}") không đúng định dạng UUID.` };
     }
 
     // In-memory mock store cleanup
@@ -821,6 +952,10 @@ export class GenealogyService {
       } catch (err: any) {
         return { success: false, error: err.message };
       }
+    }
+
+    if (isSupabaseConfigured() && !id.startsWith('mb-') && !id.startsWith('mat-') && (!familyId || (!familyId.startsWith('fam-') && !familyId.startsWith('clan-')))) {
+      return { success: false, error: `Mã thành viên (id: "${id}") không đúng định dạng UUID.` };
     }
 
     const member = mockMembers.find((m) => m.id === id);

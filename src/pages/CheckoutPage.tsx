@@ -48,12 +48,13 @@ export const CheckoutPage: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSubmitClaim = (e: React.FormEvent) => {
+  const handleSubmitClaim = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMessage(null);
     try {
-      PaymentService.submitPaymentClaim(`inv-${Date.now()}`, {
+      const invoiceId = crypto.randomUUID();
+      await PaymentService.submitPaymentClaim(invoiceId, {
         familyId: activeFamily?.id,
         amount: planInfo.total,
         billingReason: `${planInfo.name} (${activeFamily?.name})`,

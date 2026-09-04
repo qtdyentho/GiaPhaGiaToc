@@ -452,7 +452,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .select()
           .single();
 
-        if (!famErr && dbFam) {
+        if (famErr) {
+          console.error('Lỗi khi tạo dòng họ trên Supabase:', famErr);
+          setIsLoading(false);
+          throw new Error(`Không thể tạo dòng họ trên cơ sở dữ liệu: ${famErr.message}`);
+        }
+
+        if (dbFam) {
           newFamilyId = dbFam.id;
           newFam = {
             id: dbFam.id,
@@ -470,7 +476,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
 
           if (isUUID(currentUserId)) {
-            const { data: dbMem } = await supabase
+            const { data: dbMem, error: memErr } = await supabase
               .from('family_memberships')
               .insert([{
                 family_id: dbFam.id,
@@ -481,7 +487,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               .select()
               .single();
 
-            if (dbMem) {
+            if (memErr) {
+              console.warn('Lỗi khi tạo quyền quản trị dòng họ trên Supabase:', memErr);
+            } else if (dbMem) {
               newMem = {
                 id: dbMem.id,
                 family_id: dbFam.id,
@@ -496,7 +504,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
 
           // Seed default funds in Supabase
-          await supabase.from('funds').insert([
+          const { error: fundsErr } = await supabase.from('funds').insert([
             {
               family_id: dbFam.id,
               name: 'Quỹ Hoạt Động Thường Niên',
@@ -522,74 +530,108 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               status: 'ACTIVE',
             },
           ]);
+          if (fundsErr) {
+            console.warn('Lỗi khi khởi tạo quỹ dòng họ trên Supabase:', fundsErr.message);
+          }
+
+          if (data.founderName) {
+            const { data: dbGen, error: genErr } = await supabase
+              .from('generations')
+              .insert([{
+                family_id: dbFam.id,
+                generation_number: 1,
+                name: 'Đời thứ nhất (Thủy Tổ)',
+              }])
+              .select()
+              .single();
+
+            if (dbGen) {
+              await supabase.from('members').insert([{
+                family_id: dbFam.id,
+                generation_id: dbGen.id,
+                full_name: data.founderName,
+                gender: 'MALE',
+                status: 'DECEASED',
+                is_deceased: true,
+                biography: `Cụ Thủy Tổ khởi lập dòng họ ${data.name}.`,
+              }]);
+            } else if (genErr) {
+              console.warn('Lỗi khi tạo đời thứ nhất trên Supabase:', genErr.message);
+            }
+          }
+        } else {
+          setIsLoading(false);
+          throw new Error('Không nhận được dữ liệu phản hồi từ cơ sở dữ liệu khi tạo dòng họ');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Lỗi khi tạo dòng họ trên Supabase:', err);
+        setIsLoading(false);
+        throw err;
       }
-    }
+    } else {
+      // Seed default initial funds for in-memory fallback ONLY when Supabase is NOT configured
+      const initialFunds: Fund[] = [
+        {
+          id: `fund-${newFamilyId}-1`,
+          family_id: newFamilyId,
+          name: 'Quỹ Hoạt Động Thường Niên',
+          description: 'Chi phí hương khói, giỗ chạp, hội họp dòng họ',
+          opening_balance: 0,
+          current_balance: 0,
+          status: 'ACTIVE',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        {
+          id: `fund-${newFamilyId}-2`,
+          family_id: newFamilyId,
+          name: 'Quỹ Khuyến Học & Khuyến Tài',
+          description: 'Khen thưởng con cháu đỗ đạt và thành tích xuất sắc',
+          opening_balance: 0,
+          current_balance: 0,
+          status: 'ACTIVE',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        {
+          id: `fund-${newFamilyId}-3`,
+          family_id: newFamilyId,
+          name: 'Quỹ Tu Bổ & Xây Dựng Từ Đường',
+          description: 'Bảo tồn, trùng tu và mở rộng nhà thờ họ',
+          opening_balance: 0,
+          current_balance: 0,
+          status: 'ACTIVE',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ];
+      mockFunds.push(...initialFunds);
 
-    // Seed default initial funds for in-memory fallback
-    const initialFunds: Fund[] = [
-      {
-        id: `fund-${newFamilyId}-1`,
-        family_id: newFamilyId,
-        name: 'Quỹ Hoạt Động Thường Niên',
-        description: 'Chi phí hương khói, giỗ chạp, hội họp dòng họ',
-        opening_balance: 0,
-        current_balance: 0,
-        status: 'ACTIVE',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      {
-        id: `fund-${newFamilyId}-2`,
-        family_id: newFamilyId,
-        name: 'Quỹ Khuyến Học & Khuyến Tài',
-        description: 'Khen thưởng con cháu đỗ đạt và thành tích xuất sắc',
-        opening_balance: 0,
-        current_balance: 0,
-        status: 'ACTIVE',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      {
-        id: `fund-${newFamilyId}-3`,
-        family_id: newFamilyId,
-        name: 'Quỹ Tu Bổ & Xây Dựng Từ Đường',
-        description: 'Bảo tồn, trùng tu và mở rộng nhà thờ họ',
-        opening_balance: 0,
-        current_balance: 0,
-        status: 'ACTIVE',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-    ];
-    mockFunds.push(...initialFunds);
+      // If founder name is given, seed Generation 1 and Founder member
+      if (data.founderName) {
+        const genId = `gen-${newFamilyId}-1`;
+        mockGenerations.push({
+          id: genId,
+          family_id: newFamilyId,
+          generation_number: 1,
+          name: 'Đời thứ nhất (Thủy Tổ)',
+          created_at: new Date().toISOString(),
+        });
 
-    // If founder name is given, seed Generation 1 and Founder member
-    if (data.founderName) {
-      const genId = `gen-${newFamilyId}-1`;
-      mockGenerations.push({
-        id: genId,
-        family_id: newFamilyId,
-        generation_number: 1,
-        name: 'Đời thứ nhất (Thủy Tổ)',
-        created_at: new Date().toISOString(),
-      });
-
-      mockMembers.push({
-        id: `mb-${newFamilyId}-1`,
-        family_id: newFamilyId,
-        generation_id: genId,
-        first_name: data.founderName.split(' ').pop() || '',
-        last_name: data.founderName.split(' ').slice(0, -1).join(' ') || '',
-        full_name: data.founderName,
-        gender: 'MALE',
-        life_status: 'DECEASED',
-        bio: `Cụ Thủy Tổ khởi lập dòng họ ${data.name}.`,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
+        mockMembers.push({
+          id: `mb-${newFamilyId}-1`,
+          family_id: newFamilyId,
+          generation_id: genId,
+          first_name: data.founderName.split(' ').pop() || '',
+          last_name: data.founderName.split(' ').slice(0, -1).join(' ') || '',
+          full_name: data.founderName,
+          gender: 'MALE',
+          life_status: 'DECEASED',
+          bio: `Cụ Thủy Tổ khởi lập dòng họ ${data.name}.`,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+      }
     }
 
     const updatedFamilies = [...families, newFam];
@@ -629,16 +671,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .select()
           .single();
 
-        if (!error && data) {
+        if (error) {
+          console.error('Lỗi khi cập nhật dòng họ trên Supabase:', error);
+          setIsLoading(false);
+          throw new Error(`Không thể cập nhật dòng họ: ${error.message}`);
+        }
+
+        if (data) {
           updatedTarget = {
             ...data,
             ancestral_hall_address: data.ancestral_hall || updates.ancestral_hall_address,
             banner_url: data.cover_url || updates.banner_url,
           };
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Lỗi khi cập nhật dòng họ trên Supabase:', err);
+        setIsLoading(false);
+        throw err;
       }
+    } else if (isSupabaseConfigured() && !familyId.startsWith('fam-')) {
+      setIsLoading(false);
+      throw new Error(`Mã dòng họ (familyId: "${familyId}") không đúng định dạng UUID.`);
     }
 
     if (!updatedTarget) {

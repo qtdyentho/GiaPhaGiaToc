@@ -98,20 +98,20 @@ export class ClanChronicleService {
         }
 
         const { data, error } = await query;
-        if (!error && data && data.length > 0) {
+        if (error) {
+          console.error('Supabase getChronicles query error:', error);
+          throw new Error(`Lỗi tải danh sách ký sự: ${error.message}`);
+        }
+        if (data) {
           list = data as ClanChronicle[];
         }
-      } catch (err) {
-        console.warn('Supabase getChronicles query error:', err);
+      } catch (err: any) {
+        console.error('Supabase getChronicles query error:', err);
+        throw err;
       }
-    }
-
-    // Merge with local/in-memory items
-    const localItems = getLocalChronicles(familyId);
-    for (const local of localItems) {
-      if (!list.some((item) => item.id === local.id)) {
-        list.push(local);
-      }
+    } else {
+      // Local/in-memory items only when Supabase is not configured or non-UUID
+      list = getLocalChronicles(familyId);
     }
 
     if (category) {
@@ -147,12 +147,18 @@ export class ClanChronicleService {
           .eq('family_id', familyId)
           .single();
 
-        if (!error && data) {
+        if (error) {
+          console.error('Supabase getChronicleById error:', error);
+          throw new Error(`Lỗi tải bài viết: ${error.message}`);
+        }
+        if (data) {
           this.incrementViews(id, familyId);
           return data as ClanChronicle;
         }
-      } catch (err) {
-        console.warn('Supabase getChronicleById error:', err);
+        return null;
+      } catch (err: any) {
+        console.error('Supabase getChronicleById error:', err);
+        throw err;
       }
     }
 
@@ -280,11 +286,9 @@ export class ClanChronicleService {
       }
       if (dbData) {
         const chronicle = dbData as ClanChronicle;
-        const localList = getLocalChronicles(data.family_id);
-        localList.unshift(chronicle);
-        saveLocalChronicles(data.family_id, localList);
         return { success: true, chronicle };
       }
+      return { success: false, error: 'Không thể tạo bài viết trên cơ sở dữ liệu.' };
     }
 
     const newChronicle: ClanChronicle = {
@@ -335,6 +339,7 @@ export class ClanChronicleService {
         console.error('Supabase delete error:', error);
         return false;
       }
+      return true;
     }
 
     const localList = getLocalChronicles(familyId).filter((c) => c.id !== id);
@@ -348,8 +353,6 @@ export class ClanChronicleService {
   static async getComments(chronicleId: string, familyId: string): Promise<ClanChronicleComment[]> {
     if (!chronicleId) return [];
 
-    let comments: ClanChronicleComment[] = [];
-
     if (isSupabaseConfigured() && isUUID(chronicleId) && isUUID(familyId)) {
       try {
         const { data, error } = await supabase
@@ -359,22 +362,21 @@ export class ClanChronicleService {
           .eq('family_id', familyId)
           .order('created_at', { ascending: false });
 
-        if (!error && data && data.length > 0) {
-          comments = data as ClanChronicleComment[];
+        if (error) {
+          console.error('Supabase getComments error:', error);
+          throw new Error(`Lỗi tải danh sách bình luận: ${error.message}`);
         }
-      } catch (err) {
-        console.warn('Supabase getComments error:', err);
+        if (data) {
+          return data as ClanChronicleComment[];
+        }
+        return [];
+      } catch (err: any) {
+        console.error('Supabase getComments error:', err);
+        throw err;
       }
     }
 
-    const localComments = getLocalComments(chronicleId);
-    for (const local of localComments) {
-      if (!comments.some((c) => c.id === local.id)) {
-        comments.push(local);
-      }
-    }
-
-    return comments;
+    return getLocalComments(chronicleId);
   }
 
   /**
@@ -425,11 +427,9 @@ export class ClanChronicleService {
           await supabase.from('clan_chronicles').update({ comments_count: (chr.comments_count || 0) + 1 }).eq('id', data.chronicle_id);
         }
         const comment = dbComment as ClanChronicleComment;
-        const localComments = getLocalComments(data.chronicle_id);
-        localComments.unshift(comment);
-        saveLocalComments(data.chronicle_id, localComments);
         return { success: true, comment };
       }
+      return { success: false, error: 'Không thể thêm bình luận trên cơ sở dữ liệu.' };
     }
 
     const newComment: ClanChronicleComment = {
@@ -496,6 +496,42 @@ export class ClanChronicleService {
 
     if (!familyId) return defaultIntro;
 
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      try {
+        const { data, error } = await supabase
+          .from('families')
+          .select('description, ancestral_hall_address, origin_province, origin_district, origin_commune, covenant_preamble')
+          .eq('id', familyId)
+          .single();
+
+        if (error) {
+          console.error('Supabase getClanIntro error:', error);
+          throw new Error(`Lỗi tải thông tin giới thiệu dòng họ: ${error.message}`);
+        }
+
+        if (data) {
+          const intro: ClanIntroConfig = { ...defaultIntro };
+          if (data.covenant_preamble && data.covenant_preamble.startsWith('{')) {
+            try {
+              const parsed = JSON.parse(data.covenant_preamble);
+              Object.assign(intro, parsed);
+            } catch {}
+          }
+          if (data.description) intro.historical_origin = data.description;
+          if (data.ancestral_hall_address) intro.ancestral_hall_address = data.ancestral_hall_address;
+          if (data.origin_province) intro.origin_province = data.origin_province;
+          if (data.origin_district) intro.origin_district = data.origin_district;
+          if (data.origin_commune) intro.origin_commune = data.origin_commune;
+
+          inMemoryIntro.set(familyId, intro);
+          return intro;
+        }
+      } catch (err: any) {
+        console.error('Supabase getClanIntro exception:', err);
+        throw err;
+      }
+    }
+
     if (inMemoryIntro.has(familyId)) {
       return inMemoryIntro.get(familyId)!;
     }
@@ -510,28 +546,6 @@ export class ClanChronicleService {
         }
       }
     } catch {}
-
-    if (isSupabaseConfigured() && isUUID(familyId)) {
-      try {
-        const { data, error } = await supabase
-          .from('families')
-          .select('description, ancestral_hall_address, origin_province, origin_district, origin_commune, covenant_preamble')
-          .eq('id', familyId)
-          .single();
-
-        if (!error && data) {
-          if (data.covenant_preamble && data.covenant_preamble.startsWith('{')) {
-            try {
-              const parsed = JSON.parse(data.covenant_preamble);
-              return { ...defaultIntro, ...parsed };
-            } catch {}
-          }
-          if (data.description) defaultIntro.historical_origin = data.description;
-          if (data.ancestral_hall_address) defaultIntro.ancestral_hall_address = data.ancestral_hall_address;
-          if (data.origin_province) defaultIntro.origin_province = data.origin_province;
-        }
-      } catch {}
-    }
 
     return defaultIntro;
   }
@@ -553,6 +567,25 @@ export class ClanChronicleService {
       updated_at: new Date().toISOString(),
     };
 
+    if (isSupabaseConfigured() && isUUID(familyId)) {
+      const { error } = await supabase
+        .from('families')
+        .update({
+          description: updated.historical_origin,
+          ancestral_hall_address: updated.ancestral_hall_address,
+          origin_province: updated.origin_province,
+          origin_district: updated.origin_district,
+          origin_commune: updated.origin_commune,
+          covenant_preamble: JSON.stringify(updated),
+        })
+        .eq('id', familyId);
+
+      if (error) {
+        console.error('Supabase update family intro error:', error);
+        return { success: false, error: error.message };
+      }
+    }
+
     inMemoryIntro.set(familyId, updated);
 
     try {
@@ -560,24 +593,6 @@ export class ClanChronicleService {
         localStorage.setItem(`${LOCAL_INTRO_KEY}_${familyId}`, JSON.stringify(updated));
       }
     } catch {}
-
-    if (isSupabaseConfigured() && isUUID(familyId)) {
-      try {
-        await supabase
-          .from('families')
-          .update({
-            description: updated.historical_origin,
-            ancestral_hall_address: updated.ancestral_hall_address,
-            origin_province: updated.origin_province,
-            origin_district: updated.origin_district,
-            origin_commune: updated.origin_commune,
-            covenant_preamble: JSON.stringify(updated),
-          })
-          .eq('id', familyId);
-      } catch (err) {
-        console.warn('Supabase update family intro error:', err);
-      }
-    }
 
     return { success: true, intro: updated };
   }
