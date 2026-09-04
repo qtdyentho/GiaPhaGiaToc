@@ -66,13 +66,17 @@ const GenealogyTreeNodeComponent: React.FC<GenealogyTreeNodeProps> = ({
         id={`member-node-${member.id}`}
         data-member-id={member.id}
         onClick={() => onSelectMember(member)}
-        className={`member-card-interactive w-56 rounded-3xl p-4 transition-all duration-200 cursor-pointer border-2 shadow-sm hover:shadow-lg relative select-none ${
+        className={`member-card-interactive w-56 rounded-3xl p-4 transition-all duration-300 cursor-pointer border-2 shadow-sm hover:shadow-lg relative select-none ${
+          isMemSelected
+            ? 'ring-4 ring-amber-400 dark:ring-amber-500 shadow-2xl scale-[1.03] animate-pulse border-amber-500 z-30'
+            : ''
+        } ${
           isMemMale
             ? isMemSelected
-              ? 'bg-sky-100/90 dark:bg-sky-950/80 border-sky-500 ring-4 ring-sky-500/20'
+              ? 'bg-sky-100/95 dark:bg-sky-950/90 border-amber-500'
               : 'bg-sky-50/85 dark:bg-sky-950/40 border-sky-400 dark:border-sky-500 hover:border-sky-600'
             : isMemSelected
-            ? 'bg-pink-100/90 dark:bg-pink-950/80 border-pink-500 ring-4 ring-pink-500/20'
+            ? 'bg-pink-100/95 dark:bg-pink-950/90 border-amber-500'
             : 'bg-pink-50/85 dark:bg-pink-950/40 border-pink-400 dark:border-pink-500 hover:border-pink-600'
         }`}
       >

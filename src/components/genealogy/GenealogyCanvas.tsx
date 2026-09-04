@@ -19,6 +19,7 @@ import {
 import { Member, Generation, Branch, MemberRelationship, KinshipResult } from '../../types/database';
 import { GenealogyTreeNode, FamilyTreeNodeData } from './GenealogyTreeNode';
 import { KinshipService } from '../../services/genealogy/KinshipService';
+import { AncestralBanner } from './AncestralBanner';
 
 interface GenealogyCanvasProps {
   members: Member[];
@@ -30,6 +31,10 @@ interface GenealogyCanvasProps {
   selectedMemberId?: string | null;
   selectedBranchId?: string;
   onBranchChange?: (branchId: string) => void;
+  familyName?: string;
+  clanTitle?: string;
+  bannerUrl?: string;
+  hometown?: string;
 }
 
 export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
@@ -42,6 +47,10 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
   selectedMemberId,
   selectedBranchId,
   onBranchChange,
+  familyName,
+  clanTitle,
+  bannerUrl,
+  hometown,
 }) => {
   const [zoom, setZoom] = useState<number>(0.85);
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 80, y: 50 });
@@ -1008,7 +1017,19 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
         }}
       >
         {/* Render Hierarchical Tree Nodes with Centering & Branch Connectors */}
-        <div ref={treeContentRef} className="inline-flex items-start justify-center gap-24 p-16 min-w-max">
+        <div ref={treeContentRef} className="inline-flex flex-col items-center justify-center p-16 min-w-max">
+          {/* 🏛️ HOÀNH PHI / CUỐN THƯ NGHỆ THUẬT TRUYỀN THỐNG ĐỈNH PHẢ ĐỒ */}
+          <AncestralBanner
+            familyName={familyName || 'ĐẠI TỘC GIA PHẢ'}
+            clanTitle={clanTitle || 'ẨM THỦY TƯ NGUYÊN'}
+            bannerUrl={bannerUrl}
+            hometown={hometown}
+            generationCount={generations.length}
+            totalMembers={members.length}
+            className="mb-8"
+          />
+
+          <div className="inline-flex items-start justify-center gap-24">
           {treeRoots.length > 0 ? (
             treeRoots.map((rootNode) => (
               <div key={rootNode.id} className="flex flex-col items-center">
@@ -1044,6 +1065,7 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
               </p>
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>

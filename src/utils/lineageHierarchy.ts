@@ -148,6 +148,12 @@ export function getLineageHierarchyInfo(
  * 4. Khi chọn NHÁNH (Đời 4+): Hiển thị Vị Đứng Đầu Cành Đời 3 (Thủy Tổ của Nhánh) + Nhánh đó (Đời 4) + toàn bộ con cháu (Đời 5+). Ẩn Đời 1, Đời 2 và các Nhánh khác.
  * 5. BẢO TOÀN HÔN PHỐI (Preserve Spouses): Các phối ngẫu (Vợ/Chồng) của thành viên hợp lệ luôn được giữ lại cùng phả đồ.
  */
+export type LineageGenderFilter = 'ALL' | 'MALE_AND_DINH' | 'DIRECT_LINEAGE_ONLY';
+
+/**
+ * Lọc thành viên theo cấu trúc Phân Cấp Dòng Họ (Thủy Tổ, Chi, Cành, Nhánh),
+ * kèm theo bộ lọc giới tính / hương hỏa (Nam & Đinh, Huyết thống) và giới hạn số đời (Depth Limiter).
+ */
 export function filterLineageTree(
   members: Member[],
   generations: Generation[],
@@ -157,18 +163,28 @@ export function filterLineageTree(
     selectedChiId?: string;
     selectedCanh?: string;
     selectedNhanh?: string;
+    genderFilter?: LineageGenderFilter;
+    maxGenerationLimit?: number; // Ví dụ: 3, 5, 7 hoặc undefined (tất cả)
   }
 ): Member[] {
-  if (filter.mode === 'ALL' || (!filter.selectedChiId && !filter.selectedCanh && !filter.selectedNhanh)) {
-    return members;
-  }
+  const genMap = new Map(generations.map((g) => [g.id, g.generation_number]));
+  const getGenNum = (m: Member) => genMap.get(m.generation_id || '') || m.generation_index || 1;
 
-  // Bước 1: Thu thập tất cả thành viên trực hệ thỏa mãn bộ lọc
+  // Bước 1: Thu thập tất cả thành viên thỏa mãn bộ lọc phân cấp (Chi/Cành/Nhánh)
+  const isHierarchyFiltered =
+    filter.mode !== 'ALL' &&
+    Boolean(filter.selectedChiId || filter.selectedCanh || filter.selectedNhanh);
+
   const matchedDirectIds = new Set<string>();
 
   members.forEach((m) => {
+    if (!isHierarchyFiltered) {
+      matchedDirectIds.add(m.id);
+      return;
+    }
+
     const info = getLineageHierarchyInfo(m, generations, branches, members);
-    
+
     // 1. Lọc theo CHI (Đời 2 trở đi):
     if (filter.mode === 'CHI') {
       if (info.generationNumber === 1) {
@@ -219,21 +235,68 @@ export function filterLineageTree(
     }
   });
 
-  // Bước 2: Bảo toàn hôn phối (vợ/chồng của các thành viên trực hệ đã chọn)
+  // Bước 2: Bảo toàn hôn phối (vợ/chồng của các thành viên trực hệ đã chọn) nếu không lọc Huyết Thống
   const finalIds = new Set<string>(matchedDirectIds);
-  members.forEach((m) => {
-    if (m.spouse_id && matchedDirectIds.has(m.spouse_id)) {
-      finalIds.add(m.id);
-    }
-    if (!finalIds.has(m.id)) {
-      const isSpouseOfMatched = members.some(
-        (matched) => matchedDirectIds.has(matched.id) && matched.spouse_id === m.id
-      );
-      if (isSpouseOfMatched) {
+  if (filter.genderFilter !== 'DIRECT_LINEAGE_ONLY') {
+    members.forEach((m) => {
+      if (m.spouse_id && matchedDirectIds.has(m.spouse_id)) {
         finalIds.add(m.id);
       }
-    }
-  });
+      if (!finalIds.has(m.id)) {
+        const isSpouseOfMatched = members.some(
+          (matched) => matchedDirectIds.has(matched.id) && matched.spouse_id === m.id
+        );
+        if (isSpouseOfMatched) {
+          finalIds.add(m.id);
+        }
+      }
+    });
+  }
 
-  return members.filter((m) => finalIds.has(m.id));
+  // Bước 3: Áp dụng Bộ Lọc Giới Tính / Hương Hỏa & Giới Hạn Cấp Đời
+  return members.filter((m) => {
+    if (!finalIds.has(m.id)) return false;
+
+    // Giới hạn cấp thế hệ (Depth Limiter)
+    if (filter.maxGenerationLimit && filter.maxGenerationLimit > 0) {
+      const genNum = getGenNum(m);
+      if (genNum > filter.maxGenerationLimit) return false;
+    }
+
+    // Bộ lọc Nam & Đinh (MALE_AND_DINH)
+    if (filter.genderFilter === 'MALE_AND_DINH') {
+      // Nam trực hệ luôn hiển thị
+      if (m.gender === 'MALE') return true;
+      // Nữ đóng vai trò Nữ Đinh / Trưởng chi / Đinh (hoặc có ghi chú Đinh trong tiểu sử)
+      const isNuDinh =
+        (m as any).is_dinh === true ||
+        (m as any).is_nu_dinh === true ||
+        (m.bio && /(nữ đinh|hương hỏa|trưởng chi|thờ tự)/i.test(m.bio));
+      if (isNuDinh) return true;
+
+      // Phối ngẫu là nữ của nam trực hệ: Vẫn giữ để thể hiện vợ chồng
+      if (m.gender === 'FEMALE') {
+        const hasMaleSpouse = members.some(
+          (other) => other.gender === 'MALE' && (other.spouse_id === m.id || m.spouse_id === other.id)
+        );
+        if (hasMaleSpouse) return true;
+      }
+      return false;
+    }
+
+    // Bộ lọc Chỉ Huyết Thống (DIRECT_LINEAGE_ONLY): Loại bỏ dâu rể
+    if (filter.genderFilter === 'DIRECT_LINEAGE_ONLY') {
+      if (m.is_direct_lineage === false) return false;
+      // Nếu không có trường is_direct_lineage, kiểm tra cha mẹ ruột hoặc là gốc Thủy Tổ
+      const hasParent = Boolean(m.father_id || m.mother_id);
+      const isRootGen = getGenNum(m) === 1;
+      if (!hasParent && !isRootGen && m.spouse_id) {
+        // Nếu không có cha mẹ, không phải đời 1 mà có spouse_id thì thường là dâu/rể
+        return false;
+      }
+      return true;
+    }
+
+    return true;
+  });
 }

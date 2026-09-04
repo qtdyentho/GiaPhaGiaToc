@@ -42,6 +42,8 @@ export const GenealogyTreePage: React.FC = () => {
   const [selectedChiId, setSelectedChiId] = useState<string>('');
   const [selectedCanh, setSelectedCanh] = useState<string>('Cành 1');
   const [selectedNhanh, setSelectedNhanh] = useState<string>('Nhánh 1');
+  const [genderFilter, setGenderFilter] = useState<'ALL' | 'MALE_AND_DINH' | 'DIRECT_LINEAGE_ONLY'>('ALL');
+  const [maxGenerationLimit, setMaxGenerationLimit] = useState<number | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Modals state
@@ -109,6 +111,8 @@ export const GenealogyTreePage: React.FC = () => {
       selectedChiId: selectedChiId || undefined,
       selectedCanh: filterMode === 'CANH' ? selectedCanh : undefined,
       selectedNhanh: filterMode === 'NHANH' ? selectedNhanh : undefined,
+      genderFilter,
+      maxGenerationLimit,
     }
   );
 
@@ -252,8 +256,40 @@ export const GenealogyTreePage: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tìm tên, Húy..."
-              className="pl-7 pr-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-[#166534] w-28 sm:w-40 md:w-52"
+              className="pl-7 pr-2.5 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-[#166534] w-28 sm:w-36 md:w-44"
             />
+          </div>
+
+          {/* 👥 Bộ Lọc Nam & Đinh / Huyết Thống */}
+          <div className="flex items-center gap-1 shrink-0">
+            <select
+              value={genderFilter}
+              onChange={(e: any) => setGenderFilter(e.target.value)}
+              className="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-[#166534] cursor-pointer"
+              title="Lọc thành viên hiển thị trên cây"
+            >
+              <option value="ALL">👥 Toàn bộ thành viên</option>
+              <option value="MALE_AND_DINH">👑 Chỉ Nam & Đinh</option>
+              <option value="DIRECT_LINEAGE_ONLY">🌿 Chỉ Huyết Thống</option>
+            </select>
+          </div>
+
+          {/* 🏛️ Giới Hạn Số Đời Hiển Thị (Depth Limiter) */}
+          <div className="flex items-center gap-1 shrink-0">
+            <select
+              value={maxGenerationLimit || ''}
+              onChange={(e) => setMaxGenerationLimit(e.target.value ? Number(e.target.value) : undefined)}
+              className="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-[#166534] cursor-pointer"
+              title="Giới hạn số thế hệ hiển thị giúp tối ưu cây lớn"
+            >
+              <option value="">🏛️ Tất Cả Các Đời</option>
+              <option value="3">Đến Đời 3</option>
+              <option value="4">Đến Đời 4</option>
+              <option value="5">Đến Đời 5</option>
+              <option value="6">Đến Đời 6</option>
+              <option value="7">Đến Đời 7</option>
+              <option value="9">Đến Đời 9</option>
+            </select>
           </div>
         </div>
 
@@ -318,6 +354,16 @@ export const GenealogyTreePage: React.FC = () => {
             selectedMemberId={selectedMember?.id}
             selectedBranchId={selectedChiId}
             onBranchChange={setSelectedChiId}
+            familyName={activeFamily?.name}
+            clanTitle={activeFamily?.covenant_title || 'ẨM THỦY TƯ NGUYÊN'}
+            bannerUrl={activeFamily?.banner_url}
+            hometown={
+              activeFamily?.origin_province
+                ? [activeFamily.origin_commune, activeFamily.origin_district, activeFamily.origin_province]
+                    .filter(Boolean)
+                    .join(', ')
+                : undefined
+            }
           />
         )}
       </div>

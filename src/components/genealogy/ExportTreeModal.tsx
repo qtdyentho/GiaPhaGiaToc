@@ -24,8 +24,8 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
   relationships,
   familyName = 'Đại Tộc Nguyễn Văn',
 }) => {
-  const [exportFormat, setExportFormat] = useState<'PDF_PRINT' | 'IMAGE' | 'CSV' | 'JSON'>('PDF_PRINT');
-  const [paperSize, setPaperSize] = useState<'A0' | 'A1' | 'A2' | 'A3' | 'A4'>('A4');
+  const [exportFormat, setExportFormat] = useState<'PDF_PRINT' | 'IMAGE' | 'VECTOR_SVG' | 'CSV'>('PDF_PRINT');
+  const [paperSize, setPaperSize] = useState<'A0' | 'A1' | 'A2' | 'A3' | 'A4' | 'BANNER_BAT'>('A0');
   const [orientation, setOrientation] = useState<'LANDSCAPE' | 'PORTRAIT'>('LANDSCAPE');
   const [resolutionScale, setResolutionScale] = useState<'1' | '2' | '4'>('2');
   const [includeDeceasedInfo, setIncludeDeceasedInfo] = useState(true);
@@ -457,9 +457,134 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
     setTimeout(() => setDownloaded(false), 3000);
   };
 
+  // 🚀 XUẤT FILE VECTOR SVG SIÊU NÉT (KHÔNG BỊ VỠ KHI IN BẠT DÀI HOẶC KHỔ A0)
+  const handleExportVectorSVG = () => {
+    setIsExporting(true);
+    try {
+      const sortedGens = [...generations].sort((a, b) => a.generation_number - b.generation_number);
+      const width = 3600;
+      const cardWidth = 240;
+      const cardHeight = 110;
+      const gapX = 30;
+      const gapY = 80;
+      const bannerHeight = 160;
+
+      let currentY = bannerHeight + 60;
+      let svgElements: string[] = [];
+
+      // 1. Hoành Phi / Cuốn Thư Vector ở đỉnh
+      svgElements.push(`
+        <g id="cuon_thu_banner" transform="translate(${width / 2 - 400}, 30)">
+          <defs>
+            <linearGradient id="bannerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#92400E" />
+              <stop offset="50%" stop-color="#78350F" />
+              <stop offset="100%" stop-color="#451A03" />
+            </linearGradient>
+            <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+              <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.3" />
+            </filter>
+          </defs>
+          <rect x="0" y="0" width="800" height="130" rx="28" fill="url(#bannerGrad)" stroke="#F59E0B" stroke-width="4" filter="url(#shadow)" />
+          <rect x="250" y="15" width="300" height="36" rx="18" fill="#000000" fill-opacity="0.4" stroke="#FBBF24" stroke-width="1.5" />
+          <text x="400" y="39" text-anchor="middle" font-family="'Times New Roman', serif" font-size="18" font-weight="bold" fill="#FDE68A" letter-spacing="4">ẨM THỦY TƯ NGUYÊN</text>
+          <text x="400" y="90" text-anchor="middle" font-family="'Times New Roman', serif" font-size="30" font-weight="bold" fill="#FEF3C7" letter-spacing="2">${familyName.toUpperCase()}</text>
+          <text x="400" y="115" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#FCD34D" opacity="0.9">Khổ in: ${paperSize} • ${sortedGens.length} Thế Hệ • ${members.length} Thành Viên</text>
+        </g>
+      `);
+
+      // 2. Từng thế hệ và các Node thành viên
+      sortedGens.forEach((gen) => {
+        const genMembers = members.filter((m) => m.generation_id === gen.id);
+        if (genMembers.length === 0) return;
+
+        // Gen Title Badge
+        svgElements.push(`
+          <g transform="translate(60, ${currentY})">
+            <rect x="0" y="0" width="380" height="34" rx="10" fill="#166534" />
+            <text x="16" y="22" font-family="sans-serif" font-size="14" font-weight="bold" fill="#FFFFFF">ĐỜI THỨ ${gen.generation_number}: ${gen.name.toUpperCase()} (${genMembers.length} thành viên)</text>
+          </g>
+        `);
+
+        currentY += 50;
+
+        const maxCardsPerRow = 12;
+        const totalCards = genMembers.length;
+        const rowCount = Math.ceil(totalCards / maxCardsPerRow);
+
+        for (let r = 0; r < rowCount; r++) {
+          const rowMembers = genMembers.slice(r * maxCardsPerRow, (r + 1) * maxCardsPerRow);
+          const rowWidth = rowMembers.length * cardWidth + (rowMembers.length - 1) * gapX;
+          const startX = Math.max((width - rowWidth) / 2, 60);
+
+          rowMembers.forEach((m, cIdx) => {
+            const x = startX + cIdx * (cardWidth + gapX);
+            const y = currentY;
+            const isDeceased = m.life_status === 'DECEASED';
+            const isMale = m.gender === 'MALE';
+            const strokeColor = isDeceased ? '#CBD5E1' : isMale ? '#0284C7' : '#DB2777';
+            const bgColor = isDeceased ? '#F8FAFC' : isMale ? '#F0F9FF' : '#FDF2F8';
+
+            const cleanName = m.full_name.replace(/\(.*?\)/g, '').trim();
+            const branchName = branches.find((b) => b.id === m.branch_id)?.name || 'Chi Trưởng';
+
+            svgElements.push(`
+              <g id="member_${m.id}" transform="translate(${x}, ${y})">
+                <rect width="${cardWidth}" height="${cardHeight}" rx="14" fill="${bgColor}" stroke="${strokeColor}" stroke-width="2" filter="url(#shadow)" />
+                <text x="14" y="24" font-family="sans-serif" font-size="11" font-weight="bold" fill="#166534">${branchName.toUpperCase()}</text>
+                <text x="${cardWidth - 14}" y="24" text-anchor="end" font-family="sans-serif" font-size="10" fill="${isDeceased ? '#64748B' : '#059669'}">${isDeceased ? '🕯️ Đã mất' : '🌿 Còn sống'}</text>
+                <text x="14" y="52" font-family="'Times New Roman', serif" font-size="16" font-weight="bold" fill="#0F172A">${cleanName}</text>
+                <line x1="14" y1="62" x2="${cardWidth - 14}" y2="62" stroke="#E2E8F0" stroke-width="1" />
+                <text x="14" y="80" font-family="sans-serif" font-size="11" fill="#475569">${m.birth_solar_date ? `Sinh: ${new Date(m.birth_solar_date).getFullYear()}` : 'Niên đại gia phả'}</text>
+                ${
+                  includeLunarDates && m.death_lunar_day && m.death_lunar_month
+                    ? `<text x="14" y="96" font-family="sans-serif" font-size="10" fill="#92400E">🕯️ Giỗ: ${m.death_lunar_day}/${m.death_lunar_month} ÂL</text>`
+                    : ''
+                }
+              </g>
+            `);
+          });
+
+          currentY += cardHeight + 24;
+        }
+
+        currentY += gapY;
+      });
+
+      const totalHeight = Math.max(currentY + 100, 2400);
+
+      const svgContent = `<?xml version="1.0" standalone="no"?>
+        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${totalHeight}" viewBox="0 0 ${width} ${totalHeight}">
+          <rect width="${width}" height="${totalHeight}" fill="#FAFBF8" />
+          <rect x="20" y="20" width="${width - 40}" height="${totalHeight - 40}" rx="24" fill="none" stroke="#D97706" stroke-width="4" />
+          <rect x="28" y="28" width="${width - 56}" height="${totalHeight - 56}" rx="18" fill="none" stroke="#F59E0B" stroke-width="1.5" stroke-dasharray="8 4" />
+          ${svgElements.join('\n')}
+        </svg>
+      `;
+
+      const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `PhaDo_Vector_${familyName.replace(/\s+/g, '_')}_${paperSize}.svg`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setDownloaded(true);
+      setTimeout(() => setDownloaded(false), 3000);
+    } catch (err) {
+      console.error('Lỗi khi xuất SVG:', err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const handleExecuteExport = () => {
     if (exportFormat === 'PDF_PRINT') {
       handlePrintDocument();
+      return;
+    }
+    if (exportFormat === 'VECTOR_SVG') {
+      handleExportVectorSVG();
       return;
     }
     if (exportFormat === 'IMAGE') {
@@ -502,11 +627,11 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
           {/* Format Selection */}
           <div className="space-y-2">
             <label className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px]">Định Dạng Xuất Bản:</label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               <button
                 type="button"
                 onClick={() => setExportFormat('PDF_PRINT')}
-                className={`p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between space-y-2 cursor-pointer ${
+                className={`p-3 rounded-2xl border-2 text-left transition flex flex-col justify-between space-y-2 cursor-pointer ${
                   exportFormat === 'PDF_PRINT'
                     ? 'border-[#166534] dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-300 shadow-xs'
                     : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300'
@@ -514,15 +639,31 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
               >
                 <Printer className={`w-5 h-5 ${exportFormat === 'PDF_PRINT' ? 'text-[#166534] dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} />
                 <div>
-                  <div className="font-bold text-xs">In Ấn / Xuất PDF</div>
+                  <div className="font-bold text-xs">In Ấn / PDF</div>
                   <div className="text-[10px] text-slate-500 dark:text-slate-400">Chuẩn in ấn A0 - A4</div>
                 </div>
               </button>
 
               <button
                 type="button"
+                onClick={() => setExportFormat('VECTOR_SVG')}
+                className={`p-3 rounded-2xl border-2 text-left transition flex flex-col justify-between space-y-2 cursor-pointer ${
+                  exportFormat === 'VECTOR_SVG'
+                    ? 'border-[#166534] dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-300 shadow-xs'
+                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300'
+                }`}
+              >
+                <Sparkles className={`w-5 h-5 ${exportFormat === 'VECTOR_SVG' ? 'text-[#166534] dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} />
+                <div>
+                  <div className="font-bold text-xs">Vector SVG</div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400">In bạt nhà thờ họ</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setExportFormat('IMAGE')}
-                className={`p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between space-y-2 cursor-pointer ${
+                className={`p-3 rounded-2xl border-2 text-left transition flex flex-col justify-between space-y-2 cursor-pointer ${
                   exportFormat === 'IMAGE'
                     ? 'border-[#166534] dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-300 shadow-xs'
                     : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300'
@@ -530,15 +671,15 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
               >
                 <ImageIcon className={`w-5 h-5 ${exportFormat === 'IMAGE' ? 'text-[#166534] dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} />
                 <div>
-                  <div className="font-bold text-xs">Ảnh Siêu Nét PNG</div>
-                  <div className="text-[10px] text-slate-500 dark:text-slate-400">Độ phân giải cao 4K/8K</div>
+                  <div className="font-bold text-xs">Ảnh PNG Nét</div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400">Độ nét cao 4K/8K</div>
                 </div>
               </button>
 
               <button
                 type="button"
                 onClick={() => setExportFormat('CSV')}
-                className={`p-3.5 rounded-2xl border-2 text-left transition flex flex-col justify-between space-y-2 cursor-pointer ${
+                className={`p-3 rounded-2xl border-2 text-left transition flex flex-col justify-between space-y-2 cursor-pointer ${
                   exportFormat === 'CSV'
                     ? 'border-[#166534] dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-300 shadow-xs'
                     : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300'
@@ -546,8 +687,8 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
               >
                 <FileSpreadsheet className={`w-5 h-5 ${exportFormat === 'CSV' ? 'text-[#166534] dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`} />
                 <div>
-                  <div className="font-bold text-xs">File Excel (CSV)</div>
-                  <div className="text-[10px] text-slate-500 dark:text-slate-400">Bảng dữ liệu thành viên</div>
+                  <div className="font-bold text-xs">Excel (CSV)</div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400">Danh sách thành viên</div>
                 </div>
               </button>
             </div>
@@ -568,6 +709,7 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
                   <option value="A2">Khổ A2 (420 x 594 mm - Khổ vừa)</option>
                   <option value="A1">Khổ A1 (594 x 841 mm - Nhà thờ họ)</option>
                   <option value="A0">Khổ A0 (841 x 1189 mm - Đại lễ khánh thành)</option>
+                  <option value="BANNER_BAT">Dải Bạt Dài Treo Nhà Thờ Họ (Dài 2m - 10m)</option>
                 </select>
               </div>
 
