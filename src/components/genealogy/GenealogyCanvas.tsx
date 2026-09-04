@@ -132,25 +132,32 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
   // Mouse wheel zoom & pan with focal point compensation
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
-    if (e.ctrlKey || e.metaKey) {
-      if (!containerRef.current) return;
-      const containerRect = containerRef.current.getBoundingClientRect();
-      const focalX = e.clientX - containerRect.left;
-      const focalY = e.clientY - containerRect.top;
-      const delta = e.deltaY < 0 ? 0.15 : -0.15;
-      const newZoom = Math.min(Math.max(zoom + delta, 0.35), 2.0);
-      const scaleFactor = newZoom / zoom;
-      setPan((prev) => ({
-        x: Math.round(focalX - (focalX - prev.x) * scaleFactor),
-        y: Math.round(focalY - (focalY - prev.y) * scaleFactor),
-      }));
-      setZoom(newZoom);
-    } else {
+    if (!containerRef.current) return;
+
+    // Shift + wheel or horizontal trackpad scroll -> pan horizontally
+    if (e.shiftKey || (Math.abs(e.deltaX) > Math.abs(e.deltaY) && !e.ctrlKey && !e.metaKey)) {
       setPan((prev) => ({
         x: prev.x - e.deltaX * 0.8,
         y: prev.y - e.deltaY * 0.8,
       }));
+      return;
     }
+
+    // Default wheel action: smooth focal point zoom
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const focalX = e.clientX - containerRect.left;
+    const focalY = e.clientY - containerRect.top;
+    
+    // Smooth zoom delta factor
+    const zoomFactor = e.deltaY < 0 ? 1.12 : 0.89;
+    const newZoom = Math.min(Math.max(zoom * zoomFactor, 0.25), 2.5);
+    const scaleFactor = newZoom / zoom;
+
+    setPan((prev) => ({
+      x: Math.round(focalX - (focalX - prev.x) * scaleFactor),
+      y: Math.round(focalY - (focalY - prev.y) * scaleFactor),
+    }));
+    setZoom(newZoom);
   };
 
   // Pan Mouse Dragging
@@ -649,9 +656,10 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
-      className={`relative w-full h-full bg-[#F6F8F5] dark:bg-slate-950 overflow-hidden select-none flex flex-col ${
+      className={`relative w-full h-full bg-[#F6F8F5] dark:bg-slate-950 overflow-hidden select-none flex flex-col touch-none ${
         isDragging ? 'cursor-grabbing' : 'cursor-grab'
       }`}
+      style={{ touchAction: 'none' }}
     >
       {/* Background Heritage Dot Matrix */}
       <div
