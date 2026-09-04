@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, User, Calendar, MapPin, Heart, GitFork, Sparkles, Edit3, Plus, ShieldCheck, Compass, ScrollText, X, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, User, Calendar, MapPin, Heart, GitFork, Sparkles, Edit3, Plus, ShieldCheck, Compass, ScrollText, X, Loader2, Save, Briefcase, Phone, GraduationCap, Globe, Mail, ExternalLink } from 'lucide-react';
 import { Member, MemberRelationship, MemorialDate, GenderType, MemberLifeStatus } from '../types/database';
 import { GenealogyService } from '../services/GenealogyService';
 import { MemorialService } from '../services/calendar/MemorialService';
@@ -312,6 +312,114 @@ export const MemberProfilePage: React.FC = () => {
                 <div className="text-emerald-800 text-[11px]">
                   <strong>Các hướng cát lành:</strong> {batTu.cungPhi.favorableDirections.join(', ')}
                 </div>
+              </div>
+            )}
+          </div>
+
+          {/* Cư Trú, Sự Nghiệp & Danh Bạ Liên Lạc */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold text-slate-900 font-serif flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-sky-600" />
+                <span>Cư Trú, Sự Nghiệp & Danh Bạ Liên Lạc</span>
+              </h2>
+              {displayMember.work_status && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">
+                  {displayMember.work_status === 'WORKING' && '💼 Đang làm việc'}
+                  {displayMember.work_status === 'RETIRED' && '🎖️ Đã nghỉ hưu'}
+                  {displayMember.work_status === 'STUDENT' && '🎓 Học sinh / Sinh viên'}
+                  {displayMember.work_status === 'OTHER' && '🌿 Khác'}
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="p-3 bg-slate-50 rounded-xl space-y-1">
+                <span className="text-slate-500 flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Quê Quán / Nguyên Quán:</span>
+                </span>
+                <strong className="text-slate-900 block font-semibold">
+                  {displayMember.hometown || 'Chưa cập nhật'}
+                </strong>
+              </div>
+
+              <div className="p-3 bg-slate-50 rounded-xl space-y-1">
+                <span className="text-slate-500 flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Chỗ Ở Hiện Nay:</span>
+                </span>
+                <strong className="text-slate-900 block font-semibold">
+                  {displayMember.current_residence || 'Chưa cập nhật'}
+                </strong>
+              </div>
+
+              <div className="p-3 bg-slate-50 rounded-xl space-y-1">
+                <span className="text-slate-500 flex items-center gap-1">
+                  <Briefcase className="w-3.5 h-3.5 text-sky-600" />
+                  <span>Nghề Nghiệp / Chức Vụ:</span>
+                </span>
+                <strong className="text-slate-900 block font-semibold">
+                  {displayMember.occupation || 'Chưa ghi nhận'}
+                </strong>
+              </div>
+
+              <div className="p-3 bg-slate-50 rounded-xl space-y-1">
+                <span className="text-slate-500 flex items-center gap-1">
+                  <GraduationCap className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Trình Độ Học Vấn:</span>
+                </span>
+                <strong className="text-slate-900 block font-semibold">
+                  {displayMember.education_level || 'Chưa ghi nhận'}
+                </strong>
+              </div>
+            </div>
+
+            {(displayMember.phone || displayMember.social_links?.facebook || displayMember.social_links?.zalo || displayMember.social_links?.email) && (
+              <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2.5">
+                {displayMember.phone && (
+                  <a
+                    href={`tel:${displayMember.phone}`}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-300 text-xs font-bold transition"
+                  >
+                    <Phone className="w-3.5 h-3.5 text-emerald-700" />
+                    <span>{displayMember.phone}</span>
+                  </a>
+                )}
+
+                {displayMember.social_links?.zalo && (
+                  <a
+                    href={displayMember.social_links.zalo.startsWith('http') ? displayMember.social_links.zalo : `https://zalo.me/${displayMember.social_links.zalo}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-50 text-sky-800 hover:bg-sky-100 border border-sky-300 text-xs font-bold transition"
+                  >
+                    <Globe className="w-3.5 h-3.5 text-sky-700" />
+                    <span>Zalo</span>
+                  </a>
+                )}
+
+                {displayMember.social_links?.facebook && (
+                  <a
+                    href={displayMember.social_links.facebook.startsWith('http') ? displayMember.social_links.facebook : `https://${displayMember.social_links.facebook}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-800 hover:bg-blue-100 border border-blue-300 text-xs font-bold transition"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-blue-700" />
+                    <span>Facebook</span>
+                  </a>
+                )}
+
+                {displayMember.social_links?.email && (
+                  <a
+                    href={`mailto:${displayMember.social_links.email}`}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-300 text-xs font-bold transition"
+                  >
+                    <Mail className="w-3.5 h-3.5 text-slate-600" />
+                    <span>{displayMember.social_links.email}</span>
+                  </a>
+                )}
               </div>
             )}
           </div>

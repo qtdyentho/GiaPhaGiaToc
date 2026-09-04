@@ -40,6 +40,12 @@ export interface RawImportMember {
   deathTime?: string;            // 25. Giờ Mất (Ví dụ: Giờ Ngọ (11h-13h) hoặc 12:15)
   burialPlace?: string;          // 26. Nơi An Táng / Mộ Phần
   bio?: string;                  // 27. Tiểu Sử / Sự Nghiệp / Ghi Chú
+  hometown?: string;             // 28. Quê Quán
+  currentResidence?: string;     // 29. Nơi Ở Hiện Nay
+  occupation?: string;           // 30. Nghề Nghiệp
+  workStatus?: string;           // 31. Trạng Thái Công Tác
+  phone?: string;                // 32. Số Điện Thoại
+  educationLevel?: string;       // 33. Trình Độ Học Vấn
   parentName?: string;           // Tên Cha (Hỗ trợ tương thích ngược)
   motherName?: string;           // Tên Mẹ (Hỗ trợ tương thích ngược)
   spouseName?: string;           // Tên Vợ / Chồng (Hỗ trợ tương thích ngược)

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, User, Users, GitBranch, Calendar, Heart, Shield, Clock, MapPin, Loader2 } from 'lucide-react';
-import { Member, Generation, Branch, SpouseRankType, GenderType, MemberLifeStatus } from '../../types/database';
+import { X, Save, User, Users, GitBranch, Calendar, Heart, Shield, Clock, MapPin, Loader2, Briefcase, Phone, GraduationCap, Globe } from 'lucide-react';
+import { Member, Generation, Branch, SpouseRankType, GenderType, MemberLifeStatus, WorkStatusType } from '../../types/database';
 import { GenealogyService } from '../../services/GenealogyService';
 
 interface EditMemberModalProps {
@@ -51,6 +51,17 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
   const [bio, setBio] = useState<string>('');
   const [avatarUrl, setAvatarUrl] = useState<string>('');
 
+  // Extended fields states
+  const [hometown, setHometown] = useState<string>('');
+  const [currentResidence, setCurrentResidence] = useState<string>('');
+  const [occupation, setOccupation] = useState<string>('');
+  const [workStatus, setWorkStatus] = useState<WorkStatusType>('WORKING');
+  const [phone, setPhone] = useState<string>('');
+  const [educationLevel, setEducationLevel] = useState<string>('');
+  const [facebookUrl, setFacebookUrl] = useState<string>('');
+  const [zaloPhone, setZaloPhone] = useState<string>('');
+  const [contactEmail, setContactEmail] = useState<string>('');
+
   useEffect(() => {
     if (!member) return;
 
@@ -78,6 +89,15 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
     setBurialPlace(member.burial_place || '');
     setBio(member.bio || '');
     setAvatarUrl(member.avatar_url || '');
+    setHometown(member.hometown || '');
+    setCurrentResidence(member.current_residence || '');
+    setOccupation(member.occupation || '');
+    setWorkStatus(member.work_status || 'WORKING');
+    setPhone(member.phone || '');
+    setEducationLevel(member.education_level || '');
+    setFacebookUrl(member.social_links?.facebook || '');
+    setZaloPhone(member.social_links?.zalo || '');
+    setContactEmail(member.social_links?.email || '');
     setError(null);
   }, [member, isOpen]);
 
@@ -132,6 +152,20 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
         burial_place: burialPlace.trim() || undefined,
         bio: bio.trim() || undefined,
         avatar_url: avatarUrl.trim() || undefined,
+        hometown: hometown.trim() || undefined,
+        current_residence: currentResidence.trim() || undefined,
+        occupation: occupation.trim() || undefined,
+        work_status: workStatus,
+        phone: phone.trim() || undefined,
+        education_level: educationLevel.trim() || undefined,
+        social_links:
+          facebookUrl.trim() || zaloPhone.trim() || contactEmail.trim()
+            ? {
+                facebook: facebookUrl.trim() || undefined,
+                zalo: zaloPhone.trim() || undefined,
+                email: contactEmail.trim() || undefined,
+              }
+            : undefined,
         family_id: member.family_id,
       };
 
@@ -557,6 +591,147 @@ export const EditMemberModal: React.FC<EditMemberModalProps> = ({
               placeholder="Ghi chép công đức, chức vụ, đóng góp xây dựng từ đường và sự tích dòng tộc..."
               className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
             />
+          </div>
+
+          {/* 6. THÔNG TIN MỞ RỘNG (CƯ TRÚ, NGHỀ NGHIỆP, LIÊN LẠC & HỌC VẤN) */}
+          <div className="space-y-4 p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-850 border border-slate-200 dark:border-slate-750">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400 flex items-center gap-1.5">
+                <Briefcase className="w-3.5 h-3.5" />
+                <span>6. Thông Tin Mở Rộng (Cư Trú, Sự Nghiệp & Liên Lạc)</span>
+              </h4>
+              <span className="text-[10px] text-slate-400 italic">Dành cho danh bạ & kết nối dòng họ</span>
+            </div>
+
+            {/* Quê quán & Nơi ở hiện tại */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 flex items-center gap-1">
+                  <MapPin className="w-3 h-3 text-amber-600" />
+                  <span>Quê Quán / Nguyên Quán</span>
+                </label>
+                <input
+                  type="text"
+                  value={hometown}
+                  onChange={(e) => setHometown(e.target.value)}
+                  placeholder="VD: Thiệu Viên, Thiệu Hóa, Thanh Hóa"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 flex items-center gap-1">
+                  <MapPin className="w-3 h-3 text-emerald-600" />
+                  <span>Chỗ Ở Hiện Nay</span>
+                </label>
+                <input
+                  type="text"
+                  value={currentResidence}
+                  onChange={(e) => setCurrentResidence(e.target.value)}
+                  placeholder="VD: P. Định Công, Q. Hoàng Mai, Hà Nội"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+
+            {/* Nghề nghiệp & Trạng thái công tác */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 flex items-center gap-1">
+                  <Briefcase className="w-3 h-3 text-sky-600" />
+                  <span>Nghề Nghiệp / Đơn Vị Công Tác</span>
+                </label>
+                <input
+                  type="text"
+                  value={occupation}
+                  onChange={(e) => setOccupation(e.target.value)}
+                  placeholder="VD: Kỹ sư CNTT, Giảng viên đại học, Doanh nhân..."
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1">Trạng Thái Công Tác</label>
+                <select
+                  value={workStatus}
+                  onChange={(e) => setWorkStatus(e.target.value as WorkStatusType)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                >
+                  <option value="WORKING">💼 Đang Làm Việc</option>
+                  <option value="RETIRED">🎖️ Đã Nghỉ Hưu</option>
+                  <option value="STUDENT">🎓 Học Sinh / Sinh Viên</option>
+                  <option value="OTHER">🌿 Khác / Tự Do</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Trình độ học vấn & Số điện thoại */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 flex items-center gap-1">
+                  <GraduationCap className="w-3 h-3 text-indigo-600" />
+                  <span>Trình Độ Học Vấn / Học Vị</span>
+                </label>
+                <input
+                  type="text"
+                  value={educationLevel}
+                  onChange={(e) => setEducationLevel(e.target.value)}
+                  placeholder="VD: Cử nhân, Thạc sĩ, Tiến sĩ, Giáo sư..."
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 dark:text-slate-300 font-semibold mb-1 flex items-center gap-1">
+                  <Phone className="w-3 h-3 text-emerald-600" />
+                  <span>Số Điện Thoại Liên Hệ</span>
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="VD: 0912345678"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+
+            {/* Mạng xã hội & Kênh liên kết */}
+            <div className="pt-2 border-t border-slate-200/70 dark:border-slate-700/70 space-y-2">
+              <label className="block text-slate-700 dark:text-slate-300 font-semibold text-xs flex items-center gap-1">
+                <Globe className="w-3 h-3 text-blue-600" />
+                <span>Mạng Xã Hội & Kênh Kết Nối Nội Tộc</span>
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                <div>
+                  <input
+                    type="text"
+                    value={facebookUrl}
+                    onChange={(e) => setFacebookUrl(e.target.value)}
+                    placeholder="Link Facebook cá nhân"
+                    className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="text"
+                    value={zaloPhone}
+                    onChange={(e) => setZaloPhone(e.target.value)}
+                    placeholder="SĐT / Link Zalo"
+                    className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-cyan-500"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    placeholder="Email cá nhân"
+                    className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Footer Action Buttons */}

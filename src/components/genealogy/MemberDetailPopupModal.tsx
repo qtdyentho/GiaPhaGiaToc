@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { 
   X, User, Calendar, MapPin, Heart, ArrowRightLeft, 
-  ExternalLink, Edit, Plus, Users, Award, ShieldAlert, Sparkles, ScrollText, Compass
+  ExternalLink, Edit, Plus, Users, Award, ShieldAlert, Sparkles, ScrollText, Compass,
+  Briefcase, Phone, GraduationCap, Globe, Mail
 } from 'lucide-react';
 import { Member, Generation, Branch, MemberRelationship } from '../../types/database';
 import { useNavigate } from 'react-router-dom';
@@ -258,6 +259,125 @@ export const MemberDetailPopupModal: React.FC<MemberDetailPopupModalProps> = ({
                   <span className="text-emerald-800 dark:text-emerald-400 text-[10px] font-medium">
                     Hướng cát: {batTu.cungPhi.favorableDirections[0]?.split(' ')[0]}
                   </span>
+                </div>
+              )}
+            </div>
+
+            {/* 🏢 Cư Trú, Nghề Nghiệp & Liên Lạc Xã Hội */}
+            <div className="bg-[#F8FAFC] dark:bg-slate-850 p-4 rounded-2xl border border-slate-200/90 dark:border-slate-700 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="font-bold text-slate-900 dark:text-white text-xs flex items-center gap-1.5 uppercase tracking-wider">
+                  <Briefcase className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+                  <span>Cư Trú, Nghề Nghiệp & Danh Bạ</span>
+                </div>
+                {member.work_status && (
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                    member.work_status === 'WORKING'
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
+                      : member.work_status === 'RETIRED'
+                      ? 'bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950 dark:text-amber-300'
+                      : member.work_status === 'STUDENT'
+                      ? 'bg-indigo-50 text-indigo-800 border-indigo-300 dark:bg-indigo-950 dark:text-indigo-300'
+                      : 'bg-slate-50 text-slate-700 border-slate-300 dark:bg-slate-900 dark:text-slate-300'
+                  }`}>
+                    {member.work_status === 'WORKING' && '💼 Đang làm việc'}
+                    {member.work_status === 'RETIRED' && '🎖️ Đã nghỉ hưu'}
+                    {member.work_status === 'STUDENT' && '🎓 Học sinh / Sinh viên'}
+                    {member.work_status === 'OTHER' && '🌿 Tự do / Khác'}
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                {/* Quê quán & Nơi ở */}
+                <div className="space-y-0.5">
+                  <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-amber-600" />
+                    <span>Quê Quán:</span>
+                  </span>
+                  <div className="font-semibold text-slate-900 dark:text-white">
+                    {member.hometown || 'Chưa cập nhật'}
+                  </div>
+                </div>
+
+                <div className="space-y-0.5">
+                  <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-emerald-600" />
+                    <span>Nơi Ở Hiện Nay:</span>
+                  </span>
+                  <div className="font-semibold text-slate-900 dark:text-white">
+                    {member.current_residence || 'Chưa cập nhật'}
+                  </div>
+                </div>
+
+                {/* Nghề nghiệp & Học vị */}
+                <div className="space-y-0.5">
+                  <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                    <Briefcase className="w-3 h-3 text-sky-600" />
+                    <span>Nghề Nghiệp:</span>
+                  </span>
+                  <div className="font-semibold text-slate-900 dark:text-white">
+                    {member.occupation || 'Chưa ghi nhận'}
+                  </div>
+                </div>
+
+                <div className="space-y-0.5">
+                  <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                    <GraduationCap className="w-3 h-3 text-indigo-600" />
+                    <span>Trình Độ / Học Vị:</span>
+                  </span>
+                  <div className="font-semibold text-slate-900 dark:text-white">
+                    {member.education_level || 'Chưa ghi nhận'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Kênh liên lạc & Mạng xã hội */}
+              {(member.phone || member.social_links?.facebook || member.social_links?.zalo || member.social_links?.email) && (
+                <div className="pt-2 border-t border-slate-200/80 dark:border-slate-700/80 flex flex-wrap items-center gap-2">
+                  {member.phone && (
+                    <a
+                      href={`tel:${member.phone}`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-200 hover:bg-emerald-200 border border-emerald-300 dark:border-emerald-800 text-[11px] font-bold transition"
+                    >
+                      <Phone className="w-3 h-3 text-emerald-700 dark:text-emerald-400" />
+                      <span>{member.phone}</span>
+                    </a>
+                  )}
+
+                  {member.social_links?.zalo && (
+                    <a
+                      href={member.social_links.zalo.startsWith('http') ? member.social_links.zalo : `https://zalo.me/${member.social_links.zalo}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-100 dark:bg-sky-950/70 text-sky-900 dark:text-sky-200 hover:bg-sky-200 border border-sky-300 dark:border-sky-800 text-[11px] font-bold transition"
+                    >
+                      <Globe className="w-3 h-3 text-sky-700 dark:text-sky-400" />
+                      <span>Zalo</span>
+                    </a>
+                  )}
+
+                  {member.social_links?.facebook && (
+                    <a
+                      href={member.social_links.facebook.startsWith('http') ? member.social_links.facebook : `https://${member.social_links.facebook}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-100 dark:bg-blue-950/70 text-blue-900 dark:text-blue-200 hover:bg-blue-200 border border-blue-300 dark:border-blue-800 text-[11px] font-bold transition"
+                    >
+                      <ExternalLink className="w-3 h-3 text-blue-700 dark:text-blue-400" />
+                      <span>Facebook</span>
+                    </a>
+                  )}
+
+                  {member.social_links?.email && (
+                    <a
+                      href={`mailto:${member.social_links.email}`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 border border-slate-300 dark:border-slate-700 text-[11px] font-bold transition"
+                    >
+                      <Mail className="w-3 h-3 text-slate-600 dark:text-slate-400" />
+                      <span>{member.social_links.email}</span>
+                    </a>
+                  )}
                 </div>
               )}
             </div>

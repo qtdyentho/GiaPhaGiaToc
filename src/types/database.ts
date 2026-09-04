@@ -172,6 +172,14 @@ export interface FamilyUnion {
   updated_at: string;
 }
 
+export type WorkStatusType = 'WORKING' | 'RETIRED' | 'STUDENT' | 'OTHER';
+
+export interface SocialLinks {
+  facebook?: string;
+  zalo?: string;
+  email?: string;
+}
+
 export interface Member {
   id: string;
   family_id: string;
@@ -214,6 +222,13 @@ export interface Member {
   burial_place?: string;
   avatar_url?: string;
   bio?: string;
+  hometown?: string;
+  current_residence?: string;
+  occupation?: string;
+  work_status?: WorkStatusType;
+  phone?: string;
+  education_level?: string;
+  social_links?: SocialLinks;
   created_at: string;
   updated_at: string;
 }

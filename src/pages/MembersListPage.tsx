@@ -120,7 +120,12 @@ export const MembersListPage: React.FC = () => {
         (m.birth_time && m.birth_time.toLowerCase().includes(q)) ||
         (m.death_time && m.death_time.toLowerCase().includes(q)) ||
         (m.burial_place && m.burial_place.toLowerCase().includes(q)) ||
-        (m.bio && m.bio.toLowerCase().includes(q));
+        (m.bio && m.bio.toLowerCase().includes(q)) ||
+        (m.hometown && m.hometown.toLowerCase().includes(q)) ||
+        (m.current_residence && m.current_residence.toLowerCase().includes(q)) ||
+        (m.occupation && m.occupation.toLowerCase().includes(q)) ||
+        (m.phone && m.phone.toLowerCase().includes(q)) ||
+        (m.education_level && m.education_level.toLowerCase().includes(q));
 
       const matchesGen =
         selectedGenFilter === 'ALL' ||

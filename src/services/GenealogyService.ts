@@ -78,6 +78,13 @@ export class GenealogyService {
               burial_place: dbRow.burial_place || extractNote('Mộ phần'),
               bio: dbRow.biography || dbRow.notes,
               avatar_url: dbRow.avatar_url,
+              hometown: dbRow.hometown || extractNote('Quê quán'),
+              current_residence: dbRow.current_residence || extractNote('Nơi ở'),
+              occupation: dbRow.occupation || extractNote('Nghề nghiệp'),
+              work_status: dbRow.work_status || (extractNote('Trạng thái công tác') as any),
+              phone: dbRow.phone || extractNote('Điện thoại'),
+              education_level: dbRow.education_level || extractNote('Trình độ'),
+              social_links: dbRow.social_links || (extractNote('Mạng xã hội') ? { facebook: extractNote('Mạng xã hội') } : undefined),
               created_at: dbRow.created_at,
               updated_at: dbRow.updated_at,
             };
@@ -518,6 +525,13 @@ export class GenealogyService {
         if (updates.marriage_order !== undefined) payload.marriage_order = updates.marriage_order;
         if (updates.branch_id !== undefined) payload.branch_id = updates.branch_id;
         if (updates.generation_id !== undefined) payload.generation_id = updates.generation_id;
+        if (updates.hometown !== undefined) payload.hometown = updates.hometown;
+        if (updates.current_residence !== undefined) payload.current_residence = updates.current_residence;
+        if (updates.occupation !== undefined) payload.occupation = updates.occupation;
+        if (updates.work_status !== undefined) payload.work_status = updates.work_status;
+        if (updates.phone !== undefined) payload.phone = updates.phone;
+        if (updates.education_level !== undefined) payload.education_level = updates.education_level;
+        if (updates.social_links !== undefined) payload.social_links = updates.social_links;
 
         let updateQuery = supabase.from('members').update(payload).eq('id', id);
         if (updates.family_id && isUUID(updates.family_id)) {
@@ -617,6 +631,13 @@ export class GenealogyService {
           burial_place: data.burial_place,
           bio: data.biography || data.notes,
           avatar_url: data.avatar_url,
+          hometown: data.hometown || updates.hometown,
+          current_residence: data.current_residence || updates.current_residence,
+          occupation: data.occupation || updates.occupation,
+          work_status: data.work_status || updates.work_status,
+          phone: data.phone || updates.phone,
+          education_level: data.education_level || updates.education_level,
+          social_links: data.social_links || updates.social_links,
           created_at: data.created_at,
           updated_at: data.updated_at,
         };
