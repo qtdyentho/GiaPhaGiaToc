@@ -147,6 +147,17 @@ const GenealogyTreeNodeComponent: React.FC<GenealogyTreeNodeProps> = ({
                   : 'Ghi chép ngọc phả'}
               </span>
             </div>
+
+            {/* Quê quán / Nơi cư trú hoặc Nghề nghiệp */}
+            {(member.occupation || member.current_residence || member.hometown) && (
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[140px] pt-0.5">
+                {member.occupation ? (
+                  <span>💼 {member.occupation}</span>
+                ) : (
+                  <span>📍 {member.current_residence || member.hometown}</span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

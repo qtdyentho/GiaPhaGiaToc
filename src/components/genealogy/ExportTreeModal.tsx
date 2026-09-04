@@ -85,6 +85,13 @@ export const ExportTreeModal: React.FC<ExportTreeModalProps> = ({
                   ${isDeceased ? '<span class="status-tag">Đã mất</span>' : '<span class="status-tag live">Còn sống</span>'}
                 </div>
                 ${
+                  m.occupation || m.current_residence || m.hometown
+                    ? `<div style="font-size:7.5pt; color:#475569; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        ${m.occupation ? `💼 ${m.occupation}` : `📍 ${m.current_residence || m.hometown}`}
+                      </div>`
+                    : ''
+                }
+                ${
                   spouses.length > 0
                     ? `<div class="member-spouse">Phối: ${spouses.map((s) => s.full_name.replace(/\(.*?\)/g, '').trim()).join(', ')}</div>`
                     : ''
