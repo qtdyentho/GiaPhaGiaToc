@@ -21,7 +21,7 @@ export const AncestralBanner: React.FC<AncestralBannerProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`flex flex-col items-center select-none ${className}`}>
+    <div data-testid="ancestral-banner" className={`flex flex-col items-center select-none ${className}`}>
       {bannerUrl ? (
         <div className="relative mb-6 max-w-xl mx-auto rounded-3xl overflow-hidden shadow-2xl border-4 border-amber-500/80 bg-black/40">
           <img

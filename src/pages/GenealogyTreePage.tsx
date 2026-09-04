@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Search,
   Printer,
@@ -101,25 +101,37 @@ export const GenealogyTreePage: React.FC = () => {
     setIsKinshipModalOpen(true);
   };
 
-  // Filter members based on traditional lineage hierarchy (Thủy Tổ -> Chi -> Cành -> Nhánh) & Search
-  const hierarchyFilteredMembers = filterLineageTree(
+  // Filter members based on traditional lineage hierarchy (Thủy Tổ -> Chi -> Cành -> Nhánh) & Search (Memoized)
+  const hierarchyFilteredMembers = useMemo(() => {
+    return filterLineageTree(
+      treeData.members,
+      treeData.generations,
+      treeData.branches,
+      {
+        mode: filterMode,
+        selectedChiId: selectedChiId || undefined,
+        selectedCanh: filterMode === 'CANH' ? selectedCanh : undefined,
+        selectedNhanh: filterMode === 'NHANH' ? selectedNhanh : undefined,
+        genderFilter,
+        maxGenerationLimit,
+      }
+    );
+  }, [
     treeData.members,
     treeData.generations,
     treeData.branches,
-    {
-      mode: filterMode,
-      selectedChiId: selectedChiId || undefined,
-      selectedCanh: filterMode === 'CANH' ? selectedCanh : undefined,
-      selectedNhanh: filterMode === 'NHANH' ? selectedNhanh : undefined,
-      genderFilter,
-      maxGenerationLimit,
-    }
-  );
+    filterMode,
+    selectedChiId,
+    selectedCanh,
+    selectedNhanh,
+    genderFilter,
+    maxGenerationLimit,
+  ]);
 
-  const filteredMembers = hierarchyFilteredMembers.filter((m) => {
-    if (!searchQuery.trim()) return true;
+  const filteredMembers = useMemo(() => {
+    if (!searchQuery.trim()) return hierarchyFilteredMembers;
     const q = searchQuery.toLowerCase();
-    return (
+    return hierarchyFilteredMembers.filter((m) =>
       m.full_name.toLowerCase().includes(q) ||
       (m.courtesy_name && m.courtesy_name.toLowerCase().includes(q)) ||
       (m.religious_name && m.religious_name.toLowerCase().includes(q)) ||
@@ -128,7 +140,7 @@ export const GenealogyTreePage: React.FC = () => {
       (m.burial_place && m.burial_place.toLowerCase().includes(q)) ||
       (m.bio && m.bio.toLowerCase().includes(q))
     );
-  });
+  }, [hierarchyFilteredMembers, searchQuery]);
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden font-sans bg-slate-50 dark:bg-slate-950">
@@ -290,6 +302,12 @@ export const GenealogyTreePage: React.FC = () => {
               <option value="7">Đến Đời 7</option>
               <option value="9">Đến Đời 9</option>
             </select>
+          </div>
+
+          {/* 🏷️ Badge số lượng thành viên đang hiển thị */}
+          <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 shrink-0">
+            <span>Hiển thị:</span>
+            <span className="font-bold font-mono">{filteredMembers.length} / {treeData.members.length}</span>
           </div>
         </div>
 

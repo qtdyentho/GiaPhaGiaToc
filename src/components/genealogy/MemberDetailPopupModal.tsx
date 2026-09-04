@@ -84,7 +84,12 @@ export const MemberDetailPopupModal: React.FC<MemberDetailPopupModalProps> = ({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto font-sans">
+      <div
+        role="dialog"
+        aria-modal="true"
+        data-testid="member-detail-modal"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto font-sans"
+      >
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl animate-fade-in flex flex-col max-h-[90vh]">
           
           {/* Modal Hero Header Card */}
