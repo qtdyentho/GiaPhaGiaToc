@@ -146,7 +146,7 @@ const GenealogyTreeNodeComponent: React.FC<GenealogyTreeNodeProps> = ({
           </div>
         </div>
 
-        {/* Card Footer: Xem 360° & Level */}
+        {/* Card Footer: Xem 360° & Level & Quick Action Buttons */}
         <div className="mt-3 pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-xs">
           <span
             className={`text-[10px] font-bold flex items-center gap-0.5 ${
@@ -160,6 +160,41 @@ const GenealogyTreeNodeComponent: React.FC<GenealogyTreeNodeProps> = ({
             {isPrimary ? `${lineageInfo.levelName} (Đời ${generationNumber})` : `Hôn Phối Đời ${generationNumber}`}
           </span>
         </div>
+
+        {/* ⚡ HÀNG NÚT THÊM NHANH CON / HÔN PHỐI TRỰC TIẾP TRÊN MỖI THẺ */}
+        {onAddRelation && (
+          <div className="mt-2 pt-1.5 border-t border-dashed border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between gap-1">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddRelation(member, 'CHILD');
+              }}
+              title={`Thêm Con cho ${member.full_name}`}
+              className="flex-1 py-1 px-1.5 rounded-lg bg-white/90 dark:bg-slate-800/90 hover:bg-sky-100 dark:hover:bg-sky-950/80 text-sky-700 dark:text-sky-300 text-[10px] font-bold transition flex items-center justify-center gap-1 border border-sky-300 dark:border-sky-700 shadow-2xs hover:scale-[1.02] cursor-pointer"
+            >
+              <Plus className="w-3 h-3 text-sky-600" />
+              <span>+ Con</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddRelation(member, 'SPOUSE');
+              }}
+              title={
+                member.gender === 'FEMALE'
+                  ? `Thêm Chồng (Phu Quân) cho ${member.full_name}`
+                  : `Thêm Vợ (Hôn Phối) cho ${member.full_name}`
+              }
+              className="flex-1 py-1 px-1.5 rounded-lg bg-white/90 dark:bg-slate-800/90 hover:bg-pink-100 dark:hover:bg-pink-950/80 text-pink-700 dark:text-pink-300 text-[10px] font-bold transition flex items-center justify-center gap-1 border border-pink-300 dark:border-pink-700 shadow-2xs hover:scale-[1.02] cursor-pointer"
+            >
+              <Heart className="w-3 h-3 text-pink-500 fill-pink-500" />
+              <span>{member.gender === 'FEMALE' ? '+ Chồng' : '+ Vợ'}</span>
+            </button>
+          </div>
+        )}
       </div>
     );
   };
