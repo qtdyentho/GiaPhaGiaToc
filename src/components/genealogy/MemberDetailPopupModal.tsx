@@ -7,6 +7,7 @@ import { Member, Generation, Branch, MemberRelationship } from '../../types/data
 import { useNavigate } from 'react-router-dom';
 import { calculateBatTu } from '../../lib/fengshui';
 import { MemorialPrayerViewerModal } from './MemorialPrayerViewerModal';
+import { EditMemberModal } from './EditMemberModal';
 
 interface MemberDetailPopupModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ interface MemberDetailPopupModalProps {
   onOpenKinship: (member: Member) => void;
   onOpenAddRelation: (target: Member, relType: 'CHILD' | 'SPOUSE' | 'PARENT') => void;
   onSelectAnotherMember?: (member: Member) => void;
+  onMemberUpdated?: (updatedMember: Member) => void;
 }
 
 export const MemberDetailPopupModal: React.FC<MemberDetailPopupModalProps> = ({
@@ -32,9 +34,11 @@ export const MemberDetailPopupModal: React.FC<MemberDetailPopupModalProps> = ({
   onOpenKinship,
   onOpenAddRelation,
   onSelectAnotherMember,
+  onMemberUpdated,
 }) => {
   const navigate = useNavigate();
   const [isPrayerModalOpen, setIsPrayerModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   if (!isOpen || !member) return null;
 
@@ -370,12 +374,12 @@ export const MemberDetailPopupModal: React.FC<MemberDetailPopupModalProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  onClose();
-                  onOpenAddRelation(member, 'CHILD');
+                  setIsEditModalOpen(true);
                 }}
-                className="px-3.5 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition cursor-pointer"
+                className="px-3.5 py-2.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl text-xs transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
               >
-                Chỉnh Sửa
+                <Edit className="w-3.5 h-3.5 text-[#166534] dark:text-emerald-400" />
+                <span>Chỉnh Sửa</span>
               </button>
 
               <button
@@ -394,6 +398,21 @@ export const MemberDetailPopupModal: React.FC<MemberDetailPopupModalProps> = ({
 
         </div>
       </div>
+
+      {/* Edit Member Modal */}
+      <EditMemberModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSuccess={(updated) => {
+          if (onMemberUpdated) {
+            onMemberUpdated(updated);
+          }
+        }}
+        member={member}
+        allMembers={allMembers}
+        generations={generations}
+        branches={branches}
+      />
 
       {/* Memorial Prayer Modal */}
       <MemorialPrayerViewerModal

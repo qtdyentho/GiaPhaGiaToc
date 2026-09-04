@@ -336,6 +336,10 @@ export const GenealogyTreePage: React.FC = () => {
         onSelectAnotherMember={(anotherMember) => {
           setSelectedMember(anotherMember);
         }}
+        onMemberUpdated={(updated) => {
+          setSelectedMember(updated);
+          loadTree();
+        }}
       />
 
       {/* Add Member Relation Modal */}

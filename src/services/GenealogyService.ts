@@ -527,6 +527,59 @@ export class GenealogyService {
         if (error) {
           return { success: false, error: error.message };
         }
+
+        // Đồng bộ member_relationships khi thay đổi cha, mẹ hoặc vợ/chồng
+        const effectiveFamId = data.family_id || updates.family_id;
+        if (effectiveFamId && isUUID(effectiveFamId)) {
+          try {
+            // Đồng bộ Bố (CHILD relation: father_id -> member_id)
+            if (updates.father_id !== undefined) {
+              await supabase.from('member_relationships').delete()
+                .eq('family_id', effectiveFamId)
+                .eq('related_member_id', id)
+                .eq('relationship_type', 'CHILD');
+              if (updates.father_id && isUUID(updates.father_id)) {
+                await supabase.from('member_relationships').insert([{
+                  family_id: effectiveFamId,
+                  member_id: updates.father_id,
+                  related_member_id: id,
+                  relationship_type: 'CHILD',
+                }]);
+              }
+            }
+
+            // Đồng bộ Mẹ (CHILD relation: mother_id -> member_id)
+            if (updates.mother_id !== undefined && updates.mother_id && isUUID(updates.mother_id)) {
+              await supabase.from('member_relationships').insert([{
+                family_id: effectiveFamId,
+                member_id: updates.mother_id,
+                related_member_id: id,
+                relationship_type: 'CHILD',
+              }]);
+            }
+
+            // Đồng bộ Vợ/Chồng (SPOUSE relation 2 chiều & spouse_id trên đối phương)
+            if (updates.spouse_id !== undefined) {
+              await supabase.from('member_relationships').delete()
+                .eq('family_id', effectiveFamId)
+                .eq('relationship_type', 'SPOUSE')
+                .or(`member_id.eq.${id},related_member_id.eq.${id}`);
+              
+              if (updates.spouse_id && isUUID(updates.spouse_id)) {
+                await supabase.from('members').update({ spouse_id: id }).eq('id', updates.spouse_id);
+                await supabase.from('member_relationships').insert([{
+                  family_id: effectiveFamId,
+                  member_id: id,
+                  related_member_id: updates.spouse_id,
+                  relationship_type: 'SPOUSE',
+                }]);
+              }
+            }
+          } catch (relErr) {
+            console.warn('Sync relationship on updateMember warning:', relErr);
+          }
+        }
+
         const updatedMember: Member = {
           id: data.id,
           family_id: data.family_id,
@@ -577,6 +630,59 @@ export class GenealogyService {
     const idx = mockMembers.findIndex((m) => m.id === id && (!updates.family_id || m.family_id === updates.family_id));
     if (idx !== -1) {
       mockMembers[idx] = { ...mockMembers[idx], ...updates, updated_at: new Date().toISOString() };
+      
+      // Đồng bộ mockRelationships
+      if (updates.father_id !== undefined || updates.mother_id !== undefined) {
+        for (let i = mockRelationships.length - 1; i >= 0; i--) {
+          if (mockRelationships[i].related_member_id === id && (mockRelationships[i].relationship === 'CHILD' || mockRelationships[i].relationship_type === 'CHILD')) {
+            mockRelationships.splice(i, 1);
+          }
+        }
+        if (updates.father_id) {
+          mockRelationships.push({
+            id: `rel-${Date.now()}-f`,
+            family_id: mockMembers[idx].family_id,
+            member_id: updates.father_id,
+            related_member_id: id,
+            relationship: 'CHILD',
+            relationship_type: 'CHILD',
+            created_at: new Date().toISOString(),
+          });
+        }
+        if (updates.mother_id) {
+          mockRelationships.push({
+            id: `rel-${Date.now()}-m`,
+            family_id: mockMembers[idx].family_id,
+            member_id: updates.mother_id,
+            related_member_id: id,
+            relationship: 'CHILD',
+            relationship_type: 'CHILD',
+            created_at: new Date().toISOString(),
+          });
+        }
+      }
+
+      if (updates.spouse_id !== undefined) {
+        for (let i = mockRelationships.length - 1; i >= 0; i--) {
+          if ((mockRelationships[i].member_id === id || mockRelationships[i].related_member_id === id) && (mockRelationships[i].relationship === 'SPOUSE' || mockRelationships[i].relationship_type === 'SPOUSE')) {
+            mockRelationships.splice(i, 1);
+          }
+        }
+        if (updates.spouse_id) {
+          const spouseMember = mockMembers.find((m) => m.id === updates.spouse_id);
+          if (spouseMember) spouseMember.spouse_id = id;
+          mockRelationships.push({
+            id: `rel-${Date.now()}-sp`,
+            family_id: mockMembers[idx].family_id,
+            member_id: id,
+            related_member_id: updates.spouse_id,
+            relationship: 'SPOUSE',
+            relationship_type: 'SPOUSE',
+            created_at: new Date().toISOString(),
+          });
+        }
+      }
+
       return { success: true, member: mockMembers[idx] };
     }
     return { success: false, error: 'Không tìm thấy thành viên' };
