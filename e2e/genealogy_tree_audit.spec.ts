@@ -79,13 +79,34 @@ test.describe('E2E Genealogy Tree & Member Management Auditing', () => {
     expect(count).toBeGreaterThan(0);
     console.log('[AUDIT] Total visible member cards on canvas: ' + count);
 
+    // 3. Kiểm tra Thước Đo Thế Hệ (Generation Ruler)
+    const genRuler = page.locator('text=Thế Hệ Đời').first();
+    if (await genRuler.isVisible().catch(() => false)) {
+      console.log('[AUDIT] Generation Ruler rendered OK');
+    }
+
+    // 4. Kiểm tra nút Căn Giữa & Vừa Màn Hình
+    const fitBtn = page.locator('button').filter({ hasText: /Vừa Màn Hình|Toàn Bộ/ }).first();
+    if (await fitBtn.isVisible().catch(() => false)) {
+      await fitBtn.click();
+      await page.waitForTimeout(300);
+      console.log('[AUDIT] Auto-fit to screen triggered');
+    }
+
+    const centerBtn = page.locator('button').filter({ hasText: /Căn Giữa/ }).first();
+    if (await centerBtn.isVisible().catch(() => false)) {
+      await centerBtn.click();
+      await page.waitForTimeout(300);
+      console.log('[AUDIT] Center tree triggered');
+    }
+
     // Chụp chi tiết một node thành viên
     const firstNode = memberNodes.first();
     await firstNode.scrollIntoViewIfNeeded();
     await page.screenshot({ path: 'e2e/screenshots/02_member_node_detail.png' });
   });
 
-  test('TC-02: Test Filters (Chỉ Nam & Đinh, Giới Hạn Đời, Theo Chi Phái)', async ({ page }) => {
+  test('TC-02: Test Filters (Chỉ Nam & Đinh, Giới Hạn Đời, Theo Chi Phái & Người Đứng Đầu)', async ({ page }) => {
     await page.goto('http://localhost:3000/app/genealogy');
     await page.waitForLoadState('networkidle');
     await expect(page).not.toHaveURL(/\/login/);
@@ -118,6 +139,11 @@ test.describe('E2E Genealogy Tree & Member Management Auditing', () => {
     if (await chiButton.first().isVisible({ timeout: 2000 }).catch(() => false)) {
       await chiButton.first().click();
       await page.waitForTimeout(600);
+
+      // Kiểm tra tiêu đề Khởi Tổ Chi
+      const branchTitle = page.locator('text=/KHỞI TỔ/i').first();
+      const hasBranchTitle = await branchTitle.isVisible({ timeout: 4000 }).catch(() => false);
+      console.log('[AUDIT] Branch leader root title visible: ' + hasBranchTitle);
     }
     await page.screenshot({ path: 'e2e/screenshots/05_filter_by_branch_chi.png' });
   });

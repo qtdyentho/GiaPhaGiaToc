@@ -375,6 +375,9 @@ export const GenealogyTreePage: React.FC = () => {
             familyName={activeFamily?.name}
             clanTitle={activeFamily?.covenant_title || 'ẨM THỦY TƯ NGUYÊN'}
             bannerUrl={activeFamily?.banner_url}
+            filterMode={filterMode}
+            selectedCanh={filterMode === 'CANH' ? selectedCanh : undefined}
+            selectedNhanh={filterMode === 'NHANH' ? selectedNhanh : undefined}
             hometown={
               activeFamily?.origin_province
                 ? [activeFamily.origin_commune, activeFamily.origin_district, activeFamily.origin_province]

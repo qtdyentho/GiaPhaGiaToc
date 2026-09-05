@@ -66,7 +66,7 @@ const GenealogyTreeNodeComponent: React.FC<GenealogyTreeNodeProps> = ({
         id={`member-node-${member.id}`}
         data-member-id={member.id}
         onClick={() => onSelectMember(member)}
-        className={`member-card-interactive w-56 rounded-3xl p-4 transition-all duration-300 cursor-pointer border-2 shadow-sm hover:shadow-lg relative select-none ${
+        className={`member-card-interactive w-52 min-w-[208px] max-w-[208px] min-h-[160px] rounded-2xl p-3 transition-all duration-300 cursor-pointer border-2 shadow-sm hover:shadow-lg relative select-none flex flex-col justify-between ${
           isMemSelected
             ? 'ring-4 ring-amber-400 dark:ring-amber-500 shadow-2xl scale-[1.03] animate-pulse border-amber-500 z-30'
             : ''
@@ -80,136 +80,139 @@ const GenealogyTreeNodeComponent: React.FC<GenealogyTreeNodeProps> = ({
             : 'bg-pink-50/85 dark:bg-pink-950/40 border-pink-400 dark:border-pink-500 hover:border-pink-600'
         }`}
       >
-        {/* Top Badges */}
-        <div className="flex items-center justify-between gap-1 pb-2 mb-2 border-b border-slate-200/60 dark:border-slate-700/60">
-          <span
-            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border font-serif truncate max-w-[130px] ${
-              spouseBadgeColor || lineageInfo.badgeColor
-            }`}
-          >
-            {spouseTitle || lineageInfo.badgeLabel}
-          </span>
-          <span
-            className={`text-[10px] font-bold ${
-              isMemDeceased
-                ? 'text-slate-400 dark:text-slate-500'
-                : isMemMale
-                ? 'text-sky-700 dark:text-sky-400'
-                : 'text-pink-700 dark:text-pink-400'
-            }`}
-          >
-            {isMemDeceased ? '🕯️ Đã Mất' : '🌿 Còn Sống'}
-          </span>
-        </div>
-
-        {/* Card Body: Circular Avatar + Name + Birth Year */}
-        <div className="flex items-center gap-3">
-          <div className="relative shrink-0">
-            {member.avatar_url ? (
-              <img
-                src={member.avatar_url}
-                alt={member.full_name}
-                className={`w-12 h-12 rounded-full object-cover border-2 shadow-xs ${
-                  isMemMale ? 'border-sky-400 dark:border-sky-500' : 'border-pink-400 dark:border-pink-500'
-                }`}
-              />
-            ) : (
-              <div
-                className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shadow-xs border-2 ${
-                  isMemMale
-                    ? 'bg-sky-200/70 dark:bg-sky-900/60 border-sky-400 text-sky-800 dark:text-sky-200'
-                    : 'bg-pink-200/70 dark:bg-pink-900/60 border-pink-400 text-pink-800 dark:text-pink-200'
-                }`}
-              >
-                {isMemMale ? '👨' : '👩'}
-              </div>
-            )}
-          </div>
-
-          <div className="flex-1 min-w-0 space-y-0.5">
-            <h4
-              className={`font-bold text-sm truncate font-serif ${
-                isMemMale
-                  ? 'text-slate-900 dark:text-slate-100 group-hover:text-sky-700'
-                  : 'text-slate-900 dark:text-slate-100 group-hover:text-pink-700'
+        <div>
+          {/* Top Badges */}
+          <div className="flex items-center justify-between gap-1 pb-1.5 mb-2 border-b border-slate-200/60 dark:border-slate-700/60">
+            <span
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border font-serif truncate max-w-[125px] ${
+                spouseBadgeColor || lineageInfo.badgeColor
               }`}
             >
-              {member.full_name.replace(/\(.*?\)/g, '').trim()}
-            </h4>
+              {spouseTitle || lineageInfo.badgeLabel}
+            </span>
+            <span
+              className={`text-[10px] font-bold shrink-0 ${
+                isMemDeceased
+                  ? 'text-slate-400 dark:text-slate-500'
+                  : isMemMale
+                  ? 'text-sky-700 dark:text-sky-400'
+                  : 'text-pink-700 dark:text-pink-400'
+              }`}
+            >
+              {isMemDeceased ? '🕯️ Đã Mất' : '🌿 Còn Sống'}
+            </span>
+          </div>
 
-            <div className="text-[12px] font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-1 truncate">
-              <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
-              <span>
-                {birthYear
-                  ? birthYear
-                  : isMemDeceased && member.death_lunar_day && member.death_lunar_month
-                  ? `Giỗ: ${member.death_lunar_day}/${member.death_lunar_month} ÂL`
-                  : 'Ghi chép ngọc phả'}
-              </span>
+          {/* Card Body: Circular Avatar + Name + Birth Year */}
+          <div className="flex items-center gap-2.5">
+            <div className="relative shrink-0">
+              {member.avatar_url ? (
+                <img
+                  src={member.avatar_url}
+                  alt={member.full_name}
+                  className={`w-10 h-10 rounded-full object-cover border-2 shadow-xs ${
+                    isMemMale ? 'border-sky-400 dark:border-sky-500' : 'border-pink-400 dark:border-pink-500'
+                  }`}
+                />
+              ) : (
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold shadow-xs border-2 ${
+                    isMemMale
+                      ? 'bg-sky-200/70 dark:bg-sky-900/60 border-sky-400 text-sky-800 dark:text-sky-200'
+                      : 'bg-pink-200/70 dark:bg-pink-900/60 border-pink-400 text-pink-800 dark:text-pink-200'
+                  }`}
+                >
+                  {isMemMale ? '👨' : '👩'}
+                </div>
+              )}
             </div>
 
-            {/* Quê quán / Nơi cư trú hoặc Nghề nghiệp */}
-            {(member.occupation || member.current_residence || member.hometown) && (
-              <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[140px] pt-0.5">
+            <div className="flex-1 min-w-0 space-y-0.5">
+              <h4
+                className={`font-bold text-xs sm:text-sm truncate font-serif ${
+                  isMemMale
+                    ? 'text-slate-900 dark:text-slate-100 group-hover:text-sky-700'
+                    : 'text-slate-900 dark:text-slate-100 group-hover:text-pink-700'
+                }`}
+                title={member.full_name}
+              >
+                {member.full_name.replace(/\(.*?\)/g, '').trim()}
+              </h4>
+
+              <div className="text-[11px] font-medium text-slate-600 dark:text-slate-400 flex items-center gap-1 truncate">
+                <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
+                <span>
+                  {birthYear
+                    ? birthYear
+                    : isMemDeceased && member.death_lunar_day && member.death_lunar_month
+                    ? `Giỗ: ${member.death_lunar_day}/${member.death_lunar_month} ÂL`
+                    : 'Ngọc phả'}
+                </span>
+              </div>
+
+              {/* Quê quán / Nơi cư trú hoặc Nghề nghiệp (giữ khoảng trống cố định h-4 để đảm bảo cân đối chiều cao mọi thẻ) */}
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[130px] h-4 leading-4">
                 {member.occupation ? (
                   <span>💼 {member.occupation}</span>
-                ) : (
+                ) : (member.current_residence || member.hometown) ? (
                   <span>📍 {member.current_residence || member.hometown}</span>
-                )}
+                ) : null}
               </div>
-            )}
+            </div>
           </div>
         </div>
 
-        {/* Card Footer: Xem 360° & Level & Quick Action Buttons */}
-        <div className="mt-3 pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-xs">
-          <span
-            className={`text-[10px] font-bold flex items-center gap-0.5 ${
-              isMemMale ? 'text-sky-700 dark:text-sky-400' : 'text-pink-700 dark:text-pink-400'
-            }`}
-          >
-            <Eye className="w-3 h-3" />
-            <span>Xem 360°</span>
-          </span>
-          <span className="text-[10px] text-slate-500 font-medium font-serif">
-            {isPrimary ? `${lineageInfo.levelName} (Đời ${generationNumber})` : `Hôn Phối Đời ${generationNumber}`}
-          </span>
-        </div>
-
-        {/* ⚡ HÀNG NÚT THÊM NHANH CON / HÔN PHỐI TRỰC TIẾP TRÊN MỖI THẺ */}
-        {onAddRelation && (
-          <div className="mt-2 pt-1.5 border-t border-dashed border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between gap-1">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onAddRelation(member, 'CHILD');
-              }}
-              title={`Thêm Con cho ${member.full_name}`}
-              className="flex-1 py-1 px-1.5 rounded-lg bg-white/90 dark:bg-slate-800/90 hover:bg-sky-100 dark:hover:bg-sky-950/80 text-sky-700 dark:text-sky-300 text-[10px] font-bold transition flex items-center justify-center gap-1 border border-sky-300 dark:border-sky-700 shadow-2xs hover:scale-[1.02] cursor-pointer"
+        <div>
+          {/* Card Footer: Xem 360° & Level */}
+          <div className="mt-2 pt-1.5 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-xs">
+            <span
+              className={`text-[10px] font-bold flex items-center gap-0.5 ${
+                isMemMale ? 'text-sky-700 dark:text-sky-400' : 'text-pink-700 dark:text-pink-400'
+              }`}
             >
-              <Plus className="w-3 h-3 text-sky-600" />
-              <span>+ Con</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onAddRelation(member, 'SPOUSE');
-              }}
-              title={
-                member.gender === 'FEMALE'
-                  ? `Thêm Chồng (Phu Quân) cho ${member.full_name}`
-                  : `Thêm Vợ (Hôn Phối) cho ${member.full_name}`
-              }
-              className="flex-1 py-1 px-1.5 rounded-lg bg-white/90 dark:bg-slate-800/90 hover:bg-pink-100 dark:hover:bg-pink-950/80 text-pink-700 dark:text-pink-300 text-[10px] font-bold transition flex items-center justify-center gap-1 border border-pink-300 dark:border-pink-700 shadow-2xs hover:scale-[1.02] cursor-pointer"
-            >
-              <Heart className="w-3 h-3 text-pink-500 fill-pink-500" />
-              <span>{member.gender === 'FEMALE' ? '+ Chồng' : '+ Vợ'}</span>
-            </button>
+              <Eye className="w-3 h-3" />
+              <span>Xem 360°</span>
+            </span>
+            <span className="text-[10px] text-slate-500 font-medium font-serif">
+              {isPrimary ? `${lineageInfo.levelName} (Đời ${generationNumber})` : `Hôn Phối Đời ${generationNumber}`}
+            </span>
           </div>
-        )}
+
+          {/* ⚡ HÀNG NÚT THÊM NHANH CON / HÔN PHỐI TRỰC TIẾP TRÊN MỖI THẺ */}
+          {onAddRelation && (
+            <div className="mt-1.5 pt-1 border-t border-dashed border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between gap-1">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddRelation(member, 'CHILD');
+                }}
+                title={`Thêm Con cho ${member.full_name}`}
+                className="flex-1 py-0.5 px-1 rounded-lg bg-white/90 dark:bg-slate-800/90 hover:bg-sky-100 dark:hover:bg-sky-950/80 text-sky-700 dark:text-sky-300 text-[10px] font-bold transition flex items-center justify-center gap-0.5 border border-sky-300 dark:border-sky-700 shadow-2xs hover:scale-[1.02] cursor-pointer"
+              >
+                <Plus className="w-2.5 h-2.5 text-sky-600" />
+                <span>+ Con</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddRelation(member, 'SPOUSE');
+                }}
+                title={
+                  member.gender === 'FEMALE'
+                    ? `Thêm Chồng cho ${member.full_name}`
+                    : `Thêm Vợ cho ${member.full_name}`
+                }
+                className="flex-1 py-0.5 px-1 rounded-lg bg-white/90 dark:bg-slate-800/90 hover:bg-pink-100 dark:hover:bg-pink-950/80 text-pink-700 dark:text-pink-300 text-[10px] font-bold transition flex items-center justify-center gap-0.5 border border-pink-300 dark:border-pink-700 shadow-2xs hover:scale-[1.02] cursor-pointer"
+              >
+                <Heart className="w-2.5 h-2.5 text-pink-500 fill-pink-500" />
+                <span>{member.gender === 'FEMALE' ? '+ Chồng' : '+ Vợ'}</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     );
   };

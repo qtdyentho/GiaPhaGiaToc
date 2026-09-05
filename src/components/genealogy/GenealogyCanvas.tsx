@@ -15,6 +15,8 @@ import {
   Users,
   Compass,
   ArrowRight,
+  Target,
+  Scan,
 } from 'lucide-react';
 import { Member, Generation, Branch, MemberRelationship, KinshipResult } from '../../types/database';
 import { GenealogyTreeNode, FamilyTreeNodeData } from './GenealogyTreeNode';
@@ -35,6 +37,9 @@ interface GenealogyCanvasProps {
   clanTitle?: string;
   bannerUrl?: string;
   hometown?: string;
+  filterMode?: 'ALL' | 'CHI' | 'CANH' | 'NHANH';
+  selectedCanh?: string;
+  selectedNhanh?: string;
 }
 
 export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
@@ -51,6 +56,9 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
   clanTitle,
   bannerUrl,
   hometown,
+  filterMode = 'ALL',
+  selectedCanh,
+  selectedNhanh,
 }) => {
   const [zoom, setZoom] = useState<number>(0.85);
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 80, y: 50 });
@@ -101,11 +109,121 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
   const handleZoomOut = () => setZoom((prev) => Math.max(Math.round((prev - 0.15) * 100) / 100, 0.35));
   const handleResetZoom = () => {
     setZoom(1.0);
-    setPan({ x: 100, y: 60 });
+    handleCenterTree();
   };
-  const handleFitToView = () => {
-    setZoom(0.75);
-    setPan({ x: 60, y: 40 });
+
+  // Thuật toán đo đạc thực tế: Căn vừa màn hình (Auto-Fit to Screen) chuẩn MyTree
+  const handleFitToView = useCallback(() => {
+    if (!containerRef.current || !treeContentRef.current) return;
+    const container = containerRef.current;
+    const content = treeContentRef.current;
+
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+    const contentWidth = content.scrollWidth || content.offsetWidth;
+    const contentHeight = content.scrollHeight || content.offsetHeight;
+
+    if (contentWidth <= 0 || contentHeight <= 0 || containerWidth <= 0 || containerHeight <= 0) return;
+
+    const paddingX = 60;
+    const paddingY = 80;
+
+    const availW = Math.max(containerWidth - paddingX, 280);
+    const availH = Math.max(containerHeight - paddingY, 280);
+
+    const scaleX = availW / contentWidth;
+    const scaleY = availH / contentHeight;
+
+    // Tự động tính scale để cây nằm trọn vẹn trong màn hình
+    let idealZoom = Math.min(scaleX, scaleY, 1.0);
+    idealZoom = Math.max(0.35, Math.min(idealZoom, 1.15));
+    idealZoom = Math.round(idealZoom * 100) / 100;
+
+    // Căn giữa ngang chính xác
+    const idealPanX = Math.round((containerWidth - contentWidth * idealZoom) / 2);
+    // Căn đỉnh với khoảng cách lề trên thoáng đãng
+    const idealPanY = Math.round(
+      contentHeight * idealZoom < containerHeight - 80
+        ? Math.max(30, (containerHeight - contentHeight * idealZoom) / 3)
+        : 30
+    );
+
+    setZoom(idealZoom);
+    setPan({ x: idealPanX, y: idealPanY });
+  }, []);
+
+  // Căn giữa cây theo chiều ngang (Center Tree)
+  const handleCenterTree = useCallback(() => {
+    if (!containerRef.current || !treeContentRef.current) return;
+    const container = containerRef.current;
+    const content = treeContentRef.current;
+
+    const containerWidth = container.clientWidth;
+    const contentWidth = content.scrollWidth || content.offsetWidth;
+    if (contentWidth <= 0 || containerWidth <= 0) return;
+
+    const idealPanX = Math.round((containerWidth - contentWidth * zoom) / 2);
+    setPan((prev) => ({ x: idealPanX, y: Math.max(30, prev.y) }));
+  }, [zoom]);
+
+  // Tự động căn giữa & co giãn vừa màn hình khi tải trang hoặc chuyển đổi bộ lọc
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      handleFitToView();
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [members.length, selectedBranchId, filterMode, selectedCanh, selectedNhanh, handleFitToView]);
+
+  // Tự động thích ứng khi thay đổi kích thước cửa sổ trình duyệt
+  useEffect(() => {
+    const onResize = () => {
+      handleFitToView();
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [handleFitToView]);
+
+  // Chuyển đổi số thế hệ sang số La Mã trang trọng chuẩn truyền thống
+  const toRomanNumeral = (num: number): string => {
+    const romanMap: Record<number, string> = {
+      1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V',
+      6: 'VI', 7: 'VII', 8: 'VIII', 9: 'IX', 10: 'X',
+      11: 'XI', 12: 'XII', 13: 'XIII', 14: 'XIV', 15: 'XV'
+    };
+    return romanMap[num] || String(num);
+  };
+
+  // Danh sách các thế hệ thực tế có mặt trong cây hiển thị
+  const treeGenerations = useMemo(() => {
+    const genMap = new Map(generations.map((g) => [g.id, g.generation_number]));
+    const genSet = new Set<number>();
+    members.forEach((m) => {
+      const gNum = genMap.get(m.generation_id || '') || m.generation_index || 1;
+      genSet.add(gNum);
+    });
+    return Array.from(genSet).sort((a, b) => a - b);
+  }, [members, generations]);
+
+  // Tiêu đề động chuẩn mực cho người đứng đầu cây hiển thị
+  const getRootTitle = (rootNode: FamilyTreeNodeData) => {
+    const leaderName = rootNode.primaryMember.full_name.replace(/\(.*?\)/g, '').trim();
+    const gen = rootNode.generationNumber;
+    
+    if (filterMode === 'CHI') {
+      const branch = branches.find((b) => b.id === selectedBranchId);
+      const branchName = branch ? branch.name : 'Chi Phái';
+      return `🌿 KHỞI TỔ ${branchName.toUpperCase()} • ${leaderName.toUpperCase()} (ĐỜI THỨ ${gen})`;
+    }
+    if (filterMode === 'CANH') {
+      return `🌱 KHỞI TỔ ${selectedCanh?.toUpperCase() || 'CÀNH'} • ${leaderName.toUpperCase()} (ĐỜI THỨ ${gen})`;
+    }
+    if (filterMode === 'NHANH') {
+      return `🍃 KHỞI TỔ ${selectedNhanh?.toUpperCase() || 'NHÁNH'} • ${leaderName.toUpperCase()} (ĐỜI THỨ ${gen})`;
+    }
+    if (gen === 1) {
+      return `👑 THỦY TỔ KHỞI NGHIỆP • ${leaderName.toUpperCase()} (ĐỜI THỨ 1)`;
+    }
+    return `👑 TIỀN BỐI KHỞI ĐẦU • ${leaderName.toUpperCase()} (ĐỜI THỨ ${gen})`;
   };
 
   // Smooth Auto-Pan to a target member node
@@ -458,7 +576,9 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
           parentToChildrenMap.set(childId, new Set());
         }
         parentToChildrenMap.get(childId)!.add(parentId);
-        childHasParentSet.add(parentId);
+        if (filteredMemberIds.has(childId)) {
+          childHasParentSet.add(parentId);
+        }
         return;
       }
 
@@ -466,7 +586,10 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
         parentToChildrenMap.set(parentId, new Set());
       }
       parentToChildrenMap.get(parentId)!.add(childId);
-      childHasParentSet.add(childId);
+      // Chỉ tính con có cha mẹ trong cây NẾU người cha/mẹ đó thực sự thuộc cây hiển thị
+      if (filteredMemberIds.has(parentId)) {
+        childHasParentSet.add(childId);
+      }
     };
 
     // Nạp quan hệ từ bảng relationships
@@ -976,12 +1099,22 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
 
         <button
           type="button"
+          onClick={handleCenterTree}
+          title="Căn giữa cây phả hệ"
+          className="canvas-control-button px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-xl text-sky-800 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/70 hover:bg-sky-100 dark:hover:bg-sky-900 text-xs font-bold transition flex items-center gap-1 cursor-pointer border border-sky-200 dark:border-sky-800"
+        >
+          <Target className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Căn Giữa</span>
+        </button>
+
+        <button
+          type="button"
           onClick={handleFitToView}
-          title="Xem toàn bộ cây phả hệ"
+          title="Thu phóng vừa vặn toàn bộ màn hình"
           className="canvas-control-button px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-xl text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/70 hover:bg-emerald-100 dark:hover:bg-emerald-900 text-xs font-bold transition flex items-center gap-1 cursor-pointer border border-emerald-200 dark:border-emerald-800"
         >
-          <span className="hidden sm:inline">Xem Toàn Bộ</span>
-          <span className="sm:hidden">Toàn Bộ</span>
+          <Scan className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Vừa Màn Hình</span>
         </button>
 
         {collapsedNodeIds.size > 0 && (
@@ -1006,6 +1139,37 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
           {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
         </button>
       </div>
+
+      {/* 📜 Thước Đo Thế Hệ Dòng Họ (MyTree Generation Level Ruler) */}
+      {treeGenerations.length > 0 && (
+        <div className="absolute top-20 left-4 z-20 hidden md:flex flex-col gap-1.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl pointer-events-auto max-w-[135px]">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 pb-1 flex items-center gap-1">
+            <Layers className="w-3 h-3 text-emerald-600" />
+            <span>Thế Hệ Đời</span>
+          </div>
+          <div className="flex flex-col gap-1">
+            {treeGenerations.map((gNum) => {
+              const roman = toRomanNumeral(gNum);
+              let label = `Đời ${roman}`;
+              if (gNum === 1) label = `Đời I • Khởi Tổ`;
+              else if (gNum === 2) label = `Đời II • Chi`;
+              else if (gNum === 3) label = `Đời III • Cành`;
+              else if (gNum === 4) label = `Đời IV • Nhánh`;
+              else label = `Đời ${roman} • Hậu Duệ`;
+
+              return (
+                <div
+                  key={gNum}
+                  className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 truncate"
+                  title={`Thế hệ Đời thứ ${gNum} trong dòng họ`}
+                >
+                  {label}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Infinite Canvas Viewport */}
       <div
@@ -1037,7 +1201,7 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
                 <div className="mb-6 px-4 py-1.5 rounded-2xl bg-gradient-to-r from-[#14532D] via-[#166534] to-[#0F3D21] text-white text-xs font-bold tracking-wider shadow-sm uppercase font-serif flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
                   <span>
-                    👑 THỦY TỔ KHỞI NGHIỆP • ĐỜI THỨ {rootNode.generationNumber}
+                    {getRootTitle(rootNode)}
                   </span>
                 </div>
 

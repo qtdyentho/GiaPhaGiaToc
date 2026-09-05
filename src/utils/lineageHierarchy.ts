@@ -187,12 +187,9 @@ export function filterLineageTree(
 
     // 1. Lọc theo CHI (Đời 2 trở đi):
     if (filter.mode === 'CHI') {
-      if (info.generationNumber === 1) {
-        matchedDirectIds.add(m.id);
-        return;
-      }
       if (filter.selectedChiId) {
-        if (m.branch_id === filter.selectedChiId) {
+        // Vị Khởi Tổ của Chi (Đời 2) sẽ là người đứng đầu trên cùng của cây, không kéo cụ Đời 1 vào
+        if (info.generationNumber >= 2 && m.branch_id === filter.selectedChiId) {
           matchedDirectIds.add(m.id);
         }
       } else {
@@ -203,11 +200,7 @@ export function filterLineageTree(
       const matchChi = !filter.selectedChiId || m.branch_id === filter.selectedChiId;
       if (!matchChi) return;
 
-      if (info.generationNumber === 2) {
-        matchedDirectIds.add(m.id);
-        return;
-      }
-
+      // Vị Khởi Tổ của Cành (Đời 3) sẽ là người đứng đầu trên cùng của cây, không lấy Đời 1 hay 2
       if (info.generationNumber >= 3) {
         if (!filter.selectedCanh || info.canhName === filter.selectedCanh) {
           matchedDirectIds.add(m.id);
@@ -218,13 +211,7 @@ export function filterLineageTree(
       const matchChi = !filter.selectedChiId || m.branch_id === filter.selectedChiId;
       if (!matchChi) return;
 
-      if (info.generationNumber === 3) {
-        if (!filter.selectedCanh || info.canhName === filter.selectedCanh) {
-          matchedDirectIds.add(m.id);
-        }
-        return;
-      }
-
+      // Vị Khởi Tổ của Nhánh (Đời 4) sẽ là người đứng đầu trên cùng của cây, không lấy Đời 1, 2, 3
       if (info.generationNumber >= 4) {
         const matchCanh = !filter.selectedCanh || info.canhName === filter.selectedCanh;
         const matchNhanh = !filter.selectedNhanh || info.nhanhName === filter.selectedNhanh;
