@@ -109,11 +109,17 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
   const handleZoomOut = () => setZoom((prev) => Math.max(Math.round((prev - 0.15) * 100) / 100, 0.35));
   const handleResetZoom = () => {
     setZoom(1.0);
-    handleCenterTree();
+    if (!containerRef.current || !treeContentRef.current) return;
+    const containerWidth = containerRef.current.clientWidth;
+    const contentWidth = treeContentRef.current.scrollWidth || treeContentRef.current.offsetWidth;
+    const idealPanX = Math.round((containerWidth - contentWidth * 1.0) / 2);
+    setPan({ x: idealPanX, y: 30 });
   };
 
   // Thuật toán đo đạc thực tế: Căn vừa màn hình (Auto-Fit to Screen) chuẩn MyTree
-  const handleFitToView = useCallback(() => {
+  // fullBirdEye = true (khi bấm nút "Vừa Màn Hình"): co toàn bộ cây vào khung nhìn
+  // fullBirdEye = false (mặc định tải trang / đổi lọc): căn ngang vừa vặn, giữ chữ to rõ đọc được ngay
+  const handleFitToView = useCallback((fullBirdEye = false) => {
     if (!containerRef.current || !treeContentRef.current) return;
     const container = containerRef.current;
     const content = treeContentRef.current;
@@ -134,17 +140,24 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
     const scaleX = availW / contentWidth;
     const scaleY = availH / contentHeight;
 
-    // Tự động tính scale để cây nằm trọn vẹn trong màn hình
-    let idealZoom = Math.min(scaleX, scaleY, 1.0);
-    idealZoom = Math.max(0.35, Math.min(idealZoom, 1.15));
+    let idealZoom: number;
+    if (fullBirdEye) {
+      // Co giãn cả 2 chiều để thấy toàn cảnh cây
+      idealZoom = Math.min(scaleX, scaleY, 1.0);
+      idealZoom = Math.max(0.30, Math.min(idealZoom, 1.15));
+    } else {
+      // Ưu tiên đọc rõ nét thông tin thành viên (tối thiểu 0.68x, tối đa 1.05x)
+      idealZoom = Math.min(scaleX, 0.95);
+      idealZoom = Math.max(0.68, Math.min(idealZoom, 1.05));
+    }
     idealZoom = Math.round(idealZoom * 100) / 100;
 
     // Căn giữa ngang chính xác
     const idealPanX = Math.round((containerWidth - contentWidth * idealZoom) / 2);
-    // Căn đỉnh với khoảng cách lề trên thoáng đãng
+    // Căn đỉnh với khoảng cách lề trên thoáng đãng (bắt đầu ngay từ Hoành Phi & Đời 1)
     const idealPanY = Math.round(
       contentHeight * idealZoom < containerHeight - 80
-        ? Math.max(30, (containerHeight - contentHeight * idealZoom) / 3)
+        ? Math.max(30, (containerHeight - contentHeight * idealZoom) / 4)
         : 30
     );
 
@@ -169,7 +182,7 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
   // Tự động căn giữa & co giãn vừa màn hình khi tải trang hoặc chuyển đổi bộ lọc
   useEffect(() => {
     const timer = setTimeout(() => {
-      handleFitToView();
+      handleFitToView(false);
     }, 120);
     return () => clearTimeout(timer);
   }, [members.length, selectedBranchId, filterMode, selectedCanh, selectedNhanh, handleFitToView]);
@@ -177,7 +190,7 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
   // Tự động thích ứng khi thay đổi kích thước cửa sổ trình duyệt
   useEffect(() => {
     const onResize = () => {
-      handleFitToView();
+      handleFitToView(false);
     };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
@@ -404,7 +417,7 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
         case 'f':
         case 'F':
           e.preventDefault();
-          handleFitToView();
+          handleFitToView(true);
           break;
         case '+':
         case '=':
@@ -804,24 +817,6 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
 
       {/* 🧭 Top Floating Heritage Control & Search Bar */}
       <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 flex flex-wrap items-center gap-2 pointer-events-auto max-w-[calc(100vw-2rem)]">
-        {/* Bộ lọc Chi Phái */}
-        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md flex items-center gap-2 text-xs text-slate-800 dark:text-slate-200">
-          <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#166534] dark:text-emerald-400 shrink-0" />
-          <span className="font-bold hidden sm:inline">Chi Phái:</span>
-          <select
-            value={selectedBranchId || ''}
-            onChange={(e) => onBranchChange && onBranchChange(e.target.value)}
-            className="font-bold text-xs bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700 text-[#166534] dark:text-emerald-300 rounded-xl px-2 sm:px-3 py-1 focus:outline-none focus:ring-1 focus:ring-[#166534] cursor-pointer max-w-[180px] sm:max-w-xs truncate"
-          >
-            <option value="">Toàn Thể Dòng Họ (Đa Chi)</option>
-            {branches.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
         {/* 🔍 Hộp Tìm Kiếm Nhanh Thành Viên & Auto-Pan */}
         <div className="search-container relative">
           <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md flex items-center px-3 py-1.5 sm:py-2 gap-2 text-xs">
@@ -1109,8 +1104,8 @@ export const GenealogyCanvas: React.FC<GenealogyCanvasProps> = ({
 
         <button
           type="button"
-          onClick={handleFitToView}
-          title="Thu phóng vừa vặn toàn bộ màn hình"
+          onClick={() => handleFitToView(true)}
+          title="Thu phóng vừa vặn toàn bộ màn hình (Xem toàn cảnh)"
           className="canvas-control-button px-2 py-1.5 sm:px-2.5 sm:py-2 rounded-xl text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/70 hover:bg-emerald-100 dark:hover:bg-emerald-900 text-xs font-bold transition flex items-center gap-1 cursor-pointer border border-emerald-200 dark:border-emerald-800"
         >
           <Scan className="w-3.5 h-3.5" />
